@@ -1,4 +1,7 @@
-boundback
-=========
+<h1 style="border:0;">Rebound</h1>
+### Automatic data binding for backbone using HTMLBars.
 
-Backbone and HTMLBars were made for each other. Automatic data binding for backbone using HTMLBars.
+- - -
+
+
+Backbone and HTMLBars are a match made in heaven.
