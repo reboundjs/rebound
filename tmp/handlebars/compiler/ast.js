@@ -1,4 +1,4 @@
-import Exception from "handlebars/exception";
+import Exception from "../exception";
 
 function LocationInfo(locInfo){
   locInfo = locInfo || {};

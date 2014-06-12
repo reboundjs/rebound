@@ -1,5 +1,5 @@
-import { COMPILER_REVISION, REVISION_CHANGES, log } from "handlebars/base";
-import Exception from "handlebars/exception";
+import { COMPILER_REVISION, REVISION_CHANGES, log } from "../base";
+import Exception from "../exception";
 
 function Literal(value) {
   this.value = value;

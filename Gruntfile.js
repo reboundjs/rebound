@@ -2,22 +2,24 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     clean: {
-      tmp: ["tmp"],
-      dist: ["dist"],
-      prod: ["prod"]
+      tmp:  ["tmp"],  // ES6 files are first consolidated in tmp
+      amd: ["amd"],   // ES6 files are transpiled and placed in amd
+      dist: ["dist"]  // AMD files are concatted with loader and placed in dist
     },
     copy: {
       build: {
         files: [{
           expand: true,
-          cwd: 'node_modules/htmlbars/lib',
-          src: ['htmlbars.js', 'htmlbars/**/*'],
-          dest: 'tmp',
+          cwd: 'node_modules/htmlbars/packages/htmlbars-compiler/lib',
+          src: ['**/*'],
+          dest: 'tmp/htmlbars-compiler',
         },{
           expand: true,
-          cwd: 'node_modules/htmlbars/lib/vendor',
-          src: ['*'],
-          dest: 'tmp',
+          cwd: 'node_modules/htmlbars/packages/htmlbars-runtime/lib',
+          src: ['**/*'],
+          dest: 'tmp/htmlbars-runtime',
+        },{
+          'tmp/morph.js': 'node_modules/htmlbars/packages/morph/lib/main.js',
         },{
           expand: true,
           cwd: 'node_modules/handlebars/lib',
@@ -30,69 +32,27 @@ module.exports = function(grunt) {
           dest: 'tmp'
         }]
       },
-      htmlbarsCompiler: {
-        files: [{
-          expand: true,
-          cwd: 'node_modules/htmlbars/lib/compiler.js',
-          src: ['dist/htmlbars/compiler.js'],
-          dest: 'dist'
-        }]
-      },
       deps: {
         files: [{
           expand: true,
           cwd: '.',
           src: ['almond.js'],
-          dest: 'dist'
+          dest: 'amd'
+        },{
+          expand: true,
+          cwd: 'node_modules/htmlbars/vendor',
+          src: ['*'],
+          dest: 'amd',
         }]
       }
     },
     'string-replace': {
-      // Replaces relative imports in htmlbars compiler
-      absoluteHtmlbars: {
-        files: {
-          'tmp/htmlbars/compiler/': 'tmp/htmlbars/compiler/*',
-        },
-        options: {
-          replacements: [{
-            pattern: /(import.*("|'))\.\/(.*("|').*;)/ig,
-            replacement: '$1htmlbars/compiler/$3'
-          }]
-        }
-      },
-      absoluteHandlebarsCompiler: {
-        files: {
-          'tmp/handlebars/compiler/': 'tmp/handlebars/compiler/*',
-        },
-        options: {
-          replacements: [{
-            pattern: /(import.*("|'))\.\/(.*("|').*;)/ig,
-            replacement: '$1handlebars/compiler/$3'
-          },{
-            pattern: /(import.*("|'))\.\.\/(.*("|').*;)/ig,
-            replacement: '$1handlebars/$3'
-          }]
-        }
-      },
-      absoluteHandlebars: {
-        files: {
-          'tmp/handlebars/': 'tmp/handlebars/*.js',
-        },
-        options: {
-          replacements: [{
-            pattern: /(import.*("|'))\.\/(.*("|').*;)/ig,
-            replacement: '$1handlebars/$3'
-          },{
-            pattern: /(module.*("|'))\.\/(.*("|').*;)/ig,
-            replacement: '$1handlebars/$3'
-          }]
-        }
-      },
+      // Replaces any leading slashes placed in front of module names
       relativeDefines: {
         files: {
-          'dist/': 'dist/*.js',
-          'dist/': 'dist/**/*.js',
-          'dist/': 'dist/**/**/*.js',
+          'amd/': 'amd/*.js',
+          'amd/': 'amd/**/*.js',
+          'amd/': 'amd/**/**/*.js',
         },
         options: {
           replacements: [{
@@ -112,7 +72,7 @@ module.exports = function(grunt) {
           src: [
             '**/*.js'
           ],
-          dest: 'dist',
+          dest: 'amd',
         }]
       }
     },
@@ -122,52 +82,33 @@ module.exports = function(grunt) {
           src: [
             'wrap/start.frag',
             'wrap/almond.js',
-            'dist/handlebars/**/*.js',
-            'dist/htmlbars/**/*.js',
-            'dist/boundback/**/*.js',
-            'dist/*.js',
+            'amd/handlebars/**/*.js',
+            'amd/htmlbars-compiler/**/*.js',
+            'amd/htmlbars-runtime/**/*.js',
+            'amd/rebound/**/*.js',
+            'amd/*.js',
             'wrap/end.frag'
           ],
-          dest: 'prod/boundback.amd.js'
+          dest: 'dist/rebound.amd.js'
         }]
       }
     },
-    requirejs: {
-      make: {
-        options: {
-          baseUrl: 'dist',
-          name: 'almond.js',
-          include: [
-            'boundback.js'
-          ],
-          optimize: 'none',
-          out: 'prod/boundback.js',
-          wrap: {
-              startFile: 'wrap/start.frag',
-              endFile: 'wrap/end.frag'
-          }
-        }
-      }
-    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-string-replace');
   grunt.loadNpmTasks('grunt-es6-module-transpiler');
-  grunt.loadNpmTasks('grunt-contrib-requirejs');
   grunt.loadNpmTasks('grunt-concat-sourcemap');
 
   grunt.registerTask('build', [
     'clean',
     'copy:build',
-    'string-replace',
     'transpile',
-    'copy:htmlbarsCompiler',
     'string-replace:relativeDefines',
     'copy:deps',
-    //'requirejs:make'
-    'concat_sourcemap:browser'
+    'concat_sourcemap:browser',
+
   ]);
 
 }

@@ -1,6 +1,6 @@
-module Utils from "handlebars/utils";
-import Exception from "handlebars/exception";
-import { COMPILER_REVISION, REVISION_CHANGES, createFrame } from "handlebars/base";
+module Utils from "./utils";
+import Exception from "./exception";
+import { COMPILER_REVISION, REVISION_CHANGES, createFrame } from "./base";
 
 export function checkRevision(compilerInfo) {
   var compilerRevision = compilerInfo && compilerInfo[0] || 1,

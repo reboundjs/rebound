@@ -1,5 +1,5 @@
-import parser from "handlebars/compiler/parser";
-import AST from "handlebars/compiler/ast";
+import parser from "./parser";
+import AST from "./ast";
 
 export { parser };
 

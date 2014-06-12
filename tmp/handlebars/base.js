@@ -1,5 +1,5 @@
-module Utils from "handlebars/utils";
-import Exception from "handlebars/exception";
+module Utils from "./utils";
+import Exception from "./exception";
 
 export var VERSION = "2.0.0-alpha.4";
 export var COMPILER_REVISION = 5;

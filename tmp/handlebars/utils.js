@@ -1,5 +1,5 @@
 /*jshint -W004 */
-import SafeString from "handlebars/safe-string";
+import SafeString from "./safe-string";
 
 var escape = {
   "&": "&amp;",
