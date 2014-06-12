@@ -19,7 +19,9 @@ coverage
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
-# Compiled project result
+# Compiled project result an build directories
+tmp
+amd
 dist
 
 # Dependency directory
