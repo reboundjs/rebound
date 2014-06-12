@@ -20,7 +20,7 @@
       Rebound.registerHelper('if', _if)
 
 
-      return window.htmlbars = Rebound;
+      return window.Reboun = Rebound;
 
 
     })();

@@ -108,7 +108,17 @@ module.exports = function(grunt) {
     'string-replace:relativeDefines',
     'copy:deps',
     'concat_sourcemap:browser',
-
+    'clean:amd',
+    'clean:tmp'
   ]);
+
+grunt.registerTask('dev', [
+  'clean',
+  'copy:build',
+  'transpile',
+  'string-replace:relativeDefines',
+  'copy:deps',
+  'concat_sourcemap:browser',
+]);
 
 }
