@@ -1,9 +1,10 @@
 {
-  "name": "boundback",
+  "name": "Rebound",
   "version": "0.0.1",
   "description": "Backbone and HTMLBars were made for each other. Boundback gives Backbone automatic data binding using HTMLBars.",
-  "main": "index.js",
+  "main": "lib/main.js",
   "scripts": {
+    "rebound": "bin/main.js",
     "build": "bin/build.js",
     "test": "bin/run-tests.js"
   },
@@ -15,14 +16,12 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "htmlbars": "git://github.com/tildeio/htmlbars.git#9f169476985fa07bf8b5756aaf9b37bb3f1219b9",
     "grunt": "0.4.5",
     "grunt-es6-module-transpiler": "~0.6.0",
     "grunt-contrib-clean": "~0.5.0",
     "grunt-contrib-requirejs": "~0.4.4",
     "grunt-contrib-copy": "~0.5.0",
     "grunt-string-replace": "~0.2.7",
-    "handlebars": "~2.0.0-alpha.4",
     "grunt-concat-sourcemap": "~0.4.1"
   }
 }
