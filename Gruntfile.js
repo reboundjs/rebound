@@ -11,17 +11,17 @@ module.exports = function(grunt) {
       amd: {
         files: [{
           expand: true,
-          cwd: 'externals/htmlbars/packages/htmlbars-compiler/lib',
+          cwd: 'bower_components/htmlbars/packages/htmlbars-compiler/lib',
           src: ['**/*'],
           dest: 'tmp/htmlbars-compiler',
         },{
           expand: true,
-          cwd: 'externals/htmlbars/packages/htmlbars-runtime/lib',
+          cwd: 'bower_components/htmlbars/packages/htmlbars-runtime/lib',
           src: ['**/*'],
           dest: 'tmp/htmlbars-runtime',
         },{
-          'tmp/morph.js': 'externals/htmlbars/packages/morph/lib/main.js',
-          'tmp/htmlbars-runtime/morph.js': 'externals/htmlbars/packages/morph/lib/main.js'
+          'tmp/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
+          'tmp/htmlbars-runtime/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js'
         },{
           expand: true,
           cwd: 'externals/handlebars/lib',
@@ -42,16 +42,16 @@ module.exports = function(grunt) {
       cjs: {
         files: [{
           expand: true,
-          cwd: 'externals/htmlbars/packages/htmlbars-compiler/lib',
+          cwd: 'bower_components/htmlbars/packages/htmlbars-compiler/lib',
           src: ['**/*'],
           dest: 'tmp/htmlbars-compiler',
         },{
           expand: true,
-          cwd: 'externals/htmlbars/packages/htmlbars-runtime/lib',
+          cwd: 'bower_components/htmlbars/packages/htmlbars-runtime/lib',
           src: ['**/*'],
           dest: 'tmp/htmlbars-runtime',
         },{
-          'tmp/morph.js': 'externals/htmlbars/packages/morph/lib/main.js',
+          'tmp/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
         },{
           expand: true,
           cwd: 'externals/handlebars/lib',

@@ -31,6 +31,7 @@
   "dependencies": {
     "jquery": "2.1.1",
     "underscore": "1.6.0",
-    "backbone": "1.1.2"
+    "backbone": "1.1.2",
+    "htmlbars": "git://github.com/tildeio/htmlbars.git#247ae19683c0b5a0f4cc25974d2ed8530aec2640"
   }
 }
