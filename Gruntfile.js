@@ -195,7 +195,6 @@ module.exports = function(grunt) {
             'dist/amd/handlebars/*.js',
             'dist/amd/htmlbars-runtime/**/*.js',
             'dist/amd/simple-html-tokenizer/**/*.js',
-            'dist/amd/rebound/helpers.js',
             'dist/amd/rebound/hooks.js',
             'dist/amd/rebound/lazy-value.js',
             'dist/amd/rebound/runtime.js',

@@ -127,7 +127,7 @@ prototype.pushMustacheInContent = function(name, args, pairs, morphNum) {
 };
 
 prototype.pushMustacheInNode = function(name, args, pairs) {
-  this.source.push('  hooks.element(' + this.getParent() + ', ' + name + ', context, ' + args + ', ' + hash(pairs) + ', env);\n');
+  this.source.unshift('  hooks.element(' + this.getParent() + ', ' + name + ', context, ' + args + ', ' + hash(pairs) + ', env);\n');
 };
 
 prototype.shareParent = function(i) {
