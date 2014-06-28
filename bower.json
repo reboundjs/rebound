@@ -6,7 +6,7 @@
     "Adam Miller <adam@pages.me>"
   ],
   "description": "Automatic data-binding for Backbone. Whats not to love?",
-  "main": "bin/bower.js",
+  "main": "dist/rebound.amd.js",
   "moduleType": [
     "amd",
     "es6",
