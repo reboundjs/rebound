@@ -24,12 +24,12 @@ module.exports = function(grunt) {
           'tmp/htmlbars-runtime/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js'
         },{
           expand: true,
-          cwd: 'externals/handlebars/lib',
+          cwd: 'bower_components/handlebars/lib',
           src: ['handlebars.js', 'handlebars.runtime.js', 'handlebars/**/*'],
           dest: 'tmp',
         },{
           expand: true,
-          cwd: 'externals/simple-html-tokenizer/lib',
+          cwd: 'bower_components/simple-html-tokenizer/lib',
           src: ['**/*'],
           dest: 'tmp',
         },{
@@ -54,12 +54,12 @@ module.exports = function(grunt) {
           'tmp/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
         },{
           expand: true,
-          cwd: 'externals/handlebars/lib',
+          cwd: 'bower_components/handlebars/lib',
           src: ['handlebars.js', 'handlebars.runtime.js', 'handlebars/**/*'],
           dest: 'tmp',
         },{
           expand: true,
-          cwd: 'externals/simple-html-tokenizer/lib',
+          cwd: 'bower_components/simple-html-tokenizer/lib',
           src: ['**/*'],
           dest: 'tmp',
         },{

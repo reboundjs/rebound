@@ -1,9 +1,0 @@
-[submodule "externals/simple-html-tokenizer"]
-	path = externals/simple-html-tokenizer
-	url = https://github.com/tildeio/simple-html-tokenizer.git
-[submodule "externals/htmlbars"]
-	path = externals/htmlbars
-	url = git://github.com/tildeio/htmlbars.git
-[submodule "externals/handlebars"]
-	path = externals/handlebars
-	url = https://github.com/wycats/handlebars.js.git
