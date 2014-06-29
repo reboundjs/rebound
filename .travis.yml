@@ -3,7 +3,7 @@ node_js:
   - "0.11"
   - "0.10"
 before_script:
-  - sudo npm install -g grunt
+  - npm install -g grunt
   - bower install
   - cd ./bower_components/handlebars
   - grunt build
