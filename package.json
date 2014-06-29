@@ -6,7 +6,8 @@
   "scripts": {
     "rebound": "bin/main.js",
     "build": "bin/build.js",
-    "test": "bin/run-tests.js"
+    "test": "bin/run-tests.js",
+    "start": "bin/start-test-server.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,10 @@
     "grunt-contrib-requirejs": "~0.4.4",
     "grunt-contrib-copy": "~0.5.0",
     "grunt-string-replace": "~0.2.7",
-    "grunt-concat-sourcemap": "~0.4.1"
+    "grunt-concat-sourcemap": "~0.4.1",
+    "grunt-contrib-qunit": "~0.5.1",
+    "grunt-contrib-connect": "~0.8.0",
+    "grunt-wait": "~0.1.0",
+    "grunt-contrib-watch": "~0.6.1"
   }
 }

@@ -1,6 +1,30 @@
 module.exports = function(grunt) {
 
   grunt.initConfig({
+    qunit: {
+      all: {
+        options: {
+          urls: ['http://localhost:8000/test/index.html']
+        }
+      }
+    },
+    connect: {
+      test: {
+        options: {
+          port: 8000,
+          base: '.'
+        }
+      }
+    },
+    watch: {
+      scripts: {
+        files: ['lib/**/*.js'],
+        tasks: ['test'],
+        options: {
+          spawn: false,
+        },
+      },
+    },
     clean: {
       tmp:  ["tmp"],  // ES6 files are first consolidated in tmp
       amd: ["dist/amd"],   // ES6 files are transpiled and placed in amd
@@ -215,6 +239,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-string-replace');
   grunt.loadNpmTasks('grunt-es6-module-transpiler');
   grunt.loadNpmTasks('grunt-concat-sourcemap');
+  grunt.loadNpmTasks('grunt-contrib-qunit');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 
   grunt.registerTask('build', [
     'clean',
@@ -263,5 +290,14 @@ module.exports = function(grunt) {
     'string-replace:cjsRequires1',
     'string-replace:cjsRequires2'
   ]);
+
+  grunt.registerTask('test', 'Run the test suite', function() {
+    grunt.task.run(['build', 'connect:test', 'qunit']);
+  });
+
+  grunt.registerTask('testServer', 'Run the test server', function() {
+    grunt.task.run(['build', 'connect:test', 'watch']);
+  });
+
 
 }

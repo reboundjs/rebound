@@ -35,5 +35,8 @@
     "htmlbars": "git://github.com/tildeio/htmlbars.git#247ae19683c0b5a0f4cc25974d2ed8530aec2640",
     "handlebars": "git://github.com/wycats/handlebars.js#7172d167ddf9cbf1e8a0aae48970da42107e9e59",
     "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#231aa960e61313008f4cbd05e97a0630a580c4b9"
+  },
+  "devDependencies": {
+    "qunit": "~1.14.0"
   }
 }
