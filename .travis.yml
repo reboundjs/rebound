@@ -6,6 +6,7 @@ before_script:
   - npm install -g grunt
   - npm install -g grunt-cli
   - npm install -g bower
+  - npm install
   - bower install
   - cd ./bower_components/handlebars
   - grunt build
