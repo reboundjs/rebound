@@ -1,0 +1,216 @@
+<html>
+  <head>
+    <script src="../dist/rebound.runtime.pkg.js" ></script>
+
+  </head>
+
+  <body>
+    <div id="outlet"></div>
+  </body>
+
+  <script>
+
+  function template3(dom,Morph) {
+return (function (){
+  var child0=(function (){
+function build(dom) {
+  var el0 = dom.createDocumentFragment();
+  dom.appendText(el0,"User Name: ");
+  var el1 = dom.createElement("a");
+  dom.setAttribute(el1,"href","#");
+  var el2 = dom.createElement("img");
+  dom.setAttribute(el2,"width","100px");
+  dom.appendChild(el1, el2);
+  dom.appendChild(el0, el1);
+  return el0;
+}
+var cachedFragment = null;
+return function template(context, env) {
+  if (cachedFragment === null) {
+    cachedFragment = build(dom);
+  }
+  var fragment = dom.cloneNode(cachedFragment);
+  var hooks = env.hooks;
+  var parent0 = fragment.childNodes[1], morph0 = Morph.create(parent0,-1,0);
+  hooks.element(parent0.childNodes[0], "attribute", context, ["src",hooks.subexpr("mediumImage", context, [], {types:[],hashTypes:{},hash:{}}, env)], {types:["string","sexpr"],hashTypes:{},hash:{}}, env);
+  hooks.element(parent0, "on", context, ["click","controllerTest"], {types:["string","string"],hashTypes:{},hash:{}}, env);
+  hooks.content(morph0, "name", context, [], {escaped:true}, env);
+  return fragment;
+};
+}());
+function build(dom) {
+  var el0 = dom.createElement("p");
+  var el1 = dom.createElement("b");
+  dom.appendText(el1,"Welcome ");
+  dom.appendText(el1,"! Look around and discover new students");
+  dom.appendChild(el0, el1);
+  var el1 = dom.createElement("img");
+  dom.setAttribute(el1,"width","50px");
+  dom.appendChild(el0, el1);
+  return el0;
+}
+var cachedFragment = null;
+return function template(context, env) {
+  if (cachedFragment === null) {
+    cachedFragment = build(dom);
+  }
+  var fragment = dom.cloneNode(cachedFragment);
+  var hooks = env.hooks;
+  var morph0 = Morph.create(fragment.childNodes[0],0,1), morph1 = Morph.create(fragment,0,1);
+  hooks.element(fragment.childNodes[1], "attribute", context, ["src",hooks.subexpr("mediumImage", context, [], {types:[],hashTypes:{},hash:{}}, env)], {types:["string","sexpr"],hashTypes:{},hash:{}}, env);
+  hooks.content(morph0, "firstName", context, [], {escaped:true}, env);
+  hooks.content(morph1, "each", context, ["user"], {types:["id"],hashTypes:{},hash:{},render:child0,escaped:true}, env);
+  return fragment;
+};
+}())
+}
+
+
+function template2(dom,Morph) {
+return (function (){
+  var child0=(function (){
+function build(dom) {
+  var el0 = dom.createDocumentFragment();
+  dom.appendText(el0,"User Name: ");
+  var el1 = dom.createElement("a");
+  dom.setAttribute(el1,"href","#");
+  dom.appendChild(el0, el1);
+  return el0;
+}
+var cachedFragment = null;
+return function template(context, env) {
+  if (cachedFragment === null) {
+    cachedFragment = build(dom);
+  }
+  var fragment = dom.cloneNode(cachedFragment);
+  var hooks = env.hooks;
+  var parent0 = fragment.childNodes[1], morph0 = Morph.create(parent0,-1,-1);
+  hooks.element(parent0, "on", context, ["click","controllerTest"], {types:["string","string"],hashTypes:{},hash:{}}, env);
+  hooks.content(morph0, "name", context, [], {escaped:true}, env);
+  return fragment;
+};
+}());
+function build(dom) {
+  var el0 = dom.createElement("p");
+  var el1 = dom.createElement("b");
+  dom.appendText(el1,"Welcome ");
+  dom.appendText(el1,"! Look around and discover new students");
+  dom.appendChild(el0, el1);
+  var el1 = dom.createElement("img");
+  el1.setAttribute("width", "100px");
+  dom.appendChild(el0, el1);
+  return el0;
+}
+var cachedFragment = null;
+return function template(context, env) {
+  if (cachedFragment === null) {
+    cachedFragment = build(dom);
+  }
+  var fragment = dom.cloneNode(cachedFragment);
+  var hooks = env.hooks;
+  var morph0 = Morph.create(fragment.childNodes[0],0,1), morph1 = Morph.create(fragment,0,1);
+  hooks.element(fragment.childNodes[1], "attribute", context, ["src",hooks.subexpr("mediumImage", context, [], {types:[],hashTypes:{},hash:{}}, env)], {types:["string","sexpr"],hashTypes:{},hash:{}}, env);
+
+  hooks.content(morph0, "firstName", context, [], {escaped:true}, env);
+  hooks.content(morph1, "each", context, ["user"], {types:["id"],hashTypes:{},hash:{},render:child0,escaped:true}, env);
+  console.log("Fragment:", fragment)
+
+  return fragment;
+};
+}())
+}
+  //"<p><b>Welcome {{user.firstName}}! Look around and discover new students!</b><img src='{{user.mediumImage}}'></p>"
+  //'<p><b>Welcome {{user.firstName}}! Look around and discover new students</b>{{#each user}}User Name: <a href="#" {{on "click" "controllerTest"}}>{{name}}</a>{{/each}}<img src="{{user.mediumImage}}"></p>'
+function template(dom,Morph) {
+return (function (){
+  var child0=(function (){
+function build(dom) {
+  var el0 = dom.createDocumentFragment();
+  dom.appendText(el0," Look around and discover new students ");
+  var el1 = dom.createElement("a");
+  dom.setAttribute(el1,"href","#");
+  dom.appendChild(el0, el1);
+  dom.appendText(el0,"!");
+  return el0;
+}
+var cachedFragment = null;
+return function template(context, options) {
+  if (cachedFragment === null) {
+    cachedFragment = build(dom);
+  }
+  var fragment = dom.cloneNode(cachedFragment);
+  var hooks = options && options.hooks;
+  var helpers = options && options.helpers || {};
+  var parent0 = fragment.childNodes[1], morph0 = Morph.create(parent0,-1,-1);
+  hooks.element(parent0, "on", context, ["click","controllerTest"], {types:[],hashTypes:{},hash:{}}, helpers);
+  hooks.content(morph0, "name", context, [], {escaped:true}, helpers);
+  return fragment;
+};
+}());
+function build(dom) {
+  var el0 = dom.createElement("p");
+  var el1 = dom.createElement("b");
+  dom.appendText(el1,"Welcome ");
+  dom.appendText(el1,", ");
+  dom.appendText(el1," sadf");
+  dom.appendChild(el0, el1);
+  var el1 = dom.createElement("img");
+  dom.setAttribute(el1,"width","100px");
+  dom.appendChild(el0, el1);
+  return el0;
+}
+var cachedFragment = null;
+return function template(context, options) {
+  if (cachedFragment === null) {
+    cachedFragment = build(dom);
+  }
+  var fragment = dom.cloneNode(cachedFragment);
+  var hooks = options && options.hooks;
+  var helpers = options && options.helpers || {};
+  var parent0 = fragment.childNodes[0], morph0 = Morph.create(parent0,0,1), morph1 = Morph.create(parent0,1,2);
+  hooks.content(morph0, "firstName", context, [], {escaped:true}, helpers);
+  hooks.content(morph1, "each", context, ["user"], {types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,data:(typeof options !== "undefined" && options.data)}, helpers);
+  console.log("Fragment:", fragment)
+  hooks.element(fragment.childNodes[1], "attribute", context, ["src",hooks.subexpr("mediumImage", context, [], {types:[],hashTypes:{},hash:{}}, helpers)], {types:["string","sexpr"],hashTypes:{},hash:{}}, helpers);
+  return fragment;
+};
+}())
+}
+
+
+
+    var testModelClass = Backbone.Model.extend({
+        initialize: function(){
+            console.log("Test Model Instantiated", this);
+        }
+    });
+
+    var testModel = new testModelClass({
+      firstName: "Adam",
+      lastName: "Miller",
+      test: {firstName: "Not Adam", lastName: 'Not Miller'},
+      mediumImage: 'http://localhost:3000/images/users/thumb/large/1.jpg',
+      user: [{name: 'one', mediumImage: 'http://localhost:3000/images/users/thumb/large/1.jpg'},{name: 'two', mediumImage: 'http://localhost:3000/images/users/thumb/large/1.jpg'},{name: 'three', mediumImage: 'http://localhost:3000/images/users/thumb/large/1.jpg'}],
+      user2: [{name: 'two'},{name: 'three'}]
+    });
+
+    var testControllerClass = Backbone.Controller.extend({
+      initialize: function(options){
+        console.log("Test Controller Initialized", this);
+      },
+      controllerTest: function(event){
+        event.data.set('name', 'Clicked!')
+      }
+    });
+
+    var testController = new testControllerClass({
+      outlet: $('#outlet'),
+      data: testModel,
+      template: template3
+    });
+
+
+  </script>
+
+
+</html>
