@@ -11,5 +11,4 @@ before_script:
   - npm install
   - grunt build
   - cd ../../
-  - grunt build
 script: grunt test --verbose --force
