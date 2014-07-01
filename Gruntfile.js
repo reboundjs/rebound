@@ -20,7 +20,7 @@ module.exports = function(grunt) {
     watch: {
       scripts: {
         files: ['lib/**/*.js'],
-        tasks: ['test'],
+        tasks: ['build'],
         options: {
           spawn: false,
         },
@@ -45,8 +45,8 @@ module.exports = function(grunt) {
           src: ['**/*'],
           dest: 'tmp/htmlbars-runtime',
         },{
-          'tmp/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
-          'tmp/htmlbars-runtime/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js'
+          'tmp/morph/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
+          'tmp/morph/dom-helper.js': 'bower_components/htmlbars/packages/morph/lib/dom-helper.js'
         },{
           expand: true,
           cwd: 'bower_components/handlebars/lib',
@@ -76,7 +76,8 @@ module.exports = function(grunt) {
           src: ['**/*'],
           dest: 'tmp/htmlbars-runtime',
         },{
-          'tmp/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
+          'tmp/morph/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
+          'tmp/morph/dom-helper.js': 'bower_components/htmlbars/packages/morph/lib/dom-helper.js'
         },{
           expand: true,
           cwd: 'bower_components/handlebars/lib',
@@ -182,6 +183,7 @@ module.exports = function(grunt) {
             'wrap/start.frag',
             'wrap/almond.js',
             'dist/amd/handlebars/**/*.js',
+            'dist/amd/morph/*.js',
             'dist/amd/htmlbars-compiler/**/*.js',
             'dist/amd/htmlbars-runtime/**/*.js',
             'dist/amd/simple-html-tokenizer/**/*.js',
@@ -201,6 +203,7 @@ module.exports = function(grunt) {
             'bower_components/backbone/backbone.js',
             'wrap/almond.js',
             'dist/amd/handlebars/**/*.js',
+            'dist/amd/morph/*.js',
             'dist/amd/htmlbars-compiler/**/*.js',
             'dist/amd/htmlbars-runtime/**/*.js',
             'dist/amd/simple-html-tokenizer/**/*.js',
@@ -218,6 +221,7 @@ module.exports = function(grunt) {
             'bower_components/backbone/backbone.js',
             'wrap/almond.js',
             'dist/amd/handlebars/*.js',
+            'dist/amd/morph/*.js',
             'dist/amd/htmlbars-runtime/**/*.js',
             'dist/amd/simple-html-tokenizer/**/*.js',
             'dist/amd/rebound/hooks.js',
@@ -244,61 +248,37 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
-  grunt.registerTask('build', [
-    'clean',
-    // Compile AMD
+  grunt.registerTask('compileAMD', 'Build the project as AMD', [
     'copy:amd',
     'transpile:amd',
     'string-replace:amdDefines',
-    'concat_sourcemap:amd',
-    'concat_sourcemap:package',
-    'clean:amd',
-    'clean:tmp',
-    // Compile Common JS
-    'copy:cjs',
-    'transpile:cjs',
-    'string-replace:cjsRequires0',
-    'string-replace:cjsRequires1',
-    'string-replace:cjsRequires2',
-    'clean:tmp'
-  ]);
-
-  grunt.registerTask('package', [
-    'clean',
-    // Compile AMD
-    'copy:amd',
-    'transpile:amd',
-    'string-replace:amdDefines',
-    'concat_sourcemap:package',
-    //'clean:amd',
-    //'clean:tmp',
-  ]);
-
-  grunt.registerTask('amd', [
-    'clean',
-    'copy:amd',
-    'transpile:amd',
-    'string-replace:amdDefines',
-    'concat_sourcemap:amd',
+    'concat_sourcemap:amd'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'
-  grunt.registerTask('cjs', [
-    'clean',
+  grunt.registerTask('compileCJS', 'Build the project as CJS', [
     'copy:cjs',
     'transpile:cjs',
+    // TODO: This is dumb, should be a way to write it as one string-replace job
     'string-replace:cjsRequires0',
     'string-replace:cjsRequires1',
     'string-replace:cjsRequires2'
+  ]);
+
+  grunt.registerTask('build', 'Build the project in AMD and CJS', [
+    'clean',
+    'compileAMD',
+    'compileCJS',
+    'concat_sourcemap:package',
+    'clean:tmp'
   ]);
 
   grunt.registerTask('test', 'Run the test suite', function() {
     grunt.task.run(['build', 'connect:test', 'qunit']);
   });
 
-  grunt.registerTask('testServer', 'Run the test server', function() {
+  grunt.registerTask('start', 'Run the test server', function() {
     grunt.task.run(['build', 'connect:test', 'watch']);
   });
-
 
 }

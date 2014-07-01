@@ -7,8 +7,4 @@ before_script:
   - npm install -g grunt-cli
   - npm install -g bower
   - bower install
-  - cd ./bower_components/handlebars
-  - npm install
-  - grunt build
-  - cd ../../
 script: grunt test --verbose --force

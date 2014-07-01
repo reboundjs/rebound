@@ -6,13 +6,13 @@
     "qunit": "~1.14.0",
     "qunit-phantom-runner": "jonkemp/qunit-phantomjs-runner#3575d9f9850f4c5f30f3595e66e0d59866d53fa5"
   },
-  "homepage": "https://github.com/tildeio/htmlbars",
-  "_release": "247ae19683",
+  "homepage": "https://github.com/epicmiller/htmlbars",
+  "_release": "d233b6fefd",
   "_resolution": {
     "type": "commit",
-    "commit": "247ae19683c0b5a0f4cc25974d2ed8530aec2640"
+    "commit": "d233b6fefdd3b1b5c96f233592820fdaaa8165ad"
   },
-  "_source": "git://github.com/tildeio/htmlbars.git",
-  "_target": "247ae19683c0b5a0f4cc25974d2ed8530aec2640",
-  "_originalSource": "git://github.com/tildeio/htmlbars.git"
+  "_source": "https://github.com/epicmiller/htmlbars.git",
+  "_target": "d233b6fefdd3b1b5c96f233592820fdaaa8165ad",
+  "_originalSource": "https://github.com/epicmiller/htmlbars.git"
 }

@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-var grunt = require('grunt').tasks(['testServer']);
+var grunt = require('grunt').tasks(['start']);
