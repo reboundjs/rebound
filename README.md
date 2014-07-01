@@ -1,6 +1,11 @@
-# Rebound
-### Automatic data binding for backbone using HTMLBars.
-
+<p align="center">
+  <img src="http://reboundjs.com/images/rebound.svg" alt="Rebound Logo" width="520px" />
+  <br>
+  <a href="https://travis-ci.org/epicmiller/rebound">
+    <img src="https://travis-ci.org/epicmiller/rebound.svg?branch=master" alt="Build Status" />
+  </a>
+  <h3 align="center">Automatic data binding for backbone using HTMLBars.</h3>
+</p>
 - - -
 
 
