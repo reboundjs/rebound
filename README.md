@@ -9,7 +9,7 @@
 - - -
 
 
-Backbone and HTMLBars are a match made in heaven :heart:
+#### Backbone and HTMLBars are a match made in heaven :heart:
 
 Now I know what you're thinking:
 
