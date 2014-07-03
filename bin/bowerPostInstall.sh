@@ -3,3 +3,6 @@ cd ./bower_components/handlebars
 npm install
 grunt build
 cd -
+
+# Now, with everything install, build our project
+grunt build
