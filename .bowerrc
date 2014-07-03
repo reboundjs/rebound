@@ -1,6 +1,6 @@
 {
   "directory": "bower_components",
   "scripts": {
-    "postinstall": "bash ./bin/bowerPostInstall.sh"
+    "postinstall": "sh bin/bowerPostInstall.sh"
   }
 }
