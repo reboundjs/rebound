@@ -8,7 +8,8 @@
     "build": "bin/build.js",
     "test": "bin/run-tests.js",
     "start": "bin/start-test-server.js",
-    "postinstall": "bin/post-install.js"
+    "postinstall": "bin/post-install.js",
+    "preinstall": "npm install --ignore-scripts"
   },
   "repository": {
     "type": "git",
