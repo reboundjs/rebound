@@ -6,8 +6,7 @@ var path = require('path');
 var fs = require('fs');
 var filepath = path.join(path.dirname(fs.realpathSync(__filename)), '..');
 
-process.chdir(filepath+'/bower_components/handlebars');
-exec( 'cd ' + filepath + '/bower_components/handlebars && npm install && grunt build && cd -', function (error, stdout, stderr) {
+exec( 'bower install && cd ' + filepath + '/bower_components/handlebars && npm install && grunt build && cd -', function (error, stdout, stderr) {
   if (stderr !== null) {
     console.log('' + stderr);
   }
