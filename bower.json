@@ -32,7 +32,7 @@
     "jquery": "2.1.1",
     "underscore": "1.6.0",
     "backbone": "1.1.2",
-    "htmlbars": "https://github.com/epicmiller/htmlbars.git#d233b6fefdd3b1b5c96f233592820fdaaa8165ad",
+    "htmlbars": "https://github.com/tildeio/htmlbars.git#b685e698fa3078d3eaa3f9335eb1429efa5ba54b",
     "handlebars": "git://github.com/wycats/handlebars.js#7172d167ddf9cbf1e8a0aae48970da42107e9e59",
     "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#231aa960e61313008f4cbd05e97a0630a580c4b9"
   },
