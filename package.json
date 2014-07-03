@@ -1,7 +1,7 @@
 {
   "name": "reboundjs",
-  "version": "0.0.3",
-  "description": "Rebound gives Backbone automatic data binding using HTMLBars.",
+  "version": "0.0.5",
+  "description": "Automatic data binding for Backbone using HTMLBars.",
   "main": "lib/main.js",
   "scripts": {
     "rebound": "bin/main.js",
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "https://github.com/epicmiller/rebound.git"
   },
-  "author": "Pages, LLC.",
+  "author": "Adam Miller - Pages, LLC.",
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
