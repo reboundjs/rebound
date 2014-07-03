@@ -6,7 +6,9 @@ var path = require('path');
 var fs = require('fs');
 var filepath = path.join(path.dirname(fs.realpathSync(__filename)), '..');
 
-exec( 'bower install && cd ' + filepath + '/bower_components/handlebars && npm install && grunt build && cd -', function (error, stdout, stderr) {
+// TODO: this is dumb...fix this.
+// Install bower deps, build handlebars to generate its parser.js file, build our project.
+exec( 'bower install && cd ' + filepath + '/bower_components/handlebars && npm install && grunt build && cd ../../ && grunt build', function (error, stdout, stderr) {
   if (stderr !== null) {
     console.log('' + stderr);
   }
@@ -16,8 +18,4 @@ exec( 'bower install && cd ' + filepath + '/bower_components/handlebars && npm i
   if (error !== null) {
     console.log('' + error);
   }
-
-  // Now, with everything install, build our project
-  require('grunt').tasks(['build']);
-
 });
