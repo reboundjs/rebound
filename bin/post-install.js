@@ -18,6 +18,6 @@ exec( 'bower install && cd ' + filepath + '/bower_components/handlebars && npm i
   }
 
   // Now, with everything install, build our project
-  require('grunt').tasks(['build']);
+  //require('grunt').tasks(['build']);
 
 });

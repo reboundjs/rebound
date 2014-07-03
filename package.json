@@ -1,6 +1,6 @@
 {
   "name": "reboundjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Rebound gives Backbone automatic data binding using HTMLBars.",
   "main": "lib/main.js",
   "scripts": {
