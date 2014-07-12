@@ -28,7 +28,7 @@ function gruntBuildHandlebars(){
 function gruntBuildRebound(){
   console.log("Starting Grunt Build");
   ps = spawn('grunt', ['build'], {stdio: "inherit", cwd: filepath});
-  spawn.on('error', function (err) {
+  ps.on('error', function (err) {
     console.log('Error Running Grunt Build:', err);
   })
 }
