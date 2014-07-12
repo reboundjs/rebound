@@ -298,9 +298,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('build', 'Build the project in AMD and CJS', [
     'clean',
-    'compileAMD',
-    'compileCJS',
-    'concat_sourcemap:package',
+
     'clean:tmp'
   ]);
 
