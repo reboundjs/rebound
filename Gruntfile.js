@@ -23,8 +23,15 @@ module.exports = function(grunt) {
         tasks: ['build'],
         options: {
           spawn: false,
-        },
+        }
       },
+      demo: {
+        files: ['test/demo/templates/*.hbs'],
+        tasks: ['precompileDemo'],
+        options: {
+          spawn: false,
+        }
+      }
     },
     clean: {
       tmp:  ["tmp"],  // ES6 files are first consolidated in tmp
@@ -124,6 +131,8 @@ module.exports = function(grunt) {
       },
       cjsRequires1: {
         files: {
+          'dist/commonjs/rebound/': 'dist/commonjs/rebound/*.js',
+          'dist/commonjs/morph/': 'dist/commonjs/morph/*.js',
           'dist/commonjs/handlebars/': 'dist/commonjs/handlebars/*.js',
           'dist/commonjs/htmlbars-compiler/': 'dist/commonjs/htmlbars-compiler/*.js',
           'dist/commonjs/htmlbars-runtime/': 'dist/commonjs/htmlbars-runtime/*.js',
@@ -248,6 +257,28 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
+  grunt.registerTask('precompileDemo', 'Precompiles our demo template.', function(){
+    var rebound = require('./dist/commonjs/rebound/compiler'),
+        fs = require('fs');
+
+    var data = fs.readFile('./test/demo/templates/demo.hbs', 'utf8', function (err,data) {
+      if (err) {
+        return console.log(err);
+      }
+
+      var template = 'var template = ' + rebound.precompile(data);
+
+      fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
+          if(err) {
+              console.log(err);
+          } else {
+              console.log("Demo template compiled successfully!");
+          }
+      });
+    });
+
+  })
+
   grunt.registerTask('compileAMD', 'Build the project as AMD', [
     'copy:amd',
     'transpile:amd',
@@ -278,7 +309,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('start', 'Run the test server', function() {
-    grunt.task.run(['build', 'connect:test', 'watch']);
+    grunt.task.run(['build', 'precompileDemo', 'connect:test', 'watch']);
   });
 
 }

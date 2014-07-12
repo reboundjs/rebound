@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <script src="../../dist/rebound.compiler.pkg.js" ></script>
+    <script src="./templates/demo.js" ></script>
+    <link rel="stylesheet" href="/bower_components/todomvc-common/base.css">
+    <link rel="stylesheet" type="text/css" id="profile-css" href="./demo.css">
+  </head>
+
+  <body>
+    <div id="outlet"></div>
+  </body>
+
+  <script>
+
+    var toDoModelClass = Backbone.Model.extend({
+        initialize: function(){
+            console.log("ToDo Model Instantiated", this);
+        }
+    });
+
+    var toDoModel = new toDoModelClass({
+      newTitle: 'asdf',
+      length: 1,
+      remaining: 1,
+      filteredTodos: [
+        {
+          title: "Tie Bowtie",
+          editing: false,
+          isCompleted: true
+        },{
+          title: "Look Dapper",
+          editing: false,
+          isCompleted: false
+        },
+      ]
+    });
+
+    var testControllerClass = Backbone.Controller.extend({
+      initialize: function(options){
+        console.log("Test Controller Initialized", this);
+      },
+      createTodo: function(event){
+
+      }
+    });
+
+    var testController = new testControllerClass({
+      outlet: $('#outlet'),
+      data: toDoModel,
+      template: template
+    });
+
+
+  </script>
+
+
+</html>

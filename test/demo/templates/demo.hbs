@@ -1,0 +1,53 @@
+<img src="http://reboundjs.com/images/rebound.svg" id="rebound-logo">
+
+<section id="todoapp">
+	<header id="header">
+		<h1>todos</h1>
+    <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" rebound-action="createTodo">
+	</header>
+	{{#if length}}
+		<section id="main">
+			<ul id="todo-list">
+				{{#each filteredTodos}}
+					<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
+						{{#if editing}}
+							{{edit-todo class="edit" value=bufferedTitle focusOut="doneEditing" insertNewline="doneEditing" escapePress="cancelEditing"}}
+						{{else}}
+							<input type="checkbox" class="toggle" checked="{{isCompleted}}">
+							<label {{action "editTodo" on="doubleClick"}}>{{title}}</label>
+							<button {{action "removeTodo"}} class="destroy"></button>
+						{{/if}}
+						</li>
+				{{/each}}
+			</ul>
+			{{input type="checkbox" id="toggle-all" checked=allAreDone}}
+		</section>
+		<footer id="footer">
+			<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
+			<ul id="filters">
+				<li>
+					{{#link-to "todos.index" activeClass="selected"}}All{{/link-to}}
+				</li>
+				<li>
+					{{#link-to "todos.active" activeClass="selected"}}Active{{/link-to}}
+				</li>
+				<li>
+					{{#link-to "todos.completed" activeClass="selected"}}Completed{{/link-to}}
+				</li>
+			</ul>
+			{{#if remaining}}
+				<button id="clear-completed" {{action "clearCompleted"}}>
+					Clear completed ({{remaining}})
+				</button>
+			{{/if}}
+		</footer>
+	{{/if}}
+</section>
+<footer id="info">
+	<p>Double-click to edit a todo</p>
+	<p>
+		Created by
+		<a href="http://github.com/epicmiller">Adam Miller</a>,
+	</p>
+	<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+</footer>
