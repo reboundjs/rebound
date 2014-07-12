@@ -27,6 +27,12 @@ function gruntBuildHandlebars(){
 // Build our project
 function gruntBuildRebound(){
   ps = spawn('grunt', ['build'], {stdio: "inherit", cwd: filepath});
+  ps.on('exit', done);
+}
+
+// Notify finished
+function done(){
+  console.log('Post Install Finished');
 }
 
 installBowerDeps();
