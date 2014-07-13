@@ -12,16 +12,30 @@
 
   <script>
 
-    var toDoModelClass = Backbone.Model.extend({
-        initialize: function(){
-            console.log("ToDo Model Instantiated", this);
-        }
+    var toDoAppClass = Backbone.Model.extend({
+      initialize: function(){
+        console.log("ToDo Model Instantiated", this);
+      }
     });
 
-    var toDoModel = new toDoModelClass({
-      newTitle: 'asdf',
-      length: 1,
-      remaining: 1,
+    var toDoModelClass = Backbone.Model.extend({
+      initialize: function(){
+        console.log("ToDo Model Instantiated", this);
+      }
+    });
+
+    var toDoModel = new toDoAppClass({
+      newTitle: '',
+      allAreDone: function(){
+        console.log('allAreDone')
+        return this.get('filteredTodos').where({'isCompleted': true}).length == this.get('filteredTodos').length;
+      },
+      remaining: function(){
+        return this.get('filteredTodos').where({'isCompleted': false}).length;
+      },
+      completed: function(){
+        return this.get('filteredTodos').where({'isCompleted': true}).length;
+      },
       filteredTodos: [
         {
           title: "Tie Bowtie",
@@ -31,16 +45,33 @@
           title: "Look Dapper",
           editing: false,
           isCompleted: false
-        },
+        },{
+          title: "Profit",
+          editing: false,
+          isCompleted: false
+        }
       ]
     });
+
 
     var testControllerClass = Backbone.Controller.extend({
       initialize: function(options){
         console.log("Test Controller Initialized", this);
       },
       createTodo: function(event){
-
+        if(this.data.get('newTitle') == '') return;
+        this.data.get('filteredTodos').add({
+          title: this.data.get('newTitle'),
+          editing: false,
+          isCompleted: false
+        });
+        this.data.set('newTitle', '');
+      },
+      toggleAll: function(event){
+        var value = event.currentTarget.checked;
+        this.data.get('filteredTodos').forEach(function(model, index) {
+          model.set('isCompleted', value);
+        });
       }
     });
 

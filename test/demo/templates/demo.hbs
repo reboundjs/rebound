@@ -5,7 +5,6 @@
 		<h1>todos</h1>
     <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" rebound-action="createTodo">
 	</header>
-	{{#if length}}
 		<section id="main">
 			<ul id="todo-list">
 				{{#each filteredTodos}}
@@ -20,7 +19,7 @@
 						</li>
 				{{/each}}
 			</ul>
-			{{input type="checkbox" id="toggle-all" checked=allAreDone}}
+			<input type="checkbox" id="toggle-all" checked={{allAreDone}} {{on 'click' 'toggleAll'}}>
 		</section>
 		<footer id="footer">
 			<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
@@ -37,11 +36,10 @@
 			</ul>
 			{{#if remaining}}
 				<button id="clear-completed" {{action "clearCompleted"}}>
-					Clear completed ({{remaining}})
+					Clear completed ({{completed}})
 				</button>
 			{{/if}}
 		</footer>
-	{{/if}}
 </section>
 <footer id="info">
 	<p>Double-click to edit a todo</p>
