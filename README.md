@@ -34,13 +34,11 @@ The project isn't 100% ready to be unleashed on the world. I won't tell you how 
 
 ##### To test what is already there:
 
- - Install server dependancies: ```npm install```
-
- - Install client dependancies: ```bower install```
+ - Install all dependancies: ```npm install```
 
  - Start the test server: ```npm start```
 
- - Check to [localhost:8000/test](http://localhost:8000/test) to run the tests or [localhost:8000/test/example.html](http://localhost:8000/test/example.html) to see it in action.
+ - Check to [localhost:8000/test](http://localhost:8000/test) to run the tests or [localhost:8000/test/demo](http://localhost:8000/test/demo) to see it in action.
 
 ##### Other options:
 
