@@ -1,6 +1,6 @@
 {
   "name": "Rebound",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/epicmiller/rebound",
   "authors": [
     "Adam Miller <adam@pages.me>"
@@ -20,7 +20,6 @@
     "javascript"
   ],
   "license": "MIT",
-  "private": true,
   "ignore": [
     "**/.*",
     "node_modules",
