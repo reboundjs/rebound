@@ -5,16 +5,18 @@
 		<h1>todos</h1>
     <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" rebound-action="createTodo">
 	</header>
+  {{#if filteredTodos}}
 		<section id="main">
 			<ul id="todo-list">
 				{{#each filteredTodos}}
 					<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 						{{#if editing}}
-							{{edit-todo class="edit" value=bufferedTitle focusOut="doneEditing" insertNewline="doneEditing" escapePress="cancelEditing"}}
+              <input class="edit" value="{{title}}" type="text" {{on "blur" "doneEditing"}} rebound-action="doneEditing">
+							{{! edit-todo class="edit" value=bufferedTitle focusOut="doneEditing" insertNewline="doneEditing" escapePress="cancelEditing"}}
 						{{else}}
 							<input type="checkbox" class="toggle" checked="{{isCompleted}}">
-							<label {{action "editTodo" on="doubleClick"}}>{{title}}</label>
-							<button {{action "removeTodo"}} class="destroy"></button>
+							<label {{on "dblclick" "editTodo" }}>{{title}}</label>
+							<button {{on "click" "removeTodo"}} class="destroy"></button>
 						{{/if}}
 						</li>
 				{{/each}}
@@ -25,21 +27,23 @@
 			<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
 			<ul id="filters">
 				<li>
-					{{#link-to "todos.index" activeClass="selected"}}All{{/link-to}}
+					<a href="" class="selected">All</a>
 				</li>
 				<li>
-					{{#link-to "todos.active" activeClass="selected"}}Active{{/link-to}}
+					<a href="">Active</a>
 				</li>
 				<li>
-					{{#link-to "todos.completed" activeClass="selected"}}Completed{{/link-to}}
+          <a href="">Completed</a>
+					{{! #link-to "todos.completed" activeClass="selected" }Completed {! /link-to}}
 				</li>
 			</ul>
 			{{#if remaining}}
-				<button id="clear-completed" {{action "clearCompleted"}}>
+				<button id="clear-completed" {{on "click" "clearCompleted"}}>
 					Clear completed ({{completed}})
 				</button>
 			{{/if}}
 		</footer>
+  {{/if}}
 </section>
 <footer id="info">
 	<p>Double-click to edit a todo</p>

@@ -1,11 +1,90 @@
 var template = (function() {
   var child0 = (function() {
     var child0 = (function() {
+      var child0 = (function() {
+        function build(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("\n              ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("input");
+          dom.setAttribute(el1,"class","edit");
+          dom.setAttribute(el1,"type","text");
+          dom.setAttribute(el1,"rebound-action","doneEditing");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n							\n						");
+          dom.appendChild(el0, el1);
+          return el0;
+        }
+        var cachedFragment;
+        return function template(context, env, contextualElement) {
+          var dom = env.dom, hooks = env.hooks;
+          if (cachedFragment === undefined) {
+            cachedFragment = build(dom);
+          }
+          if (contextualElement === undefined) {
+            contextualElement = dom.document.body;
+          }
+          var fragment = dom.cloneNode(cachedFragment, true);
+          var element4 = fragment.childNodes[1];
+          hooks.element(element4, "attribute", context, ["value",hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element4}, env);
+          hooks.element(element4, "on", context, ["blur","doneEditing"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element4}, env);
+          return fragment;
+        };
+      }());
+      var child1 = (function() {
+        function build(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("\n							");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("input");
+          dom.setAttribute(el1,"type","checkbox");
+          dom.setAttribute(el1,"class","toggle");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n							");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("label");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n							");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("button");
+          dom.setAttribute(el1,"class","destroy");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n						");
+          dom.appendChild(el0, el1);
+          return el0;
+        }
+        var cachedFragment;
+        return function template(context, env, contextualElement) {
+          var dom = env.dom, hooks = env.hooks;
+          if (cachedFragment === undefined) {
+            cachedFragment = build(dom);
+          }
+          if (contextualElement === undefined) {
+            contextualElement = dom.document.body;
+          }
+          var fragment = dom.cloneNode(cachedFragment, true);
+          var element1 = fragment.childNodes[1];
+          var element2 = fragment.childNodes[3];
+          var morph0 = dom.createMorph(element2,-1,-1);
+          var element3 = fragment.childNodes[5];
+          hooks.element(element1, "attribute", context, ["checked",hooks.subexpr("isCompleted", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element1}, env);
+          hooks.element(element2, "on", context, ["dblclick","editTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element2}, env);
+          hooks.content(morph0, "title", context, [], {escaped:true}, env);
+          hooks.element(element3, "on", context, ["click","removeTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element3}, env);
+          return fragment;
+        };
+      }());
       function build(dom) {
         var el0 = dom.createDocumentFragment();
-        var el1 = dom.createTextNode("\n							");
+        var el1 = dom.createTextNode("\n					");
         dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n						");
+        var el1 = dom.createElement("li");
+        var el2 = dom.createTextNode("\n						");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode("\n						");
+        dom.appendChild(el1, el2);
+        dom.appendChild(el0, el1);
+        var el1 = dom.createTextNode("\n				");
         dom.appendChild(el0, el1);
         return el0;
       }
@@ -19,30 +98,26 @@ var template = (function() {
           contextualElement = dom.document.body;
         }
         var fragment = dom.cloneNode(cachedFragment, true);
-        var morph0 = dom.createMorph(fragment,0,1,contextualElement);
-        hooks.content(morph0, "edit-todo", context, [], {context:context,types:[],hashTypes:{class:"string",value:"id",focusOut:"string",insertNewline:"string",escapePress:"string"},hash:{class:"edit",value:"bufferedTitle",focusOut:"doneEditing",insertNewline:"doneEditing",escapePress:"cancelEditing"},escaped:true,morph:morph0}, env);
+        var element5 = fragment.childNodes[1];
+        var morph0 = dom.createMorph(element5,0,1);
+        hooks.element(element5, "attribute", context, ["class",hooks.subexpr("concat", context, [hooks.subexpr("if", context, ["isCompleted","completed"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)," ",hooks.subexpr("if", context, ["editing","editing"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["sexpr","string","sexpr"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element5}, env);
+        hooks.content(morph0, "if", context, ["editing"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,inverse:child1,escaped:true,morph:morph0}, env);
         return fragment;
       };
     }());
     var child1 = (function() {
       function build(dom) {
         var el0 = dom.createDocumentFragment();
-        var el1 = dom.createTextNode("\n							");
-        dom.appendChild(el0, el1);
-        var el1 = dom.createElement("input");
-        dom.setAttribute(el1,"type","checkbox");
-        dom.setAttribute(el1,"class","toggle");
-        dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n							");
-        dom.appendChild(el0, el1);
-        var el1 = dom.createElement("label");
-        dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n							");
+        var el1 = dom.createTextNode("\n				");
         dom.appendChild(el0, el1);
         var el1 = dom.createElement("button");
-        dom.setAttribute(el1,"class","destroy");
+        dom.setAttribute(el1,"id","clear-completed");
+        var el2 = dom.createTextNode("\n					Clear completed (");
+        dom.appendChild(el1, el2);
+        var el2 = dom.createTextNode(")\n				");
+        dom.appendChild(el1, el2);
         dom.appendChild(el0, el1);
-        var el1 = dom.createTextNode("\n						");
+        var el1 = dom.createTextNode("\n			");
         dom.appendChild(el0, el1);
         return el0;
       }
@@ -56,115 +131,100 @@ var template = (function() {
           contextualElement = dom.document.body;
         }
         var fragment = dom.cloneNode(cachedFragment, true);
-        var element1 = fragment.childNodes[1];
-        var element2 = fragment.childNodes[3];
-        var morph0 = dom.createMorph(element2,-1,-1);
-        var element3 = fragment.childNodes[5];
-        hooks.element(element1, "attribute", context, ["checked",hooks.subexpr("isCompleted", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element1}, env);
-        hooks.element(element2, "action", context, ["editTodo"], {context:context,types:["string"],hashTypes:{on:"string"},hash:{on:"doubleClick"},element:element2}, env);
-        hooks.content(morph0, "title", context, [], {escaped:true}, env);
-        hooks.element(element3, "action", context, ["removeTodo"], {context:context,types:["string"],hashTypes:{},hash:{},element:element3}, env);
+        var element0 = fragment.childNodes[1];
+        var morph0 = dom.createMorph(element0,0,1);
+        hooks.element(element0, "on", context, ["click","clearCompleted"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
+        hooks.content(morph0, "completed", context, [], {escaped:true}, env);
         return fragment;
       };
     }());
     function build(dom) {
       var el0 = dom.createDocumentFragment();
-      var el1 = dom.createTextNode("\n					");
+      var el1 = dom.createTextNode("\n		");
       dom.appendChild(el0, el1);
-      var el1 = dom.createElement("li");
-      var el2 = dom.createTextNode("\n						");
+      var el1 = dom.createElement("section");
+      dom.setAttribute(el1,"id","main");
+      var el2 = dom.createTextNode("\n			");
       dom.appendChild(el1, el2);
-      var el2 = dom.createTextNode("\n						");
+      var el2 = dom.createElement("ul");
+      dom.setAttribute(el2,"id","todo-list");
+      var el3 = dom.createTextNode("\n				");
+      dom.appendChild(el2, el3);
+      var el3 = dom.createTextNode("\n			");
+      dom.appendChild(el2, el3);
       dom.appendChild(el1, el2);
-      dom.appendChild(el0, el1);
-      var el1 = dom.createTextNode("\n				");
-      dom.appendChild(el0, el1);
-      return el0;
-    }
-    var cachedFragment;
-    return function template(context, env, contextualElement) {
-      var dom = env.dom, hooks = env.hooks;
-      if (cachedFragment === undefined) {
-        cachedFragment = build(dom);
-      }
-      if (contextualElement === undefined) {
-        contextualElement = dom.document.body;
-      }
-      var fragment = dom.cloneNode(cachedFragment, true);
-      var element4 = fragment.childNodes[1];
-      var morph0 = dom.createMorph(element4,0,1);
-      hooks.element(element4, "attribute", context, ["class",hooks.subexpr("concat", context, [hooks.subexpr("if", context, ["isCompleted","completed"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)," ",hooks.subexpr("if", context, ["editing","editing"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["sexpr","string","sexpr"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element4}, env);
-      hooks.content(morph0, "if", context, ["editing"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,inverse:child1,escaped:true,morph:morph0}, env);
-      return fragment;
-    };
-  }());
-  var child1 = (function() {
-    function build(dom) {
-      var el0 = dom.createTextNode("All");
-      return el0;
-    }
-    var cachedFragment;
-    return function template(context, env, contextualElement) {
-      var dom = env.dom, hooks = env.hooks;
-      if (cachedFragment === undefined) {
-        cachedFragment = build(dom);
-      }
-      if (contextualElement === undefined) {
-        contextualElement = dom.document.body;
-      }
-      var fragment = dom.cloneNode(cachedFragment, true);
-      return fragment;
-    };
-  }());
-  var child2 = (function() {
-    function build(dom) {
-      var el0 = dom.createTextNode("Active");
-      return el0;
-    }
-    var cachedFragment;
-    return function template(context, env, contextualElement) {
-      var dom = env.dom, hooks = env.hooks;
-      if (cachedFragment === undefined) {
-        cachedFragment = build(dom);
-      }
-      if (contextualElement === undefined) {
-        contextualElement = dom.document.body;
-      }
-      var fragment = dom.cloneNode(cachedFragment, true);
-      return fragment;
-    };
-  }());
-  var child3 = (function() {
-    function build(dom) {
-      var el0 = dom.createTextNode("Completed");
-      return el0;
-    }
-    var cachedFragment;
-    return function template(context, env, contextualElement) {
-      var dom = env.dom, hooks = env.hooks;
-      if (cachedFragment === undefined) {
-        cachedFragment = build(dom);
-      }
-      if (contextualElement === undefined) {
-        contextualElement = dom.document.body;
-      }
-      var fragment = dom.cloneNode(cachedFragment, true);
-      return fragment;
-    };
-  }());
-  var child4 = (function() {
-    function build(dom) {
-      var el0 = dom.createDocumentFragment();
-      var el1 = dom.createTextNode("\n				");
-      dom.appendChild(el0, el1);
-      var el1 = dom.createElement("button");
-      dom.setAttribute(el1,"id","clear-completed");
-      var el2 = dom.createTextNode("\n					Clear completed (");
+      var el2 = dom.createTextNode("\n			");
       dom.appendChild(el1, el2);
-      var el2 = dom.createTextNode(")\n				");
+      var el2 = dom.createElement("input");
+      dom.setAttribute(el2,"type","checkbox");
+      dom.setAttribute(el2,"id","toggle-all");
+      dom.appendChild(el1, el2);
+      var el2 = dom.createTextNode("\n		");
       dom.appendChild(el1, el2);
       dom.appendChild(el0, el1);
-      var el1 = dom.createTextNode("\n			");
+      var el1 = dom.createTextNode("\n		");
+      dom.appendChild(el0, el1);
+      var el1 = dom.createElement("footer");
+      dom.setAttribute(el1,"id","footer");
+      var el2 = dom.createTextNode("\n			");
+      dom.appendChild(el1, el2);
+      var el2 = dom.createElement("span");
+      dom.setAttribute(el2,"id","todo-count");
+      var el3 = dom.createElement("strong");
+      dom.appendChild(el2, el3);
+      var el3 = dom.createTextNode(" item left");
+      dom.appendChild(el2, el3);
+      dom.appendChild(el1, el2);
+      var el2 = dom.createTextNode("\n			");
+      dom.appendChild(el1, el2);
+      var el2 = dom.createElement("ul");
+      dom.setAttribute(el2,"id","filters");
+      var el3 = dom.createTextNode("\n				");
+      dom.appendChild(el2, el3);
+      var el3 = dom.createElement("li");
+      var el4 = dom.createTextNode("\n					");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("a");
+      dom.setAttribute(el4,"class","selected");
+      var el5 = dom.createTextNode("All");
+      dom.appendChild(el4, el5);
+      dom.appendChild(el3, el4);
+      var el4 = dom.createTextNode("\n				");
+      dom.appendChild(el3, el4);
+      dom.appendChild(el2, el3);
+      var el3 = dom.createTextNode("\n				");
+      dom.appendChild(el2, el3);
+      var el3 = dom.createElement("li");
+      var el4 = dom.createTextNode("\n					");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("a");
+      var el5 = dom.createTextNode("Active");
+      dom.appendChild(el4, el5);
+      dom.appendChild(el3, el4);
+      var el4 = dom.createTextNode("\n				");
+      dom.appendChild(el3, el4);
+      dom.appendChild(el2, el3);
+      var el3 = dom.createTextNode("\n				");
+      dom.appendChild(el2, el3);
+      var el3 = dom.createElement("li");
+      var el4 = dom.createTextNode("\n          ");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("a");
+      var el5 = dom.createTextNode("Completed");
+      dom.appendChild(el4, el5);
+      dom.appendChild(el3, el4);
+      var el4 = dom.createTextNode("\n					\n				");
+      dom.appendChild(el3, el4);
+      dom.appendChild(el2, el3);
+      var el3 = dom.createTextNode("\n			");
+      dom.appendChild(el2, el3);
+      dom.appendChild(el1, el2);
+      var el2 = dom.createTextNode("\n			");
+      dom.appendChild(el1, el2);
+      var el2 = dom.createTextNode("\n		");
+      dom.appendChild(el1, el2);
+      dom.appendChild(el0, el1);
+      var el1 = dom.createTextNode("\n  ");
       dom.appendChild(el0, el1);
       return el0;
     }
@@ -178,10 +238,24 @@ var template = (function() {
         contextualElement = dom.document.body;
       }
       var fragment = dom.cloneNode(cachedFragment, true);
-      var element0 = fragment.childNodes[1];
-      var morph0 = dom.createMorph(element0,0,1);
-      hooks.element(element0, "action", context, ["clearCompleted"], {context:context,types:["string"],hashTypes:{},hash:{},element:element0}, env);
-      hooks.content(morph0, "completed", context, [], {escaped:true}, env);
+      var element6 = fragment.childNodes[1];
+      var morph0 = dom.createMorph(element6.childNodes[1],0,1);
+      var element7 = element6.childNodes[3];
+      var element8 = fragment.childNodes[3];
+      var morph1 = dom.createMorph(element8.childNodes[1].childNodes[0],-1,-1);
+      var element9 = element8.childNodes[3];
+      var element10 = element9.childNodes[1].childNodes[1];
+      var element11 = element9.childNodes[3].childNodes[1];
+      var element12 = element9.childNodes[5].childNodes[1];
+      var morph2 = dom.createMorph(element8,4,5);
+      hooks.content(morph0, "each", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
+      hooks.element(element7, "attribute", context, ["checked",hooks.subexpr("allAreDone", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element7}, env);
+      hooks.element(element7, "on", context, ["click","toggleAll"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element7}, env);
+      hooks.content(morph1, "remaining", context, [], {escaped:true}, env);
+      hooks.element(element10, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element10}, env);
+      hooks.element(element11, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element11}, env);
+      hooks.element(element12, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element12}, env);
+      hooks.content(morph2, "if", context, ["remaining"], {context:context,types:["id"],hashTypes:{},hash:{},render:child1,escaped:true,morph:morph2}, env);
       return fragment;
     };
   }());
@@ -216,76 +290,7 @@ var template = (function() {
     var el3 = dom.createTextNode("\n	");
     dom.appendChild(el2, el3);
     dom.appendChild(el1, el2);
-    var el2 = dom.createTextNode("\n		");
-    dom.appendChild(el1, el2);
-    var el2 = dom.createElement("section");
-    dom.setAttribute(el2,"id","main");
-    var el3 = dom.createTextNode("\n			");
-    dom.appendChild(el2, el3);
-    var el3 = dom.createElement("ul");
-    dom.setAttribute(el3,"id","todo-list");
-    var el4 = dom.createTextNode("\n				");
-    dom.appendChild(el3, el4);
-    var el4 = dom.createTextNode("\n			");
-    dom.appendChild(el3, el4);
-    dom.appendChild(el2, el3);
-    var el3 = dom.createTextNode("\n			");
-    dom.appendChild(el2, el3);
-    var el3 = dom.createElement("input");
-    dom.setAttribute(el3,"type","checkbox");
-    dom.setAttribute(el3,"id","toggle-all");
-    dom.appendChild(el2, el3);
-    var el3 = dom.createTextNode("\n		");
-    dom.appendChild(el2, el3);
-    dom.appendChild(el1, el2);
-    var el2 = dom.createTextNode("\n		");
-    dom.appendChild(el1, el2);
-    var el2 = dom.createElement("footer");
-    dom.setAttribute(el2,"id","footer");
-    var el3 = dom.createTextNode("\n			");
-    dom.appendChild(el2, el3);
-    var el3 = dom.createElement("span");
-    dom.setAttribute(el3,"id","todo-count");
-    var el4 = dom.createElement("strong");
-    dom.appendChild(el3, el4);
-    var el4 = dom.createTextNode(" item left");
-    dom.appendChild(el3, el4);
-    dom.appendChild(el2, el3);
-    var el3 = dom.createTextNode("\n			");
-    dom.appendChild(el2, el3);
-    var el3 = dom.createElement("ul");
-    dom.setAttribute(el3,"id","filters");
-    var el4 = dom.createTextNode("\n				");
-    dom.appendChild(el3, el4);
-    var el4 = dom.createElement("li");
-    var el5 = dom.createTextNode("\n					");
-    dom.appendChild(el4, el5);
-    var el5 = dom.createTextNode("\n				");
-    dom.appendChild(el4, el5);
-    dom.appendChild(el3, el4);
-    var el4 = dom.createTextNode("\n				");
-    dom.appendChild(el3, el4);
-    var el4 = dom.createElement("li");
-    var el5 = dom.createTextNode("\n					");
-    dom.appendChild(el4, el5);
-    var el5 = dom.createTextNode("\n				");
-    dom.appendChild(el4, el5);
-    dom.appendChild(el3, el4);
-    var el4 = dom.createTextNode("\n				");
-    dom.appendChild(el3, el4);
-    var el4 = dom.createElement("li");
-    var el5 = dom.createTextNode("\n					");
-    dom.appendChild(el4, el5);
-    var el5 = dom.createTextNode("\n				");
-    dom.appendChild(el4, el5);
-    dom.appendChild(el3, el4);
-    var el4 = dom.createTextNode("\n			");
-    dom.appendChild(el3, el4);
-    dom.appendChild(el2, el3);
-    var el3 = dom.createTextNode("\n			");
-    dom.appendChild(el2, el3);
-    var el3 = dom.createTextNode("\n		");
-    dom.appendChild(el2, el3);
+    var el2 = dom.createTextNode("\n  ");
     dom.appendChild(el1, el2);
     var el2 = dom.createTextNode("\n");
     dom.appendChild(el1, el2);
@@ -339,27 +344,11 @@ var template = (function() {
       contextualElement = dom.document.body;
     }
     var fragment = dom.cloneNode(cachedFragment, true);
-    var element5 = fragment.childNodes[2];
-    var element6 = element5.childNodes[1].childNodes[3];
-    var element7 = element5.childNodes[3];
-    var morph0 = dom.createMorph(element7.childNodes[1],0,1);
-    var element8 = element7.childNodes[3];
-    var element9 = element5.childNodes[5];
-    var morph1 = dom.createMorph(element9.childNodes[1].childNodes[0],-1,-1);
-    var element10 = element9.childNodes[3];
-    var morph2 = dom.createMorph(element10.childNodes[1],0,1);
-    var morph3 = dom.createMorph(element10.childNodes[3],0,1);
-    var morph4 = dom.createMorph(element10.childNodes[5],0,1);
-    var morph5 = dom.createMorph(element9,4,5);
-    hooks.element(element6, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element6}, env);
-    hooks.content(morph0, "each", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
-    hooks.element(element8, "attribute", context, ["checked",hooks.subexpr("allAreDone", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element8}, env);
-    hooks.element(element8, "on", context, ["click","toggleAll"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element8}, env);
-    hooks.content(morph1, "remaining", context, [], {escaped:true}, env);
-    hooks.content(morph2, "link-to", context, ["todos.index"], {context:context,types:["string"],hashTypes:{activeClass:"string"},hash:{activeClass:"selected"},render:child1,escaped:true,morph:morph2}, env);
-    hooks.content(morph3, "link-to", context, ["todos.active"], {context:context,types:["string"],hashTypes:{activeClass:"string"},hash:{activeClass:"selected"},render:child2,escaped:true,morph:morph3}, env);
-    hooks.content(morph4, "link-to", context, ["todos.completed"], {context:context,types:["string"],hashTypes:{activeClass:"string"},hash:{activeClass:"selected"},render:child3,escaped:true,morph:morph4}, env);
-    hooks.content(morph5, "if", context, ["remaining"], {context:context,types:["id"],hashTypes:{},hash:{},render:child4,escaped:true,morph:morph5}, env);
+    var element13 = fragment.childNodes[2];
+    var element14 = element13.childNodes[1].childNodes[3];
+    var morph0 = dom.createMorph(element13,2,3);
+    hooks.element(element14, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element14}, env);
+    hooks.content(morph0, "if", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
     return fragment;
   };
 }());
