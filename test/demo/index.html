@@ -1,6 +1,7 @@
 <html>
   <head>
     <script src="../../dist/rebound.compiler.pkg.js" ></script>
+    <script src="./templates/_editing.js" ></script>
     <script src="./templates/demo.js" ></script>
     <link rel="stylesheet" href="/bower_components/todomvc-common/base.css">
     <link rel="stylesheet" type="text/css" id="profile-css" href="./demo.css">
@@ -11,7 +12,6 @@
   </body>
 
   <script>
-
     var toDoModelClass = Backbone.Model.extend({
       initialize: function(){
         console.log("ToDo Model Instantiated", this);

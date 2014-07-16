@@ -4,14 +4,9 @@ var template = (function() {
       var child0 = (function() {
         function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("\n              ");
+          var el1 = dom.createTextNode("");
           dom.appendChild(el0, el1);
-          var el1 = dom.createElement("input");
-          dom.setAttribute(el1,"class","edit");
-          dom.setAttribute(el1,"type","text");
-          dom.setAttribute(el1,"rebound-action","doneEditing");
-          dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode("\n							\n						");
+          var el1 = dom.createTextNode("\n              \n							\n						");
           dom.appendChild(el0, el1);
           return el0;
         }
@@ -25,9 +20,8 @@ var template = (function() {
             contextualElement = dom.document.body;
           }
           var fragment = dom.cloneNode(cachedFragment, true);
-          var element4 = fragment.childNodes[1];
-          hooks.element(element4, "attribute", context, ["value",hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element4}, env);
-          hooks.element(element4, "on", context, ["blur","doneEditing"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element4}, env);
+          var morph0 = dom.createMorph(fragment,0,1,contextualElement);
+          hooks.content(morph0, "partial", context, ["test/demo/templates/editing"], {context:context,types:["string"],hashTypes:{},hash:{},escaped:true,morph:morph0}, env);
           return fragment;
         };
       }());
@@ -98,9 +92,9 @@ var template = (function() {
           contextualElement = dom.document.body;
         }
         var fragment = dom.cloneNode(cachedFragment, true);
-        var element5 = fragment.childNodes[1];
-        var morph0 = dom.createMorph(element5,0,1);
-        hooks.element(element5, "attribute", context, ["class",hooks.subexpr("concat", context, [hooks.subexpr("if", context, ["isCompleted","completed"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)," ",hooks.subexpr("if", context, ["editing","editing"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["sexpr","string","sexpr"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element5}, env);
+        var element4 = fragment.childNodes[1];
+        var morph0 = dom.createMorph(element4,0,1);
+        hooks.element(element4, "attribute", context, ["class",hooks.subexpr("concat", context, [hooks.subexpr("if", context, ["isCompleted","completed"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)," ",hooks.subexpr("if", context, ["editing","editing"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["sexpr","string","sexpr"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element4}, env);
         hooks.content(morph0, "if", context, ["editing"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,inverse:child1,escaped:true,morph:morph0}, env);
         return fragment;
       };
@@ -238,23 +232,23 @@ var template = (function() {
         contextualElement = dom.document.body;
       }
       var fragment = dom.cloneNode(cachedFragment, true);
-      var element6 = fragment.childNodes[1];
-      var morph0 = dom.createMorph(element6.childNodes[1],0,1);
-      var element7 = element6.childNodes[3];
-      var element8 = fragment.childNodes[3];
-      var morph1 = dom.createMorph(element8.childNodes[1].childNodes[0],-1,-1);
-      var element9 = element8.childNodes[3];
-      var element10 = element9.childNodes[1].childNodes[1];
-      var element11 = element9.childNodes[3].childNodes[1];
-      var element12 = element9.childNodes[5].childNodes[1];
-      var morph2 = dom.createMorph(element8,4,5);
+      var element5 = fragment.childNodes[1];
+      var morph0 = dom.createMorph(element5.childNodes[1],0,1);
+      var element6 = element5.childNodes[3];
+      var element7 = fragment.childNodes[3];
+      var morph1 = dom.createMorph(element7.childNodes[1].childNodes[0],-1,-1);
+      var element8 = element7.childNodes[3];
+      var element9 = element8.childNodes[1].childNodes[1];
+      var element10 = element8.childNodes[3].childNodes[1];
+      var element11 = element8.childNodes[5].childNodes[1];
+      var morph2 = dom.createMorph(element7,4,5);
       hooks.content(morph0, "each", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
-      hooks.element(element7, "attribute", context, ["checked",hooks.subexpr("allAreDone", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element7}, env);
-      hooks.element(element7, "on", context, ["click","toggleAll"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element7}, env);
+      hooks.element(element6, "attribute", context, ["checked",hooks.subexpr("allAreDone", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element6}, env);
+      hooks.element(element6, "on", context, ["click","toggleAll"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element6}, env);
       hooks.content(morph1, "remaining", context, [], {escaped:true}, env);
+      hooks.element(element9, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element9}, env);
       hooks.element(element10, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element10}, env);
       hooks.element(element11, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element11}, env);
-      hooks.element(element12, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element12}, env);
       hooks.content(morph2, "if", context, ["remaining"], {context:context,types:["id"],hashTypes:{},hash:{},render:child1,escaped:true,morph:morph2}, env);
       return fragment;
     };
@@ -344,10 +338,10 @@ var template = (function() {
       contextualElement = dom.document.body;
     }
     var fragment = dom.cloneNode(cachedFragment, true);
-    var element13 = fragment.childNodes[2];
-    var element14 = element13.childNodes[1].childNodes[3];
-    var morph0 = dom.createMorph(element13,2,3);
-    hooks.element(element14, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element14}, env);
+    var element12 = fragment.childNodes[2];
+    var element13 = element12.childNodes[1].childNodes[3];
+    var morph0 = dom.createMorph(element12,2,3);
+    hooks.element(element13, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element13}, env);
     hooks.content(morph0, "if", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
     return fragment;
   };

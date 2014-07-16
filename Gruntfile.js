@@ -277,6 +277,22 @@ module.exports = function(grunt) {
       });
     });
 
+    var partial = fs.readFile('./test/demo/templates/_editing.hbs', 'utf8', function (err,data) {
+      if (err) {
+        return console.log(err);
+      }
+
+      var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerPartial( "test/demo/templates/editing", template);})();';
+
+      fs.writeFile('./test/demo/templates/_editing.js', template, function(err) {
+          if(err) {
+              console.log(err);
+          } else {
+              console.log("Partial template compiled successfully!");
+          }
+      });
+    });
+
   })
 
   grunt.registerTask('compileAMD', 'Build the project as AMD', [

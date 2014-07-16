@@ -11,7 +11,7 @@
 				{{#each filteredTodos}}
 					<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 						{{#if editing}}
-              <input class="edit" value="{{title}}" type="text" {{on "blur" "doneEditing"}} rebound-action="doneEditing">
+              {{>test/demo/templates/editing}}
 							{{! edit-todo class="edit" value=bufferedTitle focusOut="doneEditing" insertNewline="doneEditing" escapePress="cancelEditing"}}
 						{{else}}
 							<input type="checkbox" class="toggle" checked="{{isCompleted}}">
