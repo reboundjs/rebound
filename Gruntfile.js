@@ -266,7 +266,7 @@ module.exports = function(grunt) {
         return console.log(err);
       }
 
-      var template = 'var template = ' + rebound.precompile(data);
+      var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerTemplate( "test/demo/templates/demo", template);})();';
 
       fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
           if(err) {

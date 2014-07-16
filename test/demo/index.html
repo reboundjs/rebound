@@ -20,16 +20,31 @@
 
     var toDoModel = new toDoModelClass({
       newTitle: '',
+      filter: 'all',
       allAreDone: function(){
+        console.log("ALL", this.get('filteredTodos'))
         return this.get('filteredTodos').where({'isCompleted': true}).length == this.get('filteredTodos').length;
       },
+      noneAreDone: function(){
+        console.log("NONE", this.get('filteredTodos'))
+
+        return this.get('filteredTodos').where({'isCompleted': true}).length == 0;
+      },
       remaining: function(){
-        return this.get('filteredTodos').where({'isCompleted': false}).length;
+        return this.get('todos').where({'isCompleted': false}).length;
       },
       completed: function(){
-        return this.get('filteredTodos').where({'isCompleted': true}).length;
+        return this.get('todos').where({'isCompleted': true}).length;
       },
-      filteredTodos: [
+      filteredTodos: function(){
+        if(this.get('filter') == 'all')
+          return this.get('todos');
+        if(this.get('filter') == 'active')
+          return _(this.get('todos').where({'isCompleted': false}));
+        if(this.get('filter') == 'completed')
+          return _(this.get('todos').where({'isCompleted': true}));
+      },
+      todos: [
         {
           title: "Tie Bowtie",
           editing: false,
@@ -55,7 +70,7 @@
       },
       createTodo: function(event){
         if(this.data.get('newTitle') == '') return;
-        this.data.get('filteredTodos').add({
+        this.data.get('todos').add({
           title: this.data.get('newTitle'),
           editing: false,
           isCompleted: false
@@ -64,30 +79,34 @@
       },
       toggleAll: function(event){
         var value = event.currentTarget.checked;
-        this.data.get('filteredTodos').forEach(function(model, index) {
+        this.data.get('todos').forEach(function(model, index) {
           model.set('isCompleted', value);
         });
       },
       clearCompleted: function(){
-        this.data.get('filteredTodos').remove(
-          this.data.get('filteredTodos').where({'isCompleted': true})
+        this.data.get('todos').remove(
+          this.data.get('todos').where({'isCompleted': true})
         );
       },
       removeTodo: function(event){
-        this.data.get('filteredTodos').remove(event.data);
+        this.data.get('todos').remove(event.data);
       },
       editTodo: function(event){
         event.data.set('editing', true);
       },
       doneEditing: function(event){
         event.data.set('editing', false);
+      },
+      filterList: function(event){
+        event.preventDefault();
+        this.data.set('filter', event.data)
       }
     });
 
     var testController = new testControllerClass({
       outlet: $('#outlet'),
       data: toDoModel,
-      template: template
+      template: 'test/demo/templates/demo'
     });
 
 

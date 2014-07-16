@@ -1,4 +1,4 @@
-var template = (function() {
+(function(){var template = (function() {
   var child0 = (function() {
     var child0 = (function() {
       var child0 = (function() {
@@ -269,9 +269,12 @@ var template = (function() {
       hooks.element(element6, "on", context, ["click","toggleAll"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element6}, env);
       hooks.content(morph1, "remaining", context, [], {escaped:true}, env);
       hooks.element(element9, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element9}, env);
+      hooks.element(element9, "on", context, ["click","filterList"], {context:context,types:["string","string"],hashTypes:{data:"string"},hash:{data:"all"},element:element9}, env);
       hooks.element(element10, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element10}, env);
+      hooks.element(element10, "on", context, ["click","filterList"], {context:context,types:["string","string"],hashTypes:{data:"string"},hash:{data:"active"},element:element10}, env);
       hooks.element(element11, "attribute", context, ["href",hooks.subexpr("concat", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element11}, env);
-      hooks.content(morph2, "if", context, ["remaining"], {context:context,types:["id"],hashTypes:{},hash:{},render:child1,escaped:true,morph:morph2}, env);
+      hooks.element(element11, "on", context, ["click","filterList"], {context:context,types:["string","string"],hashTypes:{data:"string"},hash:{data:"completed"},element:element11}, env);
+      hooks.content(morph2, "unless", context, ["noneAreDone"], {context:context,types:["id"],hashTypes:{},hash:{},render:child1,escaped:true,morph:morph2}, env);
       return fragment;
     };
   }());
@@ -367,4 +370,4 @@ var template = (function() {
     hooks.content(morph0, "if", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
     return fragment;
   };
-}());
+}()); window.Rebound.registerTemplate( "test/demo/templates/demo", template);})();

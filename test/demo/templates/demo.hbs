@@ -28,21 +28,21 @@
 			<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
 			<ul id="filters">
 				<li>
-					<a href="" class="selected">All</a>
+					<a href="" class="selected" {{on 'click' 'filterList' data='all'}}>All</a>
 				</li>
 				<li>
-					<a href="">Active</a>
+					<a href="" {{on 'click' 'filterList' data='active'}}>Active</a>
 				</li>
 				<li>
-          <a href="">Completed</a>
+          <a href="" {{on 'click' 'filterList' data='completed'}}>Completed</a>
 					{{! #link-to "todos.completed" activeClass="selected" }Completed {! /link-to}}
 				</li>
 			</ul>
-			{{#if remaining}}
+			{{#unless noneAreDone}}
 				<button id="clear-completed" {{on "click" "clearCompleted"}}>
 					Clear completed ({{completed}})
 				</button>
-			{{/if}}
+			{{/unless}}
 		</footer>
   {{/if}}
 </section>
