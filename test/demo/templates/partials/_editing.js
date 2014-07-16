@@ -19,6 +19,7 @@
     var element0 = fragment;
     hooks.element(element0, "attribute", context, ["value",hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element0}, env);
     hooks.element(element0, "on", context, ["blur","doneEditing"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
+    hooks.element(element0, "loadEdit", context, [], {context:context,types:[],hashTypes:{},hash:{},element:element0}, env);
     return fragment;
   };
-}()); console.log("in", template, window.Rebound); window.Rebound.registerPartial( "test/demo/templates/editing", template);})();
+}()); window.Rebound.registerPartial( "test/demo/templates/editing", template);})();

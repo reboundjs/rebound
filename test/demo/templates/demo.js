@@ -2,11 +2,31 @@ var template = (function() {
   var child0 = (function() {
     var child0 = (function() {
       var child0 = (function() {
+        var child0 = (function() {
+          function build(dom) {
+            var el0 = dom.createTextNode("asdf");
+            return el0;
+          }
+          var cachedFragment;
+          return function template(context, env, contextualElement) {
+            var dom = env.dom, hooks = env.hooks;
+            if (cachedFragment === undefined) {
+              cachedFragment = build(dom);
+            }
+            if (contextualElement === undefined) {
+              contextualElement = dom.document.body;
+            }
+            var fragment = dom.cloneNode(cachedFragment, true);
+            return fragment;
+          };
+        }());
         function build(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode("");
           dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode("\n              \n							\n						");
+          var el1 = dom.createTextNode("\n              \n              ");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createTextNode("\n							\n						");
           dom.appendChild(el0, el1);
           return el0;
         }
@@ -21,7 +41,9 @@ var template = (function() {
           }
           var fragment = dom.cloneNode(cachedFragment, true);
           var morph0 = dom.createMorph(fragment,0,1,contextualElement);
+          var morph1 = dom.createMorph(fragment,1,2,contextualElement);
           hooks.content(morph0, "partial", context, ["test/demo/templates/editing"], {context:context,types:["string"],hashTypes:{},hash:{},escaped:true,morph:morph0}, env);
+          hooks.webComponent(morph1, "test-element", context, {context:context,types:[],hashTypes:{},hash:{},render:child0}, env);
           return fragment;
         };
       }());

@@ -1,7 +1,7 @@
 <html>
   <head>
     <script src="../../dist/rebound.compiler.pkg.js" ></script>
-    <script src="./templates/_editing.js" ></script>
+    <script src="./templates/partials/_editing.js" ></script>
     <script src="./templates/demo.js" ></script>
     <link rel="stylesheet" href="/bower_components/todomvc-common/base.css">
     <link rel="stylesheet" type="text/css" id="profile-css" href="./demo.css">
@@ -49,7 +49,9 @@
 
     var testControllerClass = Backbone.Controller.extend({
       initialize: function(options){
-        console.log("Test Controller Initialized", this);
+        Rebound.registerHelper('loadEdit', function(params, hash, options, env){
+          setTimeout(function(){$(options.element).focus()}, 100)
+        })
       },
       createTodo: function(event){
         if(this.data.get('newTitle') == '') return;

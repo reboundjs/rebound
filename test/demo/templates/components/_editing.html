@@ -1,0 +1,24 @@
+<element name="editing-todo">
+  <template>
+    <style>
+
+    </style>
+    <input class="edit" value="{{title}}" type="text" {{on "blur" "doneEditing"}} rebound-action="doneEditing">
+  </template
+  <script>
+    Rebound({
+      readyCallback: function(){
+
+      },
+      insertedCallback: function(){
+
+      },
+      removedCallback: function(){
+
+      },
+      doneEditing: function(){
+
+      }
+    })
+  </script>
+</element>

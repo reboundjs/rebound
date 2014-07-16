@@ -26,7 +26,7 @@ module.exports = function(grunt) {
         }
       },
       demo: {
-        files: ['test/demo/templates/*.hbs'],
+        files: ['test/demo/templates/**/*.hbs', 'test/demo/templates/*.hbs'],
         tasks: ['precompileDemo'],
         options: {
           spawn: false,
@@ -277,14 +277,14 @@ module.exports = function(grunt) {
       });
     });
 
-    var partial = fs.readFile('./test/demo/templates/_editing.hbs', 'utf8', function (err,data) {
+    var partial = fs.readFile('./test/demo/templates/partials/_editing.hbs', 'utf8', function (err,data) {
       if (err) {
         return console.log(err);
       }
 
       var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerPartial( "test/demo/templates/editing", template);})();';
 
-      fs.writeFile('./test/demo/templates/_editing.js', template, function(err) {
+      fs.writeFile('./test/demo/templates/partials/_editing.js', template, function(err) {
           if(err) {
               console.log(err);
           } else {
