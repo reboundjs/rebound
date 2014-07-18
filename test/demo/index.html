@@ -66,9 +66,6 @@
           setTimeout(function(){$(options.element).focus()}, 100)
         })
       },
-      
-      template: 'test/demo/templates/demo',
-
       createTodo: function(event){
         if(this.data.get('newTitle') == '') return;
         this.data.get('todos').add({
@@ -106,8 +103,8 @@
 
     var testController = new testControllerClass({
       outlet: $('#outlet'),
-      data: toDoModel
-
+      data: toDoModel,
+      template: 'test/demo/templates/demo'
     });
 
 
