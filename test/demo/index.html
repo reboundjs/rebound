@@ -22,12 +22,9 @@
       newTitle: '',
       filter: 'all',
       allAreDone: function(){
-        console.log("ALL", this.get('filteredTodos'))
         return this.get('filteredTodos').where({'isCompleted': true}).length == this.get('filteredTodos').length;
       },
       noneAreDone: function(){
-        console.log("NONE", this.get('filteredTodos'))
-
         return this.get('filteredTodos').where({'isCompleted': true}).length == 0;
       },
       remaining: function(){
@@ -37,12 +34,13 @@
         return this.get('todos').where({'isCompleted': true}).length;
       },
       filteredTodos: function(){
+        // console.log('In Filtered Todos', this.get('filter'), new Backbone.Collection(this.get('todos').where({'isCompleted': false})));
         if(this.get('filter') == 'all')
           return this.get('todos');
         if(this.get('filter') == 'active')
-          return _(this.get('todos').where({'isCompleted': false}));
+          return this.get('todos').where({'isCompleted': false});
         if(this.get('filter') == 'completed')
-          return _(this.get('todos').where({'isCompleted': true}));
+          return this.get('todos').where({'isCompleted': true});
       },
       todos: [
         {
@@ -68,6 +66,9 @@
           setTimeout(function(){$(options.element).focus()}, 100)
         })
       },
+      
+      template: 'test/demo/templates/demo',
+
       createTodo: function(event){
         if(this.data.get('newTitle') == '') return;
         this.data.get('todos').add({
@@ -105,8 +106,8 @@
 
     var testController = new testControllerClass({
       outlet: $('#outlet'),
-      data: toDoModel,
-      template: 'test/demo/templates/demo'
+      data: toDoModel
+
     });
 
 

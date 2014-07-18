@@ -5,7 +5,7 @@
 		<h1>todos</h1>
     <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" rebound-action="createTodo">
 	</header>
-  {{#if filteredTodos}}
+  {{#if todos}}
 		<section id="main">
 			<ul id="todo-list">
 				{{#each filteredTodos}}

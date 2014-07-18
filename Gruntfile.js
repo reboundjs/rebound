@@ -233,13 +233,8 @@ module.exports = function(grunt) {
             'dist/amd/morph/*.js',
             'dist/amd/htmlbars-runtime/**/*.js',
             'dist/amd/simple-html-tokenizer/**/*.js',
-            'dist/amd/rebound/hooks.js',
-            'dist/amd/rebound/lazy-value.js',
-            'dist/amd/rebound/runtime.js',
-            'dist/amd/handlebars.runtime.js',
-            'dist/amd/morph.js',
-            'dist/amd/rebound.runtime.js',
-            'dist/amd/simple-html-tokenizer.js',
+            'dist/amd/rebound/**/*.js',
+            'dist/amd/*.js',
             'wrap/end.runtime.frag'
           ],
           dest: 'dist/rebound.runtime.pkg.js'

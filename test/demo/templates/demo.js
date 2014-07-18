@@ -367,7 +367,7 @@
     var element13 = element12.childNodes[1].childNodes[3];
     var morph0 = dom.createMorph(element12,2,3);
     hooks.element(element13, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element13}, env);
-    hooks.content(morph0, "if", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
+    hooks.content(morph0, "if", context, ["todos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
     return fragment;
   };
 }()); window.Rebound.registerTemplate( "test/demo/templates/demo", template);})();
