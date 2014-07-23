@@ -69,6 +69,11 @@ module.exports = function(grunt) {
           cwd: 'lib',
           src: ['rebound.js', 'rebound.runtime.js', 'rebound/**/*'],
           dest: 'tmp'
+        },{
+          expand: true,
+          cwd: 'wrap',
+          src: ['almond.js'],
+          dest: 'tmp'
         }]
       },
       cjs: {
@@ -185,72 +190,96 @@ module.exports = function(grunt) {
         }]
       }
     },
-    concat_sourcemap: {
-      amd: {
-        files: [{
-          src: [
-            'wrap/start.frag',
-            'wrap/almond.js',
-            'dist/amd/handlebars/**/*.js',
-            'dist/amd/morph/*.js',
-            'dist/amd/htmlbars-compiler/**/*.js',
-            'dist/amd/htmlbars-runtime/**/*.js',
-            'dist/amd/simple-html-tokenizer/**/*.js',
-            'dist/amd/rebound/**/*.js',
-            'dist/amd/*.js',
-            'wrap/end.frag'
-          ],
-          dest: 'dist/rebound.amd.js'
-        }]
+
+    requirejs: {
+      runtime: {
+        options: {
+          optimize: "none",
+          name: "rebound.runtime",
+          baseUrl: "./dist/amd",
+          // mainConfigFile: "path/to/config.js",
+          out: "dist/rebound.runtime.js",
+          wrap: {
+            startFile: [
+              'bower_components/underscore/underscore.js',
+              'bower_components/jquery/dist/jquery.js',
+              'bower_components/backbone/backbone.js',
+              'bower_components/requirejs/require.js',
+              'wrap/start.frag'
+            ],
+            endFile: ["wrap/end.runtime.frag"]
+          },
+        }
       },
-      package: {
-        files: [{
-          src: [
-            'wrap/start.frag',
-            'bower_components/underscore/underscore.js',
-            'bower_components/jquery/dist/jquery.js',
-            'bower_components/backbone/backbone.js',
-            'wrap/almond.js',
-            'dist/amd/handlebars/**/*.js',
-            'dist/amd/morph/*.js',
-            'dist/amd/htmlbars-compiler/**/*.js',
-            'dist/amd/htmlbars-runtime/**/*.js',
-            'dist/amd/simple-html-tokenizer/**/*.js',
-            'dist/amd/rebound/**/*.js',
-            'dist/amd/*.js',
-            'wrap/end.compiler.frag'
-          ],
-          dest: 'dist/rebound.compiler.pkg.js'
-        },
-        {
-          src: [
-            'wrap/start.frag',
-            'bower_components/underscore/underscore.js',
-            'bower_components/jquery/dist/jquery.js',
-            'bower_components/backbone/backbone.js',
-            'wrap/almond.js',
-            'dist/amd/handlebars/*.js',
-            'dist/amd/morph/*.js',
-            'dist/amd/htmlbars-runtime/**/*.js',
-            'dist/amd/simple-html-tokenizer/**/*.js',
-            'dist/amd/rebound/**/*.js',
-            'dist/amd/*.js',
-            'wrap/end.runtime.frag'
-          ],
-          dest: 'dist/rebound.runtime.pkg.js'
-        }]
+      compiler: {
+        options: {
+          optimize: "none",
+          name: "rebound",
+          baseUrl: "./dist/amd",
+          // mainConfigFile: "path/to/config.js",
+          out: "dist/rebound.compiler.min.js",
+          wrap: {
+            startFile: [
+              'bower_components/underscore/underscore.js',
+              'bower_components/jquery/dist/jquery.js',
+              'bower_components/backbone/backbone.js',
+              'bower_components/requirejs/require.js',
+              'wrap/start.frag'
+            ],
+            endFile: ["wrap/end.compiler.frag"]
+          },
+        }
+      },
+      runtimeMin: {
+        options: {
+          optimize: "uglify",
+          name: "rebound.runtime",
+          baseUrl: "./dist/amd",
+          // mainConfigFile: "path/to/config.js",
+          out: "dist/rebound.runtime.min.js",
+          wrap: {
+            startFile: [
+              'bower_components/underscore/underscore.js',
+              'bower_components/jquery/dist/jquery.js',
+              'bower_components/backbone/backbone.js',
+              'bower_components/requirejs/require.js',
+              'wrap/start.frag'
+            ],
+            endFile: ["wrap/end.runtime.frag"]
+          },
+        }
+      },
+      compilerMin: {
+        options: {
+          optimize: "uglify",
+          name: "rebound",
+          baseUrl: "./dist/amd",
+          // mainConfigFile: "path/to/config.js",
+          out: "dist/rebound.compiler.js",
+          wrap: {
+            startFile: [
+              'bower_components/underscore/underscore.js',
+              'bower_components/jquery/dist/jquery.js',
+              'bower_components/backbone/backbone.js',
+              'bower_components/requirejs/require.js',
+              'wrap/start.frag'
+            ],
+            endFile: ["wrap/end.compiler.frag"]
+          },
+        }
       }
-    },
+    }
   });
+
 
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-string-replace');
   grunt.loadNpmTasks('grunt-es6-module-transpiler');
-  grunt.loadNpmTasks('grunt-concat-sourcemap');
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-requirejs');
 
   grunt.registerTask('precompileDemo', 'Precompiles our demo template.', function(){
     var rebound = require('./dist/commonjs/rebound/compiler'),
@@ -294,7 +323,10 @@ module.exports = function(grunt) {
     'copy:amd',
     'transpile:amd',
     'string-replace:amdDefines',
-    'concat_sourcemap:amd'
+    'requirejs:runtime',
+    // 'requirejs:runtimeMin',
+    'requirejs:compiler',
+    // 'requirejs:compilerMin'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'
@@ -311,7 +343,6 @@ module.exports = function(grunt) {
     'clean',
     'compileAMD',
     'compileCJS',
-    'concat_sourcemap:package',
     'clean:tmp'
   ]);
 

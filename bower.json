@@ -34,7 +34,8 @@
     "todomvc-common": "0.1.9",
     "htmlbars": "https://github.com/tildeio/htmlbars.git#b3240992d04026d5a9525a8e25f22dc6e5666c12",
     "handlebars": "git://github.com/wycats/handlebars.js#7172d167ddf9cbf1e8a0aae48970da42107e9e59",
-    "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#231aa960e61313008f4cbd05e97a0630a580c4b9"
+    "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#231aa960e61313008f4cbd05e97a0630a580c4b9",
+    "requirejs": "https://github.com/jrburke/requirejs.git#19a98167858db65342a269ba76f06e3be152210e"
   },
   "devDependencies": {
     "qunit": "~1.14.0"

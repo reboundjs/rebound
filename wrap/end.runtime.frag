@@ -4,6 +4,10 @@
     //value to use for the public API for the built file.
 
     return (function(){
-      return window.Rebound = require('rebound.runtime');
+      require(['rebound.runtime'], function(Rebound){
+        window.Rebound = Rebound;
+      });
     })();
 }));
+
+require(['Rebound']);
