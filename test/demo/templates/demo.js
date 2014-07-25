@@ -55,8 +55,6 @@
           var el1 = dom.createElement("button");
           dom.setAttribute(el1,"class","destroy");
           dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode("\n							");
-          dom.appendChild(el0, el1);
           var el1 = dom.createTextNode("\n						");
           dom.appendChild(el0, el1);
           return el0;
@@ -73,12 +71,10 @@
           var element2 = fragment.childNodes[3]
           var element3 = fragment.childNodes[5]
           var morph0 = dom.createMorphAt(element2,-1,-1);
-          var morph1 = dom.createMorphAt(fragment,6,7,contextualElement);
           hooks.element(element1, "attribute", context, ["checked",hooks.subexpr("isCompleted", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element1}, env);
           hooks.element(element2, "on", context, ["dblclick","editTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element2}, env);
           hooks.content(morph0, "title", context, [], {escaped:true}, env);
           hooks.element(element3, "on", context, ["click","removeTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element3}, env);
-          hooks.content(morph1, "@index", context, [], {escaped:true}, env);
           return fragment;
         };
       }());
