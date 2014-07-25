@@ -11,13 +11,12 @@
 				{{#each filteredTodos}}
 					<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 						{{#if editing}}
-              {{>test/demo/templates/editing}}
-              <test-element>asdf</test-element>
-							{{! edit-todo class="edit" value=bufferedTitle focusOut="doneEditing" insertNewline="doneEditing" escapePress="cancelEditing"}}
+              <edit-todo value={{title}} editing={{editing}} arr={{arr}}>asdf</edit-todo>
 						{{else}}
 							<input type="checkbox" class="toggle" checked="{{isCompleted}}">
 							<label {{on "dblclick" "editTodo" }}>{{title}}</label>
 							<button {{on "click" "removeTodo"}} class="destroy"></button>
+							{{@index}}
 						{{/if}}
 						</li>
 				{{/each}}

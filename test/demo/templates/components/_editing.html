@@ -1,23 +1,33 @@
-<element name="editing-todo">
+<element name="edit-todo">
   <template>
     <style>
 
     </style>
-    <input class="edit" value="{{title}}" type="text" {{on "blur" "doneEditing"}} rebound-action="doneEditing">
+
+    <input class="edit" value="{{value}}" type="text" {{on 'blur' 'doneEditing'}} {{on 'keyup' 'inputModified'}}>
+
   </template
   <script>
-    Rebound({
-      readyCallback: function(){
-
+    return ({
+      value: 'Default Value',
+      readyCallback: function(event){
+        this.oldValue = this.data.get('value');
       },
-      insertedCallback: function(){
-
+      insertedCallback: function(event){
+        this.dom.focus();
       },
-      removedCallback: function(){
-
+      doneEditing: function(event){
+        event.data.set('editing', false);
       },
-      doneEditing: function(){
-
+      inputModified: function(event){
+        // If enter
+        if(event.keyCode == 13)
+          this.doneEditing(event);
+        // If escape
+        if(event.keyCode == 27){
+          this.data.set('value', this.oldValue);
+          this.doneEditing(event);
+        }
       }
     })
   </script>
