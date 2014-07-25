@@ -19,7 +19,13 @@
         }());
         function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("\n              ");
+          var el1 = dom.createTextNode("\n						");
+          dom.appendChild(el0, el1);
+          var el1 = dom.createElement("div");
+          var el2 = dom.createTextNode("\n              ");
+          dom.appendChild(el1, el2);
+          var el2 = dom.createTextNode("\n						");
+          dom.appendChild(el1, el2);
           dom.appendChild(el0, el1);
           var el1 = dom.createTextNode("\n						");
           dom.appendChild(el0, el1);
@@ -32,8 +38,8 @@
             cachedFragment = build(dom);
           }
           var fragment = dom.cloneNode(cachedFragment, true);
-          var morph0 = dom.createMorphAt(fragment,0,1,contextualElement);
-          hooks.webComponent(morph0, "edit-todo", context, {context:context,types:[],hashTypes:{value:"sexpr",editing:"sexpr",arr:"sexpr"},hash:{value:hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env),editing:hooks.subexpr("editing", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env),arr:hooks.subexpr("arr", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)},render:child0}, env);
+          var morph0 = dom.createMorphAt(fragment.childNodes[1],0,1);
+          hooks.webComponent(morph0, "edit-todo", context, {context:context,types:[],hashTypes:{value:"sexpr",editing:"sexpr"},hash:{value:hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env),editing:hooks.subexpr("editing", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)},render:child0}, env);
           return fragment;
         };
       }());
@@ -282,7 +288,7 @@
     var el3 = dom.createTextNode("\n	");
     dom.appendChild(el2, el3);
     dom.appendChild(el1, el2);
-    var el2 = dom.createTextNode("\n  ");
+    var el2 = dom.createTextNode("\n\n  ");
     dom.appendChild(el1, el2);
     var el2 = dom.createTextNode("\n");
     dom.appendChild(el1, el2);
