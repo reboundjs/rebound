@@ -289,7 +289,7 @@ module.exports = function(grunt) {
       if (err) {
         return console.log(err);
       }
-
+console.log("compile demo")
       var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerTemplate( "test/demo/templates/demo", template);})();';
 
       fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
@@ -297,6 +297,22 @@ module.exports = function(grunt) {
               console.log(err);
           } else {
               console.log("Demo template compiled successfully!");
+          }
+      });
+    });
+
+    data = fs.readFile('./test/demo/templates/components/editing.hbs', 'utf8', function (err,data) {
+      if (err) {
+        return console.log(err);
+      }
+
+      var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerTemplate( "test/demo/templates/components/editing", template);})();';
+
+      fs.writeFile('./test/demo/templates/components/editing.js', template, function(err) {
+          if(err) {
+              console.log(err);
+          } else {
+              console.log("Editing component template compiled successfully!");
           }
       });
     });
@@ -312,7 +328,7 @@ module.exports = function(grunt) {
           if(err) {
               console.log(err);
           } else {
-              console.log("Partial template compiled successfully!");
+              console.log("Editing partial template compiled successfully!");
           }
       });
     });
