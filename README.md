@@ -30,21 +30,62 @@ So we remove Backbone's most annoying 'feature' - manual data binding – while 
 #### Awesome. How do I use it?
 
 
-The project isn't 100% ready to be unleashed on the world. I won't tell you how to use all this quite yet, and it is subject to change in the coming weeks, but definately expect much better documentation here when the time comes!
+The project is still in flux, so everything below is subject to change! Use at your own risk / pleasure:
 
 ##### To test what is already there:
 
  - Install all dependancies: ```npm install```
+ 
+ - Just build the project: ```grunt build```
+
+ - Test in the command line: ```npm test```
 
  - Start the test server: ```npm start```
 
  - Check to [localhost:8000/test](http://localhost:8000/test) to run the tests or [localhost:8000/test/demo](http://localhost:8000/test/demo) to see it in action.
 
-##### Other options:
+<p align="center">
+  <h3 align="center">Awesome, lets get to some code</h3>
+</p>
+- - -
 
- - Just build the project: ```grunt build```
+There will soon be a Bower repository for Rebound, but until then use what is is the /dist directory after running ```grunt build```, ```npm test``` or ```npm start```. There are two packaged files called ```rebound.runtime.pkg.js``` and ```rebound.compiler.pkg.js```. Both of these files contain [JQuery](http://www.jquery.com), [Underscore](http://www.underscorejs.org), [RequireJS](requirejs.org), [Backbone](backbonejs.org) and of course, the main Rebound library. The compiler package contains the extra code needed to compile HTMLBars templates and should rarely be needed on any client facing site. All templates should be precompiled on the server by the [Grunt-Rebound](https://github.com/epicmiller/grunt-rebound) plugin, or a similar pre-compiler.
 
- - Test in the command line: ```npm test```
+### How do I get Rebound on my page?
 
+You can include Rebound on your page like this:
+
+```js
+<script src="/javascripts/lib/rebound.runtime.pkg.js" id="Rebound">
+{
+  "appContext": "/",
+  "globalControllers": {"chrome" : "nav"},
+  "jsPrefix": "/javascripts/apps/",
+  "jsSuffix": "",
+  "cssPrefix": "/stylesheets/apps/",
+  "cssSuffix": "",
+  "triggerOnFirstLoad": true,
+  "routeMapping": {
+    "": "home"
+  }
+}
+</script>
+```
+Because the script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's config options right where you include the Rebound library itself. Convenient! 
+
+##### Config Options
+
+ - __appContext__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
+ - __globalControllers__ - By default, as will be talked about in the next section, there is only one controller loaded at a time, your page-level controller. The controllers specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "controllerName": "cssSelector" }```. The output of the controller will be loaded into the first matching element for the provided css selector on the page.
+ - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
+ - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
+ - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
+ - __cssSuffix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
+ - __triggerOnFirstLoad__ - If true, Rebound will try and trigger each the route callback once the page is loaded. Equivalent to passing ```{ silent: false }``` to Backbone.history.start
+ - __routeMapping__ - Object which defines custom base route path to controller name mappings. ex: if the root url ```/``` should load the home controller, pass ```{ "": "home" }```
+
+### Routing
+
+Rebound adds functionality to Backbone's router to include automatic loading of page resources if a route doesn't exist. When the page loads Rebound has a single wildcard route.
 
 
