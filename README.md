@@ -111,19 +111,19 @@ A Rebound component looks like this:
 ```html
 <element name="edit-todo">
   <template>
-    <input class="edit" value="{{value}}" type="text" {{on 'blur' 'doneEditing'}} {{on 'keyup' 'inputModified'}}>
+    <input class="edit" value="{{value}}" type="text" {{on "blur" "doneEditing"}} {{on "keyup" "inputModified"}}>
   </template>
   <script>
     return ({
       
       /********* Lifecycle Methods ********/
       created: function(event){
-        this.oldValue = this.data.get('value');
-        console.log('I've been created!');
+        this.oldValue = this.data.get("value");
+        console.log("I've been created!");
       },
       inserted: function(event){
         this.dom.focus();
-        console.log('I've been inserted into the dom!');
+        console.log("I've been inserted into the dom!");
       },
       removed: function(){
         console.log("I've been removed from the dom!");
