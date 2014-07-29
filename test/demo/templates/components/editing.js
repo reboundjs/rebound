@@ -21,7 +21,7 @@ define( [], function(){
     return fragment;
   };
 }());
-  var script = {}
+  var script = {};
   var style = "";
   window.Rebound.registerComponent({
     name:"edit-todo",
