@@ -22,12 +22,11 @@ But just trust me on this, this is going to be good.
 
 **The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details, but the 
 
-Rebound + HTMLBars is a Model View Component framework build on Backbone which replaces Backbone's view layer, binding to your Backbone's models on first render. To make the conversation two-way, an event helper lets you respond to user interaction by defining event callbacks in your templates. It can either function as a stand-alone replacement view for Backbone, or play nice with some other Backbone libraries I have in the works that will help to put the 'C' back in 'MV*'.
+Rebound + HTMLBars is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars, binding to your models on first render and live updating your dom as they change. To make the conversation two-way, an event helper lets you respond to user interaction by defining callbacks in your HTMLBars templates. Combine with with a powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
 
 So we remove Backbone's most annoying 'feature' - manual data binding – while avoiding the overhead, convention restrictions and learning curve of Ember. And unlike some of the very few other data-binding libraries out there (heres looking at you React, epoxyjs, knockoutjs, etc), we get the simple interface of the much-loved Handlebars syntax for our templates, without any extra elements or data attributes cluttering our DOM! Server side rendering of data-bound templates will be possible in the near future! Whats there not to love?!
 
 #### Awesome. How do I use it?
-
 
 The project is still in flux, so everything below is subject to change! Use at your own risk / pleasure:
 
@@ -88,7 +87,7 @@ Because the script tag contains a src, nothing inside it gets executed, but is s
 ### Routing
 
 Rebound adds a three bits of functionality to Backbone's router to make navigation in a single page app even easier:
- - Relative urls will always try and trigger a route. You can now write ```<a href="/profile/1234"></a>``` and have that route be triggered on the helper. No need for wiring click events, or helpers to trigger routes.
+ - Relative urls will always try and trigger a route. You can now write ```<a href="/profile/1234"></a>``` and have that route be triggered on the router. No need for wiring click events, or helpers to trigger routes.
  - Absolute urls like ```<a href="www.google.com"></a>``` will be ignored by the router and load normally.
  - If a route does not exist in the router, Rebound will try and automatically load that page's resources from ```jsPrefix``` + baseRoute + ```jsSuffix``` and then re-trigger the route.
 
