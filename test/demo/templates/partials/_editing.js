@@ -1,3 +1,4 @@
+define( [], function(){
 (function(){var template = (function() {
   function build(dom) {
     var el0 = dom.createElement("input");
@@ -19,4 +20,5 @@
     hooks.element(element0, "loadEdit", context, [], {context:context,types:[],hashTypes:{},hash:{},element:element0}, env);
     return fragment;
   };
-}()); window.Rebound.registerPartial( "test/demo/templates/editing", template);})();
+}()); window.Rebound.registerPartial( "", template);})();
+});

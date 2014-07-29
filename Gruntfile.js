@@ -26,7 +26,7 @@ module.exports = function(grunt) {
         }
       },
       demo: {
-        files: ['test/demo/templates/**/*.hbs', 'test/demo/templates/*.hbs'],
+        files: ['test/demo/templates/**/*', 'test/demo/templates/*', '!test/demo/templates/*.js', '!test/demo/templates/**/*.js'],
         tasks: ['precompileDemo'],
         options: {
           spawn: false,
@@ -289,8 +289,8 @@ module.exports = function(grunt) {
       if (err) {
         return console.log(err);
       }
-console.log("compile demo")
-      var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerTemplate( "test/demo/templates/demo", template);})();';
+
+      var template = rebound.precompile(data, {filepath: 'test/demo/templates/demo.html'});
 
       fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
           if(err) {
@@ -301,12 +301,12 @@ console.log("compile demo")
       });
     });
 
-    data = fs.readFile('./test/demo/templates/components/editing.hbs', 'utf8', function (err,data) {
+    data = fs.readFile('./test/demo/templates/components/editing.html', 'utf8', function (err,data) {
       if (err) {
         return console.log(err);
       }
 
-      var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerTemplate( "test/demo/templates/components/editing", template);})();';
+      var template = rebound.precompile(data, {filepath: 'test/demo/templates/components/editing.html'});
 
       fs.writeFile('./test/demo/templates/components/editing.js', template, function(err) {
           if(err) {
@@ -322,7 +322,7 @@ console.log("compile demo")
         return console.log(err);
       }
 
-      var template = '(function(){var template = '+rebound.precompile(data)+' window.Rebound.registerPartial( "test/demo/templates/editing", template);})();';
+      var template = rebound.precompile(data, {filepath: 'test/demo/templates/partials/_editing.hbs'});
 
       fs.writeFile('./test/demo/templates/partials/_editing.js', template, function(err) {
           if(err) {

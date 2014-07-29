@@ -1,31 +1,35 @@
 <element name="edit-todo">
   <template>
     <style>
-
+      body{
+        width: 100px;
+        height: 20px;
+      }
     </style>
 
     <input class="edit" value="{{value}}" type="text" {{on 'blur' 'doneEditing'}} {{on 'keyup' 'inputModified'}}>
 
-  </template
+  </template>
   <script>
     return ({
       value: 'Default Value',
       readyCallback: function(event){
-        this.oldValue = this.data.get('value');
+        this.oldValue = this.get('value');
       },
       insertedCallback: function(event){
-        this.dom.focus();
+        this.$('input.edit').focus();
       },
       doneEditing: function(event){
-        event.data.set('editing', false);
+        this.set('editing', false);
       },
       inputModified: function(event){
         // If enter
         if(event.keyCode == 13)
           this.doneEditing(event);
+
         // If escape
         if(event.keyCode == 27){
-          this.data.set('value', this.oldValue);
+          this.set('value', this.oldValue);
           this.doneEditing(event);
         }
       }

@@ -1,4 +1,6 @@
-(function(){var template = (function() {
+define( [], function(){
+(function(){
+  var template = (function() {
   function build(dom) {
     var el0 = dom.createElement("input");
     dom.setAttribute(el0,"class","edit");
@@ -18,4 +20,15 @@
     hooks.element(element0, "on", context, ["keyup","inputModified"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
     return fragment;
   };
-}()); window.Rebound.registerTemplate( "test/demo/templates/components/editing", template);})();
+}());
+  var script = (function(){ return ({ value: 'Default Value', readyCallback: function(event){ this.oldValue = this.get('value'); }, insertedCallback: function(event){ this.$('input.edit').focus(); }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })();
+  var style = " body{ width: 100px; height: 20px; } ";
+  window.Rebound.registerComponent({
+    name:"edit-todo",
+    template: template,
+    script: script,
+    style: style
+  });
+})();
+return Rebound.components["edit-todo"];
+});
