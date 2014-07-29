@@ -67,9 +67,9 @@ define( ["test/demo/templates/components/editing"], function(){
           }
           var fragment = dom.cloneNode(cachedFragment, true);
           dom.repairClonedNode(fragment.childNodes[1],[],true);
-          var element1 = fragment.childNodes[1]
-          var element2 = fragment.childNodes[2]
-          var element3 = fragment.childNodes[3]
+          var element1 = fragment.childNodes[1];
+          var element2 = fragment.childNodes[2];
+          var element3 = fragment.childNodes[3];
           var morph0 = dom.createMorphAt(element2,-1,-1);
           hooks.element(element1, "attribute", context, ["checked",hooks.subexpr("isCompleted", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element1}, env);
           hooks.element(element2, "on", context, ["dblclick","editTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element2}, env);
@@ -99,7 +99,7 @@ define( ["test/demo/templates/components/editing"], function(){
           cachedFragment = build(dom);
         }
         var fragment = dom.cloneNode(cachedFragment, true);
-        var element4 = fragment.childNodes[1]
+        var element4 = fragment.childNodes[1];
         var morph0 = dom.createMorphAt(element4,0,1);
         hooks.element(element4, "attribute", context, ["class",hooks.subexpr("concat", context, [hooks.subexpr("if", context, ["isCompleted","completed"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)," ",hooks.subexpr("if", context, ["editing","editing"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["sexpr","string","sexpr"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element4}, env);
         hooks.content(morph0, "if", context, ["editing"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,inverse:child1,escaped:true,morph:morph0}, env);
@@ -129,7 +129,7 @@ define( ["test/demo/templates/components/editing"], function(){
           cachedFragment = build(dom);
         }
         var fragment = dom.cloneNode(cachedFragment, true);
-        var element0 = fragment.childNodes[1]
+        var element0 = fragment.childNodes[1];
         var morph0 = dom.createMorphAt(element0,0,1);
         hooks.element(element0, "on", context, ["click","clearCompleted"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
         hooks.content(morph0, "completed", context, [], {escaped:true}, env);
@@ -205,11 +205,10 @@ define( ["test/demo/templates/components/editing"], function(){
       }
       var fragment = dom.cloneNode(cachedFragment, true);
       var element5 = fragment.childNodes[1];
-      var element6 = element5.childNodes[1]
+      var element6 = element5.childNodes[1];
       dom.repairClonedNode(element6,[],true);
-      var element7 = fragment.childNodes[2]
+      var element7 = fragment.childNodes[2];
       var morph0 = dom.createMorphAt(element5.childNodes[0],0,1);
-      console.log(element5, element5.childNodes[0], morph0)
       var morph1 = dom.createMorphAt(element7.childNodes[0].childNodes[0],-1,-1);
       var morph2 = dom.createMorphAt(element7,2,3);
       hooks.content(morph0, "each", context, ["filteredTodos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
@@ -282,8 +281,8 @@ define( ["test/demo/templates/components/editing"], function(){
       cachedFragment = build(dom);
     }
     var fragment = dom.cloneNode(cachedFragment, true);
-    var element8 = fragment.childNodes[1]
-    var element9 = element8.childNodes[0].childNodes[1]
+    var element8 = fragment.childNodes[1];
+    var element9 = element8.childNodes[0].childNodes[1];
     var morph0 = dom.createMorphAt(element8,1,2);
     hooks.element(element9, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element9}, env);
     hooks.content(morph0, "if", context, ["todos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);

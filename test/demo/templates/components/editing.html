@@ -1,10 +1,6 @@
 <element name="edit-todo">
   <template>
     <style>
-      body{
-        width: 100px;
-        height: 20px;
-      }
     </style>
 
     <input class="edit" value="{{value}}" type="text" {{on 'blur' 'doneEditing'}} {{on 'keyup' 'inputModified'}}>
