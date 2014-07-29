@@ -10,4 +10,8 @@ return (function(){
 })();
 }));
 
+require.config({
+    baseUrl: "/"
+})
+
 require(['Rebound']);

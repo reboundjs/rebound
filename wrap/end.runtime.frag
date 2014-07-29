@@ -10,4 +10,8 @@
     })();
 }));
 
+require.config({
+    baseUrl: "/"
+})
+
 require(['Rebound']);
