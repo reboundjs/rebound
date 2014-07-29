@@ -21,7 +21,7 @@ define( [], function(){
     return fragment;
   };
 }());
-  var script = {};
+  var script = (function(){ return ({ value: 'Default Value', readyCallback: function(event){ this.oldValue = this.get('value'); }, insertedCallback: function(event){ this.$('input.edit').focus(); }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })() || {};
   var style = "";
   window.Rebound.registerComponent({
     name:"edit-todo",

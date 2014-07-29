@@ -221,10 +221,6 @@ define( ["test/demo/templates/components/editing"], function(){
   }());
   function build(dom) {
     var el0 = dom.createDocumentFragment();
-    var el1 = dom.createElement("img");
-    dom.setAttribute(el1,"src","http://reboundjs.com/images/rebound.svg");
-    dom.setAttribute(el1,"id","rebound-logo");
-    dom.appendChild(el0, el1);
     var el1 = dom.createElement("section");
     dom.setAttribute(el1,"id","todoapp");
     var el2 = dom.createElement("header");
@@ -281,7 +277,7 @@ define( ["test/demo/templates/components/editing"], function(){
       cachedFragment = build(dom);
     }
     var fragment = dom.cloneNode(cachedFragment, true);
-    var element8 = fragment.childNodes[1];
+    var element8 = fragment.childNodes[0];
     var element9 = element8.childNodes[0].childNodes[1];
     var morph0 = dom.createMorphAt(element8,1,2);
     hooks.element(element9, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element9}, env);

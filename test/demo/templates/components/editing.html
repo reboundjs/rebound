@@ -6,5 +6,29 @@
     <input class="edit" value="{{value}}" type="text" {{on 'blur' 'doneEditing'}} {{on 'keyup' 'inputModified'}}>
 
   </template>
+  <script>
+    return ({
+      value: 'Default Value',
+      readyCallback: function(event){
+        this.oldValue = this.get('value');
+      },
+      insertedCallback: function(event){
+        this.$('input.edit').focus();
+      },
+      doneEditing: function(event){
+        this.set('editing', false);
+      },
+      inputModified: function(event){
+        // If enter
+        if(event.keyCode == 13)
+          this.doneEditing(event);
 
+        // If escape
+        if(event.keyCode == 27){
+          this.set('value', this.oldValue);
+          this.doneEditing(event);
+        }
+      }
+    })
+  </script>
 </element>
