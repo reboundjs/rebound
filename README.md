@@ -177,12 +177,13 @@ When creating a Rebound component, think about it like you're defining a public 
 
 Default properties come it two types. __Primitive Properties__ and __Computed Properties__. 
 
-Primitive properties are exactly like they sound. They are any string, interger, object or array. 
+Primitive properties are exactly like they sound. They are any string, interger, boolean, object or array. 
 
 ```js
 return ({
   value: 'Default Value',
   count: 0,
+  bool: true,
   arr: ['Default', 'Values'],
   obj: { 'Default': 'Value' }
 })
