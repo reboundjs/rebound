@@ -20,5 +20,5 @@ define( [], function(){
     hooks.element(element0, "loadEdit", context, [], {context:context,types:[],hashTypes:{},hash:{},element:element0}, env);
     return fragment;
   };
-}()); window.Rebound.registerPartial( "", template);})();
+}()); window.Rebound.registerPartial( "test/demo/templates/partials/_editing.hbs", template);})();
 });
