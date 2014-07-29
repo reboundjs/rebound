@@ -204,7 +204,13 @@ return ({
 
 Computed properteis automatically set up their dependancy chains. This means that ```awesomeValue``` knows it depends on ```value``` and will re-render itself in the template any time ```value``` changes.
 
-Computed properties are always called in the scope of the component. You can access all of the component's properties through its ```this``` variable.
+Computed properties are always called in the scope of the component. You can access all of the component's properties and methods through the ```this``` variable.
+
+When using a Rebound component in your templates, any attributes passed to the component will override any default property of the same name you have set. The you may pass any type of data to a component this way – strings, objects or arrays.
+
+```html
+<edit-todo value={{title}} name="Works with inline strings too."></edit-todo>
+```
 
 ##### Lifecycle Methods
 
@@ -259,6 +265,8 @@ return ({
 })
 ```
 
+Component methods are always called in the scope of the component. You can access all of the component's properties and methods through the ```this``` variable.
+
 ##### Config Options
 
 Config options are reserved words that serve a special function in Rebound components.
@@ -268,5 +276,5 @@ Valid config options are:
  - __urlRoot__ - Specify a urlRoot if you're using a model outside of a collection, to enable the default url function to generate URLs based on the model id. "[urlRoot]/id". May be a function or string.
  - __idAttribute__ - A model's unique identifier is stored under the id attribute. If you're directly communicating with a backend that uses a different unique key, you may set a Model's idAttribute to transparently map from that key to id.
 
-Under the covers, components are just special instances of Backbone models. This gives you all the niceties of Backbone, but it does mean that there are a few reserved words. These are: ```constructor, get, set, has, extend, escape, unset, clear, cid, attributes, changed, toJSON validationError, isValid, isNew, hasChanged, changedAttributes, previous, previousAttributes```
+Under the covers, components are just special instances of Backbone models. This gives you all the niceties of Backbone, but it does mean that there are a few other reserved words that will yell at you if you try and use them as property or method names. These are: ```constructor, get, set, has, extend, escape, unset, clear, cid, attributes, changed, toJSON validationError, isValid, isNew, hasChanged, changedAttributes, previous, previousAttributes```
 
