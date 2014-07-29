@@ -89,13 +89,13 @@ Because the script tag contains a src, nothing inside it gets executed, but is s
 Rebound adds a three bits of functionality to Backbone's router to make navigation in a single page app even easier:
  - Relative urls will always try and trigger a route. You can now write ```<a href="/profile/1234"></a>``` and have that route be triggered on the router. No need for wiring click events, or helpers to trigger routes.
  - Absolute urls like ```<a href="www.google.com"></a>``` will be ignored by the router and load normally.
- - If a route does not exist in the router, Rebound will try and automatically load that page's resources from ```jsPrefix``` + baseRoute + ```jsSuffix``` and then re-trigger the route.
+ - If a route does not exist in the router, Rebound will try and automatically load that page's resources from ```jsPrefix``` + ```baseRoute``` + ```jsSuffix``` and then re-trigger the route.
 
 By loading routes and page resources as they are needed, your initial __page load size is greatly reduced__. Your application also __does not need to know every route on page load - every page in your application manages its own routing__. This way there is no central router to manage, a major benefit for larger applications.
 
 Here's a walkthrough of how Rebound's automatic resource loading works: 
 
->If the page is loaded at /profile/1234, with the jsPrefix "javascripts/apps/" and jsSuffix "Page" Rebound will start the router and try to trigger the route /profile/1234. Because this route doesn't exits, the wildcard route is executed. Rebound then tries to load the javascript file ```/javascripts/apps/profilePage.js```. Inside this file is all the resources needed for the profile page, including its template, controller, and additional routes as you'll see below in the components section. The routes defined in this page component are then loaded into the router and the /profile/1234 route is triggered again. This time, because the page's resources have been loaded, the /profile/:uid route has presumably been defined and the route will execute.
+>A page is loaded at /profile/1234, with the jsPrefix "javascripts/apps/" and jsSuffix "Page". Rebound will start the router and try to trigger the route /profile/1234. Because this route doesn't exits, the wildcard route is executed. Rebound then tries to load the javascript file ```/javascripts/apps/profilePage.js```. Inside this file is all the resources needed for the profile page, including its template, controller, and additional routes as you'll see below in the components section. The routes defined in this page component are then loaded into the router and the /profile/1234 route is triggered again. This time, because the page's resources have been loaded, the /profile/:uid route has now presumably been defined and the route will execute.
 
 >When the user clicks on another link, say, /discover, the router sees that it does not have a /discover route loaded. The router again hits the wildcard route and fetches ```/javascripts/apps/discoverPage.js```. The old profile app is then uninstalled, its routes removed, and the discover page is loaded as before.
 
