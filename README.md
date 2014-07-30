@@ -120,11 +120,11 @@ A Rebound component looks like this:
         this.oldValue = this.get("value");
         console.log("I've been created!");
       },
-      inserted: function(event){
+      attached: function(event){
         this.$('input.edit').focus();
         console.log("I've been inserted into the dom!");
       },
-      removed: function(){
+      detached: function(){
         console.log("I've been removed from the dom!");
       },
       
