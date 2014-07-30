@@ -117,11 +117,11 @@ A Rebound component looks like this:
       
       /********* Lifecycle Methods ********/
       created: function(event){
-        this.oldValue = this.data.get("value");
+        this.oldValue = this.get("value");
         console.log("I've been created!");
       },
       inserted: function(event){
-        this.dom.focus();
+        this.$('input.edit').focus();
         console.log("I've been inserted into the dom!");
       },
       removed: function(){
@@ -140,7 +140,7 @@ A Rebound component looks like this:
       
       /********* Component Methods ********/
       doneEditing: function(event){
-        event.data.set('editing', false);
+        this.set('editing', false);
       },
       inputModified: function(event){
         // If enter key is pressed
@@ -148,7 +148,7 @@ A Rebound component looks like this:
           this.doneEditing(event);
         // If escape key is pressed
         if(event.keyCode == 27){
-          this.data.set('value', this.oldValue);
+          this.set('value', this.oldValue);
           this.doneEditing(event);
         }
       }
