@@ -165,6 +165,18 @@ and used like this
 
 The above is actually very close to what is used by the TodoMVC demo in the Rebound repository's demo application. Go take a look to see it in action!
 
+#### Sure, but how do they work?
+
+Every function in the component is called in the scope of the component itself. That means that the ```this``` variable will always be the current component.
+
+Here are the convenience methods you get when working in a component:
+
+ - __get__ - ```this.get()``` is used to get the properties defined on your component just like in Backbone models. Because properties can be of any data type, either string together multiple gets to retreive nested data ```this.get('users').at(0).get('firstName')``` or, for your convenience, just pass it the path you want ```this.get('users.[0].firstName')```.
+ - __set__ = ```this.set()``` is used to set component properties just like in Backbone models. Because properties can be any of any data type, either string together multiple gets followed by a set to set nested data items ```this.get('users').at(0).set('firstName', 'Adam')``` or, for your convenience, just pass it the path you want ```this.set('users.[0].firstName', 'Adam')```.
+ - __$__
+ - __$el__
+ - __el__
+
 #### Sweet!! How do I make one?!
 
 When creating a Rebound component, think about it like you're defining a public API for the rest of the program to interface with your custom element. You'll be defining: 
