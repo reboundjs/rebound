@@ -173,9 +173,9 @@ Here are the convenience methods you get when working in a component:
 
  - __get__ - ```this.get()``` is used to get the properties defined on your component just like in Backbone models. Because properties can be of any data type, either string together multiple gets to retreive nested data ```this.get('users').at(0).get('firstName')``` or, for your convenience, just pass it the path you want ```this.get('users.[0].firstName')```.
  - __set__ = ```this.set()``` is used to set component properties just like in Backbone models. Because properties can be any of any data type, either string together multiple gets followed by a set to set nested data items ```this.get('users').at(0).set('firstName', 'Adam')``` or, for your convenience, just pass it the path you want ```this.set('users.[0].firstName', 'Adam')```.
- - __$__
- - __$el__
- - __el__
+ - __$__ - Each component has a $ function that runs queries scoped within the view's element. Use like ```this.$('any#css.selector')```
+ - __$el__ - All components have a DOM element at all times, accessable through the el property, whether they've already been inserted into the page or not.
+ - __el__ - A cached jQuery object for the view's element. A handy reference instead of re-wrapping the DOM element all the time.
 
 #### Sweet!! How do I make one?!
 
