@@ -9,10 +9,10 @@
   <script>
     return ({
       value: 'Default Value',
-      readyCallback: function(event){
+      created: function(event){
         this.oldValue = this.get('value');
       },
-      insertedCallback: function(event){
+      attached: function(event){
         this.$('input.edit').focus();
       },
       doneEditing: function(event){
