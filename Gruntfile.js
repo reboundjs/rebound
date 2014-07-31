@@ -201,7 +201,7 @@ module.exports = function(grunt) {
           out: "dist/rebound.runtime.js",
           wrap: {
             startFile: [
-              'bower_components/underscore/underscore.js',
+              'bower_components/lodash/dist/lodash.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
               'bower_components/requirejs/require.js',
@@ -220,7 +220,7 @@ module.exports = function(grunt) {
           out: "dist/rebound.compiler.min.js",
           wrap: {
             startFile: [
-              'bower_components/underscore/underscore.js',
+              'bower_components/lodash/dist/lodash.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
               'bower_components/requirejs/require.js',
