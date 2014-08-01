@@ -217,7 +217,7 @@ module.exports = function(grunt) {
           name: "rebound",
           baseUrl: "./dist/amd",
           // mainConfigFile: "path/to/config.js",
-          out: "dist/rebound.compiler.min.js",
+          out: "dist/rebound.compiler.js",
           wrap: {
             startFile: [
               'bower_components/lodash/dist/lodash.js',
@@ -255,7 +255,7 @@ module.exports = function(grunt) {
           name: "rebound",
           baseUrl: "./dist/amd",
           // mainConfigFile: "path/to/config.js",
-          out: "dist/rebound.compiler.js",
+          out: "dist/rebound.compiler.min.js",
           wrap: {
             startFile: [
               'bower_components/underscore/underscore.js',
