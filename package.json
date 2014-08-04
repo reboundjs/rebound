@@ -1,6 +1,6 @@
 {
   "name": "reboundjs",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "description": "Automatic data binding for Backbone using HTMLBars.",
   "main": "dist/commonjs/rebound/compiler.js",
   "scripts": {
@@ -8,8 +8,7 @@
     "build": "bin/build.js",
     "test": "bin/run-tests.js",
     "start": "bin/start-test-server.js",
-    "postinstall": "bin/post-install.js",
-    "preinstall": "bin/pre-install.js"
+    "postinstall": "bin/post-install.js"
   },
   "repository": {
     "type": "git",
