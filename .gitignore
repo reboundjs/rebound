@@ -22,7 +22,6 @@ build/Release
 # Tmp build directories
 tmp
 amd
-dist
 
 # Dependency directory
 # Deployed apps should consider commenting this line out:
