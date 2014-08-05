@@ -30167,7 +30167,7 @@ define("rebound/compiler",
 
         isPartial = false;
 
-        name = str.replace(/.*<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>.*>/ig, '$2');
+        name = str.replace(/.*<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>.*/ig, '$2');
 
         // If the template tag exists, extract it.
         if(str.indexOf('<template>') > -1 && str.indexOf('</template>') > -1){
