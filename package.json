@@ -1,14 +1,12 @@
 {
   "name": "reboundjs",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "description": "Automatic data binding for Backbone using HTMLBars.",
   "main": "dist/commonjs/rebound/compiler.js",
   "scripts": {
-    "rebound": "bin/main.js",
-    "build": "bin/build.js",
     "test": "bin/run-tests.js",
     "start": "bin/start-test-server.js",
-    "postinstall": "bin/post-install.js"
+    "postinstall": "if [ -d node_modules/requirejs ] ; then bower install; cd bower_components/handlebars; npm install; grunt build; fi;"
   },
   "repository": {
     "type": "git",
@@ -17,7 +15,7 @@
   "author": "Adam Miller - Pages, LLC.",
   "license": "MIT",
   "readmeFilename": "README.md",
-  "dependencies": {
+  "devDependencies": {
     "bower": "~1.3.3",
     "grunt": "0.4.5",
     "grunt-concat-sourcemap": "~0.4.1",

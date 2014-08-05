@@ -27,7 +27,7 @@
     "test",
     "tests"
   ],
-  "dependencies": {
+  "devDependencies": {
     "jquery": "2.1.1",
     "underscore": "1.6.0",
     "backbone": "1.1.2",
@@ -37,9 +37,7 @@
     "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#231aa960e61313008f4cbd05e97a0630a580c4b9",
     "requirejs": "https://github.com/jrburke/requirejs.git#19a98167858db65342a269ba76f06e3be152210e",
     "acorn": "~0.6.0",
-    "lodash": "~2.4.1"
-  },
-  "devDependencies": {
+    "lodash": "~2.4.1",
     "qunit": "~1.14.0"
   }
 }

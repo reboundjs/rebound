@@ -6,16 +6,16 @@ var path = require('path'),
     util  = require('util'),
     spawn = require('child_process').spawn;
 
-
-// Install Rebound's bower dependancies
-function installNpmDeps(){
-  console.log('REBOUND POSTINSTALL: Installing Additional Rebound NPM Deps...')
-  ps = spawn('npm', ['install', '--ignore-scripts'], {stdio: "inherit", cwd: filepath});
-  ps.on('exit', installBowerDeps);
-  ps.on('error', function (err) {
-    console.log('REBOUND POSTINSTALL: Error Running Rebound NPM Install!', err);
-  })
-}
+//
+// // Install Rebound's bower dependancies
+// function installNpmDeps(){
+//   console.log('REBOUND POSTINSTALL: Installing Additional Rebound NPM Deps...')
+//   ps = spawn('npm', ['install', '--ignore-scripts'], {stdio: "inherit", cwd: filepath});
+//   ps.on('exit', installBowerDeps);
+//   ps.on('error', function (err) {
+//     console.log('REBOUND POSTINSTALL: Error Running Rebound NPM Install!', err);
+//   })
+// }
 
 // Install Rebound's bower dependancies
 function installBowerDeps(){
@@ -60,4 +60,4 @@ function gruntBuildRebound(){
   })
 }
 
-installNpmDeps();
+installBowerDeps();
