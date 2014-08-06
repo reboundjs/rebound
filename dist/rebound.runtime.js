@@ -20391,10 +20391,11 @@ define("rebound/hooks",
       _.each(value, function(obj, key, list){
 
         // Even if rendered already, update each element's index, key, first and last in case of order changes or element removals
-        if(obj.__rendered && _.isArray(value)){
+        if(_.isArray(value)){
           obj.set({'@index': key, '@first': (key == 0), '@last': (key == value.length-1)});
         }
-        if(obj.__rendered && !_.isArray(value) && _.isObject(value))
+
+        if(!_.isArray(value) && _.isObject(value))
           obj.set({'@key' : key})
 
         // If this object in the collection has already been rendered, move on.

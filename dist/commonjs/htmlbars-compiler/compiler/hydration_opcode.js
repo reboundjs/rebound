@@ -175,7 +175,7 @@ HydrationOpcodeCompiler.prototype.sexpr = function(sexpr) {
   this.opcode('program', null, null);
   processParams(this, sexpr.params);
   processHash(this, sexpr.hash);
-  this.opcode('sexpr', sexpr.id.string, sexpr.params.length);
+  this.opcode('sexpr', (sexpr.id.string || sexpr.id.idName), sexpr.params.length);
 };
 
 HydrationOpcodeCompiler.prototype.string = function(str) {
