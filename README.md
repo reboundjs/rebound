@@ -3,6 +3,8 @@
   <br>
   <a href="https://travis-ci.org/epicmiller/rebound">
     <img src="https://travis-ci.org/epicmiller/rebound.svg?branch=master" alt="Build Status" />
+    <br>
+    <a href="https://trello.com/b/IKShh3Nt/rebound">Trello Board</a>
   </a>
   <h3 align="center">Automatic data binding for Backbone using HTMLBars.</h3>
 </p>
