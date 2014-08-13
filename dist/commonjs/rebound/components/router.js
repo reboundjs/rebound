@@ -32,11 +32,9 @@
  */
 
 // If Rebound Runtime has already been run, throw error
-if(Backbone.AppLoader)
-  throw 'Rebound is already loaded on the page!';
+if(Backbone.AppLoader){ throw 'Rebound is already loaded on the page!'; }
 // If Backbone hasn't been started yet, throw error
-if(!window.Backbone)
-  throw "Backbone must be on the page for Rebound to load.";
+if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
 
 var AppLoader = Backbone.AppLoader = (function (Backbone) {
   'use strict';
@@ -70,10 +68,10 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
       // Unset Previous Application's Routes. For each route in the page app:
       _.each(pageApp.routes, function (value, key) {
 
-        var regExp = appRouter._routeToRegExp(key).toString()
+        var regExp = appRouter._routeToRegExp(key).toString();
 
         // Remove the handler from our route object
-        Backbone.history.handlers = _.filter(Backbone.history.handlers, function(obj){return obj.route.toString() !== regExp;})
+        Backbone.history.handlers = _.filter(Backbone.history.handlers, function(obj){return obj.route.toString() !== regExp;});
 
         // Delete our referance to the route's callback
         delete appRouter[ '_function_' + key ];
@@ -84,15 +82,18 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
       pageApp.deinitialize();
 
       // Disable old css if it exists
-      setTimeout(function(){$('#' + oldPageName + '-css').attr('disabled', true)}, 500);
+      setTimeout(function(){
+        $('#' + oldPageName + '-css').attr('disabled', true);
+      }, 500);
 
     }
 
     // Load New PageApp, give it it's name so we know what css to remove when it deinitializes
-    pageInstance = new PageApp({
-      outlet: ((isGlobal) ? $(isGlobal) : $('content'))
-    });
+    pageInstance = new PageApp();
     pageInstance.__name = primaryRoute;
+
+    // Add to our page
+    ((isGlobal) ? $(isGlobal) : $('content')).append(pageInstance);
 
     // Augment ApplicationRouter with new routes from PageApp
     _.each(pageInstance.routes, function (value, key) {
@@ -160,25 +161,57 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
         cssLoaded = true;
       }
 
-      // AMD Will Manage Dependancies For Us. Load The App.
-      require([jsUrl], function(PageClass){
+      // If require library is almond, load script manualy
+      if(require._defined){
+        $('<script>')
+          .appendTo($('head'))
+          .attr({type : 'text/javascript'})
+          .attr('src', '/'+jsUrl+'.js')
+          .attr('id', primaryRoute + '-js')
+          .on('load', function(event){
+            // AMD Will Manage Dependancies For Us. Load The App.
+            require([jsUrl], function(PageClass){
 
-        if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
+              if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
-          // Install The Loaded Resources
-          pageApp = installPageResources(PageApp, primaryRoute, isGlobal);
-          // Re-trigger route so the newly added route may execute if there's a route match.
-          // If no routes are matched, app will hit wildCard route which will then trigger 404
-          if(!isGlobal && config.triggerOnFirstLoad){
-            Backbone.history.loadUrl(Backbone.history.fragment);
+                // Install The Loaded Resources
+                pageApp = installPageResources(PageApp, primaryRoute, isGlobal);
+                // Re-trigger route so the newly added route may execute if there's a route match.
+                // If no routes are matched, app will hit wildCard route which will then trigger 404
+                if(!isGlobal && config.triggerOnFirstLoad){
+                  Backbone.history.loadUrl(Backbone.history.fragment);
+                }
+                Rebound.pageApp = pageApp;
+                if(!isGlobal){
+                  config.triggerOnFirstLoad = true;
+                }
+                $('body').removeClass('loading');
+              }
+            });
+          });
+      }
+      else{
+        // AMD Will Manage Dependancies For Us. Load The App.
+        require([jsUrl], function(PageClass){
+
+          if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
+
+            // Install The Loaded Resources
+            pageApp = installPageResources(PageApp, primaryRoute, isGlobal);
+            // Re-trigger route so the newly added route may execute if there's a route match.
+            // If no routes are matched, app will hit wildCard route which will then trigger 404
+            if(!isGlobal && config.triggerOnFirstLoad){
+              Backbone.history.loadUrl(Backbone.history.fragment);
+            }
+            Rebound.pageApp = pageApp;
+            if(!isGlobal){
+              config.triggerOnFirstLoad = true;
+            }
+            $('body').removeClass('loading');
           }
-          Rebound.pageApp = pageApp;
-          if(!isGlobal){
-            config.triggerOnFirstLoad = true;
-          }
-          $('body').removeClass('loading');
-        }
-      });
+        });
+      }
+
   }
 
   /**
@@ -258,7 +291,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
           event.preventDefault();
           appRouter.navigate(path, {trigger: true});
         }
-      })
+      });
 
       // Add wildcard route
       this.router.onUnknownRoute = onUnknownRoute;
@@ -267,7 +300,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
       // Install our global controllers
       _.each(config.globalControllers, function(selector, route){
         loadPageResources(route, selector);
-      })
+      });
 
       // Start the history
       Backbone.history.start(options);
@@ -280,4 +313,4 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
   return AppLoader;
 })(Backbone);
 
-exports["default"] = AppLoader
+exports["default"] = AppLoader;

@@ -1,4 +1,6 @@
 "use strict";
+/*jshint -W054 */
+// jshint ignore: start
 
   // A second optional argument can be given to further configure
   // the parser process. These options are recognized:
@@ -653,6 +655,7 @@
       if (next === 120 || next === 88) return readHexNumber();
       // Anything else beginning with a digit is an integer, octal
       // number, or float.
+    /* falls through */
     case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: // 1-9
       return readNumber(false);
 
@@ -847,6 +850,7 @@
           case 102: out += "\f"; break; // 'f' -> '\f'
           case 48: out += "\0"; break; // 0 -> '\0'
           case 13: if (input.charCodeAt(tokPos) === 10) ++tokPos; // '\r\n'
+          /* falls through */
           case 10: // ' \n'
             if (options.locations) { tokLineStart = tokPos; ++tokCurLine; }
             break;

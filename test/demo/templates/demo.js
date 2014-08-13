@@ -1,5 +1,5 @@
 define( ["test/demo/templates/components/editing"], function(){
-(function(){
+return (function(){
   var template = (function() {
   var child0 = (function() {
     var child0 = (function() {
@@ -23,8 +23,6 @@ define( ["test/demo/templates/components/editing"], function(){
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode(" ");
           dom.appendChild(el0, el1);
-          var el1 = dom.createElement("div");
-          dom.appendChild(el0, el1);
           var el1 = dom.createTextNode(" ");
           dom.appendChild(el0, el1);
           return el0;
@@ -36,8 +34,8 @@ define( ["test/demo/templates/components/editing"], function(){
             cachedFragment = build(dom);
           }
           var fragment = dom.cloneNode(cachedFragment, true);
-          var morph0 = dom.createMorphAt(fragment.childNodes[1],-1,-1);
-          hooks.webComponent(morph0, "edit-todo", context, {context:context,types:[],hashTypes:{value:"sexpr",editing:"sexpr"},hash:{value:hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env),editing:hooks.subexpr("editing", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)},render:child0}, env);
+          var morph0 = dom.createMorphAt(fragment,0,1,contextualElement);
+          hooks.webComponent(morph0, "edit-todo", context, {context:context,types:[],hashTypes:{value:"sexpr",editing:"sexpr",arr:"sexpr"},hash:{value:hooks.subexpr("title", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env),editing:hooks.subexpr("editing", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env),arr:hooks.subexpr("arr", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)},render:child0}, env);
           return fragment;
         };
       }());
@@ -285,14 +283,24 @@ define( ["test/demo/templates/components/editing"], function(){
     return fragment;
   };
 }());
-  var script = (function(){ return ({ initialize: function(options){ }, readyCallback: function(){ }, insertedCallback: function(){ }, removedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false, },{ title: "Profit", editing: false, isCompleted: false, arr: [{a: 1}, {b: 2}, {c: 3}] } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('filteredTodos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, createTodo: function(event){ if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.currentTarget.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.data); }, editTodo: function(event){ event.data.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })() || {};
+  var script = (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false, },{ title: "Profit", editing: false, isCompleted: false, arr: [{a: 1}, {b: 2}, {c: 3}] } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('filteredTodos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, createTodo: function(event){ if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.currentTarget.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.data); }, editTodo: function(event){ event.data.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })() || {};
   var style = "";
-  window.Rebound.registerComponent({
-    name:"demo",
-    template: template,
-    script: script,
-    style: style
-  });
+  var component = Backbone.Controller.extend(script, { __name: "rebound-demo" });
+  var proto = Object.create(HTMLElement.prototype, {});
+  proto.createdCallback = function(){
+    this.__template = new component({template: template, outlet: this, data: Rebound.seedData});
+    script.createdCallback && script.createdCallback.call(this.__template);
+  }
+  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__template)};
+  proto.detachedCallback = function(){
+    this.__template.deinitialize();
+    script.detachedCallback && script.detachedCallback.call(this.__template);
+    };
+  proto.attributeChangedCallback = function(attrName, oldVal, newVal){
+    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
+    this.__template.set(attrName, newVal);
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__template);
+  }
+  return document.registerElement("rebound-demo", {prototype: proto} );
 })();
-return Rebound.components["demo"];
 });

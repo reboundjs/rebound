@@ -11,4 +11,9 @@
         root.Rebound = factory();
     }
 }(this, function () {
+
+    // Start custom elements observer if using polyfill
+    if(window.CustomElements)
+      window.CustomElements.observeDocument(document)
+
     //almond, and your modules will be inlined here

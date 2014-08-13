@@ -7,8 +7,8 @@ var defaultEnv = require("../rebound/hooks")["default"];
 
 Morph.prototype.__removeMorph = Morph.prototype.removeMorph;
 Morph.prototype.removeMorph = function(){
-  this.__removeMorph.apply(this, arguments)
-}
+  this.__removeMorph.apply(this, arguments);
+};
 
 function hydrate(spec, options){
   // Return a wrapper function that will merge user provided helpers with our defaults
@@ -25,7 +25,7 @@ function hydrate(spec, options){
 
     // Call our func with merged helpers and hooks
     return spec.call(this, data, env);
-  }
+  };
 }
 
 // Notify all of a object's observers of the change, execute the callback
@@ -38,8 +38,8 @@ function notify(obj, path, controllerName) {
   _.each(path, function(path){
     if(_.isArray(obj.__observers[path])){
       _.each(obj.__observers[path], function(callback, index) {
-        if(callback) callback();
-        else delete obj.__observers[path][index];
+        if(callback){ callback(); }
+        else{ delete obj.__observers[path][index]; }
       });
     }
   });
@@ -48,12 +48,8 @@ function notify(obj, path, controllerName) {
 // TODO: This is silly. Fix it.
 var registerHelper = defaultEnv.registerHelper;
 var registerPartial = defaultEnv.registerPartial;
-var registerComponent = defaultEnv.registerComponent;
-var components = defaultEnv.components;
 
 exports.registerHelper = registerHelper;
 exports.registerPartial = registerPartial;
-exports.registerComponent = registerComponent;
 exports.notify = notify;
 exports.hydrate = hydrate;
-exports.components = components;

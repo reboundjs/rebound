@@ -9,11 +9,16 @@
   <script>
     return ({
       value: 'Default Value',
-      created: function(event){
+      createdCallback: function(event){
+        console.log('created!');
         this.oldValue = this.get('value');
       },
-      attached: function(event){
+      attachedCallback: function(event){
+        console.log('attached!');
         this.$('input.edit').focus();
+      },
+      detachedCallback: function(){
+        console.log('removed!', this.el);
       },
       doneEditing: function(event){
         this.set('editing', false);

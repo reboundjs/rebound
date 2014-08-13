@@ -69,7 +69,7 @@ function compile(data){
         while(path.type.type !== ')'){
           if(path.value){
             if(itr%2 === 0){
-              attrs.push(path.value)
+              attrs.push(path.value);
             }
             itr++;
           }
@@ -85,8 +85,8 @@ function compile(data){
           _.each(paths, function(path){
             _.each(memo, function(mem){
               newMemo.push(_.compact([mem, path]).join('.'));
-            })
-          })
+            });
+          });
           return newMemo;
         }, ['']);
         finishedPaths = _.compact(_.union(finishedPaths, workingpath));
@@ -94,9 +94,9 @@ function compile(data){
         listening--;
       }
 
-    }while(token.start !== token.end)
+    } while(token.start !== token.end);
 
-    console.log('COMPUTED PROPERTY', prop.key, 'registered with these dependancy paths:', finishedPaths)
+    console.log('COMPUTED PROPERTY', prop.key, 'registered with these dependancy paths:', finishedPaths);
 
     Rebound.registerHelper(prop.key, prop.val, finishedPaths);
 
@@ -105,7 +105,7 @@ function compile(data){
 }
 
 function register(context, key, func){
-  computedProperties.push({obj: context, key: key, val: func})
+  computedProperties.push({obj: context, key: key, val: func});
 }
 
 exports["default"] = { register: register, compile: compile };

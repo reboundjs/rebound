@@ -1,4 +1,4 @@
-<element name="demo">
+<element name="rebound-demo">
 	<template>
 
 		<link href="/test/demo/templates/components/editing.html">
@@ -15,9 +15,7 @@
 						{{#each filteredTodos}}
 							<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 								{{#if editing}}
-								<div>
-		              <edit-todo value={{title}} editing={{editing}}>asdf</edit-todo>
-								</div>
+		              <edit-todo value={{title}} editing={{editing}} arr={{arr}}>asdf</edit-todo>
 								{{else}}
 									<input type="checkbox" class="toggle" checked="{{isCompleted}}">
 									<label {{on "dblclick" "editTodo" }}>{{title}}</label>
@@ -70,13 +68,13 @@
 		initialize: function(options){
 
 		},
-		readyCallback: function(){
+		createdCallback: function(){
 
 		},
-		insertedCallback: function(){
+		attachedCallback: function(){
 
 		},
-		removedCallback: function(){
+		detachedCallback: function(){
 
 		},
 		routes: {

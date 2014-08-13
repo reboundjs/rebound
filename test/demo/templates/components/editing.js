@@ -1,5 +1,5 @@
 define( [], function(){
-(function(){
+return (function(){
   var template = (function() {
   function build(dom) {
     var el0 = dom.createElement("input");
@@ -21,14 +21,24 @@ define( [], function(){
     return fragment;
   };
 }());
-  var script = (function(){ return ({ value: 'Default Value', created: function(event){ this.oldValue = this.get('value'); }, attached: function(event){ this.$('input.edit').focus(); }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })() || {};
+  var script = (function(){ return ({ value: 'Default Value', createdCallback: function(event){ console.log('created!'); this.oldValue = this.get('value'); }, attachedCallback: function(event){ console.log('attached!'); this.$('input.edit').focus(); }, detachedCallback: function(){ console.log('removed!', this.el); }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })() || {};
   var style = "";
-  window.Rebound.registerComponent({
-    name:"edit-todo",
-    template: template,
-    script: script,
-    style: style
-  });
+  var component = Backbone.Controller.extend(script, { __name: "edit-todo" });
+  var proto = Object.create(HTMLElement.prototype, {});
+  proto.createdCallback = function(){
+    this.__template = new component({template: template, outlet: this, data: Rebound.seedData});
+    script.createdCallback && script.createdCallback.call(this.__template);
+  }
+  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__template)};
+  proto.detachedCallback = function(){
+    this.__template.deinitialize();
+    script.detachedCallback && script.detachedCallback.call(this.__template);
+    };
+  proto.attributeChangedCallback = function(attrName, oldVal, newVal){
+    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
+    this.__template.set(attrName, newVal);
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__template);
+  }
+  return document.registerElement("edit-todo", {prototype: proto} );
 })();
-return Rebound.components["edit-todo"];
 });

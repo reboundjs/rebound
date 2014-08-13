@@ -92,18 +92,14 @@ LazyValue.prototype = {
 
   destroy: function() {
     _.each(this.children, function(child){
-      if (child && child.isLazyValue) child.destroy();
+      if (child && child.isLazyValue){ child.destroy(); }
     });
     _.each(this.subscribers, function(subscriber){
-      if (subscriber && subscriber.isLazyValue) subscriber.destroy();
+      if (subscriber && subscriber.isLazyValue){ subscriber.destroy(); }
     });
 
     this.parent = this.children = this.cache = this.valueFn = this.subscribers = this._childValues = null;
-
     _.each(this.observers, function(observer){
-      if(observer.context.__observers[observer.path][observer.index]){
-        observer.context.__observers[observer.path][observer.index]();
-      }
       delete observer.context.__observers[observer.path][observer.index];
     });
 

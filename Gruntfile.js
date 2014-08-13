@@ -8,6 +8,22 @@ module.exports = function(grunt) {
         }
       }
     },
+    jshint: {
+      options: {
+        curly: false,
+        loopfunc: true,
+        eqnull: true,
+        browser: true,
+        esnext: true,
+        '-W058': true, // Allow prens-less constructors (new Object;)
+        '-W093': true, // Allow returning assignment (return a = b;)
+        '-W030': true, // Allow unused expressions. Good for conditional assignment.
+        globals: {
+          jQuery: true
+        },
+      },
+      uses_defaults: ['lib/**/*.js']
+    },
     connect: {
       test: {
         options: {
@@ -201,9 +217,16 @@ module.exports = function(grunt) {
           out: "dist/rebound.runtime.js",
           wrap: {
             startFile: [
-              'bower_components/lodash/dist/lodash.js',
+              'bower_components/WeakMap/weakmap.js',
+              'bower_components/MutationObservers/MutationObserver.js',
+              'bower_components/custom-elements/src/scope.js',
+              'bower_components/custom-elements/src/Observer.js',
+              'bower_components/custom-elements/src/CustomElements.js',
+              // 'bower_components/lodash/dist/lodash.js',
+              'bower_components/underscore/underscore.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
+              //'bower_components/almond/almond.js',
               'bower_components/requirejs/require.js',
               'wrap/start.frag'
             ],
@@ -220,9 +243,16 @@ module.exports = function(grunt) {
           out: "dist/rebound.compiler.js",
           wrap: {
             startFile: [
-              'bower_components/lodash/dist/lodash.js',
+              'bower_components/WeakMap/weakmap.js',
+              'bower_components/MutationObservers/MutationObserver.js',
+              'bower_components/custom-elements/src/scope.js',
+              'bower_components/custom-elements/src/Observer.js',
+              'bower_components/custom-elements/src/CustomElements.js',
+              // 'bower_components/lodash/dist/lodash.js',
+              'bower_components/underscore/underscore.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
+              //'bower_components/almond/almond.js',
               'bower_components/requirejs/require.js',
               'wrap/start.frag'
             ],
@@ -233,15 +263,23 @@ module.exports = function(grunt) {
       runtimeMin: {
         options: {
           optimize: "uglify",
+          preserveLicenseComments: false,
           name: "rebound.runtime",
           baseUrl: "./dist/amd",
           // mainConfigFile: "path/to/config.js",
           out: "dist/rebound.runtime.min.js",
           wrap: {
             startFile: [
+              'bower_components/WeakMap/weakmap.js',
+              'bower_components/MutationObservers/MutationObserver.js',
+              'bower_components/custom-elements/src/scope.js',
+              'bower_components/custom-elements/src/Observer.js',
+              'bower_components/custom-elements/src/CustomElements.js',
               'bower_components/underscore/underscore.js',
+              //'bower_components/lodash/dist/lodash.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
+              //'bower_components/almond/almond.js',
               'bower_components/requirejs/require.js',
               'wrap/start.frag'
             ],
@@ -252,15 +290,23 @@ module.exports = function(grunt) {
       compilerMin: {
         options: {
           optimize: "uglify",
+          preserveLicenseComments: false,
           name: "rebound",
           baseUrl: "./dist/amd",
           // mainConfigFile: "path/to/config.js",
           out: "dist/rebound.compiler.min.js",
           wrap: {
             startFile: [
+              'bower_components/WeakMap/weakmap.js',
+              'bower_components/MutationObservers/MutationObserver.js',
+              'bower_components/custom-elements/src/scope.js',
+              'bower_components/custom-elements/src/Observer.js',
+              'bower_components/custom-elements/src/CustomElements.js',
+              // 'bower_components/lodash/dist/lodash.js',
               'bower_components/underscore/underscore.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
+              //'bower_components/almond/almond.js',
               'bower_components/requirejs/require.js',
               'wrap/start.frag'
             ],
@@ -280,9 +326,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
 
   grunt.registerTask('precompileDemo', 'Precompiles our demo template.', function(){
-    var rebound = require('./dist/commonjs/rebound/compiler'),
+    var rebound = require('./dist/commonjs/rebound/precompile'),
         fs = require('fs');
 
     var data = fs.readFile('./test/demo/templates/demo.hbs', 'utf8', function (err,data) {
@@ -342,7 +389,7 @@ module.exports = function(grunt) {
     'requirejs:runtime',
     'requirejs:runtimeMin',
     'requirejs:compiler',
-    'requirejs:compilerMin'
+    //'requirejs:compilerMin'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'
@@ -359,6 +406,7 @@ module.exports = function(grunt) {
     'clean',
     'compileAMD',
     'compileCJS',
+    'jshint',
     'clean:tmp'
   ]);
 

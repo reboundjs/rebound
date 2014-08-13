@@ -46,6 +46,7 @@ Backbone.Controller.prototype.deinitialize = function () {
       value.deinitialize();
     }
   });
+  console.log('DESTROY', this.__observers);
 
   // clean up references
   this.__observers = {};
