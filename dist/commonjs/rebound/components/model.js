@@ -104,8 +104,8 @@ Backbone.Model.prototype.set = function(key, val, options){
       val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
     }
 
-    // If this is a new key, and it is an eventable object, propagate its event to our parent
-    if(!(this.has(key)) && val.isModel || val.isCollection){
+    // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
+    if(!val.__parent && val.isModel || val.isCollection){
       // When requesting the name value of our value, return the its key appended to the computed name value of our parent
       // Closure is needed to preserve values in the instance so they dont get set to the prototype
       val.__parent = this;

@@ -66,7 +66,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
 
       oldPageName = pageApp.__name;
       // Unset Previous Application's Routes. For each route in the page app:
-      _.each(pageApp.routes, function (value, key) {
+      _.each(pageApp.__template.routes, function (value, key) {
 
         var regExp = appRouter._routeToRegExp(key).toString();
 
@@ -79,7 +79,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
       });
 
       // Un-hook Event Bindings, Delete Objects
-      pageApp.deinitialize();
+      pageApp.__template.deinitialize();
 
       // Disable old css if it exists
       setTimeout(function(){
@@ -93,15 +93,15 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
     pageInstance.__name = primaryRoute;
 
     // Add to our page
-    ((isGlobal) ? $(isGlobal) : $('content')).append(pageInstance);
+    ((isGlobal) ? $(isGlobal) : $('content')).html(pageInstance);
 
     // Augment ApplicationRouter with new routes from PageApp
-    _.each(pageInstance.routes, function (value, key) {
+    _.each(pageInstance.__template.routes, function (value, key) {
       // Generate our route callback's new name
       var routeFunctionName = '_function_' + key,
           functionName;
       // Add the new callback referance on to our router
-      appRouter[routeFunctionName] =  function () { pageInstance[value].apply(pageInstance, arguments); };
+      appRouter[routeFunctionName] =  function () { pageInstance.__template[value].apply(pageInstance.__template, arguments); };
       // Add the route handler
       appRouter.route(key, value, appRouter[routeFunctionName]);
     });

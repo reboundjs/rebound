@@ -18265,8 +18265,8 @@ define("rebound/components/model",
           val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
         }
 
-        // If this is a new key, and it is an eventable object, propagate its event to our parent
-        if(!(this.has(key)) && val.isModel || val.isCollection){
+        // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
+        if(!val.__parent && val.isModel || val.isCollection){
           // When requesting the name value of our value, return the its key appended to the computed name value of our parent
           // Closure is needed to preserve values in the instance so they dont get set to the prototype
           val.__parent = this;
@@ -18742,7 +18742,7 @@ define("rebound/components/router",
 
           oldPageName = pageApp.__name;
           // Unset Previous Application's Routes. For each route in the page app:
-          _.each(pageApp.routes, function (value, key) {
+          _.each(pageApp.__template.routes, function (value, key) {
 
             var regExp = appRouter._routeToRegExp(key).toString();
 
@@ -18755,7 +18755,7 @@ define("rebound/components/router",
           });
 
           // Un-hook Event Bindings, Delete Objects
-          pageApp.deinitialize();
+          pageApp.__template.deinitialize();
 
           // Disable old css if it exists
           setTimeout(function(){
@@ -18769,15 +18769,15 @@ define("rebound/components/router",
         pageInstance.__name = primaryRoute;
 
         // Add to our page
-        ((isGlobal) ? $(isGlobal) : $('content')).append(pageInstance);
+        ((isGlobal) ? $(isGlobal) : $('content')).html(pageInstance);
 
         // Augment ApplicationRouter with new routes from PageApp
-        _.each(pageInstance.routes, function (value, key) {
+        _.each(pageInstance.__template.routes, function (value, key) {
           // Generate our route callback's new name
           var routeFunctionName = '_function_' + key,
               functionName;
           // Add the new callback referance on to our router
-          appRouter[routeFunctionName] =  function () { pageInstance[value].apply(pageInstance, arguments); };
+          appRouter[routeFunctionName] =  function () { pageInstance.__template[value].apply(pageInstance.__template, arguments); };
           // Add the route handler
           appRouter.route(key, value, appRouter[routeFunctionName]);
         });
