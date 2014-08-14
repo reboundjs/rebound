@@ -629,6 +629,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
   lazyValue = new LazyValue(function() {
 
     // For each param passed to our shared component, add it to our custom element
+    // TODO: there has to be a better way to get seed data to element instances
     Rebound.seedData = data;
     element = document.createElement(path);
     Rebound.seedData = {};

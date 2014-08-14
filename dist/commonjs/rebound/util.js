@@ -20,41 +20,51 @@ util.walkTheDOM = function(node, func) {
 **/
 
 // Rolled my own deep extend in leu of having a hard dependancy on lodash.
-util.deepExtend = function(obj) {
+util.deepDefaults = function(obj) {
   var parentRE = /#{\s*?_\s*?}/,
       slice = Array.prototype.slice,
       hasOwnProperty = Object.prototype.hasOwnProperty;
 
-  _.each(slice.call(arguments, 1), function(source) {
-    for (var prop in source) {
-      if (hasOwnProperty.call(source, prop)) {
-        if (_.isUndefined(obj[prop]) || _.isFunction(obj[prop]) || _.isNull(source[prop]) || _.isDate(source[prop])) {
-          obj[prop] = source[prop];
-        }
-        else if (_.isString(source[prop]) && parentRE.test(source[prop])) {
-          if (_.isString(obj[prop])) {
-            obj[prop] = source[prop].replace(parentRE, obj[prop]);
+  _.each(slice.call(arguments, 1), function(def) {
+
+    var objArr, srcArr, objAttr, srcAttr;
+    for (var prop in def) {
+      if (hasOwnProperty.call(def, prop)) {
+        if(_.isUndefined(obj[prop])){
+
+          if(_.isObject(def[prop]) && !_.isFunction(def[prop])){
+            if(def[prop].isCollection){
+              obj[prop] = util.deepDefaults([], def[prop].models);
+            }
+            else if(_.isArray(def[prop])){
+              obj[prop] = util.deepDefaults([], def[prop]);
+            }
+            else if((def[prop].isModel)){
+              obj[prop] = util.deepDefaults({}, def[prop].attributes);
+            }
+            else{
+              obj[prop] = util.deepDefaults({}, def[prop]);
+            }
+          }
+          else{
+            obj[prop] = def[prop];
           }
         }
-        else if (_.isArray(obj[prop]) || _.isArray(source[prop])){
-          if (!_.isArray(obj[prop]) || !_.isArray(source[prop])){
-            throw 'Error: Trying to combine an array with a non-array (' + prop + ')';
-          } else {
-            obj[prop] = _.reject(_.deepExtend(obj[prop], source[prop]), function (item) { return _.isNull(item);});
+        else if(_.isObject(obj[prop])){
+          if(obj[prop].isCollection || _.isArray(obj[prop])){
+            continue;
           }
-        }
-        else if (_.isObject(obj[prop]) || _.isObject(source[prop])){
-          if (!_.isObject(obj[prop]) || !_.isObject(source[prop])){
-            throw 'Error: Trying to combine an object with a non-object (' + prop + ')';
-          } else {
-            obj[prop] = _.deepExtend(obj[prop], source[prop]);
+          else if((obj[prop].isModel)){
+            obj[prop] = util.deepDefaults({}, obj[prop].attributes, def[prop]);
           }
-        } else {
-          obj[prop] = source[prop];
+          else{
+            obj[prop] = util.deepDefaults({}, obj[prop], def[prop]);
+          }
         }
       }
     }
   });
+
   return obj;
 };
 

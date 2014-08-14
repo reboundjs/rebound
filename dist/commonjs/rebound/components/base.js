@@ -29,7 +29,6 @@ Backbone.Controller.prototype.deinitialize = function () {
 
   // mark it as deinitialized
   this.deinitialized = true;
-
   // deinitialize subclasses
   if(this.data && this.data.deinitialize){
     this.data.deinitialize();
@@ -46,12 +45,11 @@ Backbone.Controller.prototype.deinitialize = function () {
       value.deinitialize();
     }
   });
-  console.log('DESTROY', this.__observers);
 
   // clean up references
   this.__observers = {};
-  this.models = [];
+  // this.models = [];
   this.data = {};
-  this.attributes = {};
+  // this.attributes = {};
 
 };

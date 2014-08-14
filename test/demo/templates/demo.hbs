@@ -15,7 +15,7 @@
 						{{#each filteredTodos}}
 							<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 								{{#if editing}}
-		              <edit-todo value={{title}} editing={{editing}} arr={{arr}}>asdf</edit-todo>
+		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}}>asdf</edit-todo>
 								{{else}}
 									<input type="checkbox" class="toggle" checked="{{isCompleted}}">
 									<label {{on "dblclick" "editTodo" }}>{{title}}</label>
@@ -93,6 +93,7 @@
 				title: "Look Dapper",
 				editing: false,
 				isCompleted: false,
+				obj: {e:1, f:2}
 			},{
 				title: "Profit",
 				editing: false,

@@ -9,12 +9,12 @@
   <script>
     return ({
       value: 'Default Value',
+      arr: [{f:1}, {g:2}],
+      obj: {a:1, b:2},
       createdCallback: function(event){
-        console.log('created!');
         this.oldValue = this.get('value');
       },
       attachedCallback: function(event){
-        console.log('attached!');
         this.$('input.edit').focus();
       },
       detachedCallback: function(){

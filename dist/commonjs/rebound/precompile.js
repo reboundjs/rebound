@@ -82,7 +82,7 @@ function precompile(str, options){
 
   // If is a partial
   if(isPartial){
-    template = '(function(){var template = '+template+' window.Rebound.registerPartial( "'+ options.filepath +'", template);})();\n';
+    template = '(function(){var template = '+template+'\n window.Rebound.registerPartial( "'+ options.filepath +'", template);})();\n';
   }
   // Else, is a component
   else{
