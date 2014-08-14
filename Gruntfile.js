@@ -276,7 +276,7 @@ module.exports = function(grunt) {
               'bower_components/custom-elements/src/Observer.js',
               'bower_components/custom-elements/src/CustomElements.js',
               'bower_components/underscore/underscore.js',
-              //'bower_components/lodash/dist/lodash.js',
+              // 'bower_components/lodash/dist/lodash.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
               //'bower_components/almond/almond.js',

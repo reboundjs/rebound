@@ -16964,6 +16964,8 @@ define("rebound/hooks",
           // Set the properties on our element for visual referance
           json = component.toJSON();
           _.each(json, function(value, key){
+            // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
+            if((_.isObject(value))){ return; }
             value = (_.isObject(value)) ? JSON.stringify(value) : value;
             element.setAttribute(key, value);
           });
@@ -18487,6 +18489,13 @@ define("rebound/components/controller",
       // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
       // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
       // Functions are compiled to find their dependancies and registerd as compiled properties
+        // Legacy lodash only version of deepDefaults:
+          // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
+          //   if(obj === undefined) return defaults;
+          //   if(obj.isModel)
+          //    return _.defaults(obj.attributes, defaults);
+          //   return _.defaults(obj, defaults);
+          //  }));
       this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
       propertyCompiler.compile(this);
 

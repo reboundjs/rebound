@@ -33,6 +33,13 @@ var Controller = Backbone.Controller = function(options){
   // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
   // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
   // Functions are compiled to find their dependancies and registerd as compiled properties
+    // Legacy lodash only version of deepDefaults:
+      // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
+      //   if(obj === undefined) return defaults;
+      //   if(obj.isModel)
+      //    return _.defaults(obj.attributes, defaults);
+      //   return _.defaults(obj, defaults);
+      //  }));
   this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
   propertyCompiler.compile(this);
 
