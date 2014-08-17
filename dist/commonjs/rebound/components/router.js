@@ -229,11 +229,19 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
    */
   function onUnknownRoute(route) {
 
+    // Handle null route
+    route = route || '';
+
     // Get Root of Route
     var primaryRoute = (route) ? route.split('/')[0] : '';
 
     // Apply Any Special Mappings
-    primaryRoute = config.routeMapping[primaryRoute] || primaryRoute;
+    _.any(config.handlers, function(handler) {
+      if (handler.route.test(route)) {
+        primaryRoute = handler.primaryRoute;
+        return true;
+      }
+    });
 
     // If Page Is Already Loaded, The Route Does Not Exist. 404 and Exit.
     if (pageApp && pageApp.name === primaryRoute) {
@@ -259,6 +267,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
     initialize: function(options) {
       // Save our config referance
       config = options.config;
+      config.handlers = [];
       this.start();
     },
 
@@ -283,6 +292,13 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
       // Create our page router
       appRouter =  this.router = new Backbone.Router();
 
+      // Convert our routeMappings to regexps and push to our handlers
+      _.each(config.routeMapping, function(value, route){
+        if (!_.isRegExp(route)) route = appRouter._routeToRegExp(route);
+        config.handlers.unshift({ route: route, primaryRoute: value });
+      }, this);
+
+      // Navigate to route for any link with a relative href
       $(document).on('click', 'a', function(event){
         var path = event.currentTarget.getAttribute('href');
 

@@ -18524,14 +18524,7 @@ define("rebound/components/controller",
       // Render our dom
       this.dom = this.template(this, {helpers: {'__callOnController': this.__callOnController}});
 
-      // Insert our content
-      // this.$el.html(dom);
-
-      if(this.created){
-        this.created.call(this);
-      }
-
-      // Output if given an outlet
+      // Place the dom in our custom element
       this.el.appendChild(this.dom);
 
     };
@@ -18914,11 +18907,19 @@ define("rebound/components/router",
        */
       function onUnknownRoute(route) {
 
+        // Handle null route
+        route = route || '';
+
         // Get Root of Route
         var primaryRoute = (route) ? route.split('/')[0] : '';
 
         // Apply Any Special Mappings
-        primaryRoute = config.routeMapping[primaryRoute] || primaryRoute;
+        _.any(config.handlers, function(handler) {
+          if (handler.route.test(route)) {
+            primaryRoute = handler.primaryRoute;
+            return true;
+          }
+        });
 
         // If Page Is Already Loaded, The Route Does Not Exist. 404 and Exit.
         if (pageApp && pageApp.name === primaryRoute) {
@@ -18944,6 +18945,7 @@ define("rebound/components/router",
         initialize: function(options) {
           // Save our config referance
           config = options.config;
+          config.handlers = [];
           this.start();
         },
 
@@ -18968,6 +18970,13 @@ define("rebound/components/router",
           // Create our page router
           appRouter =  this.router = new Backbone.Router();
 
+          // Convert our routeMappings to regexps and push to our handlers
+          _.each(config.routeMapping, function(value, route){
+            if (!_.isRegExp(route)) route = appRouter._routeToRegExp(route);
+            config.handlers.unshift({ route: route, primaryRoute: value });
+          }, this);
+
+          // Navigate to route for any link with a relative href
           $(document).on('click', 'a', function(event){
             var path = event.currentTarget.getAttribute('href');
 
