@@ -569,12 +569,14 @@ hooks.content = function(placeholder, path, context, params, options, env) {
     // Observe this content morph's parent's children.
     // When the morph element's containing element (placeholder) is removed, clean up the lazyvalue.
     // Timeout delay hack to give out dom a change to get their parent
-    placeholder.element.__lazyValue = lazyValue;
-    setTimeout(function(){
-      if(placeholder.element.parentNode){
-        observer.observe(placeholder.element.parentNode, { attributes: false, childList: true, characterData: false, subtree: true });
-      }
-    }, 0);
+    if(placeholder._parent){
+      placeholder._parent.__lazyValue = lazyValue;
+      setTimeout(function(){
+        if(placeholder._parent.parentNode){
+          observer.observe(placeholder._parent.parentNode, { attributes: false, childList: true, characterData: false, subtree: true });
+        }
+      }, 0);
+    }
 
   }
 };
