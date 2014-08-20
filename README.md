@@ -24,7 +24,7 @@ But just trust me on this, this is going to be good.
 
 **The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details, but the 
 
-Rebound + HTMLBars is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars, binding to your models on first render and live updating your dom as they change. To make the conversation two-way, an event helper lets you respond to user interaction by defining callbacks in your HTMLBars templates. Combine with with a powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
+Rebound + HTMLBars is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars, binding to your models on first render and live updating your dom as they change. To make the conversation two-way, an event helper lets you respond to user interaction by defining s in your HTMLBars templates. Combine with with a powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
 
 So we remove Backbone's most annoying 'feature' - manual data binding – while avoiding the overhead, convention restrictions and learning curve of Ember. And unlike some of the very few other data-binding libraries out there (heres looking at you React, epoxyjs, knockoutjs, etc), we get the simple interface of the much-loved Handlebars syntax for our templates, without any extra elements or data attributes cluttering our DOM! Server side rendering of data-bound templates will be possible in the near future! Whats there not to love?!
 
@@ -83,7 +83,7 @@ Because the script tag contains a src, nothing inside it gets executed, but is s
  - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
  - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
  - __cssSuffix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
- - __triggerOnFirstLoad__ - If false, Rebound will not try and trigger the route callback once the page is loaded. Equivalent to passing ```{ silent: true }``` to Backbone.history.start
+ - __triggerOnFirstLoad__ - If false, Rebound will not try and trigger the route  once the page is loaded. Equivalent to passing ```{ silent: true }``` to Backbone.history.start
  - __routeMapping__ - Object which defines custom base route path to controller name mappings. ex: if the root url ```/``` should load the home controller, pass ```{ "": "home" }```
 
 ### Routing
@@ -232,13 +232,13 @@ Lifecycle methods are called when certain events happen to a component over its 
 
 ```javascript
 return ({
-  created: function(event){
+  createdCallback: function(event){
     console.log("I've been created!");
   },
-  inserted: function(event){
+  attachedCallback: function(event){
     console.log("I've been inserted into the dom!");
   },
-  removed: function(){
+  detachedCallback: function(){
     console.log("I've been removed from the dom!");
   }
 })
