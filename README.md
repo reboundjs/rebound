@@ -118,15 +118,15 @@ A Rebound component looks like this:
     return ({
       
       /********* Lifecycle Methods ********/
-      created: function(event){
+      createdCallback: function(event){
         this.oldValue = this.get("value");
         console.log("I've been created!");
       },
-      attached: function(event){
+      attachedCallback: function(event){
         this.$('input.edit').focus();
         console.log("I've been inserted into the dom!");
       },
-      detached: function(){
+      detachedCallback: function(){
         console.log("I've been removed from the dom!");
       },
       
