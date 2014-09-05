@@ -122,7 +122,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
   function loadPageResources(primaryRoute, isGlobal) {
 
     // Expecting Module Definition as 'SearchApp' Where 'Search' a Primary Route
-    var jsPrefix = config.jsPrefix.replace(/:route:/g, primaryRoute),
+    var jsPrefix = config.jsPrefix.replace(/:route/g, primaryRoute),
         jsUrl = jsPrefix + primaryRoute + config.jsSuffix,
         cssUrl = config.cssPrefix + primaryRoute + config.cssSuffix + '.css',
         cssLoaded = false,

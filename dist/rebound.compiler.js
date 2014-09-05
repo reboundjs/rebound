@@ -16256,25 +16256,19 @@ define("rebound/util",
 
     __exports__["default"] = util;
   });
-define("rebound/hooks", 
-  ["rebound/lazy-value","rebound/util","exports"],
-  function(__dependency1__, __dependency2__, __exports__) {
+define("rebound/helpers", 
+  ["rebound/lazy-value","exports"],
+  function(__dependency1__, __exports__) {
     
     var LazyValue = __dependency1__["default"];
-    var util = __dependency2__["default"];
 
-
-    var hooks = {},
-        helpers = {},
-        partials = {},
-        components = {};
-
+    var helpers = {};
 
     /*******************************
             Default helpers
     ********************************/
 
-    function __on(params, hash, options, env){
+    helpers.on = function(params, hash, options, env){
       var id = $(options.element).attr('data-event') || _.uniqueId('event'),
           i, callback,
           len = params.length,
@@ -16292,18 +16286,18 @@ define("rebound/hooks",
         });
         // this.outlet.off(eventName, delegate, this[params[i]]).on(eventName, delegate, data, this[params[i]]);
       }
-    }
+    };
 
-    function __action(params, hash, options, env){
+    helpers.action = function(params, hash, options, env){
 
-    }
+    };
 
-    function __length(params, hash, options, env){
+    helpers.length = function(params, hash, options, env){
         return params[0] && params[0].length || 0;
-    }
+    };
 
     // Attribute helper handles binding data to dom attributes
-    function __attribute(params, hash, options, env) {
+    helpers.attribute = function(params, hash, options, env) {
       var checkboxChange,
           type = options.element.getAttribute("type"),
           inputTypes = {'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true,},
@@ -16347,17 +16341,17 @@ define("rebound/hooks",
       }
 
       return params[1];
-    }
+    };
 
-    function __concat(params, hash, options, env) {
+    helpers.concat = function(params, hash, options, env) {
       var value = "";
       for (var i = 0, l = params.length; i < l; i++) {
         value += params[i];
       }
       return value;
-    }
+    };
 
-    function __if(params, hash, options, env){
+    helpers.if = function(params, hash, options, env){
       var condition = params[0];
 
       if(condition === undefined){ return console.log("Condition passed to if helper is undefined!"); }
@@ -16395,9 +16389,11 @@ define("rebound/hooks",
       }
 
       return '';
-    }
+    };
 
-    function __unless(params, hash, options, env){
+
+    // TODO: Proxy to if helper with inverted params
+    helpers.unless = function(params, hash, options, env){
       var condition = params[0];
 
       if(condition === undefined){ return console.log("Condition passed to unless helper is undefined!"); }
@@ -16430,7 +16426,7 @@ define("rebound/hooks",
       }
 
       return '';
-    }
+    };
 
     // Given an array, predicate and optional extra variable, finds the index in the array where predicate is true
     function findIndex(arr, predicate, cid) {
@@ -16454,7 +16450,7 @@ define("rebound/hooks",
       return -1;
     }
 
-    function __each(params, hash, options, env){
+    helpers.each = function(params, hash, options, env){
       var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
           start, end, // used below to remove trailing junk morphs from the dom
           position, // Stores the iterated element's integer position in the dom list
@@ -16518,25 +16514,40 @@ define("rebound/hooks",
 
       // No need for a return statement. Our placeholder (containing element) now has all the dom we need.
 
-    }
+    };
 
-    function __with(params, hash, options, env){
+    helpers.with = function(params, hash, options, env){
 
       // Render the content inside our block helper with the context of this object. Returns a dom tree.
       return options.render(params[0], options);
 
       // TODO: Needs data binding?...
 
-    }
+    };
 
-    function __partial(params, hash, options, env){
+    helpers.partial = function(params, hash, options, env){
 
       if(typeof partials[params[0]] === 'function'){
         return partials[params[0]](options.context, env);
       }
 
-    }
+    };
 
+    __exports__["default"] = helpers;
+  });
+define("rebound/hooks", 
+  ["rebound/lazy-value","rebound/util","rebound/helpers","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
+    
+    var LazyValue = __dependency1__["default"];
+    var util = __dependency2__["default"];
+    var defaultHelpers = __dependency3__["default"];
+
+
+    var hooks = {},
+        helpers = {},
+        partials = {},
+        components = {};
 
     /*******************************
             Hook Utils
@@ -16728,15 +16739,15 @@ define("rebound/hooks",
 
     // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
     function lookupHelper(name, env) {
-      if(name === 'attribute') { return __attribute; }
-      if(name === 'if') { return __if; }
-      if(name === 'unless') { return __unless; }
-      if(name === 'each') { return __each; }
-      if(name === 'with') { return __with; }
-      if(name === 'partial') { return __partial; }
-      if(name === 'concat') { return __concat; }
-      if(name === 'on') { return __on; }
-      if(name === 'action') { return __action; }
+      if(name === 'attribute') { return defaultHelpers.attribute; }
+      if(name === 'if') { return defaultHelpers.if; }
+      if(name === 'unless') { return defaultHelpers.unless; }
+      if(name === 'each') { return defaultHelpers.each; }
+      if(name === 'with') { return defaultHelpers.with; }
+      if(name === 'partial') { return defaultHelpers.partial; }
+      if(name === 'concat') { return defaultHelpers.concat; }
+      if(name === 'on') { return defaultHelpers.on; }
+      if(name === 'action') { return defaultHelpers.action; }
       return helpers[name];
     }
 
@@ -16800,10 +16811,6 @@ define("rebound/hooks",
       return options.lazyValue;
     }
 
-    /*******************************
-            Default Hooks
-    ********************************/
-
     // Given a root element, cleans all of the morph lazyValues for a given subtree
     // TODO: Theres probably a more efficient way to write this function.
     function cleanSubtree(mutations, observer){
@@ -16823,6 +16830,10 @@ define("rebound/hooks",
     }
 
     var subtreeObserver = new MutationObserver(cleanSubtree);
+
+    /*******************************
+            Default Hooks
+    ********************************/
 
     hooks.content = function(placeholder, path, context, params, options, env) {
 
@@ -18791,7 +18802,7 @@ define("rebound/components/router",
       function loadPageResources(primaryRoute, isGlobal) {
 
         // Expecting Module Definition as 'SearchApp' Where 'Search' a Primary Route
-        var jsPrefix = config.jsPrefix.replace(/:route:/g, primaryRoute),
+        var jsPrefix = config.jsPrefix.replace(/:route/g, primaryRoute),
             jsUrl = jsPrefix + primaryRoute + config.jsSuffix,
             cssUrl = config.cssPrefix + primaryRoute + config.cssSuffix + '.css',
             cssLoaded = false,
@@ -26288,14 +26299,6 @@ define("htmlbars-compiler/compiler",
     }
 
     __exports__.compileSpec = compileSpec;
-  });
-define("rebound/helpers", 
-  ["exports"],
-  function(__exports__) {
-    
-    var helpers = {};
-
-    __exports__.helpers = helpers;
   });
 define("rebound/compiler", 
   ["htmlbars-compiler/compiler","htmlbars-runtime/utils","rebound/helpers","rebound/hooks","exports"],
