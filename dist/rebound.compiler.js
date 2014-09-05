@@ -16451,6 +16451,9 @@ define("rebound/helpers",
     }
 
     helpers.each = function(params, hash, options, env){
+
+      if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.error('Undefined value passed to each helper. Provide a default value.'); return; }
+
       var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
           start, end, // used below to remove trailing junk morphs from the dom
           position, // Stores the iterated element's integer position in the dom list
@@ -18293,6 +18296,8 @@ define("rebound/components/model",
       for (key in attrs) {
         val = attrs[key];
 
+        if(val === null){ val = undefined; }
+
         // If any value is a function, turn it into a computed property
         if(_.isFunction(val)){
           propertyCompiler.register(this, key, val);
@@ -18364,6 +18369,7 @@ define("rebound/components/model",
         this._isSerializing = true;
         var json = _.clone(this.attributes);
         _.each(json, function(value, name) {
+            if( _.isNull(value) || _.isUndefined(value) ){ return; }
             _.isFunction(value.toJSON) && (json[name] = value.toJSON());
         });
         this._isSerializing = false;

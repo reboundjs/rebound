@@ -84,6 +84,8 @@ Backbone.Model.prototype.set = function(key, val, options){
   for (key in attrs) {
     val = attrs[key];
 
+    if(val === null){ val = undefined; }
+
     // If any value is a function, turn it into a computed property
     if(_.isFunction(val)){
       propertyCompiler.register(this, key, val);
@@ -155,6 +157,7 @@ Backbone.Model.prototype.toJSON = function() {
     this._isSerializing = true;
     var json = _.clone(this.attributes);
     _.each(json, function(value, name) {
+        if( _.isNull(value) || _.isUndefined(value) ){ return; }
         _.isFunction(value.toJSON) && (json[name] = value.toJSON());
     });
     this._isSerializing = false;
