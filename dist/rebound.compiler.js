@@ -16262,7 +16262,14 @@ define("rebound/helpers",
     
     var LazyValue = __dependency1__["default"];
 
-    var helpers = {};
+    var helpers = {},
+        partials = {};
+
+    helpers.registerPartial = function(name, func){
+      if(_.isFunction(func) && typeof name === 'string'){
+        partials[name] = func;
+      }
+    };
 
     /*******************************
             Default helpers
@@ -16549,7 +16556,6 @@ define("rebound/hooks",
 
     var hooks = {},
         helpers = {},
-        partials = {},
         components = {};
 
     /*******************************
@@ -16992,35 +16998,53 @@ define("rebound/hooks",
         // For each change on our component, update the states of the original context and the element's proeprties.
         context.listenTo(component, 'change', function(model){
 
-          var path = model.__path().replace(context.__path(), ''),
-              split = path.split('.'),
-              json = model.toJSON();
+          var componentPath = (model.__path()).slice( 1 ),
+              contextPath = (context.__path()).slice( 1 ),
+              json = model.toJSON(),
+              componentAttrs = model.changedAttributes(),
+              contextAttrs = {};
 
-          // delete json.id;
-          // delete model.changed.id;
-
-          if(options.hash[split[1]]){
-            split[1] = options.hash[split[1]].path;
+          // If changed model is our top level component object, then the value changed is a primitive
+          // Only update the values that were passed in to our component
+          // Variable names may change when passed into components (ex: user={{person}}).
+          // When user changes on the component, be sure to update the person variable
+          if(componentPath === ""){
+            // For each attribute modified on our component, update the context's corrosponding key
+            _.each(componentAttrs, function(value, componentKey){
+              if(options.hash[componentKey] && options.hash[componentKey].path){
+                contextAttrs[options.hash[componentKey].path] = value;
+              }
+            });
           }
-          path = split.join('.');
+          // If changed model is a sub object of the component, only update the values that were passed in to our component
+          else{
+            // If base model was renamed, create the actual path on the context we're updating
+            contextPath = componentPath.split('.');
+            if(options.hash.hasOwnProperty(contextPath[0])){
+              contextPath[0] = options.hash[contextPath[0]].path;
+            }
+            contextPath = contextPath.join('.');
 
-          if(context.get(path)){
-            context.get(path).set(model.changedAttributes());
+            // All values were passed in as is, use all of them
+            contextAttrs = componentAttrs;
           }
 
-          // Set the properties on our element for visual referance
-          _.each(json, function(value, key){
-            // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
-            if((_.isObject(value))){ return; }
-            value = (_.isObject(value)) ? JSON.stringify(value) : value;
-            element.setAttribute(key, value);
-          });
+          // Update our context at the right path with the right attrubutes
+          context.get(contextPath).set(contextAttrs);
+
+          // Set the properties on our element for visual referance if we are on a top level attribute
+          if(componentPath === ""){
+            _.each(json, function(value, key){
+              // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
+              if((_.isObject(value))){ return; }
+              value = (_.isObject(value)) ? JSON.stringify(value) : value;
+              element.setAttribute(key, value);
+            });
+          }
         });
 
         // For each change to the original context, update our component
         component.listenTo(context, 'change', function(model){
-
-          // delete model.changed.id;
 
           var path = model.__path(),
               split = path.split('.');
@@ -17087,15 +17111,9 @@ define("rebound/hooks",
       helpers[key] = callback;
     }
 
-    function registerPartial(name, func){
-      if(_.isFunction(func) && typeof name === 'string'){
-        partials[name] = func;
-      }
-    }
-
     __exports__["default"] = {
       registerHelper: registerHelper,
-      registerPartial: registerPartial,
+      registerPartial: defaultHelpers.registerPartial,
       hooks: hooks,
       helpers: helpers,
       components: components

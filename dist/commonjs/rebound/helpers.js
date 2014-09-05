@@ -1,7 +1,14 @@
 "use strict";
 var LazyValue = require("../rebound/lazy-value")["default"];
 
-var helpers = {};
+var helpers = {},
+    partials = {};
+
+helpers.registerPartial = function(name, func){
+  if(_.isFunction(func) && typeof name === 'string'){
+    partials[name] = func;
+  }
+};
 
 /*******************************
         Default helpers
