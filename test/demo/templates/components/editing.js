@@ -36,7 +36,8 @@ return (function(){
     };
   proto.attributeChangedCallback = function(attrName, oldVal, newVal){
     try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
-    this.__template.set(attrName, newVal);
+    if(newVal === null){ this.__template.unset(attrName); }
+    else{ this.__template.set(attrName, newVal); }
     script.attributeChangedCallback && script.attributeChangedCallback.call(this.__template);
   }
   return document.registerElement("edit-todo", {prototype: proto} );

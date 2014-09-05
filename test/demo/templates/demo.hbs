@@ -69,7 +69,7 @@
 
 		},
 		createdCallback: function(){
-
+			window.el = this;
 		},
 		attachedCallback: function(){
 
@@ -115,7 +115,6 @@
 			return this.get('todos').where({'isCompleted': true}).length;
 		},
 		filteredTodos: function(){
-			// console.log('In Filtered Todos', this.get('filter'), new Backbone.Collection(this.get('todos').where({'isCompleted': false})));
 			if(this.get('filter') == 'all')
 				return this.get('todos');
 			if(this.get('filter') == 'active')

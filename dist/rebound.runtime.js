@@ -16432,56 +16432,89 @@ define("rebound/hooks",
       return '';
     }
 
+    // Given an array, predicate and optional extra variable, finds the index in the array where predicate is true
+    function findIndex(arr, predicate, cid) {
+      if (arr == null) {
+        throw new TypeError('findIndex called on null or undefined');
+      }
+      if (typeof predicate !== 'function') {
+        throw new TypeError('predicate must be a function');
+      }
+      var list = Object(arr);
+      var length = list.length >>> 0;
+      var thisArg = arguments[1];
+      var value;
+
+      for (var i = 0; i < length; i++) {
+        value = list[i];
+        if (predicate.call(thisArg, value, i, list, cid)) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
     function __each(params, hash, options, env){
-      var value = params[0];
+      var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
+          start, end, // used below to remove trailing junk morphs from the dom
+          position, // Stores the iterated element's integer position in the dom list
+          currentModel = function(element, index, array, cid){
+            return element.cid === cid; // Returns true if currently observed element is the current model.
+          };
 
-      if(!value){ return; }
-
-      if(value.isCollection){
-        value = value.models;
-      }
-
-      // Remove elements at indicies passed to us in the collection's __removedIndex array
-      if(_.isArray(value.__removedIndex) && value.__removedIndex.length && options.placeholder.morphs){
-        // For each removed indes, in decending order so we dont mess up the dom for later indicies, destroy its morph element
-        _.each(_.sortBy(value.__removedIndex, function(num){return num;}).reverse(), function(index){
-          options.placeholder.morphs[index].destroy();
-        });
-        // Leave our removed index array clean for the next call
-        value.__removedIndex.length = 0;
-      }
-
-      value.__indexed = false;
+      // Create our morph array if it doesnt exist
+      options.placeholder.morphs = options.placeholder.morphs || [];
 
       _.each(value, function(obj, key, list){
 
+        position = findIndex(options.placeholder.morphs, currentModel, obj.cid);
+
         // Even if rendered already, update each element's index, key, first and last in case of order changes or element removals
         if(_.isArray(value)){
-          obj.set({'@index': key, '@first': (key === 0), '@last': (key === value.length-1)});
+          obj.set({'@index': key, '@first': (key === 0), '@last': (key === value.length-1)}, {silent: true});
         }
 
         if(!_.isArray(value) && _.isObject(value)){
-          obj.set({'@key' : key});
+          obj.set({'@key' : key}, {silent: true});
         }
 
-        // If this object in the collection has already been rendered, move on.
-        if(obj.__rendered){ return; }
+        // If this model is not the morph element at this index
+        if(position !== key){
 
-        // If this model was added silently, but is now being rendered, removing it will need to update the dom.
-        if(obj.__silent){ delete obj.__silent; }
+          // If this model was added silently, but is now being rendered, removing it will need to update the dom.
+          if(obj.__silent){ delete obj.__silent; }
 
-        // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
-        var lazyValue = new LazyValue(function(){
-          return options.render(obj, options);
-        });
+          // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
+          var lazyValue = new LazyValue(function(){
+            return options.render(obj, options);
+          });
 
-        // Insert our newly rendered value (a document tree) into our placeholder (the containing element) at its requested position (where we currently are in the object list)
-        options.placeholder.insert(key, lazyValue.value());
+          // If this model is rendered somewhere else in the list, destroy it
+          if(position > -1){
+            options.placeholder.morphs[position].destroy();
+          }
 
-        // Mark this object as rendered so we will not re-render it a second time
-        obj.__rendered = true;
+          // Destroy the morph we're replacing
+          if(options.placeholder.morphs[key]){
+            options.placeholder.morphs[key].destroy();
+          }
+
+          // Insert our newly rendered value (a document tree) into our placeholder (the containing element) at its requested position (where we currently are in the object list)
+          options.placeholder.insert(key, lazyValue.value());
+
+          // Label the inserted morph element with this model's cid
+          options.placeholder.morphs[key].cid = obj.cid;
+
+        }
 
       }, this);
+
+      // If any more morphs are left over, remove them. We've already gone through all the models.
+      start = value.length;
+      end = options.placeholder.morphs.length - 1;
+      for(end; start <= end; end--){
+        options.placeholder.morphs[end].destroy();
+      }
 
       // No need for a return statement. Our placeholder (containing element) now has all the dom we need.
 
@@ -16570,15 +16603,8 @@ define("rebound/hooks",
 
       // Add our callback
       context.__observers[path].push(function() {
-        // TODO: Add a garbage collector that periodically walks over the data and cleans observers.
+        // TODO: Add a garbage collector that periodically walks over the data and cleans observers? May not be needed.
         try{
-          // If morph element is no longer on the page, remove our bound observer. Otherwise, notify our lazy value of the value change.
-
-          // This method breaks shit...good idea though
-          // if(morph && morph.element && !document.contains(morph.element)){
-          //   delete context.__observers[path][length];
-          //   return;
-          // }
           return lazyValue.notify();
         } catch(err) {
           // If we run into an error running notify, that means we have a dead dependancy chain. Kill it.
@@ -16793,6 +16819,7 @@ define("rebound/hooks",
           });
         }
       });
+
     }
 
     var subtreeObserver = new MutationObserver(cleanSubtree);
@@ -16950,9 +16977,13 @@ define("rebound/hooks",
 
         // For each change on our component, update the states of the original context and the element's proeprties.
         context.listenTo(component, 'change', function(model){
+
           var path = model.__path().replace(context.__path(), ''),
               split = path.split('.'),
-              json = {};
+              json = model.toJSON();
+
+          // delete json.id;
+          // delete model.changed.id;
 
           if(options.hash[split[1]]){
             split[1] = options.hash[split[1]].path;
@@ -16964,7 +16995,6 @@ define("rebound/hooks",
           }
 
           // Set the properties on our element for visual referance
-          json = component.toJSON();
           _.each(json, function(value, key){
             // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
             if((_.isObject(value))){ return; }
@@ -16975,6 +17005,9 @@ define("rebound/hooks",
 
         // For each change to the original context, update our component
         component.listenTo(context, 'change', function(model){
+
+          // delete model.changed.id;
+
           var path = model.__path(),
               split = path.split('.');
 
@@ -18249,8 +18282,6 @@ define("rebound/components/model",
       for (key in attrs) {
         val = attrs[key];
 
-        if(val === undefined || val === null){ continue; }
-
         // If any value is a function, turn it into a computed property
         if(_.isFunction(val)){
           propertyCompiler.register(this, key, val);
@@ -18265,16 +18296,16 @@ define("rebound/components/model",
         }
 
         // Set this element's path variable. Returns the fully formed json path of this element
-        if(val){
+        if(val !== undefined){
           val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
-        }
 
-        // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
-        if(!val.__parent && val.isModel || val.isCollection){
-          // When requesting the name value of our value, return the its key appended to the computed name value of our parent
-          // Closure is needed to preserve values in the instance so they dont get set to the prototype
-          val.__parent = this;
-          val.on('all', this.trigger, this);
+          // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
+          if(!val.__parent && val.isModel || val.isCollection){
+            // When requesting the name value of our value, return the its key appended to the computed name value of our parent
+            // Closure is needed to preserve values in the instance so they dont get set to the prototype
+            val.__parent = this;
+            val.on('all', this.trigger, this);
+          }
         }
 
         // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
@@ -18356,6 +18387,7 @@ define("rebound/components/collection",
 
     // By default, __path returns the root object unless overridden
     Backbone.Collection.prototype.__path = function(){return '';};
+
     // Have collections set its model's names.
     Backbone.Collection.prototype.__set = Backbone.Collection.prototype.set;
     Backbone.Collection.prototype.set = function(models, options){
@@ -18403,52 +18435,6 @@ define("rebound/components/collection",
       // Call original set function
       this.__set.call(this, models, options);
 
-    };
-
-    // We override the _reset function to mark all models for removal in the dom and preserve our __removedIndex array on internal _reset.
-    Backbone.Collection.prototype.___reset = Backbone.Collection.prototype._reset;
-    Backbone.Collection.prototype._reset = function(){
-      // Ensure existance of __removedIndex array. Saves indicies of removed elements to be passed to our #each helper.
-      var cachedArray = this.models && this.models.__removedIndex || [];
-      // Mark everything for removal from dom
-      _.each(this.models, function(model){
-        // If we have been accumulating silent removes, use the original index, otherwise use our current one.
-        this.remove(model, {silent: true, __silent: true});
-      }, this);
-      this.___reset.call(this);
-      this.models = this.models || [];
-      this.models.__removedIndex = cachedArray;
-    };
-
-    // We override the remove function to always trigger a dom sync on removal.
-    Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
-    Backbone.Collection.prototype.remove = function(models, options){
-      var singular = !_.isArray(models),
-          prevLength = this.models.__removedIndex.length  > 0;
-      models = singular ? [models] : _.clone(models);
-      options = _.extend({}, options);
-
-      // If a silent remove and this is the first silent remove since the last dom update, save our initial indicies
-      if( options.silent && !this.models.__indexed ){
-        _.each(this.models, function(model, index){
-          model.__originalIndex = index;
-        });
-        this.models.__indexed = true;
-      }
-
-      // Keep referance of removed elements' index so our each helper can stay in sync when elements are removed silently.
-      _.each(models, function(model){
-        // If this model was added silently, we do not need to alert the dom about its removal.
-        if(model.__silent){ return; }
-        // If we have been accumulating silent removes, use the original index, otherwise use our current one.
-        var index = (prevLength  > 0) ? model.__originalIndex : this.indexOf(model);
-        this.models.__removedIndex.push(index);
-      }, this);
-
-      // Call original set function.
-      if(!options.__silent){
-        this.__remove.call(this, models, options);
-      }
     };
 
     __exports__.Collection = Collection;
@@ -18585,6 +18571,7 @@ define("rebound/components/controller",
           collection = model;
         }
         changed[collection.__path()] = collection;
+
         this._notify(this, changed);
       },
 
@@ -18617,11 +18604,13 @@ define("rebound/components/controller",
                 }
               }
             });
+
             queue.push({obj: obj, paths: paths});
           }
           obj = obj.__parent;
         }
         len = queue.length;
+
         for(i=len-1; i>=0; i--){
           notify(queue[i].obj, queue[i].paths);
         }

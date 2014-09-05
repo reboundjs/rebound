@@ -21,6 +21,7 @@ function pathGenerator(collection, model){
 
 // By default, __path returns the root object unless overridden
 Backbone.Collection.prototype.__path = function(){return '';};
+
 // Have collections set its model's names.
 Backbone.Collection.prototype.__set = Backbone.Collection.prototype.set;
 Backbone.Collection.prototype.set = function(models, options){
@@ -68,52 +69,6 @@ Backbone.Collection.prototype.set = function(models, options){
   // Call original set function
   this.__set.call(this, models, options);
 
-};
-
-// We override the _reset function to mark all models for removal in the dom and preserve our __removedIndex array on internal _reset.
-Backbone.Collection.prototype.___reset = Backbone.Collection.prototype._reset;
-Backbone.Collection.prototype._reset = function(){
-  // Ensure existance of __removedIndex array. Saves indicies of removed elements to be passed to our #each helper.
-  var cachedArray = this.models && this.models.__removedIndex || [];
-  // Mark everything for removal from dom
-  _.each(this.models, function(model){
-    // If we have been accumulating silent removes, use the original index, otherwise use our current one.
-    this.remove(model, {silent: true, __silent: true});
-  }, this);
-  this.___reset.call(this);
-  this.models = this.models || [];
-  this.models.__removedIndex = cachedArray;
-};
-
-// We override the remove function to always trigger a dom sync on removal.
-Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
-Backbone.Collection.prototype.remove = function(models, options){
-  var singular = !_.isArray(models),
-      prevLength = this.models.__removedIndex.length  > 0;
-  models = singular ? [models] : _.clone(models);
-  options = _.extend({}, options);
-
-  // If a silent remove and this is the first silent remove since the last dom update, save our initial indicies
-  if( options.silent && !this.models.__indexed ){
-    _.each(this.models, function(model, index){
-      model.__originalIndex = index;
-    });
-    this.models.__indexed = true;
-  }
-
-  // Keep referance of removed elements' index so our each helper can stay in sync when elements are removed silently.
-  _.each(models, function(model){
-    // If this model was added silently, we do not need to alert the dom about its removal.
-    if(model.__silent){ return; }
-    // If we have been accumulating silent removes, use the original index, otherwise use our current one.
-    var index = (prevLength  > 0) ? model.__originalIndex : this.indexOf(model);
-    this.models.__removedIndex.push(index);
-  }, this);
-
-  // Call original set function.
-  if(!options.__silent){
-    this.__remove.call(this, models, options);
-  }
 };
 
 exports.Collection = Collection;

@@ -127,6 +127,7 @@ _.extend(Controller.prototype, Backbone.Model.prototype, {
       collection = model;
     }
     changed[collection.__path()] = collection;
+
     this._notify(this, changed);
   },
 
@@ -159,11 +160,13 @@ _.extend(Controller.prototype, Backbone.Model.prototype, {
             }
           }
         });
+
         queue.push({obj: obj, paths: paths});
       }
       obj = obj.__parent;
     }
     len = queue.length;
+
     for(i=len-1; i>=0; i--){
       notify(queue[i].obj, queue[i].paths);
     }

@@ -105,7 +105,8 @@ function precompile(str, options){
                '    };\n' +
                '  proto.attributeChangedCallback = function(attrName, oldVal, newVal){\n' +
                '    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }\n' +
-               '    this.__template.set(attrName, newVal);\n' +
+               '    if(newVal === null){ this.__template.unset(attrName); }\n' +
+               '    else{ this.__template.set(attrName, newVal); }\n' +
                '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__template);\n' +
                '  }\n' +
                '  return document.registerElement("' + name + '", {prototype: proto} );\n' +
