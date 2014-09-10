@@ -369,7 +369,7 @@ module.exports = function(grunt) {
     'requirejs:runtime',
     'requirejs:runtimeMin',
     'requirejs:compiler',
-    //'requirejs:compilerMin'
+    'requirejs:compilerMin'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'

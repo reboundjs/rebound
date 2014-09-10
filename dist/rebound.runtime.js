@@ -18282,6 +18282,7 @@ define("rebound-data/model",
       if(_.isFunction(value)){
         value = value.call(this);
       }
+      
       return value;
     };
 
