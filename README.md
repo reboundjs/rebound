@@ -20,13 +20,17 @@ But just trust me on this, this is going to be good.
 
 #### Wait, what is this again?
 
-**tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. And, like Ember, we can use these features to allow for live data-binding with our Backbone models - change a value in your model or collection, and your views update automagically.
+**tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. And, like Ember, we can use these features to allow for live data-binding with our Backbone models - change a value in your model or collection, and your views update automagically. Throw in the brilliant Polymer Custom-Elements polyfill and *bam* – Rebound.
 
-**The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details, but the
+**The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details. But long story short is this new library makes data binding very fast and very powerful.
 
-Rebound + HTMLBars is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars, binding to your models on first render and live updating your dom as they change. To make the conversation two-way, an event helper lets you respond to user interaction by defining s in your HTMLBars templates. Combine with with a powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
+The [Polymer](https://github.com/Polymer) people over at Google have created a polyfill for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
 
-So we remove Backbone's most annoying 'feature' - manual data binding – while avoiding the overhead, convention restrictions and learning curve of Ember. And unlike some of the very few other data-binding libraries out there (heres looking at you React, epoxyjs, knockoutjs, etc), we get the simple interface of the much-loved Handlebars syntax for our templates, without any extra elements or data attributes cluttering our DOM! Server side rendering of data-bound templates will be possible in the near future! Whats there not to love?!
+[Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
+
+[Rebound](https://github.com/epicmiller/rebound) is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars templates, binding to your models to the dom on render and live updating your page as they change. To make the conversation two-way, event helpers and automatic binding to form elements lets you respond to user interaction. Combine this with an augmented but still powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
+
+So we remove Backbone's most annoying 'feature' - manual data binding – while avoiding the overhead, proprietary convention restrictions and learning curve of Ember. And unlike some of the very few other data-binding libraries out there (heres looking at you React, epoxyjs, knockoutjs, etc), we get the simple interface of the much-loved Handlebars syntax for our templates, without any extra elements or data attributes cluttering our DOM! Server side rendering of data-bound templates will be possible in the near future! Whats there not to love?!
 
 #### Awesome. How do I use it?
 
@@ -35,8 +39,6 @@ The project is still in flux, so everything below is subject to change! Use at y
 ##### To test what is already there:
 
  - Install all dependancies: ```npm install```
-
- - Just build the project: ```grunt build```
 
  - Test in the command line: ```npm test```
 
@@ -49,20 +51,18 @@ The project is still in flux, so everything below is subject to change! Use at y
 </p>
 - - -
 
-#### NOTE: This project is not 100% ready yet and this documentation represents how Rebound will be used and not the current state of the project!
-
-There will soon be a Bower repository for Rebound, but until then use what is is the /dist directory after running ```grunt build```, ```npm test``` or ```npm start```. There are two packaged files called ```rebound.runtime.pkg.js``` and ```rebound.compiler.pkg.js```. Both of these files contain [JQuery](http://www.jquery.com), [Underscore](http://www.underscorejs.org), [RequireJS](requirejs.org), [Backbone](backbonejs.org) and of course, the main Rebound library. The compiler package contains the extra code needed to compile HTMLBars templates and should rarely be needed on any client facing site. All templates should be precompiled on the server by the [Grunt-Rebound](https://github.com/epicmiller/grunt-rebound) plugin, or a similar pre-compiler.
+There will soon be a Bower repository for Rebound, but until then use what is is the /dist directory. There are two packaged files called ```rebound.runtime.js``` and ```rebound.compiler.js```. Both of these files contain [JQuery](http://www.jquery.com), [Underscore](http://www.underscorejs.org), [RequireJS](requirejs.org), [Backbone](backbonejs.org), [CustomElements](https://github.com/Polymer/CustomElements), [HTMLBars](https://github.com/tildeio/htmlbars) and of course, the main Rebound library. The compiler package contains the extra code needed to compile HTMLBars templates client side and should rarely be needed on any user facing site. All templates should be precompiled on the server by the [Grunt-Rebound](https://github.com/epicmiller/grunt-rebound) plugin, or a similar pre-compiler.
 
 ### How do I get Rebound on my page?
 
 You can include Rebound on your page like this:
 
 ```js
-<script src="/javascripts/lib/rebound.runtime.pkg.js" id="Rebound">
+<script src="/javascripts/lib/rebound.runtime.js" id="Rebound">
 {
   "appContext": "/",
   "globalComponents": {"chrome" : "nav"},
-  "jsPrefix": "/javascripts/apps/",
+  "jsPrefix": "/javascripts/apps/:route/",
   "jsSuffix": "",
   "cssPrefix": "/stylesheets/apps/",
   "cssSuffix": "",
@@ -73,14 +73,14 @@ You can include Rebound on your page like this:
 }
 </script>
 ```
-Because the script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's config options right where you include the Rebound library itself. Convenient!
+Because the Rebound script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's config options right where you include the Rebound library itself. Convenient!
 
 ##### Config Options
 
  - __appContext__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
  - __globalComponents__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
- - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
- - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
+ - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
+ - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
  - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
  - __cssSuffix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
  - __triggerOnFirstLoad__ - If false, Rebound will not try and trigger the route  once the page is loaded. Equivalent to passing ```{ silent: true }``` to Backbone.history.start
@@ -89,30 +89,31 @@ Because the script tag contains a src, nothing inside it gets executed, but is s
 ### Routing
 
 Rebound adds a three bits of functionality to Backbone's router to make navigation in a single page app even easier:
- - Relative urls will always try and trigger a route. You can now write ```<a href="/profile/1234"></a>``` and have that route be triggered on the router. No need for wiring click events, or helpers to trigger routes.
+ - Relative urls will always try and trigger a route. You can now write ```<a href="/profile/1234"></a>``` and have that route be triggered on the router. No need for wiring click events, or using helpers to trigger routes.
  - Absolute urls like ```<a href="www.google.com"></a>``` will be ignored by the router and load normally.
- - If a route does not exist in the router, Rebound will try and automatically load that page's resources from ```jsPrefix``` + ```baseRoute``` + ```jsSuffix``` and then re-trigger the route.
+ - If a route does not exist in the router, Rebound will try and automatically load that page's resources in AMD format from ```jsPrefix``` + ```baseRoute``` + ```jsSuffix``` and then re-trigger the route.
+ - If for some reason you need to access the router directly, the router instance can be found at Rebound.router
 
-By loading routes and page resources as they are needed, your initial __page load size is greatly reduced__. Your application also __does not need to know every route on page load - every page in your application manages its own routing__. This way there is no central router to manage, a major benefit for larger applications.
+By loading routes and page resources as they are needed, your initial __page load size is greatly reduced__. Your application also __does not need to know every route on page load - every page in your application manages its own routing__ using the syntax show below in the components section. This way there is no central router to manage, a major benefit for larger applications.
 
 Here's a walkthrough of how Rebound's automatic resource loading works:
 
->A page is loaded at /profile/1234, with the jsPrefix "javascripts/apps/" and jsSuffix "Page". Rebound will start the router and try to trigger the route /profile/1234. Because this route doesn't exits, the wildcard route is executed. Rebound then tries to load the javascript file ```/javascripts/apps/profilePage.js```. Inside this file is all the resources needed for the profile page, including its template, component, and additional routes as you'll see below in the components section. The routes defined in this page component are then loaded into the router and the /profile/1234 route is triggered again. This time, because the page's resources have been loaded, the /profile/:uid route has now presumably been defined and the route will execute.
+>A page is loaded at /profile/1234, with the jsPrefix "javascripts/apps/" and jsSuffix "Page". Rebound will start the router and try to trigger the route /profile/1234. Because this route doesn't exits, the wildcard route is executed. Rebound then tries to load the javascript file ```/javascripts/apps/profilePage.js```. Inside this file are all the resources needed for the profile page, including its template, component properties, and additional routes as you'll see below in the components section. The routes defined in this page component are then loaded into the router and the /profile/1234 route is triggered again. This time, because the page's resources have been loaded, the /profile/:uid route has now presumably been defined and the route will execute.
 
 >When the user clicks on another link, say, /discover, the router sees that it does not have a /discover route loaded. The router again hits the wildcard route and fetches ```/javascripts/apps/discoverPage.js```. The old profile app is then uninstalled, its routes removed, and the discover page is loaded as before.
 
 ### Components
 
-Rebound is a Model View Component library. This means the basic building blocks of Rebound are data bound components which adhere closely to the W3 Web Components syntax.
+Rebound is a Model View Component library. This means the basic building blocks of Rebound are data bound components which adhere closely to the W3 Custom Elements spec.
 
 ##### Okay, cool, what do they look like?
 
 A Rebound component looks like this:
 
 ```html
-<element name="edit-todo">
+<element name="example-element">
   <template>
-    <input class="edit" value="{{value}}" type="text" {{on "blur" "doneEditing"}} {{on "keyup" "inputModified"}}>
+    <input class="edit" value="{{value}}" type="text" {{on "blur" "doneEditing"}}>
   </template>
   <script>
     return ({
@@ -142,17 +143,7 @@ A Rebound component looks like this:
 
       /********* Component Methods ********/
       doneEditing: function(event){
-        this.set('editing', false);
-      },
-      inputModified: function(event){
-        // If enter key is pressed
-        if(event.keyCode == 13)
-          this.doneEditing(event);
-        // If escape key is pressed
-        if(event.keyCode == 27){
-          this.set('value', this.oldValue);
-          this.doneEditing(event);
-        }
+        console.log("I just can't seem to focus!");
       }
     })
   </script>
@@ -162,34 +153,32 @@ A Rebound component looks like this:
 and used like this
 
 ```html
-<edit-todo value={{title}} editing={{editing}}></edit-todo>
+<example-element value={{foo}}></example-element>
 ```
 
-The above is actually very close to what is used by the TodoMVC demo in the Rebound repository's demo application. Go take a look to see it in action!
-
-#### Sure, but how do they work?
-
-Every function in the component is called in the scope of the component itself. That means that the ```this``` variable will always be the current component.
-
-Here are the convenience methods you get when working in a component:
-
- - __get__ - ```this.get()``` is used to get the properties defined on your component just like in Backbone models. Because properties can be of any data type, either string together multiple gets to retreive nested data ```this.get('users').at(0).get('firstName')``` or, for your convenience, just pass it the path you want ```this.get('users.[0].firstName')```.
- - __set__ = ```this.set()``` is used to set component properties just like in Backbone models. Because properties can be any of any data type, either string together multiple gets followed by a set to set nested data items ```this.get('users').at(0).set('firstName', 'Adam')``` or, for your convenience, just pass it the path you want ```this.set('users.[0].firstName', 'Adam')```.
- - __$__ - Each component has a $ function that runs queries scoped within the view's element. Use like ```this.$('any#css.selector')```
- - __$el__ - All components have a DOM element at all times, accessable through the el property, whether they've already been inserted into the page or not.
- - __el__ - A cached jQuery object for the view's element. A handy reference instead of re-wrapping the DOM element all the time.
+Go take a look at the TodoMVC demo app in the Rebound repository to see the power of this syntax this in action!
 
 #### Sweet!! How do I make one?!
 
 When creating a Rebound component, think about it like you're defining a public API for the rest of the program to interface with your custom element. You'll be defining:
- - __Default Properties__ - which are accessable to your template for rendering and overridable by the properties you pass to your component.
+ - __Component Properties__ - which are accessable to your template for rendering and overridable by the properties you pass to your component.
  - __Lifecycle Methods__ - which define callback function for element creation, insertion into the dom, and removal from the dom.
  - __Component Methods__ - which are callable from the view via user input events.
  - A number of special __Config Options__ which are available to allow you to take advantage of all that Backbone model goodness.
 
-##### Default Properties
+Every function in the component is called in the scope of the component itself. That means that the ```this``` variable will always be the current component.
 
-Default properties come it two types. __Primitive Properties__ and __Computed Properties__.
+Here are the convenience methods you get when working in a component method or computed property:
+
+ - __get__ - ```this.get()``` is used to get the properties defined on your component just like in Backbone models. Because properties can be of any data type, either string together multiple gets to retreive nested data ```this.get('users').at(0).get('firstName')``` or, for your convenience, just pass it the path you want ```this.get('users.[0].firstName')```.
+ - __set__ = ```this.set()``` is used to set component properties just like in Backbone models. Because properties can be any of any data type, either string together multiple gets followed by a set to set nested data items ```this.get('users').at(0).set('firstName', 'Adam')``` or, for your convenience, just pass it the path you want ```this.set('users[0].firstName', 'Adam')```.
+ - __el__ - All components have a DOM element at all times, accessable through the el property, whether they've already been inserted into the page or not.
+ - __$__ - Each component has a $ function that runs queries scoped within the view's element. Use like ```this.$('any#css.selector')```
+ - __$el__ - A cached jQuery object for the view's element. A handy reference instead of re-wrapping the DOM element all the time.
+
+##### Component Properties
+
+Component properties come it two types. __Primitive Properties__ and __Computed Properties__.
 
 Primitive properties are exactly like they sound. They are any string, interger, boolean, object or array.
 
@@ -223,7 +212,7 @@ Computed properties are always called in the scope of the component. You can acc
 When using a Rebound component in your templates, any attributes passed to the component will override any default property of the same name you have set. The you may pass any type of data to a component this way – strings, objects or arrays.
 
 ```html
-<edit-todo value={{title}} name="Works with inline strings too."></edit-todo>
+<custom-input value={{title}} name="Works with inline strings too."></custom-input>
 ```
 
 ##### Lifecycle Methods
@@ -252,7 +241,7 @@ Component Methods are called when a user takes an action on a dom element.
 
 ```javascript
 return ({
-  elementClicked: function(event){ // Takes at least one variable
+  elementClicked: function(event){ // Takes at least one variable.
     alert("OMG! I've been clicked!!");
     // Or, has no return statement
   },
