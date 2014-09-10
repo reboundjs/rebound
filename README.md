@@ -395,8 +395,29 @@ If ```someValue``` is truthy the if helper will render whatever is in the first 
 As an inline helper the if helper looks like this:
 
 ```html
+<div class="{{if someValue 'truthy' 'falsy'}}">{{if someValue someVariable}}</div>
+```
+If ```someValue``` is truthy, the first argument is printed, otherwise, if provided, the second argument is. This form is able to be used inside of attributes, where as the block form isnt, and is very helpful with assigning classes based on a conditional variable. Both strings and component properties are valid arguments.
 
 ##### unless
+Unless is the opposite of if and has both a block and an inline form.
+
+Block:
+```html
+<div>
+  {{unless someValue}}
+    Value is false!
+  {{else}}
+    Value is true
+  {{/if}}
+</div
+```
+
+Inline:
+```html
+<div class="{{unless someValue 'falsy' 'truthy'}}">{{if someValue someVariable}}</div>
+```
+
 
 ##### each
 
