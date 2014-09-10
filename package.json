@@ -1,6 +1,6 @@
 {
   "name": "reboundjs",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "Automatic data binding for Backbone using HTMLBars.",
   "main": "dist/commonjs/rebound-precompiler/rebound-precompiler.js",
   "scripts": {
