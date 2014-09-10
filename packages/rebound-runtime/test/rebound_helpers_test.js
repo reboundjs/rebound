@@ -45,8 +45,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     }
 
     // Add get method to all objects to simulate models
-    Object.prototype.get = function(key){return this[key];}
-    Object.prototype.set = function(key, val){ this[val] = val;}
+    Object.prototype.get = function(key){ return this[key]; };
+    Object.prototype.set = function(key, val){ this[val] = val; };
 
     helpers = helpers.default;
 
@@ -272,7 +272,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       var dom = template(data);
       equalTokens(dom, '<div></div>');
       data.bool = true;
-      notify(data, 'bool')
+      notify(data, 'bool');
       equalTokens(dom, '<div>bar</div>');
 
     });
@@ -348,7 +348,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       var dom = template(data);
       equalTokens(dom, '<div>foo</div>');
       data.bool = true;
-      notify(data, 'bool')
+      notify(data, 'bool');
       equalTokens(dom, '<div>bar</div>');
 
     });
@@ -398,7 +398,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       var dom = template(data);
       equalTokens(dom, '<div>bar</div>');
       data.bool = true;
-      notify(data, 'bool')
+      notify(data, 'bool');
       equalTokens(dom, '<div>foo</div>');
 
     });
@@ -474,7 +474,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       var dom = template(data);
       equalTokens(dom, '<div>bar</div>');
       data.bool = true;
-      notify(data, 'bool')
+      notify(data, 'bool');
       equalTokens(dom, '<div>foo</div>');
 
     });

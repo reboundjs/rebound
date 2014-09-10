@@ -289,7 +289,7 @@ var AppLoader = Backbone.AppLoader = (function (Backbone) {
       Backbone.history.start(options);
 
       // Let all of our components always have referance to our appRouter
-      Backbone.Component.prototype.router = this.router;
+      Rebound.Component.prototype.router = this.router;
     }
   });
 

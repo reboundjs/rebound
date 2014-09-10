@@ -6,8 +6,8 @@ import Collection from "rebound-data/collection";
  * Note: this functionality is common for all Backbone derived class
  *
  */
-Backbone.Model.prototype.deinitialize =
-Backbone.Collection.prototype.deinitialize = function () {
+Model.prototype.deinitialize =
+Collection.prototype.deinitialize = function () {
 
   // deinitialize current class
 

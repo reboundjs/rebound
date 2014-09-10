@@ -1,11 +1,10 @@
 import propertyCompiler from "property-compiler/property-compiler";
 import util from "rebound-runtime/utils";
 import env from "rebound-runtime/env";
-import reboundData from "rebound-data/rebound-data";
-
+import { Model, Collection} from "rebound-data/rebound-data";
 
 // If Rebound Runtime has already been run, throw error
-if(Backbone.Component){
+if(Rebound.Component){
   throw 'Rebound is already loaded on the page!';
 }
 // If Backbone hasn't been started yet, throw error
@@ -16,65 +15,60 @@ if(!window.Backbone){
 var componentOptions = ['template', 'routes', 'immortal', 'data'];
 
 // New Backbone Component
-var Component = Backbone.Component = function(options){
+var Component = Model.extend({
 
-  options = options || (options = {});
-  this.dom = '';
-  this.cid = _.uniqueId('component');
-  this.attributes = {};
-  this.changed = {};
+  constructor: function(options){
 
-  _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent');
+    options = options || (options = {});
+    this.dom = '';
+    this.cid = _.uniqueId('component');
+    this.attributes = {};
+    this.changed = {};
 
-  // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
-  // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
-  // Functions are compiled to find their dependancies and registerd as compiled properties
-    // Legacy lodash only version of deepDefaults:
-      // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
-      //   if(obj === undefined) return defaults;
-      //   if(obj.isModel)
-      //    return _.defaults(obj.attributes, defaults);
-      //   return _.defaults(obj, defaults);
-      //  }));
-  this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
-  propertyCompiler.compile(this);
+    _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent');
 
-  // Get any additional routes passed in from options
-  this.routes =  _.defaults((options.routes || {}), this.routes);
-  // Ensure that all route functions exist
-  _.each(this.routes, function(value, key, routes){
-      // TODO: Better error output
-      if(typeof value !== 'string'){ throw('Function name passed to routes must be a string!'); }
-      if(!this[value]){ throw('Callback function '+value+' does not exist on the component!'); }
-  }, this);
+    // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
+    // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
+    // Functions are compiled to find their dependancies and registerd as compiled properties
+      // Legacy lodash only version of deepDefaults:
+        // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
+        //   if(obj === undefined) return defaults;
+        //   if(obj.isModel)
+        //    return _.defaults(obj.attributes, defaults);
+        //   return _.defaults(obj, defaults);
+        //  }));
+    this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
+    propertyCompiler.compile(this);
 
-  // Set our outlet and template if we have one
-  this.el = options.outlet || undefined;
-  this.template = options.template || this.template || undefined;
+    // Get any additional routes passed in from options
+    this.routes =  _.defaults((options.routes || {}), this.routes);
+    // Ensure that all route functions exist
+    _.each(this.routes, function(value, key, routes){
+        // TODO: Better error output
+        if(typeof value !== 'string'){ throw('Function name passed to routes must be a string!'); }
+        if(!this[value]){ throw('Callback function '+value+' does not exist on the component!'); }
+    }, this);
 
-  // Save our dom elements on our component
-  this.$el = $(this.el);
+    // Set our outlet and template if we have one
+    this.el = options.outlet || undefined;
+    this.template = options.template || this.template || undefined;
 
-  // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
-  this.template = this._setTemplate();
+    // Save our dom elements on our component
+    this.$el = $(this.el);
 
-  // Listen to relevent data change events
-  this._startListening();
+    // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
+    this.template = this._setTemplate();
 
-  // Render our dom
-  this.dom = this.template(this, {helpers: {'__callOnComponent': this.__callOnComponent}});
+    // Listen to relevent data change events
+    this._startListening();
 
-  // Place the dom in our custom element
-  this.el.appendChild(this.dom);
+    // Render our dom
+    this.dom = this.template(this, {helpers: {'__callOnComponent': this.__callOnComponent}});
 
-};
+    // Place the dom in our custom element
+    this.el.appendChild(this.dom);
 
-Component.prototype.__trigger = Backbone.Model.prototype.trigger;
-
-_.extend(Component.prototype, Backbone.Model.prototype, {
-
-  // Initialize is an empty function by default. Override it with your own initialization logic.
-  initialize: function(){},
+  },
 
   isComponent: true,
 
@@ -87,7 +81,7 @@ _.extend(Component.prototype, Backbone.Model.prototype, {
     if(this.$el){
       this.$el.triggerHandler.apply(this, arguments);
     }
-    this.__trigger.apply(this, arguments);
+    Backbone.Model.prototype.trigger.apply(this, arguments);
   },
 
   __callOnComponent: function(name, event){
@@ -167,51 +161,51 @@ _.extend(Component.prototype, Backbone.Model.prototype, {
       env.notify(queue[i].obj, queue[i].paths);
     }
   }
-
 });
 
-Component.extend = function(protoProps, staticProps) {
-    var parent = this,
-        child,
-        reservedMethods = {'trigger':1, 'constructor':1, 'get':1, 'set':1, 'has':1, 'extend':1, 'escape':1, 'unset':1, 'clear':1, 'cid':1, 'attributes':1, 'changed':1, 'toJSON':1, 'validationError':1, 'isValid':1, 'isNew':1, 'hasChanged':1, 'changedAttributes':1, 'previous':1, 'previousAttributes':1},
-        configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
+Component.extend= function(protoProps, staticProps) {
+  var parent = this,
+      child,
+      reservedMethods = {'trigger':1, 'constructor':1, 'get':1, 'set':1, 'has':1, 'extend':1, 'escape':1, 'unset':1, 'clear':1, 'cid':1, 'attributes':1, 'changed':1, 'toJSON':1, 'validationError':1, 'isValid':1, 'isNew':1, 'hasChanged':1, 'changedAttributes':1, 'previous':1, 'previousAttributes':1},
+      configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
 
-    protoProps.defaults = {};
+  protoProps.defaults = {};
 
-    // For each primative value, or computed property (functions with that take no arguments and have a return value), add it to our data object
-    _.each(protoProps, function(value, key, protoProps){
-      var str = value.toString();
-      // If a configuration property, return
-      if(configProperties[key]){ return; }
-      // Primative or backbone type equivalent, or computed property which takes no arguments and returns a value
-      if(    !_.isFunction(value) || value.isModel || value.isComponent || (value && value.length === 0 && str.indexOf('return') > -1)){
-        protoProps.defaults[key] = value;
-        delete protoProps[key];
-      }
-
-      // All other values are component methods, leave them be unless already defined.
-      // TODO: better error output.
-      if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name!"; }
-
-    }, this);
-
-    if (protoProps && _.has(protoProps, 'constructor')) {
-      child = protoProps.constructor;
-    } else {
-      child = function(){ return parent.apply(this, arguments); };
+  // For each primative value, or computed property (functions with that take no arguments and have a return value), add it to our data object
+  _.each(protoProps, function(value, key, protoProps){
+    var str = value.toString();
+    // If a configuration property, return
+    if(configProperties[key]){ return; }
+    // Primative or backbone type equivalent, or computed property which takes no arguments and returns a value
+    if(    !_.isFunction(value) || value.isModel || value.isComponent || (value && value.length === 0 && str.indexOf('return') > -1)){
+      protoProps.defaults[key] = value;
+      delete protoProps[key];
     }
 
-    _.extend(child, parent, staticProps);
+    // All other values are component methods, leave them be unless already defined.
+    // TODO: better error output.
+    if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name!"; }
 
-    var Surrogate = function(){ this.constructor = child; };
-    Surrogate.prototype = parent.prototype;
-    child.prototype = new Surrogate();
+  }, this);
 
-    if (protoProps){ _.extend(child.prototype, protoProps); }
+  if (protoProps && _.has(protoProps, 'constructor')) {
+    child = protoProps.constructor;
+  } else {
+    child = function(){ return parent.apply(this, arguments); };
+  }
 
-    child.__super__ = parent.prototype;
+  _.extend(child, parent, staticProps);
 
-    return child;
-  };
+  var Surrogate = function(){ this.constructor = child; };
+  Surrogate.prototype = parent.prototype;
+  child.prototype = new Surrogate();
 
-export { Component };
+  if (protoProps){ _.extend(child.prototype, protoProps); }
+
+  child.__super__ = parent.prototype;
+
+  return child;
+};
+
+
+export default Component;

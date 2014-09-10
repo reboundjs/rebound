@@ -7,8 +7,8 @@ var Collection = require("rebound-data/collection")["default"];
  * Note: this functionality is common for all Backbone derived class
  *
  */
-Backbone.Model.prototype.deinitialize =
-Backbone.Collection.prototype.deinitialize = function () {
+Model.prototype.deinitialize =
+Collection.prototype.deinitialize = function () {
 
   // deinitialize current class
 

@@ -22,7 +22,7 @@ module.exports = function(grunt) {
           jQuery: true
         },
       },
-      uses_defaults: ['lib/**/*.js']
+      uses_defaults: ['packages/**/*.js']
     },
     connect: {
       test: {
@@ -101,9 +101,9 @@ module.exports = function(grunt) {
         },
         {
           expand: true,
-          cwd: 'packages/rebound-precompile/lib',
+          cwd: 'packages/rebound-precompiler/lib',
           src: ['**/*'],
-          dest: 'tmp/rebound-precompile'
+          dest: 'tmp/rebound-precompiler'
         },
         {
           expand: true,
@@ -153,7 +153,7 @@ module.exports = function(grunt) {
       },
       cjsRequires1: {
         files: {
-          'dist/commonjs/rebound-precompile/': 'dist/commonjs/rebound-precompile/*.js',
+          'dist/commonjs/rebound-precompiler/': 'dist/commonjs/rebound-precompiler/*.js',
           'dist/commonjs/morph/': 'dist/commonjs/morph/*.js',
           'dist/commonjs/handlebars/': 'dist/commonjs/handlebars/*.js',
           'dist/commonjs/htmlbars-compiler/': 'dist/commonjs/htmlbars-compiler/*.js',
@@ -324,7 +324,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
 
   grunt.registerTask('precompileDemo', 'Precompiles our demo template.', function(){
-    var precompile = require('./dist/commonjs/rebound-precompile/rebound-precompile').precompile,
+    var precompile = require('./dist/commonjs/rebound-precompiler/rebound-precompiler').precompile,
         fs = require('fs');
 
 
@@ -367,9 +367,9 @@ module.exports = function(grunt) {
     'transpile:amd',
     'string-replace:amdDefines',
     'requirejs:runtime',
-    'requirejs:runtimeMin',
+    //'requirejs:runtimeMin',
     'requirejs:compiler',
-    'requirejs:compilerMin'
+    //'requirejs:compilerMin'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'

@@ -23410,7 +23410,7 @@ define("rebound-runtime/helpers",
       if(name === 'on') { return this.on; }
       if(name === 'concat') { return this.concat; }
       return helpers[name] || false;
-    }
+    };
 
     helpers.registerHelper = function(name, callback, params){
       if(!_.isString(name)){
@@ -24378,11 +24378,11 @@ define("rebound-compiler/rebound-compiler",
 //module value for 'main' here and return it as the
 //value to use for the public API for the built file.
 
-return (function(){
-  require(['rebound-compiler/rebound-compiler'], function(Rebound){
-    window.Rebound = Rebound;
-  });
-})();
+  return (function(){
+    require(['rebound-compiler/rebound-compiler'], function(Rebound){
+
+    });
+  })();
 }));
 
 require.config({

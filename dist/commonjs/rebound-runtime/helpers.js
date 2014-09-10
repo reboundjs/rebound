@@ -22,7 +22,7 @@ helpers.lookupHelper = function(name, env) {
   if(name === 'on') { return this.on; }
   if(name === 'concat') { return this.concat; }
   return helpers[name] || false;
-}
+};
 
 helpers.registerHelper = function(name, callback, params){
   if(!_.isString(name)){

@@ -85,7 +85,7 @@ function precompile(str, options){
                '  var template = '+template+'\n' +
                '  var script = '+ script +';\n' +
                '  var style = "'+ style +'";\n' +
-               '  var component = Backbone.Component.extend(script, { __name: "'+name+'" });\n' +
+               '  var component = Rebound.Component.extend(script, { __name: "'+name+'" });\n' +
                '  var proto = Object.create(HTMLElement.prototype, {});\n' +
                '  proto.createdCallback = function(){\n' +
                     // When element is created, instantiate its associated Rebound component object

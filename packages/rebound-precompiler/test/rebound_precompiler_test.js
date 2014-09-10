@@ -1,4 +1,4 @@
-require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function(compiler, tokenizer){
+require(['rebound-precompiler/rebound-precompiler', 'simple-html-tokenizer'], function(compiler, tokenizer){
 
     function equalTokens(fragment, html) {
       var div = document.createElement("div");
@@ -31,8 +31,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function
 
     QUnit.test('Pre-compiler can handle partials ', function() {
 
-      var dom = compiler.precompile('<div></div>', {filepath: 'test/filepath'}).replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," "),
-          expected = 'define( [], function(){ (function(){var template = (function() { function build(dom) { var el0 = dom.createElement("div"); return el0; } var cachedFragment; return function template(context, env, contextualElement) { var dom = env.dom, hooks = env.hooks; if (cachedFragment === undefined) { cachedFragment = build(dom); } var fragment = dom.cloneNode(cachedFragment, true); return fragment; }; }()); window.Rebound.registerPartial( "test/filepath", template);})(); });'
+      var dom = compiler.precompile('<div></div>', {name: 'test/filepath'}).replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," "),
+          expected = 'define( [], function(){ (function(){var template = (function() { function build(dom) { var el0 = dom.createElement("div"); return el0; } var cachedFragment; return function template(context, env, contextualElement) { var dom = env.dom, hooks = env.hooks; if (cachedFragment === undefined) { cachedFragment = build(dom); } var fragment = dom.cloneNode(cachedFragment, true); return fragment; }; }()); window.Rebound.registerPartial( "test/filepath", template);})(); });';
 
       equal(dom, expected);
 

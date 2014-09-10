@@ -8,7 +8,7 @@ var env = {
   registerHelper: helpers.registerHelper,
   helpers: helpers.helpers,
   hooks: hooks
-}
+};
 
 env.hydrate = function(spec, options){
   // Return a wrapper function that will merge user provided helpers with our defaults
@@ -26,7 +26,7 @@ env.hydrate = function(spec, options){
     // Call our func with merged helpers and hooks
     return spec.call(this, data, env);
   };
-}
+};
 
 // Notify all of a object's observers of the change, execute the callback
 env.notify = function(obj, path, componentName) {
@@ -42,6 +42,6 @@ env.notify = function(obj, path, componentName) {
       });
     }
   });
-}
+};
 
 export default env;

@@ -3,11 +3,11 @@
 //module value for 'main' here and return it as the
 //value to use for the public API for the built file.
 
-return (function(){
-  require(['rebound-compiler/rebound-compiler'], function(Rebound){
-    window.Rebound = Rebound;
-  });
-})();
+  return (function(){
+    require(['rebound-compiler/rebound-compiler'], function(Rebound){
+
+    });
+  })();
 }));
 
 require.config({

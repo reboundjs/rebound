@@ -21,7 +21,7 @@
 									<label {{on "dblclick" "editTodo" }}>{{title}}</label>
 									<button {{on "click" "removeTodo"}} class="destroy"></button>
 								{{/if}}
-								</li>
+							</li>
 						{{/each}}
 					</ul>
 					<input type="checkbox" id="toggle-all" checked={{allAreDone}} {{on 'click' 'toggleAll'}}>
@@ -100,7 +100,7 @@
 				isCompleted: false,
 			}
 		],
-		
+
 	/************** Computed Properties *****************/
 
 		allAreDone: function(){

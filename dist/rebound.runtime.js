@@ -16283,7 +16283,7 @@ define("rebound-runtime/helpers",
       if(name === 'on') { return this.on; }
       if(name === 'concat') { return this.concat; }
       return helpers[name] || false;
-    }
+    };
 
     helpers.registerHelper = function(name, callback, params){
       if(!_.isString(name)){
@@ -17126,7 +17126,7 @@ define("rebound-runtime/env",
       registerHelper: helpers.registerHelper,
       helpers: helpers.helpers,
       hooks: hooks
-    }
+    };
 
     env.hydrate = function(spec, options){
       // Return a wrapper function that will merge user provided helpers with our defaults
@@ -17144,7 +17144,7 @@ define("rebound-runtime/env",
         // Call our func with merged helpers and hooks
         return spec.call(this, data, env);
       };
-    }
+    };
 
     // Notify all of a object's observers of the change, execute the callback
     env.notify = function(obj, path, componentName) {
@@ -17160,7 +17160,7 @@ define("rebound-runtime/env",
           });
         }
       });
-    }
+    };
 
     __exports__["default"] = env;
   });
@@ -18218,122 +18218,22 @@ define("rebound-data/model",
     var propertyCompiler = __dependency1__["default"];
 
     // If Rebound Runtime has already been run, throw error
-    if(Backbone.Model.rebound){ throw 'Rebound Model is already loaded on the page!'; }
+    if(Rebound.Model){ throw 'Rebound Model is already loaded on the page!'; }
     // If Backbone hasn't been started yet, throw error
     if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
 
-    var Model = Backbone.Model;
+    var Model = Backbone.Model.extend({
 
-    Backbone.Model.prototype.rebound = true;
-    Backbone.Model.prototype.isModel = true;
+      isModel: true,
 
-    // By default, __path returns the root object unless overridden
-    Backbone.Model.prototype.__path = function(){return '';};
+      __path: function(){ return ''; },
 
-    // Override get to return value of computed parameters
-    Backbone.Model.prototype.__get = Backbone.Model.prototype.get;
-    Backbone.Model.prototype.get = function(key, val, options){
-
-      // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
-      var parts  = {},
-          result = {},
-          value,
-          model,
-          i=0, l=0;
-
-      // Split the path at all '.', '[' and ']' and find the value referanced.
-      parts = _.compact(key.split(/(?:\.|\[|\])+/));
-      result = this;
-      l = parts.length;
-
-      if(key === undefined){ return; }
-
-      if(key === '' || parts.length === 0){ return result; }
-
-      if (parts.length > 0) {
-        for ( i = 0; i < l-1; i++) {
-          if( _.isFunction(result )){
-            result = result();
-          }
-          else if( result.isCollection ){
-            result = result.models[parts[i]];
-          }
-          else if( result.isModel ){
-            result = result.attributes[parts[i]];
-          }
-          else if( result && result[parts[i]] ){
-            result = result[parts[i]];
-          }
-          else{
-            result = '';
-          }
-        }
-      }
-
-      // Call original backbone get/at function
-      if(result.isCollection){
-        value = result.at(parts[i]);
-      }
-      else if(result.isModel){
-       value = this.__get.call(result, parts[i], val, options);
-     }
-
-      // If value is a computed proeprty, evaluate
-      if(_.isFunction(value)){
-        value = value.call(this);
-      }
-      
-      return value;
-    };
-
-    // Modify the Backbone.Model.set() function to have models' eventable attributes propagate their events to their parent and keep a referance to their name.
-    Backbone.Model.prototype.__set = Backbone.Model.prototype.set;
-    Backbone.Model.prototype.set = function(key, val, options){
-      var attrs, newKey;
-
-      // Set is able to take a object or a key value pair. Normalize this input.
-      if (typeof key === 'object') {
-        attrs = key;
-        options = val;
-      } else {
-        (attrs = {})[key] = val;
-      }
-
-      // For each key and value, call original set and propagate its events up to parent if it is eventable.
-      for (key in attrs) {
-        val = attrs[key];
-
-        if(val === null){ val = undefined; }
-
-        // If any value is a function, turn it into a computed property
-        if(_.isFunction(val)){
-          propertyCompiler.register(this, key, val);
-        }
-        // If any value is an object, turn it into a model
-        else if(_.isObject(val) && !_.isArray(val) && !_.isFunction(val) && !(val.isModel || val.isCollection)){
-          val = attrs[key] = new Backbone.Model(val);
-        }
-        // If any value is an array, turn it into a collection
-        else if(_.isArray(val)){
-          val = attrs[key] = new Backbone.Collection(val);
-        }
-
-        // Set this element's path variable. Returns the fully formed json path of this element
-        if(val !== undefined){
-          val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
-
-          // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
-          if(!val.__parent && val.isModel || val.isCollection){
-            // When requesting the name value of our value, return the its key appended to the computed name value of our parent
-            // Closure is needed to preserve values in the instance so they dont get set to the prototype
-            val.__parent = this;
-            val.on('all', this.trigger, this);
-          }
-        }
+      get: function(key, val, options){
 
         // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
         var parts  = {},
             result = {},
+            value,
             model,
             i=0, l=0;
 
@@ -18342,18 +18242,22 @@ define("rebound-data/model",
         result = this;
         l = parts.length;
 
+        if(key === undefined){ return; }
+
+        if(key === '' || parts.length === 0){ return result; }
+
         if (parts.length > 0) {
           for ( i = 0; i < l-1; i++) {
-            if(_.isFunction(result)){
+            if( _.isFunction(result )){
               result = result();
             }
-            else if(result.isCollection){
+            else if( result.isCollection ){
               result = result.models[parts[i]];
             }
-            else if(result.isModel){
+            else if( result.isModel ){
               result = result.attributes[parts[i]];
             }
-            else if(result && result[parts[i]]){
+            else if( result && result[parts[i]] ){
               result = result[parts[i]];
             }
             else{
@@ -18362,35 +18266,128 @@ define("rebound-data/model",
           }
         }
 
-        // Call original backbone set function
-        this.__set.call(result, parts[i], val, options);
-
-      }
-    };
-
-    // Recursive implementation of toJSON with fix for circular dependancies
-    Backbone.Model.prototype.toJSON = function() {
-        if (this._isSerializing) {
-            return this.id || this.cid;
+        // Call original backbone get/at function
+        if(result.isCollection){
+          value = result.at(parts[i]);
         }
-        this._isSerializing = true;
-        var json = _.clone(this.attributes);
-        _.each(json, function(value, name) {
-            if( _.isNull(value) || _.isUndefined(value) ){ return; }
-            _.isFunction(value.toJSON) && (json[name] = value.toJSON());
-        });
-        this._isSerializing = false;
-        return json;
-    };
+        else if(result.isModel){
+         value = Backbone.Model.prototype.get.call(result, parts[i], val, options);
+       }
 
-    __exports__.Model = Model;
+        // If value is a computed proeprty, evaluate
+        if(_.isFunction(value)){
+          value = value.call(this);
+        }
+
+        return value;
+      },
+
+      set: function(key, val, options){
+        var attrs, newKey;
+
+        // Set is able to take a object or a key value pair. Normalize this input.
+        if (typeof key === 'object') {
+          attrs = key;
+          options = val;
+        } else {
+          (attrs = {})[key] = val;
+        }
+
+        // For each key and value, call original set and propagate its events up to parent if it is eventable.
+        for (key in attrs) {
+          val = attrs[key];
+
+          if(val === null){ val = undefined; }
+
+          // If any value is a function, turn it into a computed property
+          if(_.isFunction(val)){
+            propertyCompiler.register(this, key, val);
+          }
+          // If any value is an object, turn it into a model
+          else if(_.isObject(val) && !_.isArray(val) && !_.isFunction(val) && !(val.isModel || val.isCollection)){
+            val = attrs[key] = new Rebound.Model(val);
+          }
+          // If any value is an array, turn it into a collection
+          else if(_.isArray(val)){
+            val = attrs[key] = new Rebound.Collection(val);
+          }
+
+          // Set this element's path variable. Returns the fully formed json path of this element
+          if(val !== undefined){
+            val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
+
+            // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
+            if(!val.__parent && val.isModel || val.isCollection){
+              // When requesting the name value of our value, return the its key appended to the computed name value of our parent
+              // Closure is needed to preserve values in the instance so they dont get set to the prototype
+              val.__parent = this;
+              val.on('all', this.trigger, this);
+            }
+          }
+
+          // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
+          var parts  = {},
+              result = {},
+              model,
+              i=0, l=0;
+
+          // Split the path at all '.', '[' and ']' and find the value referanced.
+          parts = _.compact(key.split(/(?:\.|\[|\])+/));
+          result = this;
+          l = parts.length;
+
+          if (parts.length > 0) {
+            for ( i = 0; i < l-1; i++) {
+              if(_.isFunction(result)){
+                result = result();
+              }
+              else if(result.isCollection){
+                result = result.models[parts[i]];
+              }
+              else if(result.isModel){
+                result = result.attributes[parts[i]];
+              }
+              else if(result && result[parts[i]]){
+                result = result[parts[i]];
+              }
+              else{
+                result = '';
+              }
+            }
+          }
+
+          // Call original backbone set function
+          Backbone.Model.prototype.set.call(result, parts[i], val, options);
+
+        }
+      },
+
+      toJSON: function() {
+          if (this._isSerializing) {
+              return this.id || this.cid;
+          }
+          this._isSerializing = true;
+          var json = _.clone(this.attributes);
+          _.each(json, function(value, name) {
+              if( _.isNull(value) || _.isUndefined(value) ){ return; }
+              _.isFunction(value.toJSON) && (json[name] = value.toJSON());
+          });
+          this._isSerializing = false;
+          return json;
+      }
+
+    });
+
+    __exports__["default"] = Model;
   });
 define("rebound-data/collection", 
-  ["exports"],
-  function(__exports__) {
+  ["rebound-data/model","exports"],
+  function(__dependency1__, __exports__) {
     
+    var Model = __dependency1__["default"];
+
     // If Rebound Runtime has already been run, throw error
-    if(Backbone.Collection.rebound){
+    if(Rebound.Collection){
       throw 'Rebound Collection is already loaded on the page!';
     }
     // If Backbone hasn't been started yet, throw error
@@ -18398,70 +18395,70 @@ define("rebound-data/collection",
       throw "Backbone must be on the page for Rebound to load.";
     }
 
-    var Collection = Backbone.Collection;
-
-    Backbone.Collection.prototype.rebound = true;
-    Backbone.Collection.prototype.isCollection = true;
-
     function pathGenerator(collection, model){
       return function(){
         return collection.__path() + '.[' + collection.indexOf(model) + ']';
       };
     }
 
-    // By default, __path returns the root object unless overridden
-    Backbone.Collection.prototype.__path = function(){return '';};
+    var Collection = Backbone.Collection.extend({
 
-    // Have collections set its model's names.
-    Backbone.Collection.prototype.__set = Backbone.Collection.prototype.set;
-    Backbone.Collection.prototype.set = function(models, options){
-      var id,
-          model,
-          i, l;
-      models = (!_.isArray(models)) ? (models ? [models] : []) : _.clone(models);
+      isCollection: true,
 
-      // If a silent remove and this is the first silent remove since the last dom update, save our initial indicies
-      if( options && options.silent && !this.models.__indexed ){
-        _.each(this.models, function(model, index){
-          model.__originalIndex = index;
-        }, this);
-        this.models.__indexed = true;
+      __path: function(){return '';},
+
+      model: Model,
+
+      set: set = function(models, options){
+        var id,
+            model,
+            i, l;
+        models = (!_.isArray(models)) ? (models ? [models] : []) : _.clone(models);
+
+        // If a silent remove and this is the first silent remove since the last dom update, save our initial indicies
+        if( options && options.silent && !this.models.__indexed ){
+          _.each(this.models, function(model, index){
+            model.__originalIndex = index;
+          }, this);
+          this.models.__indexed = true;
+        }
+
+        for (i = 0, l = models.length; i < l; i++) {
+          model = models[i] || {};
+          // If model is a backbone model, awesome. If not, make it one.
+          if (model.isModel) {
+            id = model;
+          } else {
+            id = model[this.model.prototype.idAttribute || 'id'];
+            options = options ? _.clone(options) : {};
+            options.collection = this;
+            model = new this.model(model, options);
+          }
+
+          // If model does not already exist in the collection, set its name.
+          if (!this.get(id)){
+            // When requesting the name value of our value, return the its index appended to the computed name value of our parent
+            // Closure is needed to preserve values in the instance so they dont get set to the prototype
+            model.__path = (pathGenerator(this, model));
+            model.__parent = this;
+          }
+
+          // If added silently, make note. If removed later, before it is rendered in the dom, we can remove it without alerting the dom.
+          if (options.silent){
+            model.__silent = true;
+          }
+
+          models[i] = model;
+        }
+
+        // Call original set function
+        Backbone.Collection.prototype.set.call(this, models, options);
+
       }
 
-      for (i = 0, l = models.length; i < l; i++) {
-        model = models[i] || {};
-        // If model is a backbone model, awesome. If not, make it one.
-        if (model.isModel) {
-          id = model;
-        } else {
-          id = model[this.model.prototype.idAttribute || 'id'];
-          options = options ? _.clone(options) : {};
-          options.collection = this;
-          model = new this.model(model, options);
-        }
+    });
 
-        // If model does not already exist in the collection, set its name.
-        if (!this.get(id)){
-          // When requesting the name value of our value, return the its index appended to the computed name value of our parent
-          // Closure is needed to preserve values in the instance so they dont get set to the prototype
-          model.__path = (pathGenerator(this, model));
-          model.__parent = this;
-        }
-
-        // If added silently, make note. If removed later, before it is rendered in the dom, we can remove it without alerting the dom.
-        if (options.silent){
-          model.__silent = true;
-        }
-
-        models[i] = model;
-      }
-
-      // Call original set function
-      this.__set.call(this, models, options);
-
-    };
-
-    __exports__.Collection = Collection;
+    __exports__["default"] = Collection;
   });
 define("rebound-data/rebound-data", 
   ["rebound-data/model","rebound-data/collection","exports"],
@@ -18475,8 +18472,8 @@ define("rebound-data/rebound-data",
      * Note: this functionality is common for all Backbone derived class
      *
      */
-    Backbone.Model.prototype.deinitialize =
-    Backbone.Collection.prototype.deinitialize = function () {
+    Model.prototype.deinitialize =
+    Collection.prototype.deinitialize = function () {
 
       // deinitialize current class
 
@@ -18532,11 +18529,11 @@ define("rebound-runtime/component",
     var propertyCompiler = __dependency1__["default"];
     var util = __dependency2__["default"];
     var env = __dependency3__["default"];
-    var reboundData = __dependency4__["default"];
-
+    var Model = __dependency4__.Model;
+    var Collection = __dependency4__.Collection;
 
     // If Rebound Runtime has already been run, throw error
-    if(Backbone.Component){
+    if(Rebound.Component){
       throw 'Rebound is already loaded on the page!';
     }
     // If Backbone hasn't been started yet, throw error
@@ -18547,65 +18544,60 @@ define("rebound-runtime/component",
     var componentOptions = ['template', 'routes', 'immortal', 'data'];
 
     // New Backbone Component
-    var Component = Backbone.Component = function(options){
+    var Component = Model.extend({
 
-      options = options || (options = {});
-      this.dom = '';
-      this.cid = _.uniqueId('component');
-      this.attributes = {};
-      this.changed = {};
+      constructor: function(options){
 
-      _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent');
+        options = options || (options = {});
+        this.dom = '';
+        this.cid = _.uniqueId('component');
+        this.attributes = {};
+        this.changed = {};
 
-      // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
-      // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
-      // Functions are compiled to find their dependancies and registerd as compiled properties
-        // Legacy lodash only version of deepDefaults:
-          // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
-          //   if(obj === undefined) return defaults;
-          //   if(obj.isModel)
-          //    return _.defaults(obj.attributes, defaults);
-          //   return _.defaults(obj, defaults);
-          //  }));
-      this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
-      propertyCompiler.compile(this);
+        _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent');
 
-      // Get any additional routes passed in from options
-      this.routes =  _.defaults((options.routes || {}), this.routes);
-      // Ensure that all route functions exist
-      _.each(this.routes, function(value, key, routes){
-          // TODO: Better error output
-          if(typeof value !== 'string'){ throw('Function name passed to routes must be a string!'); }
-          if(!this[value]){ throw('Callback function '+value+' does not exist on the component!'); }
-      }, this);
+        // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
+        // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
+        // Functions are compiled to find their dependancies and registerd as compiled properties
+          // Legacy lodash only version of deepDefaults:
+            // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
+            //   if(obj === undefined) return defaults;
+            //   if(obj.isModel)
+            //    return _.defaults(obj.attributes, defaults);
+            //   return _.defaults(obj, defaults);
+            //  }));
+        this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
+        propertyCompiler.compile(this);
 
-      // Set our outlet and template if we have one
-      this.el = options.outlet || undefined;
-      this.template = options.template || this.template || undefined;
+        // Get any additional routes passed in from options
+        this.routes =  _.defaults((options.routes || {}), this.routes);
+        // Ensure that all route functions exist
+        _.each(this.routes, function(value, key, routes){
+            // TODO: Better error output
+            if(typeof value !== 'string'){ throw('Function name passed to routes must be a string!'); }
+            if(!this[value]){ throw('Callback function '+value+' does not exist on the component!'); }
+        }, this);
 
-      // Save our dom elements on our component
-      this.$el = $(this.el);
+        // Set our outlet and template if we have one
+        this.el = options.outlet || undefined;
+        this.template = options.template || this.template || undefined;
 
-      // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
-      this.template = this._setTemplate();
+        // Save our dom elements on our component
+        this.$el = $(this.el);
 
-      // Listen to relevent data change events
-      this._startListening();
+        // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
+        this.template = this._setTemplate();
 
-      // Render our dom
-      this.dom = this.template(this, {helpers: {'__callOnComponent': this.__callOnComponent}});
+        // Listen to relevent data change events
+        this._startListening();
 
-      // Place the dom in our custom element
-      this.el.appendChild(this.dom);
+        // Render our dom
+        this.dom = this.template(this, {helpers: {'__callOnComponent': this.__callOnComponent}});
 
-    };
+        // Place the dom in our custom element
+        this.el.appendChild(this.dom);
 
-    Component.prototype.__trigger = Backbone.Model.prototype.trigger;
-
-    _.extend(Component.prototype, Backbone.Model.prototype, {
-
-      // Initialize is an empty function by default. Override it with your own initialization logic.
-      initialize: function(){},
+      },
 
       isComponent: true,
 
@@ -18618,7 +18610,7 @@ define("rebound-runtime/component",
         if(this.$el){
           this.$el.triggerHandler.apply(this, arguments);
         }
-        this.__trigger.apply(this, arguments);
+        Backbone.Model.prototype.trigger.apply(this, arguments);
       },
 
       __callOnComponent: function(name, event){
@@ -18698,54 +18690,54 @@ define("rebound-runtime/component",
           env.notify(queue[i].obj, queue[i].paths);
         }
       }
-
     });
 
-    Component.extend = function(protoProps, staticProps) {
-        var parent = this,
-            child,
-            reservedMethods = {'trigger':1, 'constructor':1, 'get':1, 'set':1, 'has':1, 'extend':1, 'escape':1, 'unset':1, 'clear':1, 'cid':1, 'attributes':1, 'changed':1, 'toJSON':1, 'validationError':1, 'isValid':1, 'isNew':1, 'hasChanged':1, 'changedAttributes':1, 'previous':1, 'previousAttributes':1},
-            configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
+    Component.extend= function(protoProps, staticProps) {
+      var parent = this,
+          child,
+          reservedMethods = {'trigger':1, 'constructor':1, 'get':1, 'set':1, 'has':1, 'extend':1, 'escape':1, 'unset':1, 'clear':1, 'cid':1, 'attributes':1, 'changed':1, 'toJSON':1, 'validationError':1, 'isValid':1, 'isNew':1, 'hasChanged':1, 'changedAttributes':1, 'previous':1, 'previousAttributes':1},
+          configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
 
-        protoProps.defaults = {};
+      protoProps.defaults = {};
 
-        // For each primative value, or computed property (functions with that take no arguments and have a return value), add it to our data object
-        _.each(protoProps, function(value, key, protoProps){
-          var str = value.toString();
-          // If a configuration property, return
-          if(configProperties[key]){ return; }
-          // Primative or backbone type equivalent, or computed property which takes no arguments and returns a value
-          if(    !_.isFunction(value) || value.isModel || value.isComponent || (value && value.length === 0 && str.indexOf('return') > -1)){
-            protoProps.defaults[key] = value;
-            delete protoProps[key];
-          }
-
-          // All other values are component methods, leave them be unless already defined.
-          // TODO: better error output.
-          if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name!"; }
-
-        }, this);
-
-        if (protoProps && _.has(protoProps, 'constructor')) {
-          child = protoProps.constructor;
-        } else {
-          child = function(){ return parent.apply(this, arguments); };
+      // For each primative value, or computed property (functions with that take no arguments and have a return value), add it to our data object
+      _.each(protoProps, function(value, key, protoProps){
+        var str = value.toString();
+        // If a configuration property, return
+        if(configProperties[key]){ return; }
+        // Primative or backbone type equivalent, or computed property which takes no arguments and returns a value
+        if(    !_.isFunction(value) || value.isModel || value.isComponent || (value && value.length === 0 && str.indexOf('return') > -1)){
+          protoProps.defaults[key] = value;
+          delete protoProps[key];
         }
 
-        _.extend(child, parent, staticProps);
+        // All other values are component methods, leave them be unless already defined.
+        // TODO: better error output.
+        if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name!"; }
 
-        var Surrogate = function(){ this.constructor = child; };
-        Surrogate.prototype = parent.prototype;
-        child.prototype = new Surrogate();
+      }, this);
 
-        if (protoProps){ _.extend(child.prototype, protoProps); }
+      if (protoProps && _.has(protoProps, 'constructor')) {
+        child = protoProps.constructor;
+      } else {
+        child = function(){ return parent.apply(this, arguments); };
+      }
 
-        child.__super__ = parent.prototype;
+      _.extend(child, parent, staticProps);
 
-        return child;
-      };
+      var Surrogate = function(){ this.constructor = child; };
+      Surrogate.prototype = parent.prototype;
+      child.prototype = new Surrogate();
 
-    __exports__.Component = Component;
+      if (protoProps){ _.extend(child.prototype, protoProps); }
+
+      child.__super__ = parent.prototype;
+
+      return child;
+    };
+
+
+    __exports__["default"] = Component;
   });
 define("rebound-router/rebound-router", 
   ["exports"],
@@ -19042,7 +19034,7 @@ define("rebound-router/rebound-router",
           Backbone.history.start(options);
 
           // Let all of our components always have referance to our appRouter
-          Backbone.Component.prototype.router = this.router;
+          Rebound.Component.prototype.router = this.router;
         }
       });
 
@@ -19052,43 +19044,53 @@ define("rebound-router/rebound-router",
     __exports__["default"] = AppLoader;
   });
 define("rebound-runtime/rebound-runtime", 
-  ["rebound-runtime/env","rebound-runtime/component","rebound-router/rebound-router","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
+  ["rebound-runtime/env","rebound-data/rebound-data","rebound-runtime/component","rebound-router/rebound-router","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
     
     var env = __dependency1__["default"];
-
-    // TODO: This is silly. Fix it.
-    var registerHelper = env.registerHelper;
-    var registerPartial = env.registerPartial;
 
     // If Backbone hasn't been started yet, throw error
     if(!window.Backbone){
       throw "Backbone must be on the page for Rebound to load.";
     }
 
+    // Load Rebound Data
+    var Model = __dependency2__.Model;
+    var Collection = __dependency2__.Collection;
+
     // Load Rebound Components
-    var Component = __dependency2__["default"];
+    var Component = __dependency3__["default"];
 
     // Load The Rebound Router
-    var Router = __dependency3__["default"];
+    var Router = __dependency4__["default"];
 
-    var ReboundConfig = jQuery.parseJSON($('#Rebound').html()),
-        router = (new Router({config: ReboundConfig})).router;
+    // Fetch Rebound Config Object
+    var Config = jQuery.parseJSON($('#Rebound').html());
 
-    __exports__.registerHelper = registerHelper;
-    __exports__.registerPartial = registerPartial;
-    __exports__.router = router;
+    // Create Global Object
+    window.Rebound = {
+      registerHelper: env.registerHelper,
+      registerPartial: env.registerPartial,
+      Model: Model,
+      Collection: Collection,
+      Component: Component,
+      Config: Config
+    };
+
+    window.Rebound.router = (new Router({config: Config})).router;
+
+    __exports__["default"] = Rebound;
   });
-    //The modules for your project will be inlined above
-    //this snippet. Ask almond to synchronously require the
-    //module value for 'main' here and return it as the
-    //value to use for the public API for the built file.
+//The modules for your project will be inlined above
+//this snippet. Ask almond to synchronously require the
+//module value for 'main' here and return it as the
+//value to use for the public API for the built file.
 
-    return (function(){
-      require(['rebound-runtime/rebound-runtime'], function(Rebound){
-        window.Rebound = Rebound;
-      });
-    })();
+  return (function(){
+    require(['rebound-runtime/rebound-runtime'], function(Rebound){
+
+    });
+  })();
 }));
 
 require.config({
