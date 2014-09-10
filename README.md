@@ -521,7 +521,9 @@ The above example is very simple, but your new component can have all of the bel
 
 Rebound knows that home-page requires user-card because of the ```<link href="/public/components/user-card.html">``` in its template. When Rebound sees this link tag it will will add user-card to home-page's dependancies list.
 
-By default, child components inherit no scope from their parent components. You can pass in attributes by adding them right on to the tag, as the above example does with ```{{firstName}}``` and ```{{lastName}}```. Attributes passed in on the tag will override any values set in the component declaration. So, the above code will render:
+By default, child components inherit no scope from their parent components. You can pass in attributes by adding them right on to the tag, as the above example does with ```{{firstName}}``` and ```{{lastName}}```. And the values passed in are not limited to primitives! Any object, array or combination of the two can also be passed in to components. 
+
+Attributes passed in on the tag will override any values set in the component declaration. So, the above code will render:
 
 ```html
 <ul>
