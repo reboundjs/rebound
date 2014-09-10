@@ -26,7 +26,7 @@ But just trust me on this, this is going to be good.
 
 The [Polymer](https://github.com/Polymer) people over at Google have created a polyfill for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
 
-[Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
+[Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its evented Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
 
 [Rebound](https://github.com/epicmiller/rebound) is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars templates, binding to your models to the dom on render and live updating your page as they change. To make the conversation two-way, event helpers and automatic binding to form elements lets you respond to user interaction. Combine this with an augmented but still powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
 
