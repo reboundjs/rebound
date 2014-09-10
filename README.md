@@ -372,18 +372,19 @@ For the most part, any complicated logic should be handled in a computed propert
 Rebound comes with a powerful set of default helpers that you can use when creating your component templates.
 
 ##### on
-The on helper binds a component method to an element in your template to be triggered by an event of your choice.
+The ```{{on}}``` helper binds a component method to an element in your template to be triggered by an event of your choice.
 ```html
 <div {{on 'click' 'methodName'}}></div>
 ```
 
+
 ##### if
-The if helper has two forms. 
+The ```{{#if}}``` helper has two forms. 
 
 Used as a block helper it looks like this:
 ```html
 <div>
-  {{if someValue}}
+  {{#if someValue}}
     Value is true!
   {{else}}
     Value is false
@@ -399,13 +400,14 @@ As an inline helper the if helper looks like this:
 ```
 If ```someValue``` is truthy, the first argument is printed, otherwise, if provided, the second argument is. This form is able to be used inside of attributes, where as the block form isnt, and is very helpful with assigning classes based on a conditional variable. Both strings and component properties are valid arguments.
 
+
 ##### unless
-Unless is the opposite of if and has both a block and an inline form.
+The ```{{#unless}}``` helper works the exact opposite of our if helper and has both a block and an inline form.
 
 Block:
 ```html
 <div>
-  {{unless someValue}}
+  {{#unless someValue}}
     Value is false!
   {{else}}
     Value is true
@@ -421,8 +423,45 @@ Inline:
 
 ##### each
 
-##### length
+```{{#each}}``` is a block helper which renders arrays of objects. Its contents are rendered in the scope of the object it is iterating over. In this scope it has access to ```{{@index}}```, an interger representing its index in the array, and the ```{{@first}}``` and ```{{@last}}``` variables – booleans which are true if the element is the first or last element in the array.
+
+```html
+{{#each users}}
+  <div>
+    Name: {{firstName}} {{lastName}}
+    Index: {{@index}}
+    isFirst: {{@first}}
+    isLast: {{@last}}
+{{/each}}
+```
 
 ##### with
 
+Sometimes you may want to invoke a section of your template with a different context. ```{{#with}}``` changes the context of the block you pass to it. 
+
+```html
+{{user.firstName}} {{user.lastName}}
+{{#with user}}
+  Welcome back, <b>{{firstName}} {{lastName}}</b>!
+{{/with}}
+```
+
 ##### partial
+
+The ```{{partial}}``` helper renders a registered partial. 
+
+Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. When rendered they inherit the context of its parent template. 
+
+The variable passed to this helper is the path to a .hbs template file on the server. When using the precompiler, Rebound will add a dependancy for the partial's template to the parent component / template so you don't need to worry about getting it on the page. Otherwise, the partial's template must be loaded on the page for it to appear. It is convention for partials to begin with an underscore. This underscore and the file extension are absent from the variable passed to the partial, so ```{{partial /public/demo/partial }}``` referances ```http://domain.com/public/demo/_partial.hbs```.
+
+/public/demo/_partial.hbs:
+```html
+{{firstName}} {{lastName}}
+```
+
+Parent Component:
+```html
+{{#each users}}
+  {{partial public/demo/partial}}
+{{/each}}
+```
