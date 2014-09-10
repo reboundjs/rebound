@@ -291,6 +291,7 @@ Under the covers, components are just special instances of Backbone models. This
 </p>
 - - -
 
+#### Referancing Data
 So in the above examples you've seen some simple Rebound templates, but lets dive down and see what we can actually do.
 
 Your component's template is always rendered in the scope of your component. Take a look at this component:
@@ -464,4 +465,67 @@ Parent Component:
 {{#each users}}
   {{partial public/demo/partial}}
 {{/each}}
+```
+
+#### Including Other Components
+
+The whole point behind components is modularity, so a Model-View-Component framework wouldn't be complete without components and their templates being able to include other components! And with Rebound, its as simple as including the custom-element's tag:
+
+Your page level component:
+```html
+<element name="home-page">
+  <template>
+  	<link href="/public/components/user-card.html">
+  	<ul>
+    {{#each users}}
+      <li>
+        <user-card first={{firstName}} last={{lastName}}></user-card>
+      </li>
+    {{/each}}
+    </ul>
+  </template>
+  <script>
+    return ({
+      users: [
+        { 
+          firstName: 'Adam',
+          lastName: 'Miller'
+        },{
+          firstName: 'Bob',
+          lastName: 'Saget'
+      ]
+    })
+  </script>
+</element>
+```
+
+The user-card component:
+```html
+<element name="user-card">
+  <template>
+    {{fullName}}'s user card!
+  </template>
+  <script>
+    return ({
+      first: 'Default Value',
+      last: 'Default Value',
+      fullName: function(){
+        return this.get('first') + ' ' + this.get('last');
+      }
+    })
+  </script>
+</element>
+```
+
+The above example is very simple, but your new component can have all of the bells and whistles described above in the components section.
+
+Rebound knows that home-page requires user-card because of the ```<link href="/public/components/user-card.html">``` in its template. When Rebound sees this link tag it will will add user-card to home-page's dependancies list.
+
+By default, child components inherit no scope from their parent components. You can pass in attributes by adding them right on to the tag, as the above example does with ```{{firstName}}``` and ```{{lastName}}```. Attributes passed in on the tag will override any values set in the component declaration. So, the above code will render:
+
+```html
+<ul>
+  <li>Adam Miller's User Card!</li>
+  <li>Bob Saget's User Card!</li>
+</ul>
 ```
