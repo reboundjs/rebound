@@ -14,7 +14,7 @@
 
 Now I know what you're thinking:
 
->"But Adam! The mind-numbingly repetative process of manually wiring all of my events in Backbone is my favorite part of application development!" 
+>"But Adam! The mind-numbingly repetative process of manually wiring all of my events in Backbone is my favorite part of application development!"
 
 But just trust me on this, this is going to be good.
 
@@ -22,7 +22,7 @@ But just trust me on this, this is going to be good.
 
 **tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. And, like Ember, we can use these features to allow for live data-binding with our Backbone models - change a value in your model or collection, and your views update automagically.
 
-**The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details, but the 
+**The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details, but the
 
 Rebound + HTMLBars is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars, binding to your models on first render and live updating your dom as they change. To make the conversation two-way, an event helper lets you respond to user interaction by defining s in your HTMLBars templates. Combine with with a powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
 
@@ -35,7 +35,7 @@ The project is still in flux, so everything below is subject to change! Use at y
 ##### To test what is already there:
 
  - Install all dependancies: ```npm install```
- 
+
  - Just build the project: ```grunt build```
 
  - Test in the command line: ```npm test```
@@ -61,7 +61,7 @@ You can include Rebound on your page like this:
 <script src="/javascripts/lib/rebound.runtime.pkg.js" id="Rebound">
 {
   "appContext": "/",
-  "globalControllers": {"chrome" : "nav"},
+  "globalComponents": {"chrome" : "nav"},
   "jsPrefix": "/javascripts/apps/",
   "jsSuffix": "",
   "cssPrefix": "/stylesheets/apps/",
@@ -73,18 +73,18 @@ You can include Rebound on your page like this:
 }
 </script>
 ```
-Because the script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's config options right where you include the Rebound library itself. Convenient! 
+Because the script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's config options right where you include the Rebound library itself. Convenient!
 
 ##### Config Options
 
  - __appContext__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
- - __globalControllers__ - By default, as will be talked about in the next section, there is only one controller loaded at a time, your page-level controller. The controllers specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "controllerName": "cssSelector" }```. The output of the controller will be loaded into the first matching element for the provided css selector on the page.
+ - __globalComponents__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
  - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
  - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. See routing for more details.
  - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
  - __cssSuffix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
  - __triggerOnFirstLoad__ - If false, Rebound will not try and trigger the route  once the page is loaded. Equivalent to passing ```{ silent: true }``` to Backbone.history.start
- - __routeMapping__ - Object which defines custom base route path to controller name mappings. ex: if the root url ```/``` should load the home controller, pass ```{ "": "home" }```
+ - __routeMapping__ - Object which defines custom base route path to component name mappings. ex: if the root url ```/``` should load the home component, pass ```{ "": "home" }```
 
 ### Routing
 
@@ -95,9 +95,9 @@ Rebound adds a three bits of functionality to Backbone's router to make navigati
 
 By loading routes and page resources as they are needed, your initial __page load size is greatly reduced__. Your application also __does not need to know every route on page load - every page in your application manages its own routing__. This way there is no central router to manage, a major benefit for larger applications.
 
-Here's a walkthrough of how Rebound's automatic resource loading works: 
+Here's a walkthrough of how Rebound's automatic resource loading works:
 
->A page is loaded at /profile/1234, with the jsPrefix "javascripts/apps/" and jsSuffix "Page". Rebound will start the router and try to trigger the route /profile/1234. Because this route doesn't exits, the wildcard route is executed. Rebound then tries to load the javascript file ```/javascripts/apps/profilePage.js```. Inside this file is all the resources needed for the profile page, including its template, controller, and additional routes as you'll see below in the components section. The routes defined in this page component are then loaded into the router and the /profile/1234 route is triggered again. This time, because the page's resources have been loaded, the /profile/:uid route has now presumably been defined and the route will execute.
+>A page is loaded at /profile/1234, with the jsPrefix "javascripts/apps/" and jsSuffix "Page". Rebound will start the router and try to trigger the route /profile/1234. Because this route doesn't exits, the wildcard route is executed. Rebound then tries to load the javascript file ```/javascripts/apps/profilePage.js```. Inside this file is all the resources needed for the profile page, including its template, component, and additional routes as you'll see below in the components section. The routes defined in this page component are then loaded into the router and the /profile/1234 route is triggered again. This time, because the page's resources have been loaded, the /profile/:uid route has now presumably been defined and the route will execute.
 
 >When the user clicks on another link, say, /discover, the router sees that it does not have a /discover route loaded. The router again hits the wildcard route and fetches ```/javascripts/apps/discoverPage.js```. The old profile app is then uninstalled, its routes removed, and the discover page is loaded as before.
 
@@ -116,7 +116,7 @@ A Rebound component looks like this:
   </template>
   <script>
     return ({
-      
+
       /********* Lifecycle Methods ********/
       createdCallback: function(event){
         this.oldValue = this.get("value");
@@ -129,7 +129,7 @@ A Rebound component looks like this:
       detachedCallback: function(){
         console.log("I've been removed from the dom!");
       },
-      
+
       /********* Config Options ********/
       // Any of these special config options would go here:
       // routes, outlet, url, urlRoot, idAttributes, id
@@ -139,7 +139,7 @@ A Rebound component looks like this:
       awesomeValue: function(){
         return this.get('value') + ' is AWESOME!';
       },
-      
+
       /********* Component Methods ********/
       doneEditing: function(event){
         this.set('editing', false);
@@ -159,7 +159,7 @@ A Rebound component looks like this:
 </element>
 ```
 
-and used like this 
+and used like this
 
 ```html
 <edit-todo value={{title}} editing={{editing}}></edit-todo>
@@ -181,17 +181,17 @@ Here are the convenience methods you get when working in a component:
 
 #### Sweet!! How do I make one?!
 
-When creating a Rebound component, think about it like you're defining a public API for the rest of the program to interface with your custom element. You'll be defining: 
- - __Default Properties__ - which are accessable to your template for rendering and overridable by the properties you pass to your component. 
- - __Lifecycle Methods__ - which define callback function for element creation, insertion into the dom, and removal from the dom. 
- - __Component Methods__ - which are callable from the view via user input events. 
+When creating a Rebound component, think about it like you're defining a public API for the rest of the program to interface with your custom element. You'll be defining:
+ - __Default Properties__ - which are accessable to your template for rendering and overridable by the properties you pass to your component.
+ - __Lifecycle Methods__ - which define callback function for element creation, insertion into the dom, and removal from the dom.
+ - __Component Methods__ - which are callable from the view via user input events.
  - A number of special __Config Options__ which are available to allow you to take advantage of all that Backbone model goodness.
 
 ##### Default Properties
 
-Default properties come it two types. __Primitive Properties__ and __Computed Properties__. 
+Default properties come it two types. __Primitive Properties__ and __Computed Properties__.
 
-Primitive properties are exactly like they sound. They are any string, interger, boolean, object or array. 
+Primitive properties are exactly like they sound. They are any string, interger, boolean, object or array.
 
 ```js
 return ({
@@ -246,7 +246,7 @@ return ({
 
 ##### Component Methods
 
-Component Methods are called when a user takes an action on a dom element. 
+Component Methods are called when a user takes an action on a dom element.
 
 ***In order for a component method to be valid it must take at least one variable or have no ```return``` statement***
 

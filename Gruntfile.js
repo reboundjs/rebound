@@ -35,7 +35,7 @@ module.exports = function(grunt) {
     },
     watch: {
       scripts: {
-        files: ['lib/**/*.js'],
+        files: ['packages/**/*.js'],
         tasks: ['build'],
         options: {
           spawn: false,
@@ -80,46 +80,47 @@ module.exports = function(grunt) {
           cwd: 'bower_components/simple-html-tokenizer/lib',
           src: ['**/*'],
           dest: 'tmp',
-        },{
+        },
+        {
           expand: true,
-          cwd: 'lib',
-          src: ['rebound.js', 'rebound.runtime.js', 'rebound/**/*'],
-          dest: 'tmp'
-        },{
+          cwd: 'packages/property-compiler/lib',
+          src: ['**/*'],
+          dest: 'tmp/property-compiler'
+        },
+        {
+          expand: true,
+          cwd: 'packages/rebound-compiler/lib',
+          src: ['**/*'],
+          dest: 'tmp/rebound-compiler'
+        },
+        {
+          expand: true,
+          cwd: 'packages/rebound-data/lib',
+          src: ['**/*'],
+          dest: 'tmp/rebound-data'
+        },
+        {
+          expand: true,
+          cwd: 'packages/rebound-precompile/lib',
+          src: ['**/*'],
+          dest: 'tmp/rebound-precompile'
+        },
+        {
+          expand: true,
+          cwd: 'packages/rebound-router/lib',
+          src: ['**/*'],
+          dest: 'tmp/rebound-router'
+        },
+        {
+          expand: true,
+          cwd: 'packages/rebound-runtime/lib',
+          src: ['**/*'],
+          dest: 'tmp/rebound-runtime'
+        },
+        {
           expand: true,
           cwd: 'wrap',
           src: ['almond.js'],
-          dest: 'tmp'
-        }]
-      },
-      cjs: {
-        files: [{
-          expand: true,
-          cwd: 'bower_components/htmlbars/packages/htmlbars-compiler/lib',
-          src: ['**/*'],
-          dest: 'tmp/htmlbars-compiler',
-        },{
-          expand: true,
-          cwd: 'bower_components/htmlbars/packages/htmlbars-runtime/lib',
-          src: ['**/*'],
-          dest: 'tmp/htmlbars-runtime',
-        },{
-          'tmp/morph/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
-          'tmp/morph/dom-helper.js': 'bower_components/htmlbars/packages/morph/lib/dom-helper.js'
-        },{
-          expand: true,
-          cwd: 'bower_components/handlebars/lib',
-          src: ['handlebars.js', 'handlebars.runtime.js', 'handlebars/**/*'],
-          dest: 'tmp',
-        },{
-          expand: true,
-          cwd: 'bower_components/simple-html-tokenizer/lib',
-          src: ['**/*'],
-          dest: 'tmp',
-        },{
-          expand: true,
-          cwd: 'lib',
-          src: ['rebound.js', 'rebound/**/*'],
           dest: 'tmp'
         }]
       }
@@ -152,7 +153,7 @@ module.exports = function(grunt) {
       },
       cjsRequires1: {
         files: {
-          'dist/commonjs/rebound/': 'dist/commonjs/rebound/*.js',
+          'dist/commonjs/rebound-compiler/': 'dist/commonjs/rebound-compiler/*.js',
           'dist/commonjs/morph/': 'dist/commonjs/morph/*.js',
           'dist/commonjs/handlebars/': 'dist/commonjs/handlebars/*.js',
           'dist/commonjs/htmlbars-compiler/': 'dist/commonjs/htmlbars-compiler/*.js',
@@ -211,9 +212,8 @@ module.exports = function(grunt) {
       runtime: {
         options: {
           optimize: "none",
-          name: "rebound.runtime",
+          name: "rebound-runtime/rebound-runtime",
           baseUrl: "./dist/amd",
-          // mainConfigFile: "path/to/config.js",
           out: "dist/rebound.runtime.js",
           wrap: {
             startFile: [
@@ -237,9 +237,8 @@ module.exports = function(grunt) {
       compiler: {
         options: {
           optimize: "none",
-          name: "rebound",
+          name: "rebound-compiler/rebound-compiler",
           baseUrl: "./dist/amd",
-          // mainConfigFile: "path/to/config.js",
           out: "dist/rebound.compiler.js",
           wrap: {
             startFile: [
@@ -263,10 +262,8 @@ module.exports = function(grunt) {
       runtimeMin: {
         options: {
           optimize: "uglify",
-          preserveLicenseComments: false,
-          name: "rebound.runtime",
+          name: "rebound-runtime/rebound-runtime",
           baseUrl: "./dist/amd",
-          // mainConfigFile: "path/to/config.js",
           out: "dist/rebound.runtime.min.js",
           wrap: {
             startFile: [
@@ -275,8 +272,8 @@ module.exports = function(grunt) {
               'bower_components/custom-elements/src/scope.js',
               'bower_components/custom-elements/src/Observer.js',
               'bower_components/custom-elements/src/CustomElements.js',
-              'bower_components/underscore/underscore.js',
               // 'bower_components/lodash/dist/lodash.js',
+              'bower_components/underscore/underscore.js',
               'bower_components/jquery/dist/jquery.js',
               'bower_components/backbone/backbone.js',
               //'bower_components/almond/almond.js',
@@ -290,10 +287,8 @@ module.exports = function(grunt) {
       compilerMin: {
         options: {
           optimize: "uglify",
-          preserveLicenseComments: false,
-          name: "rebound",
+          name: "rebound-compiler/rebound-compiler",
           baseUrl: "./dist/amd",
-          // mainConfigFile: "path/to/config.js",
           out: "dist/rebound.compiler.min.js",
           wrap: {
             startFile: [
@@ -329,15 +324,16 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
 
   grunt.registerTask('precompileDemo', 'Precompiles our demo template.', function(){
-    var rebound = require('./dist/commonjs/rebound/precompile'),
+    var precompile = require('./dist/commonjs/rebound-compiler/precompile').default,
         fs = require('fs');
 
-    var data = fs.readFile('./test/demo/templates/demo.hbs', 'utf8', function (err,data) {
+
+    var data = fs.readFile('./test/demo/templates/demo.html', 'utf8', function (err,data) {
       if (err) {
         return console.log(err);
       }
 
-      var template = rebound.precompile(data, {filepath: 'test/demo/templates/demo.html'});
+      var template = precompile(data);
 
       fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
           if(err) {
@@ -353,7 +349,7 @@ module.exports = function(grunt) {
         return console.log(err);
       }
 
-      var template = rebound.precompile(data, {filepath: 'test/demo/templates/components/editing.html'});
+      var template = precompile(data);
 
       fs.writeFile('./test/demo/templates/components/editing.js', template, function(err) {
           if(err) {
@@ -364,26 +360,10 @@ module.exports = function(grunt) {
       });
     });
 
-    var partial = fs.readFile('./test/demo/templates/partials/_editing.hbs', 'utf8', function (err,data) {
-      if (err) {
-        return console.log(err);
-      }
-
-      var template = rebound.precompile(data, {filepath: 'test/demo/templates/partials/_editing.hbs'});
-
-      fs.writeFile('./test/demo/templates/partials/_editing.js', template, function(err) {
-          if(err) {
-              console.log(err);
-          } else {
-              console.log("Editing partial template compiled successfully!");
-          }
-      });
-    });
-
   })
 
   grunt.registerTask('compileAMD', 'Build the project as AMD', [
-    'copy:amd',
+    'copy',
     'transpile:amd',
     'string-replace:amdDefines',
     'requirejs:runtime',
@@ -394,7 +374,7 @@ module.exports = function(grunt) {
 
   // TODO: generate our cjs runtime deps off of htmlbars'
   grunt.registerTask('compileCJS', 'Build the project as CJS', [
-    'copy:cjs',
+    'copy',
     'transpile:cjs',
     // TODO: This is dumb, should be a way to write it as one string-replace job
     'string-replace:cjsRequires0',

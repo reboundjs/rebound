@@ -4,7 +4,7 @@
     //value to use for the public API for the built file.
 
     return (function(){
-      require(['rebound.runtime'], function(Rebound){
+      require(['rebound-runtime/rebound-runtime'], function(Rebound){
         window.Rebound = Rebound;
       });
     })();
@@ -12,6 +12,6 @@
 
 require.config({
     baseUrl: "/"
-})
+});
 
 require(['Rebound']);

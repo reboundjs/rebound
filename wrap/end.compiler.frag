@@ -4,7 +4,7 @@
 //value to use for the public API for the built file.
 
 return (function(){
-  require(['rebound'], function(Rebound){
+  require(['rebound-compiler/rebound-compiler'], function(Rebound){
     window.Rebound = Rebound;
   });
 })();
@@ -12,6 +12,6 @@ return (function(){
 
 require.config({
     baseUrl: "/"
-})
+});
 
 require(['Rebound']);
