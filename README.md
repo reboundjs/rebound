@@ -86,8 +86,10 @@ Because the Rebound script tag contains a src, nothing inside it gets executed, 
  - __triggerOnFirstLoad__ - If false, Rebound will not try and trigger the route  once the page is loaded. Equivalent to passing ```{ silent: true }``` to Backbone.history.start
  - __routeMapping__ - Object which defines custom base route path to component name mappings. ex: if the root url ```/``` should load the home component, pass ```{ "": "home" }```
 
-### Routing
-
+<p align="center">
+  <h3 align="center">Routing</h3>
+</p>
+- - -
 Rebound adds a three bits of functionality to Backbone's router to make navigation in a single page app even easier:
  - Relative urls will always try and trigger a route. You can now write ```<a href="/profile/1234"></a>``` and have that route be triggered on the router. No need for wiring click events, or using helpers to trigger routes.
  - Absolute urls like ```<a href="www.google.com"></a>``` will be ignored by the router and load normally.
@@ -102,7 +104,10 @@ Here's a walkthrough of how Rebound's automatic resource loading works:
 
 >When the user clicks on another link, say, /discover, the router sees that it does not have a /discover route loaded. The router again hits the wildcard route and fetches ```/javascripts/apps/discoverPage.js```. The old profile app is then uninstalled, its routes removed, and the discover page is loaded as before.
 
-### Components
+<p align="center">
+  <h3 align="center">Components</h3>
+</p>
+- - -
 
 Rebound is a Model View Component library. This means the basic building blocks of Rebound are data bound components which adhere closely to the W3 Custom Elements spec.
 
@@ -281,3 +286,122 @@ Valid config options are:
 
 Under the covers, components are just special instances of Backbone models. This gives you all the niceties of Backbone, but it does mean that there are a few other reserved words that will yell at you if you try and use them as property or method names. These are: ```constructor, get, set, has, extend, escape, unset, clear, cid, attributes, changed, toJSON validationError, isValid, isNew, hasChanged, changedAttributes, previous, previousAttributes```
 
+<p align="center">
+  <h3 align="center">Templates</h3>
+</p>
+- - -
+
+So in the above examples you've seen some simple Rebound templates, but lets dive down and see what we can actually do.
+
+Your component's template is always rendered in the scope of your component. Take a look at this component:
+
+```html
+<element name="example-element">
+  <template>
+    <div class="FirstClass {{className}}" {{on "click" "upgrade"}}>{{awesomeContent}}</div>
+  </template>
+  <script>
+    return ({
+
+      /********* Default Properties ********/
+      className: 'SomeClass',
+      content: {
+        'first' : 'This Content', 
+        'last' : 'AWESOME!'
+      }
+      awesomeContent: function(){
+        return this.get('content.first') + ' Is ' + this.get('content.last');
+      },
+
+      /********* Component Methods ********/
+      upgrade: function(event){
+        this.set('content.last', 'SUPER AWESOME!!');
+      }
+      
+    })
+  </script>
+</element>
+```
+It does exactly as you'd expect. The dom output of this element is:
+
+```html
+<example-element><div class="FirstClass SomeClass">This Content Is AWESOME!</div></example-element>
+```
+
+You'll notice that, because of HTMLBars, we can simply write a variable, or "handlebar", anywhere in our template. It does not care if it is inside of an element, inside of a property, or even on the element itself! 
+
+Also for free, all of these properties are automatically data bound to your property's data structure, no matter how deeply nested the data is. When the component method ```upgrade``` is run, ```content.last``` is updated and you would see the dom automatically update itself to:
+
+```html
+<example-element><div class="FirstClass SomeClass">This Content Is SUPER AWESOME!</div></example-element>
+```
+
+This data nesting, data selection and data binding works with any mixture of objects and arrays. For example, this:
+
+```html
+<element name="example-element">
+  <template>
+    <div class="{{content[0].biz}}">{{awesomeContent}}</div>
+  </template>
+  <script>
+    return ({
+
+      /********* Default Properties ********/
+
+      content: [{'bar': 'foo'}, {'biz': 'baz'}],
+      
+      awesomeContent: function(){
+        return this.get('content[0].bar');
+      }
+
+    })
+  </script>
+</element>
+```
+
+Again, outputs exactly what you'd expect:
+
+```html
+<div class="baz">foo</div>
+```
+
+#### Helpers
+
+For the most part, any complicated logic should be handled in a computed property that can then be outputted on the page. However, that doesn't mean that we aren't without some help when rendering our templates!
+
+Rebound comes with a powerful set of default helpers that you can use when creating your component templates.
+
+##### on
+The on helper binds a component method to an element in your template to be triggered by an event of your choice.
+```html
+<div {{on 'click' 'methodName'}}></div>
+```
+
+##### if
+The if helper has two forms. 
+
+Used as a block helper it looks like this:
+```html
+<div>
+  {{if someValue}}
+    Value is true!
+  {{else}}
+    Value is false
+  {{/if}}
+</div>
+```
+If ```someValue``` is truthy the if helper will render whatever is in the first block. The else block is optional and may be left out, but if ```someValue``` is falsy the else block will render in its place. These blocks may be as complex as you'd like and are rendered in the same scope as its parent.
+
+As an inline helper the if helper looks like this:
+
+```html
+
+##### unless
+
+##### each
+
+##### length
+
+##### with
+
+##### partial
