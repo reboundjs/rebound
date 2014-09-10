@@ -26,7 +26,7 @@ But just trust me on this, this is going to be good.
 
 The [Polymer](https://github.com/Polymer) people over at Google have created a polyfill for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
 
-[Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
+[Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its evented Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
 
 [Rebound](https://github.com/epicmiller/rebound) is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars templates, binding to your models to the dom on render and live updating your page as they change. To make the conversation two-way, event helpers and automatic binding to form elements lets you respond to user interaction. Combine this with an augmented but still powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
 
@@ -451,7 +451,7 @@ Sometimes you may want to invoke a section of your template with a different con
 
 The ```{{partial}}``` helper renders a registered partial. 
 
-Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. When rendered they inherit the context of its parent template. 
+Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. They can be a conveinent way of breaking up and organizing what may otherwise be a very large template. When rendered they inherit the context of its parent template. 
 
 The variable passed to this helper is the path to a .hbs template file on the server. When using the precompiler, Rebound will add a dependancy for the partial's template to the parent component / template so you don't need to worry about getting it on the page. Otherwise, the partial's template must be loaded on the page for it to appear. It is convention for partials to begin with an underscore. This underscore and the file extension are absent from the variable passed to the partial, so ```{{partial /public/demo/partial }}``` referances ```http://domain.com/public/demo/_partial.hbs```.
 
