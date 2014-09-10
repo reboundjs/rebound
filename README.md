@@ -451,7 +451,7 @@ Sometimes you may want to invoke a section of your template with a different con
 
 The ```{{partial}}``` helper renders a registered partial. 
 
-Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. When rendered they inherit the context of its parent template. 
+Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. They can be a conveinent way of breaking up and organizing what may otherwise be a very large template. When rendered they inherit the context of its parent template. 
 
 The variable passed to this helper is the path to a .hbs template file on the server. When using the precompiler, Rebound will add a dependancy for the partial's template to the parent component / template so you don't need to worry about getting it on the page. Otherwise, the partial's template must be loaded on the page for it to appear. It is convention for partials to begin with an underscore. This underscore and the file extension are absent from the variable passed to the partial, so ```{{partial /public/demo/partial }}``` referances ```http://domain.com/public/demo/_partial.hbs```.
 
