@@ -291,7 +291,7 @@ Under the covers, components are just special instances of Backbone models. This
 </p>
 - - -
 
-#### Referancing Data
+#### Referencing Data
 So in the above examples you've seen some simple Rebound templates, but lets dive down and see what we can actually do.
 
 Your component's template is always rendered in the scope of your component. Take a look at this component:
