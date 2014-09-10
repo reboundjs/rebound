@@ -1,12 +1,7 @@
 "use strict";
-var htmlbarsCompile = require("htmlbars-compiler/compiler").compile;
-var htmlbarsCompileSpec = require("htmlbars-compiler/compiler").compileSpec;
-var merge = require("htmlbars-runtime/utils").merge;
-
-var defaultPrecompileOptions = {
-  baseDest: '',
-  baseUrl: ''
-};
+var htmlbarsCompile = require("../htmlbars-compiler/compiler").compile;
+var htmlbarsCompileSpec = require("../htmlbars-compiler/compiler").compileSpec;
+var merge = require("../htmlbars-runtime/utils").merge;
 
 function precompile(str, options){
   if( !str || str.length === 0 ){
@@ -20,7 +15,7 @@ function precompile(str, options){
 
   options = options || {};
   options.baseDest = options.baseDest || '';
-  options.filepath = options.filepath || '';
+  options.name = options.name || '';
   options.baseUrl = options.baseUrl || '';
 
   var template = str,
@@ -82,7 +77,7 @@ function precompile(str, options){
 
   // If is a partial
   if(isPartial){
-    template = '(function(){var template = '+template+'\n window.Rebound.registerPartial( "'+ options.filepath +'", template);})();\n';
+    template = '(function(){var template = '+template+'\n window.Rebound.registerPartial( "'+ options.name +'", template);})();\n';
   }
   // Else, is a component
   else{
@@ -119,4 +114,4 @@ function precompile(str, options){
   return template;
 }
 
-exports["default"] = precompile;
+exports.precompile = precompile;

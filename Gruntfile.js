@@ -153,7 +153,7 @@ module.exports = function(grunt) {
       },
       cjsRequires1: {
         files: {
-          'dist/commonjs/rebound-compiler/': 'dist/commonjs/rebound-compiler/*.js',
+          'dist/commonjs/rebound-precompile/': 'dist/commonjs/rebound-precompile/*.js',
           'dist/commonjs/morph/': 'dist/commonjs/morph/*.js',
           'dist/commonjs/handlebars/': 'dist/commonjs/handlebars/*.js',
           'dist/commonjs/htmlbars-compiler/': 'dist/commonjs/htmlbars-compiler/*.js',
@@ -324,7 +324,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
 
   grunt.registerTask('precompileDemo', 'Precompiles our demo template.', function(){
-    var precompile = require('./dist/commonjs/rebound-compiler/precompile').default,
+    var precompile = require('./dist/commonjs/rebound-precompile/rebound-precompile').precompile,
         fs = require('fs');
 
 

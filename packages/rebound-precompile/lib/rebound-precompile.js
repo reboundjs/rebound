@@ -1,11 +1,6 @@
 import { compile as htmlbarsCompile, compileSpec as htmlbarsCompileSpec } from "htmlbars-compiler/compiler";
 import { merge } from "htmlbars-runtime/utils";
 
-var defaultPrecompileOptions = {
-  baseDest: '',
-  baseUrl: ''
-};
-
 function precompile(str, options){
   if( !str || str.length === 0 ){
     return console.error('No template provided!');
@@ -18,7 +13,7 @@ function precompile(str, options){
 
   options = options || {};
   options.baseDest = options.baseDest || '';
-  options.filepath = options.filepath || '';
+  options.name = options.name || '';
   options.baseUrl = options.baseUrl || '';
 
   var template = str,
@@ -80,7 +75,7 @@ function precompile(str, options){
 
   // If is a partial
   if(isPartial){
-    template = '(function(){var template = '+template+'\n window.Rebound.registerPartial( "'+ options.filepath +'", template);})();\n';
+    template = '(function(){var template = '+template+'\n window.Rebound.registerPartial( "'+ options.name +'", template);})();\n';
   }
   // Else, is a component
   else{
@@ -117,4 +112,4 @@ function precompile(str, options){
   return template;
 }
 
-export default precompile;
+export { precompile };
