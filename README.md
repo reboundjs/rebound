@@ -116,7 +116,7 @@ A Rebound component looks like this:
 ```html
 <element name="example-element">
   <template>
-    <input class="edit" value="{{value}}" type="text" {{on "blur" "doneEditing"}}>
+    <input class="edit" value="{{awesomeValue}}" type="text" {{on "blur" "doneEditing"}}>
   </template>
   <script>
     return ({
