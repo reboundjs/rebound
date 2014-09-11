@@ -40,11 +40,9 @@ The project is still in flux, so everything below is subject to change! Use at y
 
  - Install all dependancies: ```npm install```
 
- - Test in the command line: ```npm test```
-
  - Start the test server: ```npm start```
 
- - Check to [localhost:8000/test](http://localhost:8000/test) to run the tests or [localhost:8000/test/demo](http://localhost:8000/test/demo) to see it in action.
+ - Check out [localhost:8000/test](http://localhost:8000/test) to run the tests or [localhost:8000/test/demo](http://localhost:8000/test/demo) to see it in action.
 
 <p align="center">
   <h3 align="center">Awesome, lets get to some code</h3>
