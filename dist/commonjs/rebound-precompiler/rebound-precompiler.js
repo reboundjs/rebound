@@ -55,7 +55,7 @@ function precompile(str, options){
 
 
   // Assemple our component dependancies by finding link tags and parsing their src
-  var importsre = /<link [^h]*href=(['"]?)\/?(.*).html\1[^>]*>/gi,
+  var importsre = /<link [^h]*href=(['"]?)\/?([^.'"]*).html\1[^>]*>/gi,
       match;
 
   while ((match = importsre.exec(template)) != null) {
