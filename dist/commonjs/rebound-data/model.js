@@ -67,7 +67,7 @@ var Model = Backbone.Model.extend({
   },
 
   set: function(key, val, options){
-    var attrs, newKey;
+    var attrs, newKey, obj;
 
     // Set is able to take a object or a key value pair. Normalize this input.
     if (typeof key === 'object') {
@@ -80,36 +80,51 @@ var Model = Backbone.Model.extend({
     // For each key and value, call original set and propagate its events up to parent if it is eventable.
     for (key in attrs) {
       val = attrs[key];
+      obj = undefined;
 
-      if(val === null){ val = undefined; }
-
-      // If any value is a function, turn it into a computed property
-      if(_.isFunction(val)){
-        propertyCompiler.register(this, key, val);
+      // If val is null, set to undefined
+      if(val === null){
+        val = undefined;
       }
-      // If any value is an object, turn it into a model
+      // If this value is a vanilla object, turn it into a model
       else if(_.isObject(val) && !_.isArray(val) && !_.isFunction(val) && !(val.isModel || val.isCollection)){
-        val = attrs[key] = new Rebound.Model(val);
+        obj = new Rebound.Model();
       }
-      // If any value is an array, turn it into a collection
+      // If this value is an array, turn it into a collection
       else if(_.isArray(val)){
-        val = attrs[key] = new Rebound.Collection(val);
+        obj = new Rebound.Collection();
+      }
+      // If this value is a computed property,
+      else if(_.isFunction(val)){
+        obj = val;
       }
 
-      // Set this element's path variable. Returns the fully formed json path of this element
-      if(val !== undefined){
-        val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
+      // Mutations to apply if this value is a model, collection or computed property
+      if(obj !== undefined){
 
-        // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
-        if(!val.__parent && val.isModel || val.isCollection){
-          // When requesting the name value of our value, return the its key appended to the computed name value of our parent
-          // Closure is needed to preserve values in the instance so they dont get set to the prototype
-          val.__parent = this;
-          val.on('all', this.trigger, this);
+        // Set this object's path function
+        obj.__path = (function(parent, key){ parent = parent.__path(); return function(){ return  parent + ((parent === '') ? '' : '.') + key ; }; })(this, key);
+
+        // Save this object's ancestary
+        obj.__parent = this;
+
+        // If a computed property, register it for compilation.
+        if(_.isFunction(val)){
+          propertyCompiler.register(this, key, val, this.__path());
         }
+
+        // If an eventable object (Model or Collection), propagate all its events up the chain and finally, set its children
+        if(obj.isModel || obj.isCollection){
+          obj.on('all', this.trigger, this);
+          obj.set(val);
+        }
+
+        // Save our changes
+        val = attrs[key] = obj;
       }
 
-      // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
+
+      // Set the apropreate object if setting a child element.
       var parts  = {},
           result = {},
           model,
@@ -140,7 +155,7 @@ var Model = Backbone.Model.extend({
         }
       }
 
-      // Call original backbone set function
+      // Call original backbone set function on this object
       Backbone.Model.prototype.set.call(result, parts[i], val, options);
 
     }

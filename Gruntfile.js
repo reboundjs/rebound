@@ -367,9 +367,9 @@ module.exports = function(grunt) {
     'transpile:amd',
     'string-replace:amdDefines',
     'requirejs:runtime',
-    //'requirejs:runtimeMin',
+    'requirejs:runtimeMin',
     'requirejs:compiler',
-    //'requirejs:compilerMin'
+    'requirejs:compilerMin'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'

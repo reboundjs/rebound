@@ -16272,7 +16272,9 @@ define("rebound-runtime/helpers",
     };
 
     // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
-    helpers.lookupHelper = function(name, env) {
+    helpers.lookupHelper = function(name, env, path) {
+
+      // If a reserved helpers, return it
       if(name === 'attribute') { return this.attribute; }
       if(name === 'if') { return this.if; }
       if(name === 'unless') { return this.unless; }
@@ -16282,7 +16284,9 @@ define("rebound-runtime/helpers",
       if(name === 'length') { return this.length; }
       if(name === 'on') { return this.on; }
       if(name === 'concat') { return this.concat; }
-      return helpers[name] || false;
+
+      // If not a reserved helper, check env, then global helpers, else return false
+      return (env.helpers[path + '.' + name]) || helpers[name] || false;
     };
 
     helpers.registerHelper = function(name, callback, params){
@@ -16856,7 +16860,7 @@ define("rebound-runtime/hooks",
       var lazyValue,
           value,
           observer = subtreeObserver,
-          helper = helpers.lookupHelper(path, env);
+          helper = helpers.lookupHelper(path, env, context.__path());
 
       // TODO: just set escaped on the placeholder in HTMLBars
       placeholder.escaped = options.escaped;
@@ -16898,7 +16902,7 @@ define("rebound-runtime/hooks",
 
     // Handle placeholders in element tags
     hooks.element = function(element, path, context, params, options, env) {
-      var helper = helpers.lookupHelper(path, env),
+      var helper = helpers.lookupHelper(path, env, context.__path()),
           lazyValue,
           value;
 
@@ -17096,7 +17100,7 @@ define("rebound-runtime/hooks",
 
     hooks.subexpr = function(path, context, params, options, env) {
 
-      var helper = helpers.lookupHelper(path, env),
+      var helper = helpers.lookupHelper(path, env, context.__path()),
           lazyValue;
       if (helper) {
         // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
@@ -17147,7 +17151,8 @@ define("rebound-runtime/env",
     };
 
     // Notify all of a object's observers of the change, execute the callback
-    env.notify = function(obj, path, componentName) {
+    env.notify = function(obj, path) {
+
       // If path is not an array of keys, wrap it in array
       path = (_.isString(path)) ? [path] : path;
 
@@ -18106,7 +18111,8 @@ define("property-compiler/property-compiler",
 
     // TODO: Make this farrrrrr more robust...very minimal right now
 
-    function compile(data){
+    function compile(){
+      var output = {};
 
       _.each(computedProperties, function(prop){
         var str = prop.val.toString().replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
@@ -18199,14 +18205,23 @@ define("property-compiler/property-compiler",
 
         console.log('COMPUTED PROPERTY', prop.key, 'registered with these dependancy paths:', finishedPaths);
 
-        Rebound.registerHelper(prop.key, prop.val, finishedPaths);
+        // Save this property's dependancies in its __params attribute
+        prop.val.__params = finishedPaths;
+
+        // Add it to our output
+        output[prop.path + '.' + prop.key] = prop.val;
 
       });
+
+      // Reset our computed proerties queue
       computedProperties = [];
+
+      return output;
+
     }
 
-    function register(context, key, func){
-      computedProperties.push({obj: context, key: key, val: func});
+    function register(context, key, func, path){
+      computedProperties.push({obj: context, key: key, val: func, path: path});
     }
 
     __exports__["default"] = { register: register, compile: compile };
@@ -18283,7 +18298,7 @@ define("rebound-data/model",
       },
 
       set: function(key, val, options){
-        var attrs, newKey;
+        var attrs, newKey, obj;
 
         // Set is able to take a object or a key value pair. Normalize this input.
         if (typeof key === 'object') {
@@ -18296,36 +18311,51 @@ define("rebound-data/model",
         // For each key and value, call original set and propagate its events up to parent if it is eventable.
         for (key in attrs) {
           val = attrs[key];
+          obj = undefined;
 
-          if(val === null){ val = undefined; }
-
-          // If any value is a function, turn it into a computed property
-          if(_.isFunction(val)){
-            propertyCompiler.register(this, key, val);
+          // If val is null, set to undefined
+          if(val === null){
+            val = undefined;
           }
-          // If any value is an object, turn it into a model
+          // If this value is a vanilla object, turn it into a model
           else if(_.isObject(val) && !_.isArray(val) && !_.isFunction(val) && !(val.isModel || val.isCollection)){
-            val = attrs[key] = new Rebound.Model(val);
+            obj = new Rebound.Model();
           }
-          // If any value is an array, turn it into a collection
+          // If this value is an array, turn it into a collection
           else if(_.isArray(val)){
-            val = attrs[key] = new Rebound.Collection(val);
+            obj = new Rebound.Collection();
+          }
+          // If this value is a computed property,
+          else if(_.isFunction(val)){
+            obj = val;
           }
 
-          // Set this element's path variable. Returns the fully formed json path of this element
-          if(val !== undefined){
-            val.__path = (function(model, key){ return function(){ return model.__path() + '.' + key ; }; })(this, key);
+          // Mutations to apply if this value is a model, collection or computed property
+          if(obj !== undefined){
 
-            // If this new key is an eventable object, and it doesn't yet have its ancestry set, propagate its event to our parent
-            if(!val.__parent && val.isModel || val.isCollection){
-              // When requesting the name value of our value, return the its key appended to the computed name value of our parent
-              // Closure is needed to preserve values in the instance so they dont get set to the prototype
-              val.__parent = this;
-              val.on('all', this.trigger, this);
+            // Set this object's path function
+            obj.__path = (function(parent, key){ parent = parent.__path(); return function(){ return  parent + ((parent === '') ? '' : '.') + key ; }; })(this, key);
+
+            // Save this object's ancestary
+            obj.__parent = this;
+
+            // If a computed property, register it for compilation.
+            if(_.isFunction(val)){
+              propertyCompiler.register(this, key, val, this.__path());
             }
+
+            // If an eventable object (Model or Collection), propagate all its events up the chain and finally, set its children
+            if(obj.isModel || obj.isCollection){
+              obj.on('all', this.trigger, this);
+              obj.set(val);
+            }
+
+            // Save our changes
+            val = attrs[key] = obj;
           }
 
-          // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
+
+          // Set the apropreate object if setting a child element.
           var parts  = {},
               result = {},
               model,
@@ -18356,7 +18386,7 @@ define("rebound-data/model",
             }
           }
 
-          // Call original backbone set function
+          // Call original backbone set function on this object
           Backbone.Model.prototype.set.call(result, parts[i], val, options);
 
         }
@@ -18397,7 +18427,7 @@ define("rebound-data/collection",
 
     function pathGenerator(collection, model){
       return function(){
-        return collection.__path() + '.[' + collection.indexOf(model) + ']';
+        return collection.__path() + '[' + collection.indexOf(model) + ']';
       };
     }
 
@@ -18438,8 +18468,7 @@ define("rebound-data/collection",
           // If model does not already exist in the collection, set its name.
           if (!this.get(id)){
             // When requesting the name value of our value, return the its index appended to the computed name value of our parent
-            // Closure is needed to preserve values in the instance so they dont get set to the prototype
-            model.__path = (pathGenerator(this, model));
+            model.__path = pathGenerator(this, model);
             model.__parent = this;
           }
 
@@ -18548,6 +18577,8 @@ define("rebound-runtime/component",
 
       constructor: function(options){
 
+        var helpers;
+
         options = options || (options = {});
         this.dom = '';
         this.cid = _.uniqueId('component');
@@ -18567,7 +18598,12 @@ define("rebound-runtime/component",
             //   return _.defaults(obj, defaults);
             //  }));
         this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
-        propertyCompiler.compile(this);
+
+        // All comptued properties are registered as helpers in the scope of this component
+        helpers = propertyCompiler.compile();
+
+        // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
+        helpers.__callOnComponent = this.__callOnComponent;
 
         // Get any additional routes passed in from options
         this.routes =  _.defaults((options.routes || {}), this.routes);
@@ -18592,7 +18628,7 @@ define("rebound-runtime/component",
         this._startListening();
 
         // Render our dom
-        this.dom = this.template(this, {helpers: {'__callOnComponent': this.__callOnComponent}});
+        this.dom = this.template(this, {helpers: helpers});
 
         // Place the dom in our custom element
         this.el.appendChild(this.dom);
@@ -18670,7 +18706,7 @@ define("rebound-runtime/component",
               // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
               // ex: test.[1].whatever -> test.@each.whatever
               if(path.match(/\[.+\]/g)){
-                newPath = path.replace(/\[.+\]/g, "@each");
+                newPath = path.replace(/\[.+\]/g, ".@each");
                 paths.push(newPath);
                 // Also listen to collection changes. Adds, removes, etc, if applicible.
                 if(newPath.match(/\.@each\.?/)){

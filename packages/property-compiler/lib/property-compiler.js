@@ -4,7 +4,8 @@ var computedProperties = [];
 
 // TODO: Make this farrrrrr more robust...very minimal right now
 
-function compile(data){
+function compile(){
+  var output = {};
 
   _.each(computedProperties, function(prop){
     var str = prop.val.toString().replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
@@ -97,14 +98,23 @@ function compile(data){
 
     console.log('COMPUTED PROPERTY', prop.key, 'registered with these dependancy paths:', finishedPaths);
 
-    Rebound.registerHelper(prop.key, prop.val, finishedPaths);
+    // Save this property's dependancies in its __params attribute
+    prop.val.__params = finishedPaths;
+
+    // Add it to our output
+    output[prop.path + '.' + prop.key] = prop.val;
 
   });
+
+  // Reset our computed proerties queue
   computedProperties = [];
+
+  return output;
+
 }
 
-function register(context, key, func){
-  computedProperties.push({obj: context, key: key, val: func});
+function register(context, key, func, path){
+  computedProperties.push({obj: context, key: key, val: func, path: path});
 }
 
 export default { register: register, compile: compile };

@@ -12,7 +12,7 @@ if(!window.Backbone){
 
 function pathGenerator(collection, model){
   return function(){
-    return collection.__path() + '.[' + collection.indexOf(model) + ']';
+    return collection.__path() + '[' + collection.indexOf(model) + ']';
   };
 }
 
@@ -53,8 +53,7 @@ var Collection = Backbone.Collection.extend({
       // If model does not already exist in the collection, set its name.
       if (!this.get(id)){
         // When requesting the name value of our value, return the its index appended to the computed name value of our parent
-        // Closure is needed to preserve values in the instance so they dont get set to the prototype
-        model.__path = (pathGenerator(this, model));
+        model.__path = pathGenerator(this, model);
         model.__parent = this;
       }
 

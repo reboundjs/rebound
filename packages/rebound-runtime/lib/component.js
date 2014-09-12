@@ -19,6 +19,8 @@ var Component = Model.extend({
 
   constructor: function(options){
 
+    var helpers;
+
     options = options || (options = {});
     this.dom = '';
     this.cid = _.uniqueId('component');
@@ -38,7 +40,12 @@ var Component = Model.extend({
         //   return _.defaults(obj, defaults);
         //  }));
     this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
-    propertyCompiler.compile(this);
+
+    // All comptued properties are registered as helpers in the scope of this component
+    helpers = propertyCompiler.compile();
+
+    // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
+    helpers.__callOnComponent = this.__callOnComponent;
 
     // Get any additional routes passed in from options
     this.routes =  _.defaults((options.routes || {}), this.routes);
@@ -63,7 +70,7 @@ var Component = Model.extend({
     this._startListening();
 
     // Render our dom
-    this.dom = this.template(this, {helpers: {'__callOnComponent': this.__callOnComponent}});
+    this.dom = this.template(this, {helpers: helpers});
 
     // Place the dom in our custom element
     this.el.appendChild(this.dom);
@@ -141,7 +148,7 @@ var Component = Model.extend({
           // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
           // ex: test.[1].whatever -> test.@each.whatever
           if(path.match(/\[.+\]/g)){
-            newPath = path.replace(/\[.+\]/g, "@each");
+            newPath = path.replace(/\[.+\]/g, ".@each");
             paths.push(newPath);
             // Also listen to collection changes. Adds, removes, etc, if applicible.
             if(newPath.match(/\.@each\.?/)){

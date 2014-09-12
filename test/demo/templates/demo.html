@@ -7,6 +7,10 @@
 			<header id="header">
 				<h1>todos</h1>
 		    <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" {{on 'keyup' 'createTodo'}}>
+				{{test.remaining}}
+				{{#with test}}
+					{{remaining}}
+				{{/with}}
 			</header>
 
 		  {{#if todos}}
@@ -111,6 +115,11 @@
 		},
 		remaining: function(){
 			return this.get('todos').where({'isCompleted': false}).length;
+		},
+		test: {
+			remaining: function(){
+				return 'woo...';
+			}
 		},
 		completed: function(){
 			return this.get('todos').where({'isCompleted': true}).length;

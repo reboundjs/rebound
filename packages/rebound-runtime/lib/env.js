@@ -29,7 +29,8 @@ env.hydrate = function(spec, options){
 };
 
 // Notify all of a object's observers of the change, execute the callback
-env.notify = function(obj, path, componentName) {
+env.notify = function(obj, path) {
+
   // If path is not an array of keys, wrap it in array
   path = (_.isString(path)) ? [path] : path;
 

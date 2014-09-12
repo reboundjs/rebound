@@ -282,7 +282,7 @@ hooks.content = function(placeholder, path, context, params, options, env) {
   var lazyValue,
       value,
       observer = subtreeObserver,
-      helper = helpers.lookupHelper(path, env);
+      helper = helpers.lookupHelper(path, env, context.__path());
 
   // TODO: just set escaped on the placeholder in HTMLBars
   placeholder.escaped = options.escaped;
@@ -324,7 +324,7 @@ hooks.content = function(placeholder, path, context, params, options, env) {
 
 // Handle placeholders in element tags
 hooks.element = function(element, path, context, params, options, env) {
-  var helper = helpers.lookupHelper(path, env),
+  var helper = helpers.lookupHelper(path, env, context.__path()),
       lazyValue,
       value;
 
@@ -522,7 +522,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
 
 hooks.subexpr = function(path, context, params, options, env) {
 
-  var helper = helpers.lookupHelper(path, env),
+  var helper = helpers.lookupHelper(path, env, context.__path()),
       lazyValue;
   if (helper) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
