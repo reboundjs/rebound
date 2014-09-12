@@ -16390,7 +16390,7 @@ define("rebound-runtime/helpers",
     helpers.if = function(params, hash, options, env){
       var condition = params[0];
 
-      if(condition === undefined){ return console.error("Condition passed to if helper is undefined!"); }
+      if(condition === undefined){ return console.warn("Condition passed to if helper is undefined! Maybe try setting a default value?", options.context); }
 
       if(condition.isModel){
         condition = true;
@@ -16432,7 +16432,7 @@ define("rebound-runtime/helpers",
     helpers.unless = function(params, hash, options, env){
       var condition = params[0];
 
-      if(condition === undefined){ return console.error("Condition passed to unless helper is undefined!"); }
+      if(condition === undefined){ return console.warn("Condition passed to unless helper is undefined! Maybe try setting a default value?", options.context); }
 
       if(condition.isModel){
         condition = true;
@@ -16488,7 +16488,7 @@ define("rebound-runtime/helpers",
 
     helpers.each = function(params, hash, options, env){
 
-      if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.error('Undefined value passed to each helper. Provide a default value.'); return; }
+      if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', options.context); return; }
 
       var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
           start, end, // used below to remove trailing junk morphs from the dom
