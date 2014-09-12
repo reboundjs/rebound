@@ -21,7 +21,7 @@ function precompile(str, options){
       script = '{}',
       name = '',
       isPartial = true,
-      imports,
+      imports = [],
       partials,
       require,
       deps = [];
@@ -51,15 +51,21 @@ function precompile(str, options){
     }
   }
 
+
   // Assemple our component dependancies by finding link tags and parsing their src
-  imports = template.match(/<link .*href=(['"]?)(.*).html\1[^>]*>/gi);
-  if(imports){
-    imports.forEach(function(importString, index){
-      deps.push('"' + options.baseDest + importString.replace(/<link .*href=(["']?)\/?([^'"]*).html\1.*>/gi, '$2') + '"');
-    });
+  var importsre = /<link [^h]*href=(['"]?)\/?(.*).html\1[^>]*>/gi,
+      match;
+
+  while ((match = importsre.exec(template)) != null) {
+      imports.push(match[2]);
   }
+  imports.forEach(function(importString, index){
+    deps.push('"' + options.baseDest + importString + '"');
+  });
+
   // Remove link tags from template
   template = template.replace(/<link .*href=(['"]?)(.*).html\1[^>]*>/gi, '');
+
 
   // Assemble our partial dependancies
   partials = template.match(/\{\{>\s*?['"]?([^'"}\s]*)['"]?\s*?\}\}/gi);

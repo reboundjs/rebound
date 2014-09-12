@@ -431,7 +431,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
     // For each change on our component, update the states of the original context and the element's proeprties.
     context.listenTo(component, 'change', function(model){
 
-      var componentPath = (model.__path()).slice( 1 ),
+      var componentPath = (model.__path()),
           contextPath = '',
           json = model.toJSON(),
           componentAttrs = model.changedAttributes(),

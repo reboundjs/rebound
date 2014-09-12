@@ -16390,7 +16390,7 @@ define("rebound-runtime/helpers",
     helpers.if = function(params, hash, options, env){
       var condition = params[0];
 
-      if(condition === undefined){ return console.log("Condition passed to if helper is undefined!"); }
+      if(condition === undefined){ return console.error("Condition passed to if helper is undefined!"); }
 
       if(condition.isModel){
         condition = true;
@@ -16432,7 +16432,7 @@ define("rebound-runtime/helpers",
     helpers.unless = function(params, hash, options, env){
       var condition = params[0];
 
-      if(condition === undefined){ return console.log("Condition passed to unless helper is undefined!"); }
+      if(condition === undefined){ return console.error("Condition passed to unless helper is undefined!"); }
 
       if(condition.isModel){
         condition = true;
@@ -17009,7 +17009,7 @@ define("rebound-runtime/hooks",
         // For each change on our component, update the states of the original context and the element's proeprties.
         context.listenTo(component, 'change', function(model){
 
-          var componentPath = (model.__path()).slice( 1 ),
+          var componentPath = (model.__path()),
               contextPath = '',
               json = model.toJSON(),
               componentAttrs = model.changedAttributes(),

@@ -129,7 +129,7 @@ helpers.attribute = function(params, hash, options, env) {
 helpers.if = function(params, hash, options, env){
   var condition = params[0];
 
-  if(condition === undefined){ return console.log("Condition passed to if helper is undefined!"); }
+  if(condition === undefined){ return console.error("Condition passed to if helper is undefined!"); }
 
   if(condition.isModel){
     condition = true;
@@ -171,7 +171,7 @@ helpers.if = function(params, hash, options, env){
 helpers.unless = function(params, hash, options, env){
   var condition = params[0];
 
-  if(condition === undefined){ return console.log("Condition passed to unless helper is undefined!"); }
+  if(condition === undefined){ return console.error("Condition passed to unless helper is undefined!"); }
 
   if(condition.isModel){
     condition = true;
