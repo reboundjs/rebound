@@ -13,6 +13,9 @@ helpers.registerPartial = function(name, func){
 // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
 helpers.lookupHelper = function(name, env, path) {
 
+  env = env || {};
+  path = path || '';
+
   // If a reserved helpers, return it
   if(name === 'attribute') { return this.attribute; }
   if(name === 'if') { return this.if; }
@@ -25,7 +28,7 @@ helpers.lookupHelper = function(name, env, path) {
   if(name === 'concat') { return this.concat; }
 
   // If not a reserved helper, check env, then global helpers, else return false
-  return (env.helpers[path + '.' + name]) || helpers[name] || false;
+  return (env.helpers && env.helpers[path + '.' + name]) || helpers[name] || false;
 };
 
 helpers.registerHelper = function(name, callback, params){

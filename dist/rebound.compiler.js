@@ -23401,6 +23401,9 @@ define("rebound-runtime/helpers",
     // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
     helpers.lookupHelper = function(name, env, path) {
 
+      env = env || {};
+      path = path || '';
+
       // If a reserved helpers, return it
       if(name === 'attribute') { return this.attribute; }
       if(name === 'if') { return this.if; }
@@ -23413,7 +23416,7 @@ define("rebound-runtime/helpers",
       if(name === 'concat') { return this.concat; }
 
       // If not a reserved helper, check env, then global helpers, else return false
-      return (env.helpers[path + '.' + name]) || helpers[name] || false;
+      return (env.helpers && env.helpers[path + '.' + name]) || helpers[name] || false;
     };
 
     helpers.registerHelper = function(name, callback, params){
@@ -24062,7 +24065,7 @@ define("rebound-runtime/hooks",
       var lazyValue,
           value,
           observer = subtreeObserver,
-          helper = helpers.lookupHelper(path, env, context.__path());
+          helper = helpers.lookupHelper(path, env, (context.__path ? context.__path() : ''));
 
       // TODO: just set escaped on the placeholder in HTMLBars
       placeholder.escaped = options.escaped;
@@ -24104,7 +24107,7 @@ define("rebound-runtime/hooks",
 
     // Handle placeholders in element tags
     hooks.element = function(element, path, context, params, options, env) {
-      var helper = helpers.lookupHelper(path, env, context.__path()),
+      var helper = helpers.lookupHelper(path, env, (context.__path ? context.__path() : '')),
           lazyValue,
           value;
 
@@ -24302,8 +24305,9 @@ define("rebound-runtime/hooks",
 
     hooks.subexpr = function(path, context, params, options, env) {
 
-      var helper = helpers.lookupHelper(path, env, context.__path()),
+      var helper = helpers.lookupHelper(path, env, (context.__path ? context.__path() : '')),
           lazyValue;
+
       if (helper) {
         // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
         lazyValue = constructHelper((options || true), path, context, params, options, env, helper);
