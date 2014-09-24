@@ -24,7 +24,7 @@ var Collection = Backbone.Collection.extend({
 
   model: Model,
 
-  set: set = function(models, options){
+  set: function(models, options){
     var id,
         model,
         i, l;

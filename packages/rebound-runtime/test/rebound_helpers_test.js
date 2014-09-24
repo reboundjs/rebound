@@ -1,6 +1,6 @@
 require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-runtime/helpers'], function(compiler, tokenizer, helpers){
 
-    function equalTokens(fragment, html) {
+    function equalTokens(fragment, html, message) {
       var div = document.createElement("div");
 
       div.appendChild(fragment.cloneNode(true));
@@ -25,7 +25,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       fragTokens.forEach(normalizeTokens);
       htmlTokens.forEach(normalizeTokens);
 
-      deepEqual(fragTokens, htmlTokens);
+      deepEqual(fragTokens, htmlTokens, message);
     }
 
     // Notify all of a object's observers of the change, execute the callback
@@ -57,11 +57,11 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
     *************************************************************/
 
-    QUnit.test('REGISTER HELPER adds a helper which can be fetch by LOOKUP HELPER', function() {
+    QUnit.test('Rebound Helpers - Register', function() {
       var func = function(){ return 1; };
       helpers.registerHelper('test', func);
       var regFunc = helpers.lookupHelper('test');
-      equal(func, regFunc);
+      equal(func, regFunc, 'helpers.register adds a helper to the global scope which can be fetched by Helpers.lookupHelper');
     });
 
 
@@ -71,126 +71,103 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
     *************************************************************/
 
-    QUnit.test('ATTRIBUTE helper adds element attribute', function() {
+    QUnit.test('Rebound Helpers - Attribute', function() {
 
-      var template = compiler.compile('<div class={{bar}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo'});
-      equalTokens(dom, '<div class="foo">test</div>');
-    });
+      var template, data, dom;
 
-    QUnit.test('ATTRIBUTE helper adds additional element attribute', function() {
+      template = compiler.compile('<div class={{bar}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo'});
+      equalTokens(dom, '<div class="foo">test</div>', 'Attribute helper adds element attribute');
 
-      var template = compiler.compile('<div class="test {{bar}}">test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo'});
-      equalTokens(dom, '<div class="test foo">test</div>');
-    });
 
-    QUnit.test('ATTRIBUTE is data bound', function() {
 
-      var template = compiler.compile('<div class={{bar}}>test</div>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<div class="foo">test</div>');
+      template = compiler.compile('<div class="test {{bar}}">test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo'});
+      equalTokens(dom, '<div class="test foo">test</div>', 'Attribute helper appends additional element attributes');
+
+
+
+      template = compiler.compile('<div class={{bar}}>test</div>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<div class="bar">test</div>');
+      equalTokens(dom, '<div class="bar">test</div>', 'Attribute is data bound');
 
-    });
 
-    inputTypes = {'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true,},
 
-    QUnit.test('value ATTRIBUTE on text input is two way data bound', function() {
-
-      var template = compiler.compile('<input value={{bar}}>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input value="foo">');
+      template = compiler.compile('<input value={{bar}}>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input value="bar">');
+      equalTokens(dom, '<input value="bar">', 'Value attribute on text input is two way data bound data -> element');
       dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input value="Hello World">');
+      equalTokens(dom, '<input value="Hello World">', 'Value attribute on text input is two way data bound element -> data');
 
-    });
 
-    QUnit.test('value ATTRIBUTE on email input is two way data bound', function() {
 
-      var template = compiler.compile('<input type="email" value={{bar}}>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input type="email" value="foo">');
+      template = compiler.compile('<input type="email" value={{bar}}>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="email" value="bar">');
+      equalTokens(dom, '<input type="email" value="bar">', 'Value Attribute on email input is two way data bound data -> element');
       dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="email" value="Hello World">');
+      equalTokens(dom, '<input type="email" value="Hello World">', 'Value Attribute on email input is two way data bound element -> data');
 
-    });
 
-    QUnit.test('value ATTRIBUTE on password input is two way data bound', function() {
 
-      var template = compiler.compile('<input type="password" value={{bar}}>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input type="password" value="foo">');
+      template = compiler.compile('<input type="password" value={{bar}}>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="password" value="bar">');
+      equalTokens(dom, '<input type="password" value="bar">', 'Value Attribute on password input is two way data bound data -> element');
       dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="password" value="Hello World">');
+      equalTokens(dom, '<input type="password" value="Hello World">', 'Value Attribute on password input is two way data bound element -> data');
 
-    });
 
-    QUnit.test('value ATTRIBUTE on search input is two way data bound', function() {
 
-      var template = compiler.compile('<input type="search" value={{bar}}>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input type="search" value="foo">');
+      template = compiler.compile('<input type="search" value={{bar}}>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="search" value="bar">');
+      equalTokens(dom, '<input type="search" value="bar">', 'Value Attribute on search input is two way data bound data -> element');
       dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="search" value="Hello World">');
+      equalTokens(dom, '<input type="search" value="Hello World">', 'Value Attribute on search input is two way data bound element -> data');
 
-    });
 
-    QUnit.test('value ATTRIBUTE on url input is two way data bound', function() {
 
-      var template = compiler.compile('<input type="url" value={{bar}}>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input type="url" value="foo">');
+      template = compiler.compile('<input type="url" value={{bar}}>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="url" value="bar">');
+      equalTokens(dom, '<input type="url" value="bar">', 'Value Attribute on url input is two way data bound data -> element');
       dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="url" value="Hello World">');
+      equalTokens(dom, '<input type="url" value="Hello World">', 'Value Attribute on url input is two way data bound element -> data');
 
-    });
 
-    QUnit.test('value ATTRIBUTE on tel input is two way data bound', function() {
 
-      var template = compiler.compile('<input type="tel" value={{bar}}>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input type="tel" value="foo">');
+      template = compiler.compile('<input type="tel" value={{bar}}>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="tel" value="bar">');
+      equalTokens(dom, '<input type="tel" value="bar">', 'Value Attribute on tel input is two way data bound data -> element');
       dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="tel" value="Hello World">');
+      equalTokens(dom, '<input type="tel" value="Hello World">', 'Value Attribute on tel input is two way data bound element -> data');
 
-    });
 
-    QUnit.test('checked ATTRIBUTE on checkbox present on true, removed on false and is data bound', function() {
-      var template = compiler.compile('<input type="checkbox" checked={{bool}}>', {name: 'test/partial'});
-      var data = {bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<input type="checkbox">');
+      template = compiler.compile('<input type="checkbox" checked={{bool}}>', {name: 'test/partial'});
+      data = {bool: false};
+      dom = template(data);
       data.bool = true;
       notify(data, ['bool']);
-      equalTokens(dom, '<input type="checkbox" checked="true">');
+      equalTokens(dom, '<input type="checkbox" checked="true">', 'Checked Attribute on checkbox present on true, removed on false and is data bound');
+
     });
 
 
@@ -200,30 +177,25 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
     *************************************************************/
 
-    QUnit.test('PARTIAL helper inserts partial template', function() {
+    QUnit.test('Rebound Helpers - Partial', function() {
 
-      var template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo'});
-      equalTokens(dom, '<div class="foo">bar</div>');
+      var template, data, dom, partial;
 
-      var partial = (compiler.compile('{{partial "test/partial"}}', 'test'))({foo:'bar', bar:'foo'});
-      equalTokens(dom, '<div class="foo">bar</div>');
+      template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo'});
+      partial = (compiler.compile('{{partial "test/partial"}}', 'test'))({foo:'bar', bar:'foo'});
+      equalTokens(dom, '<div class="foo">bar</div>', 'Partial helper inserts partial template');
 
-    });
 
-    QUnit.test('PARTIAL is data bound', function() {
 
-      var template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
-      var partial = compiler.compile('{{partial "test/partial"}}', 'test');
-
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = partial(data);
-      equalTokens(dom, '<div class="foo">bar</div>');
-
+      template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
+      partial = compiler.compile('{{partial "test/partial"}}', 'test');
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = partial(data);
       data.foo = 'foo';
       data.bar = 'bar';
       notify(data, ['foo', 'bar']);
-      equalTokens(dom, '<div class="bar">foo</div>');
+      equalTokens(dom, '<div class="bar">foo</div>', 'Partial is data bound');
 
     });
 
@@ -233,123 +205,97 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
     *************************************************************/
 
-    QUnit.test('Block IF helper without else block - false', function() {
+    QUnit.test('Rebound Helpers - If', function() {
 
-      var template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div></div>');
+      var template, data, dom;
 
-    });
+      template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div></div>', 'Block If helper without else block - false');
 
-    QUnit.test('Block IF helper with else block - false', function() {
 
-      var template = compiler.compile('<div>{{#if bool}}{{foo}}{{else}}{{bar}}{{/if}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>foo</div>');
 
-    });
+      template = compiler.compile('<div>{{#if bool}}{{foo}}{{else}}{{bar}}{{/if}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>foo</div>', 'Block If helper with else block - false');
 
-    QUnit.test('Block IF helper without else block - true', function() {
 
-      var template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div>bar</div>');
 
-    });
+      template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div>bar</div>', 'Block If helper without else block - true');
 
-    QUnit.test('Block IF helper with else block - true', function() {
 
-      var template = compiler.compile('<div>{{#if bool}}{{foo}}{{else}}{{bar}}{{/if}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div>bar</div>');
 
-    });
+      template = compiler.compile('<div>{{#if bool}}{{foo}}{{else}}{{bar}}{{/if}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div>bar</div>', 'Block If helper with else block - true');
 
-    QUnit.test('Block IF helper is data bound', function() {
 
-      var template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<div></div>');
+
+      template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bool = true;
       notify(data, 'bool');
-      equalTokens(dom, '<div>bar</div>');
+      equalTokens(dom, '<div>bar</div>', 'Block If helper is data bound');
 
-    });
 
-    QUnit.test('Non Block IF helper in content without else term - true', function() {
 
-      var template = compiler.compile('<div>{{if bool foo}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div>bar</div>');
+      template = compiler.compile('<div>{{if bool foo}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div>bar</div>', 'Inline If helper in content without else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper in content with else term - true', function() {
 
-      var template = compiler.compile('<div>{{if bool foo bar}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div>bar</div>');
+      template = compiler.compile('<div>{{if bool foo bar}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div>bar</div>', 'Inline If helper in content with else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper in content without else term - false', function() {
 
-      var template = compiler.compile('<div>{{if bool foo}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div></div>');
+      template = compiler.compile('<div>{{if bool foo}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div></div>', 'Inline If helper in content without else term - false');
 
-    });
 
-    QUnit.test('Non Block IF helper in content without else term - true', function() {
 
-      var template = compiler.compile('<div>{{if bool foo bar}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>foo</div>');
+      template = compiler.compile('<div>{{if bool foo bar}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>foo</div>', 'Inline If helper in content without else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper in element without else term - true', function() {
 
-      var template = compiler.compile('<div class={{if bool foo}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div class="bar">test</div>');
+      template = compiler.compile('<div class={{if bool foo}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div class="bar">test</div>', 'Inline If helper in element without else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper in element with else term - true', function() {
 
-      var template = compiler.compile('<div class={{if bool foo bar}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div class="bar">test</div>');
+      template = compiler.compile('<div class={{if bool foo bar}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div class="bar">test</div>', 'Inline If helper in element with else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper in element without else term - false', function() {
 
-      var template = compiler.compile('<div class={{if bool foo}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div class="">test</div>');
+      template = compiler.compile('<div class={{if bool foo}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div class="">test</div>', 'Inline If helper in element without else term - false');
 
-    });
 
-    QUnit.test('Non Block IF helper in element without else term - true', function() {
 
-      var template = compiler.compile('<div class={{if bool foo bar}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div class="foo">test</div>');
+      template = compiler.compile('<div class={{if bool foo bar}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div class="foo">test</div>', 'Inline If helper in element without else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper is data bound', function() {
 
-      var template = compiler.compile('<div>{{if bool foo bar}}</div>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<div>foo</div>');
+      template = compiler.compile('<div>{{if bool foo bar}}</div>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bool = true;
       notify(data, 'bool');
-      equalTokens(dom, '<div>bar</div>');
+      equalTokens(dom, '<div>bar</div>', 'Inline If helper is data bound');
 
     });
 
@@ -359,123 +305,98 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
     *************************************************************/
 
-    QUnit.test('Block UNLESS helper in content without else block - false', function() {
+    QUnit.test('Rebound Helpers - Unless', function() {
 
-      var template = compiler.compile('<div>{{#unless bool}}{{foo}}{{/unless}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>bar</div>');
+      var template, data, dom;
 
-    });
 
-    QUnit.test('Block UNLESS helper in content with else block - false', function() {
+      template = compiler.compile('<div>{{#unless bool}}{{foo}}{{/unless}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>bar</div>', 'Block Unless helper in content without else block - false');
 
-      var template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>bar</div>');
 
-    });
 
-    QUnit.test('Block UNLESS helper in content without else block - false', function() {
+      template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>bar</div>', 'Block Unless helper in content with else block - false');
 
-      var template = compiler.compile('<div>{{#unless bool}}{{foo}}{{/unless}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>bar</div>');
 
-    });
 
-    QUnit.test('Block UNLESS helper in content with else block - true', function() {
+      template = compiler.compile('<div>{{#unless bool}}{{foo}}{{/unless}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>bar</div>', 'Block Unless helper in content without else block - false');
 
-      var template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div>foo</div>');
 
-    });
 
-    QUnit.test('Block UNLESS helper is data bound', function() {
+      template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div>foo</div>', 'Block Unless helper in content with else block - true');
 
-      var template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<div>bar</div>');
+
+
+      template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bool = true;
       notify(data, 'bool');
-      equalTokens(dom, '<div>foo</div>');
+      equalTokens(dom, '<div>foo</div>', 'Block Unless helper is data bound');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in content without else term - true', function() {
 
-      var template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div></div>');
+      template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div></div>', 'Inline Unless helper in content without else term - true');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in content with else term - true', function() {
 
-      var template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div>foo</div>');
+      template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div>foo</div>', 'Inline Unless helper in content with else term - true');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in content without else term - false', function() {
 
-      var template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>bar</div>');
+      template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>bar</div>', 'Inline Unless helper in content without else term - false');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in content without else term - true', function() {
 
-      var template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div>bar</div>');
+      template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div>bar</div>', 'Inline Unless helper in content without else term - true');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in element without else term - true', function() {
 
-      var template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div class="">test</div>');
+      template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div class="">test</div>', 'Inline Unless helper in element without else term - true');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in element with else term - true', function() {
 
-      var template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div class="foo">test</div>');
+      template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: true});
+      equalTokens(dom, '<div class="foo">test</div>', 'Inline Unless helper in element with else term - true');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in element without else term - false', function() {
 
-      var template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div class="bar">test</div>');
+      template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div class="bar">test</div>', 'Inline Unless helper in element without else term - false');
 
-    });
 
-    QUnit.test('Non Block UNLESS helper in element without else term - true', function() {
 
-      var template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
-      var dom = template({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div class="bar">test</div>');
+      template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
+      dom = template({foo:'bar', bar:'foo', bool: false});
+      equalTokens(dom, '<div class="bar">test</div>', 'Inline Unless helper in element without else term - true');
 
-    });
 
-    QUnit.test('Non Block IF helper is data bound', function() {
 
-      var template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
-      var data = {foo:'bar', bar:'foo', bool: false};
-      var dom = template(data);
-      equalTokens(dom, '<div>bar</div>');
+      template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
+      data = {foo:'bar', bar:'foo', bool: false};
+      dom = template(data);
       data.bool = true;
       notify(data, 'bool');
-      equalTokens(dom, '<div>foo</div>');
+      equalTokens(dom, '<div>foo</div>', 'Inline Unless helper is data bound');
 
     });
 

@@ -19,9 +19,9 @@ var componentOptions = ['template', 'routes', 'immortal', 'data'];
 // New Backbone Component
 var Component = Model.extend({
 
-  constructor: function(options){
+  isComponent: true,
 
-    var helpers;
+  constructor: function(options){
 
     options = options || (options = {});
     this.dom = '';
@@ -31,55 +31,51 @@ var Component = Model.extend({
 
     _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent');
 
+
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and registerd as compiled properties
-      // Legacy lodash only version of deepDefaults:
-        // this.set(_.merge((options.data || {}), (this.defaults || {}), function(obj, defaults){
-        //   if(obj === undefined) return defaults;
-        //   if(obj.isModel)
-        //    return _.defaults(obj.attributes, defaults);
-        //   return _.defaults(obj, defaults);
-        //  }));
     this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
 
-    // All comptued properties are registered as helpers in the scope of this component
-    helpers = propertyCompiler.compile();
 
+    // All comptued properties are registered as helpers in the scope of this component
+    this.helpers = propertyCompiler.compile();
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
-    helpers.__callOnComponent = this.__callOnComponent;
+    this.helpers.__callOnComponent = this.__callOnComponent;
+
 
     // Get any additional routes passed in from options
     this.routes =  _.defaults((options.routes || {}), this.routes);
     // Ensure that all route functions exist
     _.each(this.routes, function(value, key, routes){
         // TODO: Better error output
-        if(typeof value !== 'string'){ throw('Function name passed to routes must be a string!'); }
-        if(!this[value]){ throw('Callback function '+value+' does not exist on the component!'); }
+        if(typeof value !== 'string'){ throw('Function name passed to routes in  ' + this.__name + ' component must be a string!'); }
+        if(!this[value]){ throw('Callback function '+value+' does not exist on the  ' + this.__name + ' component!'); }
     }, this);
+
 
     // Set our outlet and template if we have one
     this.el = options.outlet || undefined;
-    this.template = options.template || this.template || undefined;
-
-    // Save our dom elements on our component
     this.$el = $(this.el);
 
+
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
-    this.template = this._setTemplate();
+    if(!options.template && !this.template){ throw('Template must provided for ' + this.__name + ' component!'); }
+    this.template = options.template || this.template;
+    this.template = (typeof options.template === 'string') ? Rebound.templates[this.template] : env.hydrate(this.template);
+
 
     // Listen to relevent data change events
-    this._startListening();
+    this.listenTo(this, 'change', this._onModelChange);
+    this.listenTo(this, 'add remove reset', this._onCollectionChange);
+
 
     // Render our dom
-    this.dom = this.template(this, {helpers: helpers});
-
+    this.dom = this.template(this, {helpers: this.helpers});
     // Place the dom in our custom element
     this.el.appendChild(this.dom);
 
   },
-
-  isComponent: true,
 
   $: function(selector) {
     return this.$el.find(selector);
@@ -95,24 +91,6 @@ var Component = Model.extend({
 
   __callOnComponent: function(name, event){
       this[name].call(this, event);
-  },
-
-  // Hydrate our template
-  // Rebound Compiler overrides and gives the option for out template variable to be a handlebars template string
-  _setTemplate: function(){
-    // TODO: Better error output
-    if (typeof this.template === 'string'){ this.template = Rebound.templates[this.template]; }
-    if (typeof this.template !== 'function'){ throw "Template is required"; }
-    return env.hydrate(this.template);
-  },
-
-  _startListening: function(){
-    this.listenTo(this, 'change', this._onModelChange);
-    this.listenTo(this, 'add remove reset', this._onCollectionChange);
-  },
-
-  _getValue: function(key){
-
   },
 
   _onModelChange: function(model, options){
@@ -131,43 +109,36 @@ var Component = Model.extend({
   },
 
   _notify: function(obj, changed){
-    var path = obj.__path(),
-        newPath,
-        paths,
-        queue = [], i, len;
+    var context = this, // This root context
+        path = obj.__path(), // The path of the modified object relative to the root context
+        parts = _.compact(path.split(/(?:\.|\[|\])+/)), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
+        keys = _.keys(changed), // Array of all changed keys
+        i = 0,
+        len = parts.length,
+        paths;
 
     // Call notify on every object down the data tree starting at the root and all the way down element that triggered the change
-    while(obj){
-      // Constructs paths variable relative to current data element
-      paths = _.map((_.keys(changed)), function(attr){
-                var str = obj.__path().replace(/([.\[\]])/g, '\\$1')+'\\.',
-                    regex = new RegExp('^'+ (str || ''), '');
-                return ((path && path + '.') + attr).replace(regex, '');
-              });
-      // TODO: Clean this up
-      if(obj.__observers && paths.length){
-        _.each(paths, function(path){
-          // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
-          // ex: test.[1].whatever -> test.@each.whatever
-          if(path.match(/\[.+\]/g)){
-            newPath = path.replace(/\[.+\]/g, ".@each");
-            paths.push(newPath);
-            // Also listen to collection changes. Adds, removes, etc, if applicible.
-            if(newPath.match(/\.@each\.?/)){
-              newPath = newPath.split(/\.@each\.?/);
-              paths.push(newPath[0]);
-            }
-          }
-        });
+    for(i;i<=len;i++){
 
-        queue.push({obj: obj, paths: paths});
-      }
-      obj = obj.__parent;
-    }
-    len = queue.length;
+      // Reset paths for each data layer
+      paths = [];
 
-    for(i=len-1; i>=0; i--){
-      env.notify(queue[i].obj, queue[i].paths);
+      // For every key changed
+      _.each(keys, function(attr){
+        // Constructs paths variable relative to current data element
+        paths.push((path + '.' + attr).replace(context.__path(), '').replace(/^\./, ''));
+        // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
+        if(paths[0].match(/\[.+\]/g)){
+          paths.push(paths[0].replace(/\[.+\]/g, ".@each").replace(/^\./, '')); // test.[1].whatever -> test.@each.whatever
+          paths.push(paths[0].split(/\[.+\]/g)[0]); // test.[1].whatever -> test
+        }
+      });
+
+      // Call all listeners
+      env.notify(context, paths);
+
+      // If not at end of path parts, get the next data object
+      context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));
     }
   }
 });
@@ -180,37 +151,41 @@ Component.extend= function(protoProps, staticProps) {
 
   protoProps.defaults = {};
 
-  // For each primative value, or computed property (functions with that take no arguments and have a return value), add it to our data object
+  // For each property passed into our component base class
   _.each(protoProps, function(value, key, protoProps){
-    var str = value.toString();
-    // If a configuration property, return
+
+    // If a configuration property, ignore it
     if(configProperties[key]){ return; }
-    // Primative or backbone type equivalent, or computed property which takes no arguments and returns a value
-    if(    !_.isFunction(value) || value.isModel || value.isComponent || (value && value.length === 0 && str.indexOf('return') > -1)){
+
+    // If a primative or backbone type object, or computed property (function which takes no arguments and returns a value) move it to our defaults
+    if(!_.isFunction(value) || value.isModel || value.isComponent || (_.isFunction(value) && value.length === 0 && value.toString().indexOf('return') > -1)){
       protoProps.defaults[key] = value;
       delete protoProps[key];
     }
 
+    // If a reserved method, yell
+    if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name in " + staticProps.__name + "!"; }
+
     // All other values are component methods, leave them be unless already defined.
-    // TODO: better error output.
-    if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name!"; }
 
   }, this);
 
+  // If given a constructor, use it, otherwise use the default one defined above
   if (protoProps && _.has(protoProps, 'constructor')) {
     child = protoProps.constructor;
   } else {
     child = function(){ return parent.apply(this, arguments); };
   }
 
-  _.extend(child, parent, staticProps);
-
+  // Our class should inherit everything from its parent, defined above
   var Surrogate = function(){ this.constructor = child; };
   Surrogate.prototype = parent.prototype;
   child.prototype = new Surrogate();
 
-  if (protoProps){ _.extend(child.prototype, protoProps); }
+  // Extend our prototype with any remaining protoProps, overriting pre-defined ones
+  if (protoProps){ _.extend(child.prototype, protoProps, staticProps); }
 
+  // Set our ancestry
   child.__super__ = parent.prototype;
 
   return child;

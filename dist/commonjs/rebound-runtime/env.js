@@ -12,7 +12,7 @@ var env = {
 };
 
 env.hydrate = function(spec, options){
-  // Return a wrapper function that will merge user provided helpers with our defaults
+  // Return a wrapper function that will merge user provided helpers and hooks with our defaults
   return function(data, options){
     // Ensure we have a well-formed object as var options
     var env = options || {};

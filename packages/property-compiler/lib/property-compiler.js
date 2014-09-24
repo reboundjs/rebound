@@ -8,7 +8,7 @@ function compile(){
   var output = {};
 
   _.each(computedProperties, function(prop){
-    var str = prop.val.toString().replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
+    var str = prop.val.toString(), //.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
         nextToken = tokenizer.tokenize(str),
         tokens = [],
         token,
@@ -25,7 +25,6 @@ function compile(){
         attrs = [],
         workingpath = [],
         terminators = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '&&', '||'];
-
     do{
 
       token = nextToken();
@@ -52,12 +51,18 @@ function compile(){
         workingpath.push('@each.' + path.value);
       }
 
-      if(token.value === 'at'){
+      if(token.value === 'slice' || token.value === 'clone'){
+        path = nextToken();
         workingpath.push('@each');
+      }
+
+      if(token.value === 'at'){
+        // workingpath.push('@each');
         path = nextToken();
         while(!path.value){
           path = nextToken();
         }
+        // workingpath[workingpath.length -1] = workingpath[workingpath.length -1] + '[' + path.value + ']';
         workingpath.push('[' + path.value + ']');
       }
 
@@ -84,7 +89,7 @@ function compile(){
           paths = (!_.isArray(paths)) ? [paths] : paths;
           _.each(paths, function(path){
             _.each(memo, function(mem){
-              newMemo.push(_.compact([mem, path]).join('.'));
+              newMemo.push(_.compact([mem, path]).join('.').replace('.[', '['));
             });
           });
           return newMemo;

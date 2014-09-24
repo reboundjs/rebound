@@ -373,6 +373,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
 
     // For each param passed to our shared component, add it to our custom element
     // TODO: there has to be a better way to get seed data to element instances
+    // Global seed data is consumed by element as its created. This is not scoped and very dumb.
     Rebound.seedData = data;
     element = document.createElement(path);
     Rebound.seedData = {};

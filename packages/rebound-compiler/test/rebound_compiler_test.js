@@ -1,6 +1,6 @@
 require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function(compiler, tokenizer){
 
-    function equalTokens(fragment, html) {
+    function equalTokens(fragment, html, message) {
       var div = document.createElement("div");
 
       div.appendChild(fragment.cloneNode(true));
@@ -25,18 +25,18 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function
       fragTokens.forEach(normalizeTokens);
       htmlTokens.forEach(normalizeTokens);
 
-      deepEqual(fragTokens, htmlTokens);
+      deepEqual(fragTokens, htmlTokens, message);
     }
 
 
-    QUnit.test('Compiler interperts plain HTMLBars strings as partials', function() {
+    QUnit.test('Rebound Compiler', function() {
 
       var template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name:'test/partial'});
       var dom = template({foo:'bar', bar:'foo'});
-      equalTokens(dom, '<div class="foo">bar</div>');
+      equalTokens(dom, '<div class="foo">bar</div>', 'Compiler accepts plain HTMLBars strings');
 
       var partial = (compiler.compile('{{partial "test/partial"}}', {name:'test'}))({foo:'bar', bar:'foo'});
-      equalTokens(dom, '<div class="foo">bar</div>');
+      equalTokens(dom, '<div class="foo">bar</div>', 'Compiler interperts plain HTMLBars strings as partials');
 
     });
 
