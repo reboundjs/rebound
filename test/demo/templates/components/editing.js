@@ -22,7 +22,7 @@ return (function(){
     return fragment;
   };
 }());
-  var script = (function(){ return ({ value: 'Default Value', arr: [{f:1}, {g:2}], obj: {a:1, b:2}, createdCallback: function(event){ this.oldValue = this.get('value'); }, attachedCallback: function(event){ this.el.querySelector('input.edit').focus(); }, detachedCallback: function(){ }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })() || {};
+  var script = {};
   var style = "";
   var component = Rebound.Component.extend(script, { __name: "edit-todo" });
   var proto = Object.create(HTMLElement.prototype, {});

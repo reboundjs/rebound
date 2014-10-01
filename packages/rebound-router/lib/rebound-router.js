@@ -63,8 +63,12 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       this.route(key, value, this[routeFunctionName]);
     }, this);
 
+    if(!isGlobal){
+      window.Rebound.page = (this.current = pageInstance).__component;
+    }
+
     // Return our newly installed app
-    return (!isGlobal) ? pageInstance : this.current;
+    return pageInstance;
   }
 
   // Fetches Pare HTML and CSS
@@ -91,8 +95,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         utils.addEventListener(cssElement, 'load', function(event){
             if((cssLoaded = true) && jsLoaded){
               // Install The Loaded Resources
-              this.current = installResources.call(router, PageApp, primaryRoute, isGlobal);
-              window.Rebound.page = this.current.__component;
+              installResources.call(router, PageApp, primaryRoute, isGlobal);
 
               // Re-trigger route so the newly added route may execute if there's a route match.
               // If no routes are matched, app will hit wildCard route which will then trigger 404
@@ -126,7 +129,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
               if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
                 // Install The Loaded Resources
-                this.current = installResources.call(router, PageApp, primaryRoute, isGlobal);
+                installResources.call(router, PageApp, primaryRoute, isGlobal);
                 // Re-trigger route so the newly added route may execute if there's a route match.
                 // If no routes are matched, app will hit wildCard route which will then trigger 404
                 if(!isGlobal && router.config.triggerOnFirstLoad){
@@ -135,7 +138,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
                 if(!isGlobal){
                   router.config.triggerOnFirstLoad = true;
                 }
-                window.Rebound.page = this.current.__component;
+
                 document.body.classList.remove('loading');
               }
             });
@@ -149,13 +152,13 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
           if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
             // Install The Loaded Resources
-            this.current = installResources.call(router, PageApp, primaryRoute, isGlobal);
+            installResources.call(router, PageApp, primaryRoute, isGlobal);
             // Re-trigger route so the newly added route may execute if there's a route match.
             // If no routes are matched, app will hit wildCard route which will then trigger 404
             if(!isGlobal && router.config.triggerOnFirstLoad){
               Backbone.history.loadUrl(Backbone.history.fragment);
             }
-            window.Rebound.page = this.current.__component;
+
             if(!isGlobal){
               router.config.triggerOnFirstLoad = true;
             }

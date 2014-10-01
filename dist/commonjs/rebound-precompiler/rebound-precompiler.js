@@ -4,11 +4,11 @@ var htmlbarsCompileSpec = require("../htmlbars-compiler/compiler").compileSpec;
 var merge = require("../htmlbars-runtime/utils").merge;
 
 function getScript(str){
-  return '(function(){' + str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2') + '})() || {}';
+  return (str.indexOf('<script>') > -1 && str.indexOf('</script>') > -1) ? '(function(){' + str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2') + '})()' : '{}';
 }
 
 function getStyle(str){
-  return str.replace(/(.*<style>)(.*)(<\/style>.*)/ig, '$2').replace(/"/g, '\\"');
+  return (str.indexOf('<style>') > -1 && str.indexOf('</style>') > -1) ? str.replace(/(.*<style>)(.*)(<\/style>.*)/ig, '$2').replace(/"/g, '\\"') : '';
 }
 
 function getTemplate(str){
