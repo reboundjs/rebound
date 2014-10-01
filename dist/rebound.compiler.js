@@ -1,3 +1,21 @@
+// jshint ignore: start
+/*! @source http://purl.eligrey.com/github/classList.js/blob/master/classList.js*/
+;if("document" in self&&!("classList" in document.createElement("_"))){(function(j){if(!("Element" in j)){return}var a="classList",f="prototype",m=j.Element[f],b=Object,k=String[f].trim||function(){return this.replace(/^\s+|\s+$/g,"")},c=Array[f].indexOf||function(q){var p=0,o=this.length;for(;p<o;p++){if(p in this&&this[p]===q){return p}}return -1},n=function(o,p){this.name=o;this.code=DOMException[o];this.message=p},g=function(p,o){if(o===""){throw new n("SYNTAX_ERR","An invalid or illegal string was specified")}if(/\s/.test(o)){throw new n("INVALID_CHARACTER_ERR","String contains an invalid character")}return c.call(p,o)},d=function(s){var r=k.call(s.getAttribute("class")||""),q=r?r.split(/\s+/):[],p=0,o=q.length;for(;p<o;p++){this.push(q[p])}this._updateClassName=function(){s.setAttribute("class",this.toString())}},e=d[f]=[],i=function(){return new d(this)};n[f]=Error[f];e.item=function(o){return this[o]||null};e.contains=function(o){o+="";return g(this,o)!==-1};e.add=function(){var s=arguments,r=0,p=s.length,q,o=false;do{q=s[r]+"";if(g(this,q)===-1){this.push(q);o=true}}while(++r<p);if(o){this._updateClassName()}};e.remove=function(){var t=arguments,s=0,p=t.length,r,o=false;do{r=t[s]+"";var q=g(this,r);if(q!==-1){this.splice(q,1);o=true}}while(++s<p);if(o){this._updateClassName()}};e.toggle=function(p,q){p+="";var o=this.contains(p),r=o?q!==true&&"remove":q!==false&&"add";if(r){this[r](p)}return !o};e.toString=function(){return this.join(" ")};if(b.defineProperty){var l={get:i,enumerable:true,configurable:true};try{b.defineProperty(m,a,l)}catch(h){if(h.number===-2146823252){l.enumerable=false;b.defineProperty(m,a,l)}}}else{if(b[f].__defineGetter__){m.__defineGetter__(a,i)}}}(self))};
+// IE8+ support of matchesSelector
+this.Element && function(ElementPrototype) {
+  ElementPrototype.matchesSelector = ElementPrototype.matchesSelector ||
+  ElementPrototype.mozMatchesSelector ||
+  ElementPrototype.msMatchesSelector ||
+  ElementPrototype.oMatchesSelector ||
+  ElementPrototype.webkitMatchesSelector ||
+  function (selector) {
+    var node = this, nodes = (node.parentNode || node.document).querySelectorAll(selector), i = -1;
+
+    while (nodes[++i] && nodes[i] != node);
+
+    return !!nodes[i];
+  };
+}(Element.prototype);
 /*
  * Copyright 2012 The Polymer Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style
@@ -11999,9 +12017,7 @@ return jQuery;
 
   // Create local references to array methods we'll want to use later.
   var array = [];
-  var push = array.push;
   var slice = array.slice;
-  var splice = array.splice;
 
   // Current version of the library. Keep in sync with `package.json`.
   Backbone.VERSION = '1.1.2';
@@ -12071,27 +12087,46 @@ return jQuery;
     // callbacks for the event. If `name` is null, removes all bound
     // callbacks for all events.
     off: function(name, callback, context) {
-      var retain, ev, events, names, i, l, j, k;
       if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
+
+      // Remove all callbacks for all events.
       if (!name && !callback && !context) {
         this._events = void 0;
         return this;
       }
-      names = name ? [name] : _.keys(this._events);
-      for (i = 0, l = names.length; i < l; i++) {
+
+      var names = name ? [name] : _.keys(this._events);
+      for (var i = 0, length = names.length; i < length; i++) {
         name = names[i];
-        if (events = this._events[name]) {
-          this._events[name] = retain = [];
-          if (callback || context) {
-            for (j = 0, k = events.length; j < k; j++) {
-              ev = events[j];
-              if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
-                  (context && context !== ev.context)) {
-                retain.push(ev);
-              }
-            }
+
+        // Bail out if there are no events stored.
+        var events = this._events[name];
+        if (!events) continue;
+
+        // Remove all callbacks for this event.
+        if (!callback && !context) {
+          delete this._events[name];
+          continue;
+        }
+
+        // Find any remaining events.
+        var remaining = [];
+        for (var j = 0, k = events.length; j < k; j++) {
+          var event = events[j];
+          if (
+            callback && callback !== event.callback &&
+            callback !== event.callback._callback ||
+            context && context !== event.context
+          ) {
+            remaining.push(event);
           }
-          if (!retain.length) delete this._events[name];
+        }
+
+        // Replace events if there are any remaining.  Otherwise, clean up.
+        if (remaining.length) {
+          this._events[name] = remaining;
+        } else {
+          delete this._events[name];
         }
       }
 
@@ -12151,7 +12186,7 @@ return jQuery;
     // Handle space separated event names.
     if (eventSplitter.test(name)) {
       var names = name.split(eventSplitter);
-      for (var i = 0, l = names.length; i < l; i++) {
+      for (var i = 0, length = names.length; i < length; i++) {
         obj[action].apply(obj, [names[i]].concat(rest));
       }
       return false;
@@ -12316,7 +12351,7 @@ return jQuery;
       // Trigger all relevant attribute changes.
       if (!silent) {
         if (changes.length) this._pending = options;
-        for (var i = 0, l = changes.length; i < l; i++) {
+        for (var i = 0, length = changes.length; i < length; i++) {
           this.trigger('change:' + changes[i], this, current[changes[i]], options);
         }
       }
@@ -12452,7 +12487,7 @@ return jQuery;
       wrapError(this, options);
 
       method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
-      if (method === 'patch') options.attrs = attrs;
+      if (method === 'patch' && !options.attrs) options.attrs = attrs;
       xhr = this.sync(method, this, options);
 
       // Restore attributes.
@@ -12470,6 +12505,7 @@ return jQuery;
       var success = options.success;
 
       var destroy = function() {
+        model.stopListening();
         model.trigger('destroy', model, model.collection, options);
       };
 
@@ -12537,10 +12573,11 @@ return jQuery;
   });
 
   // Underscore methods that we want to implement on the Model.
-  var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit'];
+  var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit', 'chain', 'isEmpty'];
 
   // Mix in each Underscore method as a proxy to `Model#attributes`.
   _.each(modelMethods, function(method) {
+    if (!_[method]) return;
     Model.prototype[method] = function() {
       var args = slice.call(arguments);
       args.unshift(this.attributes);
@@ -12552,7 +12589,7 @@ return jQuery;
   // -------------------
 
   // If models tend to represent a single row of data, a Backbone Collection is
-  // more analagous to a table full of data ... or a small slice or page of that
+  // more analogous to a table full of data ... or a small slice or page of that
   // table, or a collection of rows that belong together for a particular reason
   // -- all of the messages in this particular folder, all of the documents
   // belonging to this particular author, and so on. Collections maintain
@@ -12606,13 +12643,13 @@ return jQuery;
       var singular = !_.isArray(models);
       models = singular ? [models] : _.clone(models);
       options || (options = {});
-      var i, l, index, model;
-      for (i = 0, l = models.length; i < l; i++) {
-        model = models[i] = this.get(models[i]);
+      for (var i = 0, length = models.length; i < length; i++) {
+        var model = models[i] = this.get(models[i]);
         if (!model) continue;
-        delete this._byId[model.id];
+        var id = this.modelId(model.attributes);
+        if (id != null) delete this._byId[id];
         delete this._byId[model.cid];
-        index = this.indexOf(model);
+        var index = this.indexOf(model);
         this.models.splice(index, 1);
         this.length--;
         if (!options.silent) {
@@ -12632,10 +12669,9 @@ return jQuery;
       options = _.defaults({}, options, setOptions);
       if (options.parse) models = this.parse(models, options);
       var singular = !_.isArray(models);
-      models = singular ? (models ? [models] : []) : _.clone(models);
-      var i, l, id, model, attrs, existing, sort;
+      models = singular ? (models ? [models] : []) : models.slice();
+      var id, model, attrs, existing, sort;
       var at = options.at;
-      var targetModel = this.model;
       var sortable = this.comparator && (at == null) && options.sort !== false;
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
       var toAdd = [], toRemove = [], modelMap = {};
@@ -12644,20 +12680,15 @@ return jQuery;
 
       // Turn bare objects into model references, and prevent invalid models
       // from being added.
-      for (i = 0, l = models.length; i < l; i++) {
-        attrs = models[i] || {};
-        if (attrs instanceof Model) {
-          id = model = attrs;
-        } else {
-          id = attrs[targetModel.prototype.idAttribute || 'id'];
-        }
+      for (var i = 0, length = models.length; i < length; i++) {
+        attrs = models[i];
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
-        if (existing = this.get(id)) {
+        if (existing = this.get(attrs)) {
           if (remove) modelMap[existing.cid] = true;
-          if (merge) {
-            attrs = attrs === model ? model.attributes : attrs;
+          if (merge && attrs !== existing) {
+            attrs = this._isModel(attrs) ? attrs.attributes : attrs;
             if (options.parse) attrs = existing.parse(attrs, options);
             existing.set(attrs, options);
             if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
@@ -12674,13 +12705,15 @@ return jQuery;
 
         // Do not add multiple models with the same `id`.
         model = existing || model;
-        if (order && (model.isNew() || !modelMap[model.id])) order.push(model);
-        modelMap[model.id] = true;
+        if (!model) continue;
+        id = this.modelId(model.attributes);
+        if (order && (model.isNew() || !modelMap[id])) order.push(model);
+        modelMap[id] = true;
       }
 
       // Remove nonexistent models if appropriate.
       if (remove) {
-        for (i = 0, l = this.length; i < l; ++i) {
+        for (var i = 0, length = this.length; i < length; i++) {
           if (!modelMap[(model = this.models[i]).cid]) toRemove.push(model);
         }
         if (toRemove.length) this.remove(toRemove, options);
@@ -12691,13 +12724,13 @@ return jQuery;
         if (sortable) sort = true;
         this.length += toAdd.length;
         if (at != null) {
-          for (i = 0, l = toAdd.length; i < l; i++) {
+          for (var i = 0, length = toAdd.length; i < length; i++) {
             this.models.splice(at + i, 0, toAdd[i]);
           }
         } else {
           if (order) this.models.length = 0;
           var orderedModels = order || toAdd;
-          for (i = 0, l = orderedModels.length; i < l; i++) {
+          for (var i = 0, length = orderedModels.length; i < length; i++) {
             this.models.push(orderedModels[i]);
           }
         }
@@ -12708,8 +12741,10 @@ return jQuery;
 
       // Unless silenced, it's time to fire all appropriate add/sort events.
       if (!options.silent) {
-        for (i = 0, l = toAdd.length; i < l; i++) {
-          (model = toAdd[i]).trigger('add', model, this, options);
+        var addOpts = at != null ? _.clone(options) : options;
+        for (var i = 0, length = toAdd.length; i < length; i++) {
+          if (at != null) addOpts.index = at + i;
+          (model = toAdd[i]).trigger('add', model, this, addOpts);
         }
         if (sort || (order && order.length)) this.trigger('sort', this, options);
       }
@@ -12724,7 +12759,7 @@ return jQuery;
     // Useful for bulk operations and optimizations.
     reset: function(models, options) {
       options || (options = {});
-      for (var i = 0, l = this.models.length; i < l; i++) {
+      for (var i = 0, length = this.models.length; i < length; i++) {
         this._removeReference(this.models[i], options);
       }
       options.previousModels = this.models;
@@ -12766,11 +12801,13 @@ return jQuery;
     // Get a model from the set by id.
     get: function(obj) {
       if (obj == null) return void 0;
-      return this._byId[obj] || this._byId[obj.id] || this._byId[obj.cid];
+      var id = this.modelId(this._isModel(obj) ? obj.attributes : obj);
+      return this._byId[obj] || this._byId[id] || this._byId[obj.cid];
     },
 
     // Get the model at the given index.
     at: function(index) {
+      if (index < 0) index += this.length;
       return this.models[index];
     },
 
@@ -12858,7 +12895,15 @@ return jQuery;
 
     // Create a new collection with an identical list of models as this one.
     clone: function() {
-      return new this.constructor(this.models);
+      return new this.constructor(this.models, {
+        model: this.model,
+        comparator: this.comparator
+      });
+    },
+
+    // Define how to uniquely identify models in the collection.
+    modelId: function (attrs) {
+      return attrs[this.model.prototype.idAttribute || 'id'];
     },
 
     // Private method to reset all internal state. Called when the collection
@@ -12872,7 +12917,10 @@ return jQuery;
     // Prepare a hash of attributes (or other model) to be added to this
     // collection.
     _prepareModel: function(attrs, options) {
-      if (attrs instanceof Model) return attrs;
+      if (this._isModel(attrs)) {
+        if (!attrs.collection) attrs.collection = this;
+        return attrs;
+      }
       options = options ? _.clone(options) : {};
       options.collection = this;
       var model = new this.model(attrs, options);
@@ -12881,11 +12929,17 @@ return jQuery;
       return false;
     },
 
+    // Method for checking whether an object should be considered a model for
+    // the purposes of adding to the collection.
+    _isModel: function (model) {
+      return model instanceof Model;
+    },
+
     // Internal method to create a model's ties to a collection.
     _addReference: function(model, options) {
       this._byId[model.cid] = model;
-      if (model.id != null) this._byId[model.id] = model;
-      if (!model.collection) model.collection = this;
+      var id = this.modelId(model.attributes);
+      if (id != null) this._byId[id] = model;
       model.on('all', this._onModelEvent, this);
     },
 
@@ -12902,9 +12956,13 @@ return jQuery;
     _onModelEvent: function(event, model, collection, options) {
       if ((event === 'add' || event === 'remove') && collection !== this) return;
       if (event === 'destroy') this.remove(model, options);
-      if (model && event === 'change:' + model.idAttribute) {
-        delete this._byId[model.previous(model.idAttribute)];
-        if (model.id != null) this._byId[model.id] = model;
+      if (event === 'change') {
+        var prevId = this.modelId(model.previousAttributes());
+        var id = this.modelId(model.attributes);
+        if (prevId !== id) {
+          if (prevId != null) delete this._byId[prevId];
+          if (id != null) this._byId[id] = model;
+        }
       }
       this.trigger.apply(this, arguments);
     }
@@ -12919,10 +12977,11 @@ return jQuery;
     'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke',
     'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',
     'tail', 'drop', 'last', 'without', 'difference', 'indexOf', 'shuffle',
-    'lastIndexOf', 'isEmpty', 'chain', 'sample'];
+    'lastIndexOf', 'isEmpty', 'chain', 'sample', 'partition'];
 
   // Mix in each Underscore method as a proxy to `Collection#models`.
   _.each(methods, function(method) {
+    if (!_[method]) return;
     Collection.prototype[method] = function() {
       var args = slice.call(arguments);
       args.unshift(this.models);
@@ -12935,6 +12994,7 @@ return jQuery;
 
   // Use attributes instead of properties.
   _.each(attributeMethods, function(method) {
+    if (!_[method]) return;
     Collection.prototype[method] = function(value, context) {
       var iterator = _.isFunction(value) ? value : function(model) {
         return model.get(value);
@@ -12962,7 +13022,6 @@ return jQuery;
     _.extend(this, _.pick(options, viewOptions));
     this._ensureElement();
     this.initialize.apply(this, arguments);
-    this.delegateEvents();
   };
 
   // Cached regex to split keys for `delegate`.
@@ -12997,19 +13056,35 @@ return jQuery;
     // Remove this view by taking the element out of the DOM, and removing any
     // applicable Backbone.Events listeners.
     remove: function() {
-      this.$el.remove();
+      this._removeElement();
       this.stopListening();
       return this;
     },
 
-    // Change the view's element (`this.el` property), including event
-    // re-delegation.
-    setElement: function(element, delegate) {
-      if (this.$el) this.undelegateEvents();
-      this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
-      this.el = this.$el[0];
-      if (delegate !== false) this.delegateEvents();
+    // Remove this view's element from the document and all event listeners
+    // attached to it. Exposed for subclasses using an alternative DOM
+    // manipulation API.
+    _removeElement: function() {
+      this.$el.remove();
+    },
+
+    // Change the view's element (`this.el` property) and re-delegate the
+    // view's events on the new element.
+    setElement: function(element) {
+      this.undelegateEvents();
+      this._setElement(element);
+      this.delegateEvents();
       return this;
+    },
+
+    // Creates the `this.el` and `this.$el` references for this view using the
+    // given `el`. `el` can be a CSS selector or an HTML string, a jQuery
+    // context or an element. Subclasses can override this to utilize an
+    // alternative DOM manipulation API and are only required to set the
+    // `this.el` property.
+    _setElement: function(el) {
+      this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
+      this.el = this.$el[0];
     },
 
     // Set callbacks, where `this.events` is a hash of
@@ -13025,8 +13100,6 @@ return jQuery;
     // pairs. Callbacks will be bound to the view, with `this` set properly.
     // Uses event delegation for efficiency.
     // Omitting the selector binds the event to `this.el`.
-    // This only works for delegate-able events: not `focus`, `blur`, and
-    // not `change`, `submit`, and `reset` in Internet Explorer.
     delegateEvents: function(events) {
       if (!(events || (events = _.result(this, 'events')))) return this;
       this.undelegateEvents();
@@ -13034,26 +13107,37 @@ return jQuery;
         var method = events[key];
         if (!_.isFunction(method)) method = this[events[key]];
         if (!method) continue;
-
         var match = key.match(delegateEventSplitter);
-        var eventName = match[1], selector = match[2];
-        method = _.bind(method, this);
-        eventName += '.delegateEvents' + this.cid;
-        if (selector === '') {
-          this.$el.on(eventName, method);
-        } else {
-          this.$el.on(eventName, selector, method);
-        }
+        this.delegate(match[1], match[2], _.bind(method, this));
       }
       return this;
     },
 
-    // Clears all callbacks previously bound to the view with `delegateEvents`.
+    // Add a single event listener to the view's element (or a child element
+    // using `selector`). This only works for delegate-able events: not `focus`,
+    // `blur`, and not `change`, `submit`, and `reset` in Internet Explorer.
+    delegate: function(eventName, selector, listener) {
+      this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+    },
+
+    // Clears all callbacks previously bound to the view by `delegateEvents`.
     // You usually don't need to use this, but may wish to if you have multiple
     // Backbone views attached to the same DOM element.
     undelegateEvents: function() {
-      this.$el.off('.delegateEvents' + this.cid);
+      if (this.$el) this.$el.off('.delegateEvents' + this.cid);
       return this;
+    },
+
+    // A finer-grained `undelegateEvents` for removing a single delegated event.
+    // `selector` and `listener` are both optional.
+    undelegate: function(eventName, selector, listener) {
+      this.$el.off(eventName + '.delegateEvents' + this.cid, selector, listener);
+    },
+
+    // Produces a DOM element to be assigned to your view. Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _createElement: function(tagName) {
+      return document.createElement(tagName);
     },
 
     // Ensure that the View has a DOM element to render into.
@@ -13065,11 +13149,17 @@ return jQuery;
         var attrs = _.extend({}, _.result(this, 'attributes'));
         if (this.id) attrs.id = _.result(this, 'id');
         if (this.className) attrs['class'] = _.result(this, 'className');
-        var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
-        this.setElement($el, false);
+        this.setElement(this._createElement(_.result(this, 'tagName')));
+        this._setAttributes(attrs);
       } else {
-        this.setElement(_.result(this, 'el'), false);
+        this.setElement(_.result(this, 'el'));
       }
+    },
+
+    // Set attributes from a hash on this view's element.  Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _setAttributes: function(attributes) {
+      this.$el.attr(attributes);
     }
 
   });
@@ -13138,24 +13228,19 @@ return jQuery;
       params.processData = false;
     }
 
-    // If we're sending a `PATCH` request, and we're in an old Internet Explorer
-    // that still has ActiveX enabled by default, override jQuery to use that
-    // for XHR instead. Remove this line when jQuery supports `PATCH` on IE8.
-    if (params.type === 'PATCH' && noXhrPatch) {
-      params.xhr = function() {
-        return new ActiveXObject("Microsoft.XMLHTTP");
-      };
-    }
+    // Pass along `textStatus` and `errorThrown` from jQuery.
+    var error = options.error;
+    options.error = function(xhr, textStatus, errorThrown) {
+      options.textStatus = textStatus;
+      options.errorThrown = errorThrown;
+      if (error) error.apply(this, arguments);
+    };
 
     // Make the request, allowing the user to override any Ajax options.
     var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
     model.trigger('request', model, xhr, options);
     return xhr;
   };
-
-  var noXhrPatch =
-    typeof window !== 'undefined' && !!window.ActiveXObject &&
-      !(window.XMLHttpRequest && (new XMLHttpRequest).dispatchEvent);
 
   // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
   var methodMap = {
@@ -13214,17 +13299,18 @@ return jQuery;
       var router = this;
       Backbone.history.route(route, function(fragment) {
         var args = router._extractParameters(route, fragment);
-        router.execute(callback, args);
-        router.trigger.apply(router, ['route:' + name].concat(args));
-        router.trigger('route', name, args);
-        Backbone.history.trigger('route', router, name, args);
+        if (router.execute(callback, args, name) !== false) {
+          router.trigger.apply(router, ['route:' + name].concat(args));
+          router.trigger('route', name, args);
+          Backbone.history.trigger('route', router, name, args);
+        }
       });
       return this;
     },
 
     // Execute a route handler with the provided parameters.  This is an
     // excellent place to do pre-route setup or post-route cleanup.
-    execute: function(callback, args) {
+    execute: function(callback, args, name) {
       if (callback) callback.apply(this, args);
     },
 
@@ -13297,12 +13383,6 @@ return jQuery;
   // Cached regex for stripping leading and trailing slashes.
   var rootStripper = /^\/+|\/+$/g;
 
-  // Cached regex for detecting MSIE.
-  var isExplorer = /msie [\w.]+/;
-
-  // Cached regex for removing a trailing slash.
-  var trailingSlash = /\/$/;
-
   // Cached regex for stripping urls of hash.
   var pathStripper = /#.*$/;
 
@@ -13318,7 +13398,15 @@ return jQuery;
 
     // Are we at the app root?
     atRoot: function() {
-      return this.location.pathname.replace(/[^\/]$/, '$&/') === this.root;
+      var path = this.location.pathname.replace(/[^\/]$/, '$&/');
+      return path === this.root && !this.getSearch();
+    },
+
+    // In IE6, the hash fragment and search params are incorrect if the
+    // fragment contains `?`.
+    getSearch: function() {
+      var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
+      return match ? match[0] : '';
     },
 
     // Gets the true hash value. Cannot use location.hash directly due to bug
@@ -13328,14 +13416,19 @@ return jQuery;
       return match ? match[1] : '';
     },
 
-    // Get the cross-browser normalized URL fragment, either from the URL,
-    // the hash, or the override.
-    getFragment: function(fragment, forcePushState) {
+    // Get the pathname and search params, without the root.
+    getPath: function() {
+      var path = decodeURI(this.location.pathname + this.getSearch());
+      var root = this.root.slice(0, -1);
+      if (!path.indexOf(root)) path = path.slice(root.length);
+      return path.slice(1);
+    },
+
+    // Get the cross-browser normalized URL fragment from the path or hash.
+    getFragment: function(fragment) {
       if (fragment == null) {
-        if (this._hasPushState || !this._wantsHashChange || forcePushState) {
-          fragment = decodeURI(this.location.pathname + this.location.search);
-          var root = this.root.replace(trailingSlash, '');
-          if (!fragment.indexOf(root)) fragment = fragment.slice(root.length);
+        if (this._hasPushState || !this._wantsHashChange) {
+          fragment = this.getPath();
         } else {
           fragment = this.getHash();
         }
@@ -13346,7 +13439,7 @@ return jQuery;
     // Start the hash change handling, returning `true` if the current URL matches
     // an existing route, and `false` otherwise.
     start: function(options) {
-      if (History.started) throw new Error("Backbone.history has already been started");
+      if (History.started) throw new Error('Backbone.history has already been started');
       History.started = true;
 
       // Figure out the initial configuration. Do we need an iframe?
@@ -13354,35 +13447,42 @@ return jQuery;
       this.options          = _.extend({root: '/'}, this.options, options);
       this.root             = this.options.root;
       this._wantsHashChange = this.options.hashChange !== false;
+      this._hasHashChange   = 'onhashchange' in window;
       this._wantsPushState  = !!this.options.pushState;
       this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);
-      var fragment          = this.getFragment();
-      var docMode           = document.documentMode;
-      var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
+      this.fragment         = this.getFragment();
+
+      // Add a cross-platform `addEventListener` shim for older browsers.
+      var addEventListener = window.addEventListener || function (eventName, listener) {
+        return attachEvent('on' + eventName, listener);
+      };
 
       // Normalize root to always include a leading and trailing slash.
       this.root = ('/' + this.root + '/').replace(rootStripper, '/');
 
-      if (oldIE && this._wantsHashChange) {
-        var frame = Backbone.$('<iframe src="javascript:0" tabindex="-1">');
-        this.iframe = frame.hide().appendTo('body')[0].contentWindow;
-        this.navigate(fragment);
+      // Proxy an iframe to handle location events if the browser doesn't
+      // support the `hashchange` event, HTML5 history, or the user wants
+      // `hashChange` but not `pushState`.
+      if (!this._hasHashChange && this._wantsHashChange && (!this._wantsPushState || !this._hasPushState)) {
+        var iframe = document.createElement('iframe');
+        iframe.src = 'javascript:0';
+        iframe.style.display = 'none';
+        iframe.tabIndex = -1;
+        var body = document.body;
+        // Using `appendChild` will throw on IE < 9 if the document is not ready.
+        this.iframe = body.insertBefore(iframe, body.firstChild).contentWindow;
+        this.navigate(this.fragment);
       }
 
       // Depending on whether we're using pushState or hashes, and whether
       // 'onhashchange' is supported, determine how we check the URL state.
       if (this._hasPushState) {
-        Backbone.$(window).on('popstate', this.checkUrl);
-      } else if (this._wantsHashChange && ('onhashchange' in window) && !oldIE) {
-        Backbone.$(window).on('hashchange', this.checkUrl);
+        addEventListener('popstate', this.checkUrl, false);
+      } else if (this._wantsHashChange && this._hasHashChange && !this.iframe) {
+        addEventListener('hashchange', this.checkUrl, false);
       } else if (this._wantsHashChange) {
         this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
       }
-
-      // Determine if we need to change the base url, for a pushState link
-      // opened by a non-pushState browser.
-      this.fragment = fragment;
-      var loc = this.location;
 
       // Transition from hashChange to pushState or vice versa if both are
       // requested.
@@ -13391,16 +13491,14 @@ return jQuery;
         // If we've started off with a route from a `pushState`-enabled
         // browser, but we're currently in a browser that doesn't support it...
         if (!this._hasPushState && !this.atRoot()) {
-          this.fragment = this.getFragment(null, true);
-          this.location.replace(this.root + '#' + this.fragment);
+          this.location.replace(this.root + '#' + this.getPath());
           // Return immediately as browser will do redirect to new url
           return true;
 
         // Or if we've started out with a hash-based route, but we're currently
         // in a browser where it could be `pushState`-based instead...
-        } else if (this._hasPushState && this.atRoot() && loc.hash) {
-          this.fragment = this.getHash().replace(routeStripper, '');
-          this.history.replaceState({}, document.title, this.root + this.fragment);
+        } else if (this._hasPushState && this.atRoot()) {
+          this.navigate(this.getHash(), {replace: true});
         }
 
       }
@@ -13411,7 +13509,25 @@ return jQuery;
     // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
     // but possibly useful for unit testing Routers.
     stop: function() {
-      Backbone.$(window).off('popstate', this.checkUrl).off('hashchange', this.checkUrl);
+      // Add a cross-platform `removeEventListener` shim for older browsers.
+      var removeEventListener = window.removeEventListener || function (eventName, listener) {
+        return detachEvent('on' + eventName, listener);
+      };
+
+      // Remove window listeners.
+      if (this._hasPushState) {
+        removeEventListener('popstate', this.checkUrl, false);
+      } else if (this._wantsHashChange && this._hasHashChange && !this.iframe) {
+        removeEventListener('hashchange', this.checkUrl, false);
+      }
+
+      // Clean up the iframe if necessary.
+      if (this.iframe) {
+        document.body.removeChild(this.iframe.frameElement);
+        this.iframe = null;
+      }
+
+      // Some environments will throw when clearing an undefined interval.
       if (this._checkUrlInterval) clearInterval(this._checkUrlInterval);
       History.started = false;
     },
@@ -13427,7 +13543,7 @@ return jQuery;
     checkUrl: function(e) {
       var current = this.getFragment();
       if (current === this.fragment && this.iframe) {
-        current = this.getFragment(this.getHash(this.iframe));
+        current = this.getHash(this.iframe);
       }
       if (current === this.fragment) return false;
       if (this.iframe) this.navigate(current);
@@ -13460,8 +13576,8 @@ return jQuery;
 
       var url = this.root + (fragment = this.getFragment(fragment || ''));
 
-      // Strip the hash for matching.
-      fragment = fragment.replace(pathStripper, '');
+      // Strip the hash and decode for matching.
+      fragment = decodeURI(fragment.replace(pathStripper, ''));
 
       if (this.fragment === fragment) return;
       this.fragment = fragment;
@@ -13477,7 +13593,7 @@ return jQuery;
       // fragment to store history.
       } else if (this._wantsHashChange) {
         this._updateHash(this.location, fragment, options.replace);
-        if (this.iframe && (fragment !== this.getFragment(this.getHash(this.iframe)))) {
+        if (this.iframe && (fragment !== this.getHash(this.iframe))) {
           // Opening and closing the iframe tricks IE7 and earlier to push a
           // history entry on hash-tag change.  When replace is true, we don't
           // want this.
@@ -15666,839 +15782,6 @@ var requirejs, require, define;
       window.CustomElements.observeDocument(document)
 
     //almond, and your modules will be inlined here
-define("handlebars/safe-string", 
-  ["exports"],
-  function(__exports__) {
-    
-    // Build out our basic SafeString type
-    function SafeString(string) {
-      this.string = string;
-    }
-
-    SafeString.prototype.toString = function() {
-      return "" + this.string;
-    };
-
-    __exports__["default"] = SafeString;
-  });
-define("handlebars/utils", 
-  ["./safe-string","exports"],
-  function(__dependency1__, __exports__) {
-    
-    /*jshint -W004 */
-    var SafeString = __dependency1__["default"];
-
-    var escape = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#x27;",
-      "`": "&#x60;"
-    };
-
-    var badChars = /[&<>"'`]/g;
-    var possible = /[&<>"'`]/;
-
-    function escapeChar(chr) {
-      return escape[chr] || "&amp;";
-    }
-
-    function extend(obj /* , ...source */) {
-      for (var i = 1; i < arguments.length; i++) {
-        for (var key in arguments[i]) {
-          if (Object.prototype.hasOwnProperty.call(arguments[i], key)) {
-            obj[key] = arguments[i][key];
-          }
-        }
-      }
-
-      return obj;
-    }
-
-    __exports__.extend = extend;var toString = Object.prototype.toString;
-    __exports__.toString = toString;
-    // Sourced from lodash
-    // https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
-    var isFunction = function(value) {
-      return typeof value === 'function';
-    };
-    // fallback for older versions of Chrome and Safari
-    if (isFunction(/x/)) {
-      isFunction = function(value) {
-        return typeof value === 'function' && toString.call(value) === '[object Function]';
-      };
-    }
-    var isFunction;
-    __exports__.isFunction = isFunction;
-    var isArray = Array.isArray || function(value) {
-      return (value && typeof value === 'object') ? toString.call(value) === '[object Array]' : false;
-    };
-    __exports__.isArray = isArray;
-
-    function escapeExpression(string) {
-      // don't escape SafeStrings, since they're already safe
-      if (string instanceof SafeString) {
-        return string.toString();
-      } else if (!string && string !== 0) {
-        return "";
-      }
-
-      // Force a string conversion as this will be done by the append regardless and
-      // the regex test will do this transparently behind the scenes, causing issues if
-      // an object's to string has escaped characters in it.
-      string = "" + string;
-
-      if(!possible.test(string)) { return string; }
-      return string.replace(badChars, escapeChar);
-    }
-
-    __exports__.escapeExpression = escapeExpression;function isEmpty(value) {
-      if (!value && value !== 0) {
-        return true;
-      } else if (isArray(value) && value.length === 0) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    __exports__.isEmpty = isEmpty;function appendContextPath(contextPath, id) {
-      return (contextPath ? contextPath + '.' : '') + id;
-    }
-
-    __exports__.appendContextPath = appendContextPath;
-  });
-define("handlebars/exception", 
-  ["exports"],
-  function(__exports__) {
-    
-
-    var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
-
-    function Exception(message, node) {
-      var line;
-      if (node && node.firstLine) {
-        line = node.firstLine;
-
-        message += ' - ' + line + ':' + node.firstColumn;
-      }
-
-      var tmp = Error.prototype.constructor.call(this, message);
-
-      // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
-      for (var idx = 0; idx < errorProps.length; idx++) {
-        this[errorProps[idx]] = tmp[errorProps[idx]];
-      }
-
-      if (line) {
-        this.lineNumber = line;
-        this.column = node.firstColumn;
-      }
-    }
-
-    Exception.prototype = new Error();
-
-    __exports__["default"] = Exception;
-  });
-define("handlebars/base", 
-  ["./utils","./exception","exports"],
-  function(__dependency1__, __dependency2__, __exports__) {
-    
-    var Utils = __dependency1__;
-    var Exception = __dependency2__["default"];
-
-    var VERSION = "2.0.0-alpha.4";
-    __exports__.VERSION = VERSION;var COMPILER_REVISION = 5;
-    __exports__.COMPILER_REVISION = COMPILER_REVISION;
-    var REVISION_CHANGES = {
-      1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
-      2: '== 1.0.0-rc.3',
-      3: '== 1.0.0-rc.4',
-      4: '== 1.x.x',
-      5: '>= 2.0.0'
-    };
-    __exports__.REVISION_CHANGES = REVISION_CHANGES;
-    var isArray = Utils.isArray,
-        isFunction = Utils.isFunction,
-        toString = Utils.toString,
-        objectType = '[object Object]';
-
-    function HandlebarsEnvironment(helpers, partials) {
-      this.helpers = helpers || {};
-      this.partials = partials || {};
-
-      registerDefaultHelpers(this);
-    }
-
-    __exports__.HandlebarsEnvironment = HandlebarsEnvironment;HandlebarsEnvironment.prototype = {
-      constructor: HandlebarsEnvironment,
-
-      logger: logger,
-      log: log,
-
-      registerHelper: function(name, fn, inverse) {
-        if (toString.call(name) === objectType) {
-          if (inverse || fn) { throw new Exception('Arg not supported with multiple helpers'); }
-          Utils.extend(this.helpers, name);
-        } else {
-          if (inverse) { fn.not = inverse; }
-          this.helpers[name] = fn;
-        }
-      },
-      unregisterHelper: function(name) {
-        delete this.helpers[name];
-      },
-
-      registerPartial: function(name, str) {
-        if (toString.call(name) === objectType) {
-          Utils.extend(this.partials,  name);
-        } else {
-          this.partials[name] = str;
-        }
-      },
-      unregisterPartial: function(name) {
-        delete this.partials[name];
-      }
-    };
-
-    function registerDefaultHelpers(instance) {
-      instance.registerHelper('helperMissing', function(/* [args, ]options */) {
-        if(arguments.length === 1) {
-          // A missing field in a {{foo}} constuct.
-          return undefined;
-        } else {
-          // Someone is actually trying to call something, blow up.
-          throw new Exception("Missing helper: '" + arguments[arguments.length-1].name + "'");
-        }
-      });
-
-      instance.registerHelper('blockHelperMissing', function(context, options) {
-        var inverse = options.inverse || function() {}, fn = options.fn;
-
-        if (isFunction(context)) { context = context.call(this); }
-
-        if(context === true) {
-          return fn(this);
-        } else if(context === false || context == null) {
-          return inverse(this);
-        } else if (isArray(context)) {
-          if(context.length > 0) {
-            if (options.ids) {
-              options.ids = [options.name];
-            }
-
-            return instance.helpers.each(context, options);
-          } else {
-            return inverse(this);
-          }
-        } else {
-          if (options.data && options.ids) {
-            var data = createFrame(options.data);
-            data.contextPath = Utils.appendContextPath(options.data.contextPath, options.name);
-            options = {data: data};
-          }
-
-          return fn(context, options);
-        }
-      });
-
-      instance.registerHelper('each', function(context, options) {
-        if (!options) {
-          throw new Exception('Must pass iterator to #each');
-        }
-
-        var fn = options.fn, inverse = options.inverse;
-        var i = 0, ret = "", data;
-
-        var contextPath;
-        if (options.data && options.ids) {
-          contextPath = Utils.appendContextPath(options.data.contextPath, options.ids[0]) + '.';
-        }
-
-        if (isFunction(context)) { context = context.call(this); }
-
-        if (options.data) {
-          data = createFrame(options.data);
-        }
-
-        if(context && typeof context === 'object') {
-          if (isArray(context)) {
-            for(var j = context.length; i<j; i++) {
-              if (data) {
-                data.index = i;
-                data.first = (i === 0);
-                data.last  = (i === (context.length-1));
-
-                if (contextPath) {
-                  data.contextPath = contextPath + i;
-                }
-              }
-              ret = ret + fn(context[i], { data: data });
-            }
-          } else {
-            for(var key in context) {
-              if(context.hasOwnProperty(key)) {
-                if(data) {
-                  data.key = key;
-                  data.index = i;
-                  data.first = (i === 0);
-
-                  if (contextPath) {
-                    data.contextPath = contextPath + key;
-                  }
-                }
-                ret = ret + fn(context[key], {data: data});
-                i++;
-              }
-            }
-          }
-        }
-
-        if(i === 0){
-          ret = inverse(this);
-        }
-
-        return ret;
-      });
-
-      instance.registerHelper('if', function(conditional, options) {
-        if (isFunction(conditional)) { conditional = conditional.call(this); }
-
-        // Default behavior is to render the positive path if the value is truthy and not empty.
-        // The `includeZero` option may be set to treat the condtional as purely not empty based on the
-        // behavior of isEmpty. Effectively this determines if 0 is handled by the positive path or negative.
-        if ((!options.hash.includeZero && !conditional) || Utils.isEmpty(conditional)) {
-          return options.inverse(this);
-        } else {
-          return options.fn(this);
-        }
-      });
-
-      instance.registerHelper('unless', function(conditional, options) {
-        return instance.helpers['if'].call(this, conditional, {fn: options.inverse, inverse: options.fn, hash: options.hash});
-      });
-
-      instance.registerHelper('with', function(context, options) {
-        if (isFunction(context)) { context = context.call(this); }
-
-        var fn = options.fn;
-
-        if (!Utils.isEmpty(context)) {
-          if (options.data && options.ids) {
-            var data = createFrame(options.data);
-            data.contextPath = Utils.appendContextPath(options.data.contextPath, options.ids[0]);
-            options = {data:data};
-          }
-
-          return fn(context, options);
-        }
-      });
-
-      instance.registerHelper('log', function(context, options) {
-        var level = options.data && options.data.level != null ? parseInt(options.data.level, 10) : 1;
-        instance.log(level, context);
-      });
-
-      instance.registerHelper('lookup', function(obj, field, options) {
-        return obj && obj[field];
-      });
-    }
-
-    var logger = {
-      methodMap: { 0: 'debug', 1: 'info', 2: 'warn', 3: 'error' },
-
-      // State enum
-      DEBUG: 0,
-      INFO: 1,
-      WARN: 2,
-      ERROR: 3,
-      level: 3,
-
-      // can be overridden in the host environment
-      log: function(level, obj) {
-        if (logger.level <= level) {
-          var method = logger.methodMap[level];
-          if (typeof console !== 'undefined' && console[method]) {
-            console[method].call(console, obj);
-          }
-        }
-      }
-    };
-    __exports__.logger = logger;
-    function log(level, obj) { logger.log(level, obj); }
-
-    __exports__.log = log;var createFrame = function(object) {
-      var frame = Utils.extend({}, object);
-      frame._parent = object;
-      return frame;
-    };
-    __exports__.createFrame = createFrame;
-  });
-define("handlebars/runtime", 
-  ["./utils","./exception","./base","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
-    
-    var Utils = __dependency1__;
-    var Exception = __dependency2__["default"];
-    var COMPILER_REVISION = __dependency3__.COMPILER_REVISION;
-    var REVISION_CHANGES = __dependency3__.REVISION_CHANGES;
-    var createFrame = __dependency3__.createFrame;
-
-    function checkRevision(compilerInfo) {
-      var compilerRevision = compilerInfo && compilerInfo[0] || 1,
-          currentRevision = COMPILER_REVISION;
-
-      if (compilerRevision !== currentRevision) {
-        if (compilerRevision < currentRevision) {
-          var runtimeVersions = REVISION_CHANGES[currentRevision],
-              compilerVersions = REVISION_CHANGES[compilerRevision];
-          throw new Exception("Template was precompiled with an older version of Handlebars than the current runtime. "+
-                "Please update your precompiler to a newer version ("+runtimeVersions+") or downgrade your runtime to an older version ("+compilerVersions+").");
-        } else {
-          // Use the embedded version info since the runtime doesn't know about this revision yet
-          throw new Exception("Template was precompiled with a newer version of Handlebars than the current runtime. "+
-                "Please update your runtime to a newer version ("+compilerInfo[1]+").");
-        }
-      }
-    }
-
-    __exports__.checkRevision = checkRevision;// TODO: Remove this line and break up compilePartial
-
-    function template(templateSpec, env) {
-      if (!env) {
-        throw new Exception("No environment passed to template");
-      }
-
-      // Note: Using env.VM references rather than local var references throughout this section to allow
-      // for external users to override these as psuedo-supported APIs.
-      env.VM.checkRevision(templateSpec.compiler);
-
-      var invokePartialWrapper = function(partial, name, context, hash, helpers, partials, data) {
-        if (hash) {
-          context = Utils.extend({}, context, hash);
-        }
-
-        var result = env.VM.invokePartial.call(this, partial, name, context, helpers, partials, data);
-        if (result != null) { return result; }
-
-        if (env.compile) {
-          var options = { helpers: helpers, partials: partials, data: data };
-          partials[name] = env.compile(partial, { data: data !== undefined }, env);
-          return partials[name](context, options);
-        } else {
-          throw new Exception("The partial " + name + " could not be compiled when running in runtime-only mode");
-        }
-      };
-
-      // Just add water
-      var container = {
-        escapeExpression: Utils.escapeExpression,
-        invokePartial: invokePartialWrapper,
-
-        fn: function(i) {
-          return templateSpec[i];
-        },
-
-        programs: [],
-        program: function(i, data) {
-          var programWrapper = this.programs[i],
-              fn = this.fn(i);
-          if(data) {
-            programWrapper = program(this, i, fn, data);
-          } else if (!programWrapper) {
-            programWrapper = this.programs[i] = program(this, i, fn);
-          }
-          return programWrapper;
-        },
-        programWithDepth: env.VM.programWithDepth,
-
-        data: function(data, depth) {
-          while (data && depth--) {
-            data = data._parent;
-          }
-          return data;
-        },
-        merge: function(param, common) {
-          var ret = param || common;
-
-          if (param && common && (param !== common)) {
-            ret = Utils.extend({}, common, param);
-          }
-
-          return ret;
-        },
-
-        noop: env.VM.noop,
-        compilerInfo: templateSpec.compiler
-      };
-
-      var ret = function(context, options) {
-        options = options || {};
-        var helpers,
-            partials,
-            data = options.data;
-
-        ret._setup(options);
-        if (!options.partial && templateSpec.useData) {
-          data = initData(context, data);
-        }
-        return templateSpec.main.call(container, context, container.helpers, container.partials, data);
-      };
-
-      ret._setup = function(options) {
-        if (!options.partial) {
-          container.helpers = container.merge(options.helpers, env.helpers);
-
-          if (templateSpec.usePartial) {
-            container.partials = container.merge(options.partials, env.partials);
-          }
-        } else {
-          container.helpers = options.helpers;
-          container.partials = options.partials;
-        }
-      };
-
-      ret._child = function(i) {
-        return container.programWithDepth(i);
-      };
-      return ret;
-    }
-
-    __exports__.template = template;function programWithDepth(i, data /*, $depth */) {
-      /*jshint -W040 */
-      var args = Array.prototype.slice.call(arguments, 2),
-          container = this,
-          fn = container.fn(i);
-
-      var prog = function(context, options) {
-        options = options || {};
-
-        return fn.apply(container, [context, container.helpers, container.partials, options.data || data].concat(args));
-      };
-      prog.program = i;
-      prog.depth = args.length;
-      return prog;
-    }
-
-    __exports__.programWithDepth = programWithDepth;function program(container, i, fn, data) {
-      var prog = function(context, options) {
-        options = options || {};
-
-        return fn.call(container, context, container.helpers, container.partials, options.data || data);
-      };
-      prog.program = i;
-      prog.depth = 0;
-      return prog;
-    }
-
-    __exports__.program = program;function invokePartial(partial, name, context, helpers, partials, data) {
-      var options = { partial: true, helpers: helpers, partials: partials, data: data };
-
-      if(partial === undefined) {
-        throw new Exception("The partial " + name + " could not be found");
-      } else if(partial instanceof Function) {
-        return partial(context, options);
-      }
-    }
-
-    __exports__.invokePartial = invokePartial;function noop() { return ""; }
-
-    __exports__.noop = noop;function initData(context, data) {
-      if (!data || !('root' in data)) {
-        data = data ? createFrame(data) : {};
-        data.root = context;
-      }
-      return data;
-    }
-  });
-define("handlebars.runtime", 
-  ["./handlebars/base","./handlebars/safe-string","./handlebars/exception","./handlebars/utils","./handlebars/runtime","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __exports__) {
-    
-    /*globals Handlebars: true */
-    var base = __dependency1__;
-
-    // Each of these augment the Handlebars object. No need to setup here.
-    // (This is done to easily share code between commonjs and browse envs)
-    var SafeString = __dependency2__["default"];
-    var Exception = __dependency3__["default"];
-    var Utils = __dependency4__;
-    var runtime = __dependency5__;
-
-    // For compatibility and usage outside of module systems, make the Handlebars object a namespace
-    var create = function() {
-      var hb = new base.HandlebarsEnvironment();
-
-      Utils.extend(hb, base);
-      hb.SafeString = SafeString;
-      hb.Exception = Exception;
-      hb.Utils = Utils;
-
-      hb.VM = runtime;
-      hb.template = function(spec) {
-        return runtime.template(spec, hb);
-      };
-
-      return hb;
-    };
-
-    var Handlebars = create();
-    Handlebars.create = create;
-
-    __exports__["default"] = Handlebars;
-  });
-define("handlebars/compiler/ast", 
-  ["../exception","exports"],
-  function(__dependency1__, __exports__) {
-    
-    var Exception = __dependency1__["default"];
-
-    function LocationInfo(locInfo){
-      locInfo = locInfo || {};
-      this.firstLine   = locInfo.first_line;
-      this.firstColumn = locInfo.first_column;
-      this.lastColumn  = locInfo.last_column;
-      this.lastLine    = locInfo.last_line;
-    }
-
-    var AST = {
-      ProgramNode: function(statements, inverseStrip, inverse, locInfo) {
-        var inverseLocationInfo, firstInverseNode;
-        if (arguments.length === 3) {
-          locInfo = inverse;
-          inverse = null;
-        } else if (arguments.length === 2) {
-          locInfo = inverseStrip;
-          inverseStrip = null;
-        }
-
-        LocationInfo.call(this, locInfo);
-        this.type = "program";
-        this.statements = statements;
-        this.strip = {};
-
-        if(inverse) {
-          firstInverseNode = inverse[0];
-          if (firstInverseNode) {
-            inverseLocationInfo = {
-              first_line: firstInverseNode.firstLine,
-              last_line: firstInverseNode.lastLine,
-              last_column: firstInverseNode.lastColumn,
-              first_column: firstInverseNode.firstColumn
-            };
-            this.inverse = new AST.ProgramNode(inverse, inverseStrip, inverseLocationInfo);
-          } else {
-            this.inverse = new AST.ProgramNode(inverse, inverseStrip);
-          }
-          this.strip.right = inverseStrip.left;
-        } else if (inverseStrip) {
-          this.strip.left = inverseStrip.right;
-        }
-      },
-
-      MustacheNode: function(rawParams, hash, open, strip, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "mustache";
-        this.strip = strip;
-
-        // Open may be a string parsed from the parser or a passed boolean flag
-        if (open != null && open.charAt) {
-          // Must use charAt to support IE pre-10
-          var escapeFlag = open.charAt(3) || open.charAt(2);
-          this.escaped = escapeFlag !== '{' && escapeFlag !== '&';
-        } else {
-          this.escaped = !!open;
-        }
-
-        if (rawParams instanceof AST.SexprNode) {
-          this.sexpr = rawParams;
-        } else {
-          // Support old AST API
-          this.sexpr = new AST.SexprNode(rawParams, hash);
-        }
-
-        this.sexpr.isRoot = true;
-
-        // Support old AST API that stored this info in MustacheNode
-        this.id = this.sexpr.id;
-        this.params = this.sexpr.params;
-        this.hash = this.sexpr.hash;
-        this.eligibleHelper = this.sexpr.eligibleHelper;
-        this.isHelper = this.sexpr.isHelper;
-      },
-
-      SexprNode: function(rawParams, hash, locInfo) {
-        LocationInfo.call(this, locInfo);
-
-        this.type = "sexpr";
-        this.hash = hash;
-
-        var id = this.id = rawParams[0];
-        var params = this.params = rawParams.slice(1);
-
-        // a mustache is definitely a helper if:
-        // * it is an eligible helper, and
-        // * it has at least one parameter or hash segment
-        this.isHelper = !!(params.length || hash);
-
-        // a mustache is an eligible helper if:
-        // * its id is simple (a single part, not `this` or `..`)
-        this.eligibleHelper = this.isHelper || id.isSimple;
-
-        // if a mustache is an eligible helper but not a definite
-        // helper, it is ambiguous, and will be resolved in a later
-        // pass or at runtime.
-      },
-
-      PartialNode: function(partialName, context, hash, strip, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type         = "partial";
-        this.partialName  = partialName;
-        this.context      = context;
-        this.hash = hash;
-        this.strip = strip;
-      },
-
-      BlockNode: function(mustache, program, inverse, close, locInfo) {
-        LocationInfo.call(this, locInfo);
-
-        if(mustache.sexpr.id.original !== close.path.original) {
-          throw new Exception(mustache.sexpr.id.original + " doesn't match " + close.path.original, this);
-        }
-
-        this.type = 'block';
-        this.mustache = mustache;
-        this.program  = program;
-        this.inverse  = inverse;
-
-        this.strip = {
-          left: mustache.strip.left,
-          right: close.strip.right
-        };
-
-        (program || inverse).strip.left = mustache.strip.right;
-        (inverse || program).strip.right = close.strip.left;
-
-        if (inverse && !program) {
-          this.isInverse = true;
-        }
-      },
-
-      RawBlockNode: function(mustache, content, close, locInfo) {
-        LocationInfo.call(this, locInfo);
-
-        if (mustache.sexpr.id.original !== close) {
-          throw new Exception(mustache.sexpr.id.original + " doesn't match " + close, this);
-        }
-
-        content = new AST.ContentNode(content, locInfo);
-
-        this.type = 'block';
-        this.mustache = mustache;
-        this.program = new AST.ProgramNode([content], locInfo);
-      },
-
-      ContentNode: function(string, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "content";
-        this.string = string;
-      },
-
-      HashNode: function(pairs, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "hash";
-        this.pairs = pairs;
-      },
-
-      IdNode: function(parts, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "ID";
-
-        var original = "",
-            dig = [],
-            depth = 0,
-            depthString = '';
-
-        for(var i=0,l=parts.length; i<l; i++) {
-          var part = parts[i].part;
-          original += (parts[i].separator || '') + part;
-
-          if (part === ".." || part === "." || part === "this") {
-            if (dig.length > 0) {
-              throw new Exception("Invalid path: " + original, this);
-            } else if (part === "..") {
-              depth++;
-              depthString += '../';
-            } else {
-              this.isScoped = true;
-            }
-          } else {
-            dig.push(part);
-          }
-        }
-
-        this.original = original;
-        this.parts    = dig;
-        this.string   = dig.join('.');
-        this.depth    = depth;
-        this.idName   = depthString + this.string;
-
-        // an ID is simple if it only has one part, and that part is not
-        // `..` or `this`.
-        this.isSimple = parts.length === 1 && !this.isScoped && depth === 0;
-
-        this.stringModeValue = this.string;
-      },
-
-      PartialNameNode: function(name, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "PARTIAL_NAME";
-        this.name = name.original;
-      },
-
-      DataNode: function(id, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "DATA";
-        this.id = id;
-        this.stringModeValue = id.stringModeValue;
-        this.idName = '@' + id.stringModeValue;
-      },
-
-      StringNode: function(string, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "STRING";
-        this.original =
-          this.string =
-          this.stringModeValue = string;
-      },
-
-      NumberNode: function(number, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "NUMBER";
-        this.original =
-          this.number = number;
-        this.stringModeValue = Number(number);
-      },
-
-      BooleanNode: function(bool, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "BOOLEAN";
-        this.bool = bool;
-        this.stringModeValue = bool === "true";
-      },
-
-      CommentNode: function(comment, locInfo) {
-        LocationInfo.call(this, locInfo);
-        this.type = "comment";
-        this.comment = comment;
-      }
-    };
-
-    // Must be exported as an object rather than the root of the module as the jison lexer
-    // most modify the object to operate properly.
-    __exports__["default"] = AST;
-  });
 define("handlebars/compiler/parser", 
   ["exports"],
   function(__exports__) {
@@ -17021,6 +16304,289 @@ define("handlebars/compiler/parser",
     })();__exports__["default"] = handlebars;
     /* jshint ignore:end */
   });
+define("handlebars/exception", 
+  ["exports"],
+  function(__exports__) {
+    
+
+    var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
+
+    function Exception(message, node) {
+      var line;
+      if (node && node.firstLine) {
+        line = node.firstLine;
+
+        message += ' - ' + line + ':' + node.firstColumn;
+      }
+
+      var tmp = Error.prototype.constructor.call(this, message);
+
+      // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
+      for (var idx = 0; idx < errorProps.length; idx++) {
+        this[errorProps[idx]] = tmp[errorProps[idx]];
+      }
+
+      if (line) {
+        this.lineNumber = line;
+        this.column = node.firstColumn;
+      }
+    }
+
+    Exception.prototype = new Error();
+
+    __exports__["default"] = Exception;
+  });
+define("handlebars/compiler/ast", 
+  ["../exception","exports"],
+  function(__dependency1__, __exports__) {
+    
+    var Exception = __dependency1__["default"];
+
+    function LocationInfo(locInfo){
+      locInfo = locInfo || {};
+      this.firstLine   = locInfo.first_line;
+      this.firstColumn = locInfo.first_column;
+      this.lastColumn  = locInfo.last_column;
+      this.lastLine    = locInfo.last_line;
+    }
+
+    var AST = {
+      ProgramNode: function(statements, inverseStrip, inverse, locInfo) {
+        var inverseLocationInfo, firstInverseNode;
+        if (arguments.length === 3) {
+          locInfo = inverse;
+          inverse = null;
+        } else if (arguments.length === 2) {
+          locInfo = inverseStrip;
+          inverseStrip = null;
+        }
+
+        LocationInfo.call(this, locInfo);
+        this.type = "program";
+        this.statements = statements;
+        this.strip = {};
+
+        if(inverse) {
+          firstInverseNode = inverse[0];
+          if (firstInverseNode) {
+            inverseLocationInfo = {
+              first_line: firstInverseNode.firstLine,
+              last_line: firstInverseNode.lastLine,
+              last_column: firstInverseNode.lastColumn,
+              first_column: firstInverseNode.firstColumn
+            };
+            this.inverse = new AST.ProgramNode(inverse, inverseStrip, inverseLocationInfo);
+          } else {
+            this.inverse = new AST.ProgramNode(inverse, inverseStrip);
+          }
+          this.strip.right = inverseStrip.left;
+        } else if (inverseStrip) {
+          this.strip.left = inverseStrip.right;
+        }
+      },
+
+      MustacheNode: function(rawParams, hash, open, strip, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "mustache";
+        this.strip = strip;
+
+        // Open may be a string parsed from the parser or a passed boolean flag
+        if (open != null && open.charAt) {
+          // Must use charAt to support IE pre-10
+          var escapeFlag = open.charAt(3) || open.charAt(2);
+          this.escaped = escapeFlag !== '{' && escapeFlag !== '&';
+        } else {
+          this.escaped = !!open;
+        }
+
+        if (rawParams instanceof AST.SexprNode) {
+          this.sexpr = rawParams;
+        } else {
+          // Support old AST API
+          this.sexpr = new AST.SexprNode(rawParams, hash);
+        }
+
+        this.sexpr.isRoot = true;
+
+        // Support old AST API that stored this info in MustacheNode
+        this.id = this.sexpr.id;
+        this.params = this.sexpr.params;
+        this.hash = this.sexpr.hash;
+        this.eligibleHelper = this.sexpr.eligibleHelper;
+        this.isHelper = this.sexpr.isHelper;
+      },
+
+      SexprNode: function(rawParams, hash, locInfo) {
+        LocationInfo.call(this, locInfo);
+
+        this.type = "sexpr";
+        this.hash = hash;
+
+        var id = this.id = rawParams[0];
+        var params = this.params = rawParams.slice(1);
+
+        // a mustache is definitely a helper if:
+        // * it is an eligible helper, and
+        // * it has at least one parameter or hash segment
+        this.isHelper = !!(params.length || hash);
+
+        // a mustache is an eligible helper if:
+        // * its id is simple (a single part, not `this` or `..`)
+        this.eligibleHelper = this.isHelper || id.isSimple;
+
+        // if a mustache is an eligible helper but not a definite
+        // helper, it is ambiguous, and will be resolved in a later
+        // pass or at runtime.
+      },
+
+      PartialNode: function(partialName, context, hash, strip, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type         = "partial";
+        this.partialName  = partialName;
+        this.context      = context;
+        this.hash = hash;
+        this.strip = strip;
+      },
+
+      BlockNode: function(mustache, program, inverse, close, locInfo) {
+        LocationInfo.call(this, locInfo);
+
+        if(mustache.sexpr.id.original !== close.path.original) {
+          throw new Exception(mustache.sexpr.id.original + " doesn't match " + close.path.original, this);
+        }
+
+        this.type = 'block';
+        this.mustache = mustache;
+        this.program  = program;
+        this.inverse  = inverse;
+
+        this.strip = {
+          left: mustache.strip.left,
+          right: close.strip.right
+        };
+
+        (program || inverse).strip.left = mustache.strip.right;
+        (inverse || program).strip.right = close.strip.left;
+
+        if (inverse && !program) {
+          this.isInverse = true;
+        }
+      },
+
+      RawBlockNode: function(mustache, content, close, locInfo) {
+        LocationInfo.call(this, locInfo);
+
+        if (mustache.sexpr.id.original !== close) {
+          throw new Exception(mustache.sexpr.id.original + " doesn't match " + close, this);
+        }
+
+        content = new AST.ContentNode(content, locInfo);
+
+        this.type = 'block';
+        this.mustache = mustache;
+        this.program = new AST.ProgramNode([content], locInfo);
+      },
+
+      ContentNode: function(string, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "content";
+        this.string = string;
+      },
+
+      HashNode: function(pairs, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "hash";
+        this.pairs = pairs;
+      },
+
+      IdNode: function(parts, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "ID";
+
+        var original = "",
+            dig = [],
+            depth = 0,
+            depthString = '';
+
+        for(var i=0,l=parts.length; i<l; i++) {
+          var part = parts[i].part;
+          original += (parts[i].separator || '') + part;
+
+          if (part === ".." || part === "." || part === "this") {
+            if (dig.length > 0) {
+              throw new Exception("Invalid path: " + original, this);
+            } else if (part === "..") {
+              depth++;
+              depthString += '../';
+            } else {
+              this.isScoped = true;
+            }
+          } else {
+            dig.push(part);
+          }
+        }
+
+        this.original = original;
+        this.parts    = dig;
+        this.string   = dig.join('.');
+        this.depth    = depth;
+        this.idName   = depthString + this.string;
+
+        // an ID is simple if it only has one part, and that part is not
+        // `..` or `this`.
+        this.isSimple = parts.length === 1 && !this.isScoped && depth === 0;
+
+        this.stringModeValue = this.string;
+      },
+
+      PartialNameNode: function(name, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "PARTIAL_NAME";
+        this.name = name.original;
+      },
+
+      DataNode: function(id, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "DATA";
+        this.id = id;
+        this.stringModeValue = id.stringModeValue;
+        this.idName = '@' + id.stringModeValue;
+      },
+
+      StringNode: function(string, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "STRING";
+        this.original =
+          this.string =
+          this.stringModeValue = string;
+      },
+
+      NumberNode: function(number, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "NUMBER";
+        this.original =
+          this.number = number;
+        this.stringModeValue = Number(number);
+      },
+
+      BooleanNode: function(bool, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "BOOLEAN";
+        this.bool = bool;
+        this.stringModeValue = bool === "true";
+      },
+
+      CommentNode: function(comment, locInfo) {
+        LocationInfo.call(this, locInfo);
+        this.type = "comment";
+        this.comment = comment;
+      }
+    };
+
+    // Must be exported as an object rather than the root of the module as the jison lexer
+    // most modify the object to operate properly.
+    __exports__["default"] = AST;
+  });
 define("handlebars/compiler/base", 
   ["./parser","./ast","exports"],
   function(__dependency1__, __dependency2__, __exports__) {
@@ -17039,1527 +16605,6 @@ define("handlebars/compiler/base",
     }
 
     __exports__.parse = parse;
-  });
-define("handlebars/compiler/compiler", 
-  ["../exception","exports"],
-  function(__dependency1__, __exports__) {
-    
-    var Exception = __dependency1__["default"];
-
-    function Compiler() {}
-
-    __exports__.Compiler = Compiler;// the foundHelper register will disambiguate helper lookup from finding a
-    // function in a context. This is necessary for mustache compatibility, which
-    // requires that context functions in blocks are evaluated by blockHelperMissing,
-    // and then proceed as if the resulting value was provided to blockHelperMissing.
-
-    Compiler.prototype = {
-      compiler: Compiler,
-
-      disassemble: function() {
-        var opcodes = this.opcodes, opcode, out = [], params, param;
-
-        for (var i=0, l=opcodes.length; i<l; i++) {
-          opcode = opcodes[i];
-
-          if (opcode.opcode === 'DECLARE') {
-            out.push("DECLARE " + opcode.name + "=" + opcode.value);
-          } else {
-            params = [];
-            for (var j=0; j<opcode.args.length; j++) {
-              param = opcode.args[j];
-              if (typeof param === "string") {
-                param = "\"" + param.replace("\n", "\\n") + "\"";
-              }
-              params.push(param);
-            }
-            out.push(opcode.opcode + " " + params.join(" "));
-          }
-        }
-
-        return out.join("\n");
-      },
-
-      equals: function(other) {
-        var len = this.opcodes.length;
-        if (other.opcodes.length !== len) {
-          return false;
-        }
-
-        for (var i = 0; i < len; i++) {
-          var opcode = this.opcodes[i],
-              otherOpcode = other.opcodes[i];
-          if (opcode.opcode !== otherOpcode.opcode || opcode.args.length !== otherOpcode.args.length) {
-            return false;
-          }
-          for (var j = 0; j < opcode.args.length; j++) {
-            if (opcode.args[j] !== otherOpcode.args[j]) {
-              return false;
-            }
-          }
-        }
-
-        len = this.children.length;
-        if (other.children.length !== len) {
-          return false;
-        }
-        for (i = 0; i < len; i++) {
-          if (!this.children[i].equals(other.children[i])) {
-            return false;
-          }
-        }
-
-        return true;
-      },
-
-      guid: 0,
-
-      compile: function(program, options) {
-        this.opcodes = [];
-        this.children = [];
-        this.depths = {list: []};
-        this.options = options;
-        this.stringParams = options.stringParams;
-        this.trackIds = options.trackIds;
-
-        // These changes will propagate to the other compiler components
-        var knownHelpers = this.options.knownHelpers;
-        this.options.knownHelpers = {
-          'helperMissing': true,
-          'blockHelperMissing': true,
-          'each': true,
-          'if': true,
-          'unless': true,
-          'with': true,
-          'log': true,
-          'lookup': true
-        };
-        if (knownHelpers) {
-          for (var name in knownHelpers) {
-            this.options.knownHelpers[name] = knownHelpers[name];
-          }
-        }
-
-        return this.accept(program);
-      },
-
-      accept: function(node) {
-        var strip = node.strip || {},
-            ret;
-        if (strip.left) {
-          this.opcode('strip');
-        }
-
-        ret = this[node.type](node);
-
-        if (strip.right) {
-          this.opcode('strip');
-        }
-
-        return ret;
-      },
-
-      program: function(program) {
-        var statements = program.statements;
-
-        for(var i=0, l=statements.length; i<l; i++) {
-          this.accept(statements[i]);
-        }
-        this.isSimple = l === 1;
-
-        this.depths.list = this.depths.list.sort(function(a, b) {
-          return a - b;
-        });
-
-        return this;
-      },
-
-      compileProgram: function(program) {
-        var result = new this.compiler().compile(program, this.options);
-        var guid = this.guid++, depth;
-
-        this.usePartial = this.usePartial || result.usePartial;
-
-        this.children[guid] = result;
-
-        for(var i=0, l=result.depths.list.length; i<l; i++) {
-          depth = result.depths.list[i];
-
-          if(depth < 2) { continue; }
-          else { this.addDepth(depth - 1); }
-        }
-
-        return guid;
-      },
-
-      block: function(block) {
-        var mustache = block.mustache,
-            program = block.program,
-            inverse = block.inverse;
-
-        if (program) {
-          program = this.compileProgram(program);
-        }
-
-        if (inverse) {
-          inverse = this.compileProgram(inverse);
-        }
-
-        var sexpr = mustache.sexpr;
-        var type = this.classifySexpr(sexpr);
-
-        if (type === "helper") {
-          this.helperSexpr(sexpr, program, inverse);
-        } else if (type === "simple") {
-          this.simpleSexpr(sexpr);
-
-          // now that the simple mustache is resolved, we need to
-          // evaluate it by executing `blockHelperMissing`
-          this.opcode('pushProgram', program);
-          this.opcode('pushProgram', inverse);
-          this.opcode('emptyHash');
-          this.opcode('blockValue', sexpr.id.original);
-        } else {
-          this.ambiguousSexpr(sexpr, program, inverse);
-
-          // now that the simple mustache is resolved, we need to
-          // evaluate it by executing `blockHelperMissing`
-          this.opcode('pushProgram', program);
-          this.opcode('pushProgram', inverse);
-          this.opcode('emptyHash');
-          this.opcode('ambiguousBlockValue');
-        }
-
-        this.opcode('append');
-      },
-
-      hash: function(hash) {
-        var pairs = hash.pairs, i, l;
-
-        this.opcode('pushHash');
-
-        for(i=0, l=pairs.length; i<l; i++) {
-          this.pushParam(pairs[i][1]);
-        }
-        while(i--) {
-          this.opcode('assignToHash', pairs[i][0]);
-        }
-        this.opcode('popHash');
-      },
-
-      partial: function(partial) {
-        var partialName = partial.partialName;
-        this.usePartial = true;
-
-        if (partial.hash) {
-          this.accept(partial.hash);
-        } else {
-          this.opcode('push', 'undefined');
-        }
-
-        if (partial.context) {
-          this.accept(partial.context);
-        } else {
-          this.opcode('push', 'depth0');
-        }
-
-        this.opcode('invokePartial', partialName.name);
-        this.opcode('append');
-      },
-
-      content: function(content) {
-        this.opcode('appendContent', content.string);
-      },
-
-      mustache: function(mustache) {
-        this.sexpr(mustache.sexpr);
-
-        if(mustache.escaped && !this.options.noEscape) {
-          this.opcode('appendEscaped');
-        } else {
-          this.opcode('append');
-        }
-      },
-
-      ambiguousSexpr: function(sexpr, program, inverse) {
-        var id = sexpr.id,
-            name = id.parts[0],
-            isBlock = program != null || inverse != null;
-
-        this.opcode('getContext', id.depth);
-
-        this.opcode('pushProgram', program);
-        this.opcode('pushProgram', inverse);
-
-        this.opcode('invokeAmbiguous', name, isBlock);
-      },
-
-      simpleSexpr: function(sexpr) {
-        var id = sexpr.id;
-
-        if (id.type === 'DATA') {
-          this.DATA(id);
-        } else if (id.parts.length) {
-          this.ID(id);
-        } else {
-          // Simplified ID for `this`
-          this.addDepth(id.depth);
-          this.opcode('getContext', id.depth);
-          this.opcode('pushContext');
-        }
-
-        this.opcode('resolvePossibleLambda');
-      },
-
-      helperSexpr: function(sexpr, program, inverse) {
-        var params = this.setupFullMustacheParams(sexpr, program, inverse),
-            id = sexpr.id,
-            name = id.parts[0];
-
-        if (this.options.knownHelpers[name]) {
-          this.opcode('invokeKnownHelper', params.length, name);
-        } else if (this.options.knownHelpersOnly) {
-          throw new Exception("You specified knownHelpersOnly, but used the unknown helper " + name, sexpr);
-        } else {
-          this.ID(id);
-          this.opcode('invokeHelper', params.length, id.original, sexpr.isRoot);
-        }
-      },
-
-      sexpr: function(sexpr) {
-        var type = this.classifySexpr(sexpr);
-
-        if (type === "simple") {
-          this.simpleSexpr(sexpr);
-        } else if (type === "helper") {
-          this.helperSexpr(sexpr);
-        } else {
-          this.ambiguousSexpr(sexpr);
-        }
-      },
-
-      ID: function(id) {
-        this.addDepth(id.depth);
-        this.opcode('getContext', id.depth);
-
-        var name = id.parts[0];
-        if (!name) {
-          this.opcode('pushContext');
-        } else {
-          this.opcode('lookupOnContext', id.parts[0]);
-        }
-
-        for(var i=1, l=id.parts.length; i<l; i++) {
-          this.opcode('lookup', id.parts[i]);
-        }
-      },
-
-      DATA: function(data) {
-        this.options.data = true;
-        this.opcode('lookupData', data.id.depth);
-        var parts = data.id.parts;
-        for(var i=0, l=parts.length; i<l; i++) {
-          this.opcode('lookup', parts[i]);
-        }
-      },
-
-      STRING: function(string) {
-        this.opcode('pushString', string.string);
-      },
-
-      NUMBER: function(number) {
-        this.opcode('pushLiteral', number.number);
-      },
-
-      BOOLEAN: function(bool) {
-        this.opcode('pushLiteral', bool.bool);
-      },
-
-      comment: function() {},
-
-      // HELPERS
-      opcode: function(name) {
-        this.opcodes.push({ opcode: name, args: [].slice.call(arguments, 1) });
-      },
-
-      declare: function(name, value) {
-        this.opcodes.push({ opcode: 'DECLARE', name: name, value: value });
-      },
-
-      addDepth: function(depth) {
-        if(depth === 0) { return; }
-
-        if(!this.depths[depth]) {
-          this.depths[depth] = true;
-          this.depths.list.push(depth);
-        }
-      },
-
-      classifySexpr: function(sexpr) {
-        var isHelper   = sexpr.isHelper;
-        var isEligible = sexpr.eligibleHelper;
-        var options    = this.options;
-
-        // if ambiguous, we can possibly resolve the ambiguity now
-        // An eligible helper is one that does not have a complex path, i.e. `this.foo`, `../foo` etc.
-        if (isEligible && !isHelper) {
-          var name = sexpr.id.parts[0];
-
-          if (options.knownHelpers[name]) {
-            isHelper = true;
-          } else if (options.knownHelpersOnly) {
-            isEligible = false;
-          }
-        }
-
-        if (isHelper) { return "helper"; }
-        else if (isEligible) { return "ambiguous"; }
-        else { return "simple"; }
-      },
-
-      pushParams: function(params) {
-        for(var i=0, l=params.length; i<l; i++) {
-          this.pushParam(params[i]);
-        }
-      },
-
-      pushParam: function(val) {
-        if (this.stringParams) {
-          if(val.depth) {
-            this.addDepth(val.depth);
-          }
-          this.opcode('getContext', val.depth || 0);
-          this.opcode('pushStringParam', val.stringModeValue, val.type);
-
-          if (val.type === 'sexpr') {
-            // Subexpressions get evaluated and passed in
-            // in string params mode.
-            this.sexpr(val);
-          }
-        } else {
-          if (this.trackIds) {
-            this.opcode('pushId', val.type, val.idName || val.stringModeValue);
-          }
-          this.accept(val);
-        }
-      },
-
-      setupFullMustacheParams: function(sexpr, program, inverse) {
-        var params = sexpr.params;
-        this.pushParams(params);
-
-        this.opcode('pushProgram', program);
-        this.opcode('pushProgram', inverse);
-
-        if (sexpr.hash) {
-          this.hash(sexpr.hash);
-        } else {
-          this.opcode('emptyHash');
-        }
-
-        return params;
-      }
-    };
-
-    function precompile(input, options, env) {
-      if (input == null || (typeof input !== 'string' && input.constructor !== env.AST.ProgramNode)) {
-        throw new Exception("You must pass a string or Handlebars AST to Handlebars.precompile. You passed " + input);
-      }
-
-      options = options || {};
-      if (!('data' in options)) {
-        options.data = true;
-      }
-
-      var ast = env.parse(input);
-      var environment = new env.Compiler().compile(ast, options);
-      return new env.JavaScriptCompiler().compile(environment, options);
-    }
-
-    __exports__.precompile = precompile;function compile(input, options, env) {
-      if (input == null || (typeof input !== 'string' && input.constructor !== env.AST.ProgramNode)) {
-        throw new Exception("You must pass a string or Handlebars AST to Handlebars.compile. You passed " + input);
-      }
-
-      options = options || {};
-
-      if (!('data' in options)) {
-        options.data = true;
-      }
-
-      var compiled;
-
-      function compileInput() {
-        var ast = env.parse(input);
-        var environment = new env.Compiler().compile(ast, options);
-        var templateSpec = new env.JavaScriptCompiler().compile(environment, options, undefined, true);
-        return env.template(templateSpec);
-      }
-
-      // Template is only compiled on first use and cached after that point.
-      var ret = function(context, options) {
-        if (!compiled) {
-          compiled = compileInput();
-        }
-        return compiled.call(this, context, options);
-      };
-      ret._setup = function(options) {
-        if (!compiled) {
-          compiled = compileInput();
-        }
-        return compiled._setup(options);
-      };
-      ret._child = function(i) {
-        if (!compiled) {
-          compiled = compileInput();
-        }
-        return compiled._child(i);
-      };
-      return ret;
-    }
-
-    __exports__.compile = compile;
-  });
-define("handlebars/compiler/javascript-compiler", 
-  ["../base","../exception","exports"],
-  function(__dependency1__, __dependency2__, __exports__) {
-    
-    var COMPILER_REVISION = __dependency1__.COMPILER_REVISION;
-    var REVISION_CHANGES = __dependency1__.REVISION_CHANGES;
-    var log = __dependency1__.log;
-    var Exception = __dependency2__["default"];
-
-    function Literal(value) {
-      this.value = value;
-    }
-
-    function JavaScriptCompiler() {}
-
-    JavaScriptCompiler.prototype = {
-      // PUBLIC API: You can override these methods in a subclass to provide
-      // alternative compiled forms for name lookup and buffering semantics
-      nameLookup: function(parent, name /* , type*/) {
-        var wrap,
-            ret;
-        if (parent.indexOf('depth') === 0) {
-          wrap = true;
-        }
-
-        if (JavaScriptCompiler.isValidJavaScriptVariableName(name)) {
-          ret = parent + "." + name;
-        } else {
-          ret = parent + "['" + name + "']";
-        }
-
-        if (wrap) {
-          return '(' + parent + ' && ' + ret + ')';
-        } else {
-          return ret;
-        }
-      },
-
-      compilerInfo: function() {
-        var revision = COMPILER_REVISION,
-            versions = REVISION_CHANGES[revision];
-        return [revision, versions];
-      },
-
-      appendToBuffer: function(string) {
-        if (this.environment.isSimple) {
-          return "return " + string + ";";
-        } else {
-          return {
-            appendToBuffer: true,
-            content: string,
-            toString: function() { return "buffer += " + string + ";"; }
-          };
-        }
-      },
-
-      initializeBuffer: function() {
-        return this.quotedString("");
-      },
-
-      namespace: "Handlebars",
-      // END PUBLIC API
-
-      compile: function(environment, options, context, asObject) {
-        this.environment = environment;
-        this.options = options || {};
-        this.stringParams = this.options.stringParams;
-        this.trackIds = this.options.trackIds;
-        this.precompile = !asObject;
-
-        log('debug', this.environment.disassemble() + "\n\n");
-
-        this.name = this.environment.name;
-        this.isChild = !!context;
-        this.context = context || {
-          programs: [],
-          environments: []
-        };
-
-        this.preamble();
-
-        this.stackSlot = 0;
-        this.stackVars = [];
-        this.aliases = {};
-        this.registers = { list: [] };
-        this.hashes = [];
-        this.compileStack = [];
-        this.inlineStack = [];
-
-        this.compileChildren(environment, options);
-
-        var opcodes = environment.opcodes,
-            opcode,
-            i,
-            l;
-
-        for (i = 0, l = opcodes.length; i < l; i++) {
-          opcode = opcodes[i];
-
-          if(opcode.opcode === 'DECLARE') {
-            this[opcode.name] = opcode.value;
-          } else {
-            this[opcode.opcode].apply(this, opcode.args);
-          }
-
-          // Reset the stripNext flag if it was not set by this operation.
-          if (opcode.opcode !== this.stripNext) {
-            this.stripNext = false;
-          }
-        }
-
-        // Flush any trailing content that might be pending.
-        this.pushSource('');
-
-        if (this.stackSlot || this.inlineStack.length || this.compileStack.length) {
-          throw new Exception('Compile completed with content left on stack');
-        }
-
-        var fn = this.createFunctionContext(asObject);
-        if (!this.isChild) {
-          var ret = {
-            compiler: this.compilerInfo(),
-            main: fn
-          };
-          var programs = this.context.programs;
-          for (i = 0, l = programs.length; i < l; i++) {
-            if (programs[i]) {
-              ret[i] = programs[i];
-            }
-          }
-
-          if (this.environment.usePartial) {
-            ret.usePartial = true;
-          }
-          if (this.options.data) {
-            ret.useData = true;
-          }
-
-          if (!asObject) {
-            ret.compiler = JSON.stringify(ret.compiler);
-            ret = this.objectLiteral(ret);
-          }
-
-          return ret;
-        } else {
-          return fn;
-        }
-      },
-
-      preamble: function() {
-        // track the last context pushed into place to allow skipping the
-        // getContext opcode when it would be a noop
-        this.lastContext = 0;
-        this.source = [];
-      },
-
-      createFunctionContext: function(asObject) {
-        var varDeclarations = '';
-
-        var locals = this.stackVars.concat(this.registers.list);
-        if(locals.length > 0) {
-          varDeclarations += ", " + locals.join(", ");
-        }
-
-        // Generate minimizer alias mappings
-        for (var alias in this.aliases) {
-          if (this.aliases.hasOwnProperty(alias)) {
-            varDeclarations += ', ' + alias + '=' + this.aliases[alias];
-          }
-        }
-
-        var params = ["depth0", "helpers", "partials", "data"];
-
-        for(var i=0, l=this.environment.depths.list.length; i<l; i++) {
-          params.push("depth" + this.environment.depths.list[i]);
-        }
-
-        // Perform a second pass over the output to merge content when possible
-        var source = this.mergeSource(varDeclarations);
-
-        if (asObject) {
-          params.push(source);
-
-          return Function.apply(this, params);
-        } else {
-          return 'function(' + params.join(',') + ') {\n  ' + source + '}';
-        }
-      },
-      mergeSource: function(varDeclarations) {
-        var source = '',
-            buffer,
-            appendOnly = !this.forceBuffer,
-            appendFirst;
-
-        for (var i = 0, len = this.source.length; i < len; i++) {
-          var line = this.source[i];
-          if (line.appendToBuffer) {
-            if (buffer) {
-              buffer = buffer + '\n    + ' + line.content;
-            } else {
-              buffer = line.content;
-            }
-          } else {
-            if (buffer) {
-              if (!source) {
-                appendFirst = true;
-                source = buffer + ';\n  ';
-              } else {
-                source += 'buffer += ' + buffer + ';\n  ';
-              }
-              buffer = undefined;
-            }
-            source += line + '\n  ';
-
-            if (!this.environment.isSimple) {
-              appendOnly = false;
-            }
-          }
-        }
-
-        if (appendOnly) {
-          if (buffer || !source) {
-            source += 'return ' + (buffer || '""') + ';\n';
-          }
-        } else {
-          varDeclarations += ", buffer = " + (appendFirst ? '' : this.initializeBuffer());
-          if (buffer) {
-            source += 'return buffer + ' + buffer + ';\n';
-          } else {
-            source += 'return buffer;\n';
-          }
-        }
-
-        if (varDeclarations) {
-          source = 'var ' + varDeclarations.substring(2) + (appendFirst ? '' : ';\n  ') + source;
-        }
-
-        return source;
-      },
-
-      // [blockValue]
-      //
-      // On stack, before: hash, inverse, program, value
-      // On stack, after: return value of blockHelperMissing
-      //
-      // The purpose of this opcode is to take a block of the form
-      // `{{#this.foo}}...{{/this.foo}}`, resolve the value of `foo`, and
-      // replace it on the stack with the result of properly
-      // invoking blockHelperMissing.
-      blockValue: function(name) {
-        this.aliases.blockHelperMissing = 'helpers.blockHelperMissing';
-
-        var params = ["depth0"];
-        this.setupParams(name, 0, params);
-
-        this.replaceStack(function(current) {
-          params.splice(1, 0, current);
-          return "blockHelperMissing.call(" + params.join(", ") + ")";
-        });
-      },
-
-      // [ambiguousBlockValue]
-      //
-      // On stack, before: hash, inverse, program, value
-      // Compiler value, before: lastHelper=value of last found helper, if any
-      // On stack, after, if no lastHelper: same as [blockValue]
-      // On stack, after, if lastHelper: value
-      ambiguousBlockValue: function() {
-        this.aliases.blockHelperMissing = 'helpers.blockHelperMissing';
-
-        // We're being a bit cheeky and reusing the options value from the prior exec
-        var params = ["depth0"];
-        this.setupParams('', 0, params, true);
-
-        this.flushInline();
-
-        var current = this.topStack();
-        params.splice(1, 0, current);
-
-        this.pushSource("if (!" + this.lastHelper + ") { " + current + " = blockHelperMissing.call(" + params.join(", ") + "); }");
-      },
-
-      // [appendContent]
-      //
-      // On stack, before: ...
-      // On stack, after: ...
-      //
-      // Appends the string value of `content` to the current buffer
-      appendContent: function(content) {
-        if (this.pendingContent) {
-          content = this.pendingContent + content;
-        }
-        if (this.stripNext) {
-          content = content.replace(/^\s+/, '');
-        }
-
-        this.pendingContent = content;
-      },
-
-      // [strip]
-      //
-      // On stack, before: ...
-      // On stack, after: ...
-      //
-      // Removes any trailing whitespace from the prior content node and flags
-      // the next operation for stripping if it is a content node.
-      strip: function() {
-        if (this.pendingContent) {
-          this.pendingContent = this.pendingContent.replace(/\s+$/, '');
-        }
-        this.stripNext = 'strip';
-      },
-
-      // [append]
-      //
-      // On stack, before: value, ...
-      // On stack, after: ...
-      //
-      // Coerces `value` to a String and appends it to the current buffer.
-      //
-      // If `value` is truthy, or 0, it is coerced into a string and appended
-      // Otherwise, the empty string is appended
-      append: function() {
-        // Force anything that is inlined onto the stack so we don't have duplication
-        // when we examine local
-        this.flushInline();
-        var local = this.popStack();
-        this.pushSource("if(" + local + " || " + local + " === 0) { " + this.appendToBuffer(local) + " }");
-        if (this.environment.isSimple) {
-          this.pushSource("else { " + this.appendToBuffer("''") + " }");
-        }
-      },
-
-      // [appendEscaped]
-      //
-      // On stack, before: value, ...
-      // On stack, after: ...
-      //
-      // Escape `value` and append it to the buffer
-      appendEscaped: function() {
-        this.aliases.escapeExpression = 'this.escapeExpression';
-
-        this.pushSource(this.appendToBuffer("escapeExpression(" + this.popStack() + ")"));
-      },
-
-      // [getContext]
-      //
-      // On stack, before: ...
-      // On stack, after: ...
-      // Compiler value, after: lastContext=depth
-      //
-      // Set the value of the `lastContext` compiler value to the depth
-      getContext: function(depth) {
-        if(this.lastContext !== depth) {
-          this.lastContext = depth;
-        }
-      },
-
-      // [lookupOnContext]
-      //
-      // On stack, before: ...
-      // On stack, after: currentContext[name], ...
-      //
-      // Looks up the value of `name` on the current context and pushes
-      // it onto the stack.
-      lookupOnContext: function(name) {
-        this.push(this.nameLookup('depth' + this.lastContext, name, 'context'));
-      },
-
-      // [pushContext]
-      //
-      // On stack, before: ...
-      // On stack, after: currentContext, ...
-      //
-      // Pushes the value of the current context onto the stack.
-      pushContext: function() {
-        this.pushStackLiteral('depth' + this.lastContext);
-      },
-
-      // [resolvePossibleLambda]
-      //
-      // On stack, before: value, ...
-      // On stack, after: resolved value, ...
-      //
-      // If the `value` is a lambda, replace it on the stack by
-      // the return value of the lambda
-      resolvePossibleLambda: function() {
-        this.aliases.functionType = '"function"';
-
-        this.replaceStack(function(current) {
-          return "typeof " + current + " === functionType ? " + current + ".apply(depth0) : " + current;
-        });
-      },
-
-      // [lookup]
-      //
-      // On stack, before: value, ...
-      // On stack, after: value[name], ...
-      //
-      // Replace the value on the stack with the result of looking
-      // up `name` on `value`
-      lookup: function(name) {
-        this.replaceStack(function(current) {
-          return current + " == null || " + current + " === false ? " + current + " : " + this.nameLookup(current, name, 'context');
-        });
-      },
-
-      // [lookupData]
-      //
-      // On stack, before: ...
-      // On stack, after: data, ...
-      //
-      // Push the data lookup operator
-      lookupData: function(depth) {
-        if (!depth) {
-          this.pushStackLiteral('data');
-        } else {
-          this.pushStackLiteral('this.data(data, ' + depth + ')');
-        }
-      },
-
-      // [pushStringParam]
-      //
-      // On stack, before: ...
-      // On stack, after: string, currentContext, ...
-      //
-      // This opcode is designed for use in string mode, which
-      // provides the string value of a parameter along with its
-      // depth rather than resolving it immediately.
-      pushStringParam: function(string, type) {
-        this.pushStackLiteral('depth' + this.lastContext);
-
-        this.pushString(type);
-
-        // If it's a subexpression, the string result
-        // will be pushed after this opcode.
-        if (type !== 'sexpr') {
-          if (typeof string === 'string') {
-            this.pushString(string);
-          } else {
-            this.pushStackLiteral(string);
-          }
-        }
-      },
-
-      emptyHash: function() {
-        this.pushStackLiteral('{}');
-
-        if (this.trackIds) {
-          this.push('{}'); // hashIds
-        }
-        if (this.stringParams) {
-          this.push('{}'); // hashContexts
-          this.push('{}'); // hashTypes
-        }
-      },
-      pushHash: function() {
-        if (this.hash) {
-          this.hashes.push(this.hash);
-        }
-        this.hash = {values: [], types: [], contexts: [], ids: []};
-      },
-      popHash: function() {
-        var hash = this.hash;
-        this.hash = this.hashes.pop();
-
-        if (this.trackIds) {
-          this.push('{' + hash.ids.join(',') + '}');
-        }
-        if (this.stringParams) {
-          this.push('{' + hash.contexts.join(',') + '}');
-          this.push('{' + hash.types.join(',') + '}');
-        }
-
-        this.push('{\n    ' + hash.values.join(',\n    ') + '\n  }');
-      },
-
-      // [pushString]
-      //
-      // On stack, before: ...
-      // On stack, after: quotedString(string), ...
-      //
-      // Push a quoted version of `string` onto the stack
-      pushString: function(string) {
-        this.pushStackLiteral(this.quotedString(string));
-      },
-
-      // [push]
-      //
-      // On stack, before: ...
-      // On stack, after: expr, ...
-      //
-      // Push an expression onto the stack
-      push: function(expr) {
-        this.inlineStack.push(expr);
-        return expr;
-      },
-
-      // [pushLiteral]
-      //
-      // On stack, before: ...
-      // On stack, after: value, ...
-      //
-      // Pushes a value onto the stack. This operation prevents
-      // the compiler from creating a temporary variable to hold
-      // it.
-      pushLiteral: function(value) {
-        this.pushStackLiteral(value);
-      },
-
-      // [pushProgram]
-      //
-      // On stack, before: ...
-      // On stack, after: program(guid), ...
-      //
-      // Push a program expression onto the stack. This takes
-      // a compile-time guid and converts it into a runtime-accessible
-      // expression.
-      pushProgram: function(guid) {
-        if (guid != null) {
-          this.pushStackLiteral(this.programExpression(guid));
-        } else {
-          this.pushStackLiteral(null);
-        }
-      },
-
-      // [invokeHelper]
-      //
-      // On stack, before: hash, inverse, program, params..., ...
-      // On stack, after: result of helper invocation
-      //
-      // Pops off the helper's parameters, invokes the helper,
-      // and pushes the helper's return value onto the stack.
-      //
-      // If the helper is not found, `helperMissing` is called.
-      invokeHelper: function(paramSize, name, isRoot) {
-        this.aliases.helperMissing = 'helpers.helperMissing';
-        this.useRegister('helper');
-
-        var nonHelper = this.popStack();
-        var helper = this.setupHelper(paramSize, name);
-
-        var lookup = 'helper = ' + helper.name + ' || ' + nonHelper + ' || helperMissing';
-        if (helper.paramsInit) {
-          lookup += ',' + helper.paramsInit;
-        }
-
-        this.push('(' + lookup + ',helper.call(' + helper.callParams + '))');
-
-        // Always flush subexpressions. This is both to prevent the compounding size issue that
-        // occurs when the code has to be duplicated for inlining and also to prevent errors
-        // due to the incorrect options object being passed due to the shared register.
-        if (!isRoot) {
-          this.flushInline();
-        }
-      },
-
-      // [invokeKnownHelper]
-      //
-      // On stack, before: hash, inverse, program, params..., ...
-      // On stack, after: result of helper invocation
-      //
-      // This operation is used when the helper is known to exist,
-      // so a `helperMissing` fallback is not required.
-      invokeKnownHelper: function(paramSize, name) {
-        var helper = this.setupHelper(paramSize, name);
-        this.push(helper.name + ".call(" + helper.callParams + ")");
-      },
-
-      // [invokeAmbiguous]
-      //
-      // On stack, before: hash, inverse, program, params..., ...
-      // On stack, after: result of disambiguation
-      //
-      // This operation is used when an expression like `{{foo}}`
-      // is provided, but we don't know at compile-time whether it
-      // is a helper or a path.
-      //
-      // This operation emits more code than the other options,
-      // and can be avoided by passing the `knownHelpers` and
-      // `knownHelpersOnly` flags at compile-time.
-      invokeAmbiguous: function(name, helperCall) {
-        this.aliases.functionType = '"function"';
-        this.useRegister('helper');
-
-        this.emptyHash();
-        var helper = this.setupHelper(0, name, helperCall);
-
-        var helperName = this.lastHelper = this.nameLookup('helpers', name, 'helper');
-        var nonHelper = this.nameLookup('depth' + this.lastContext, name, 'context');
-
-        this.push(
-          '((helper = ' + helperName + ' || ' + nonHelper
-            + (helper.paramsInit ? '),(' + helper.paramsInit : '') + '),'
-          + '(typeof helper === functionType ? helper.call(' + helper.callParams + ') : helper))');
-      },
-
-      // [invokePartial]
-      //
-      // On stack, before: context, ...
-      // On stack after: result of partial invocation
-      //
-      // This operation pops off a context, invokes a partial with that context,
-      // and pushes the result of the invocation back.
-      invokePartial: function(name) {
-        var params = [this.nameLookup('partials', name, 'partial'), "'" + name + "'", this.popStack(), this.popStack(), "helpers", "partials"];
-
-        if (this.options.data) {
-          params.push("data");
-        }
-
-        this.push("this.invokePartial(" + params.join(", ") + ")");
-      },
-
-      // [assignToHash]
-      //
-      // On stack, before: value, ..., hash, ...
-      // On stack, after: ..., hash, ...
-      //
-      // Pops a value off the stack and assigns it to the current hash
-      assignToHash: function(key) {
-        var value = this.popStack(),
-            context,
-            type,
-            id;
-
-        if (this.trackIds) {
-          id = this.popStack();
-        }
-        if (this.stringParams) {
-          type = this.popStack();
-          context = this.popStack();
-        }
-
-        var hash = this.hash;
-        if (context) {
-          hash.contexts.push("'" + key + "': " + context);
-        }
-        if (type) {
-          hash.types.push("'" + key + "': " + type);
-        }
-        if (id) {
-          hash.ids.push("'" + key + "': " + id);
-        }
-        hash.values.push("'" + key + "': (" + value + ")");
-      },
-
-      pushId: function(type, name) {
-        if (type === 'ID' || type === 'DATA') {
-          this.pushString(name);
-        } else if (type === 'sexpr') {
-          this.pushStackLiteral('true');
-        } else {
-          this.pushStackLiteral('null');
-        }
-      },
-
-      // HELPERS
-
-      compiler: JavaScriptCompiler,
-
-      compileChildren: function(environment, options) {
-        var children = environment.children, child, compiler;
-
-        for(var i=0, l=children.length; i<l; i++) {
-          child = children[i];
-          compiler = new this.compiler();
-
-          var index = this.matchExistingProgram(child);
-
-          if (index == null) {
-            this.context.programs.push('');     // Placeholder to prevent name conflicts for nested children
-            index = this.context.programs.length;
-            child.index = index;
-            child.name = 'program' + index;
-            this.context.programs[index] = compiler.compile(child, options, this.context, !this.precompile);
-            this.context.environments[index] = child;
-          } else {
-            child.index = index;
-            child.name = 'program' + index;
-          }
-        }
-      },
-      matchExistingProgram: function(child) {
-        for (var i = 0, len = this.context.environments.length; i < len; i++) {
-          var environment = this.context.environments[i];
-          if (environment && environment.equals(child)) {
-            return i;
-          }
-        }
-      },
-
-      programExpression: function(guid) {
-        if(guid == null) {
-          return 'this.noop';
-        }
-
-        var child = this.environment.children[guid],
-            depths = child.depths.list, depth;
-
-        var programParams = [child.index, 'data'];
-
-        for(var i=0, l = depths.length; i<l; i++) {
-          depth = depths[i];
-
-          programParams.push('depth' + (depth - 1));
-        }
-
-        return (depths.length === 0 ? 'this.program(' : 'this.programWithDepth(') + programParams.join(', ') + ')';
-      },
-
-      register: function(name, val) {
-        this.useRegister(name);
-        this.pushSource(name + " = " + val + ";");
-      },
-
-      useRegister: function(name) {
-        if(!this.registers[name]) {
-          this.registers[name] = true;
-          this.registers.list.push(name);
-        }
-      },
-
-      pushStackLiteral: function(item) {
-        return this.push(new Literal(item));
-      },
-
-      pushSource: function(source) {
-        if (this.pendingContent) {
-          this.source.push(this.appendToBuffer(this.quotedString(this.pendingContent)));
-          this.pendingContent = undefined;
-        }
-
-        if (source) {
-          this.source.push(source);
-        }
-      },
-
-      pushStack: function(item) {
-        this.flushInline();
-
-        var stack = this.incrStack();
-        if (item) {
-          this.pushSource(stack + " = " + item + ";");
-        }
-        this.compileStack.push(stack);
-        return stack;
-      },
-
-      replaceStack: function(callback) {
-        var prefix = '',
-            inline = this.isInline(),
-            stack,
-            createdStack,
-            usedLiteral;
-
-        // If we are currently inline then we want to merge the inline statement into the
-        // replacement statement via ','
-        if (inline) {
-          var top = this.popStack(true);
-
-          if (top instanceof Literal) {
-            // Literals do not need to be inlined
-            stack = top.value;
-            usedLiteral = true;
-          } else {
-            // Get or create the current stack name for use by the inline
-            createdStack = !this.stackSlot;
-            var name = !createdStack ? this.topStackName() : this.incrStack();
-
-            prefix = '(' + this.push(name) + ' = ' + top + '),';
-            stack = this.topStack();
-          }
-        } else {
-          stack = this.topStack();
-        }
-
-        var item = callback.call(this, stack);
-
-        if (inline) {
-          if (!usedLiteral) {
-            this.popStack();
-          }
-          if (createdStack) {
-            this.stackSlot--;
-          }
-          this.push('(' + prefix + item + ')');
-        } else {
-          // Prevent modification of the context depth variable. Through replaceStack
-          if (!/^stack/.test(stack)) {
-            stack = this.nextStack();
-          }
-
-          this.pushSource(stack + " = (" + prefix + item + ");");
-        }
-        return stack;
-      },
-
-      nextStack: function() {
-        return this.pushStack();
-      },
-
-      incrStack: function() {
-        this.stackSlot++;
-        if(this.stackSlot > this.stackVars.length) { this.stackVars.push("stack" + this.stackSlot); }
-        return this.topStackName();
-      },
-      topStackName: function() {
-        return "stack" + this.stackSlot;
-      },
-      flushInline: function() {
-        var inlineStack = this.inlineStack;
-        if (inlineStack.length) {
-          this.inlineStack = [];
-          for (var i = 0, len = inlineStack.length; i < len; i++) {
-            var entry = inlineStack[i];
-            if (entry instanceof Literal) {
-              this.compileStack.push(entry);
-            } else {
-              this.pushStack(entry);
-            }
-          }
-        }
-      },
-      isInline: function() {
-        return this.inlineStack.length;
-      },
-
-      popStack: function(wrapped) {
-        var inline = this.isInline(),
-            item = (inline ? this.inlineStack : this.compileStack).pop();
-
-        if (!wrapped && (item instanceof Literal)) {
-          return item.value;
-        } else {
-          if (!inline) {
-            if (!this.stackSlot) {
-              throw new Exception('Invalid stack pop');
-            }
-            this.stackSlot--;
-          }
-          return item;
-        }
-      },
-
-      topStack: function(wrapped) {
-        var stack = (this.isInline() ? this.inlineStack : this.compileStack),
-            item = stack[stack.length - 1];
-
-        if (!wrapped && (item instanceof Literal)) {
-          return item.value;
-        } else {
-          return item;
-        }
-      },
-
-      quotedString: function(str) {
-        return '"' + str
-          .replace(/\\/g, '\\\\')
-          .replace(/"/g, '\\"')
-          .replace(/\n/g, '\\n')
-          .replace(/\r/g, '\\r')
-          .replace(/\u2028/g, '\\u2028')   // Per Ecma-262 7.3 + 7.8.4
-          .replace(/\u2029/g, '\\u2029') + '"';
-      },
-
-      objectLiteral: function(obj) {
-        var pairs = [];
-
-        for (var key in obj) {
-          if (obj.hasOwnProperty(key)) {
-            pairs.push(this.quotedString(key) + ':' + obj[key]);
-          }
-        }
-
-        return '{' + pairs.join(',') + '}';
-      },
-
-      setupHelper: function(paramSize, name, blockHelper) {
-        var params = [],
-            paramsInit = this.setupParams(name, paramSize, params, blockHelper);
-        var foundHelper = this.nameLookup('helpers', name, 'helper');
-
-        return {
-          params: params,
-          paramsInit: paramsInit,
-          name: foundHelper,
-          callParams: ["depth0"].concat(params).join(", ")
-        };
-      },
-
-      setupOptions: function(helper, paramSize, params) {
-        var options = {}, contexts = [], types = [], ids = [], param, inverse, program;
-
-        options.name = this.quotedString(helper);
-        options.hash = this.popStack();
-
-        if (this.trackIds) {
-          options.hashIds = this.popStack();
-        }
-        if (this.stringParams) {
-          options.hashTypes = this.popStack();
-          options.hashContexts = this.popStack();
-        }
-
-        inverse = this.popStack();
-        program = this.popStack();
-
-        // Avoid setting fn and inverse if neither are set. This allows
-        // helpers to do a check for `if (options.fn)`
-        if (program || inverse) {
-          if (!program) {
-            program = 'this.noop';
-          }
-
-          if (!inverse) {
-            inverse = 'this.noop';
-          }
-
-          options.fn = program;
-          options.inverse = inverse;
-        }
-
-        // The parameters go on to the stack in order (making sure that they are evaluated in order)
-        // so we need to pop them off the stack in reverse order
-        var i = paramSize;
-        while (i--) {
-          param = this.popStack();
-          params[i] = param;
-
-          if (this.trackIds) {
-            ids[i] = this.popStack();
-          }
-          if (this.stringParams) {
-            types[i] = this.popStack();
-            contexts[i] = this.popStack();
-          }
-        }
-
-        if (this.trackIds) {
-          options.ids = "[" + ids.join(",") + "]";
-        }
-        if (this.stringParams) {
-          options.types = "[" + types.join(",") + "]";
-          options.contexts = "[" + contexts.join(",") + "]";
-        }
-
-        if (this.options.data) {
-          options.data = "data";
-        }
-
-        return options;
-      },
-
-      // the params and contexts arguments are passed in arrays
-      // to fill in
-      setupParams: function(helperName, paramSize, params, useRegister) {
-        var options = this.objectLiteral(this.setupOptions(helperName, paramSize, params));
-
-        if (useRegister) {
-          this.useRegister('options');
-          params.push('options');
-          return 'options=' + options;
-        } else {
-          params.push(options);
-          return '';
-        }
-      }
-    };
-
-    var reservedWords = (
-      "break else new var" +
-      " case finally return void" +
-      " catch for switch while" +
-      " continue function this with" +
-      " default if throw" +
-      " delete in try" +
-      " do instanceof typeof" +
-      " abstract enum int short" +
-      " boolean export interface static" +
-      " byte extends long super" +
-      " char final native synchronized" +
-      " class float package throws" +
-      " const goto private transient" +
-      " debugger implements protected volatile" +
-      " double import public let yield"
-    ).split(" ");
-
-    var compilerWords = JavaScriptCompiler.RESERVED_WORDS = {};
-
-    for(var i=0, l=reservedWords.length; i<l; i++) {
-      compilerWords[reservedWords[i]] = true;
-    }
-
-    JavaScriptCompiler.isValidJavaScriptVariableName = function(name) {
-      return !JavaScriptCompiler.RESERVED_WORDS[name] && /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(name);
-    };
-
-    __exports__["default"] = JavaScriptCompiler;
-  });
-define("handlebars", 
-  ["./handlebars.runtime","./handlebars/compiler/ast","./handlebars/compiler/base","./handlebars/compiler/compiler","./handlebars/compiler/javascript-compiler","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __exports__) {
-    
-    /*globals Handlebars: true */
-    var Handlebars = __dependency1__["default"];
-
-    // Compiler imports
-    var AST = __dependency2__["default"];
-    var Parser = __dependency3__.parser;
-    var parse = __dependency3__.parse;
-    var Compiler = __dependency4__.Compiler;
-    var compile = __dependency4__.compile;
-    var precompile = __dependency4__.precompile;
-    var JavaScriptCompiler = __dependency5__["default"];
-
-    var _create = Handlebars.create;
-    var create = function() {
-      var hb = _create();
-
-      hb.compile = function(input, options) {
-        return compile(input, options, hb);
-      };
-      hb.precompile = function (input, options) {
-        return precompile(input, options, hb);
-      };
-
-      hb.AST = AST;
-      hb.Compiler = Compiler;
-      hb.JavaScriptCompiler = JavaScriptCompiler;
-      hb.Parser = Parser;
-      hb.parse = parse;
-
-      return hb;
-    };
-
-    Handlebars = create();
-    Handlebars.create = create;
-
-    __exports__["default"] = Handlebars;
   });
 define("simple-html-tokenizer/char-refs", 
   ["exports"],
@@ -21312,7 +19357,7 @@ define("simple-html-tokenizer",
     __exports__.CommentToken = CommentToken;
   });
 define("htmlbars-compiler/ast", 
-  ["handlebars/compiler/ast","exports"],
+  ["../handlebars/compiler/ast","exports"],
   function(__dependency1__, __exports__) {
     
     var AST = __dependency1__["default"];
@@ -21476,7 +19521,7 @@ define("htmlbars-compiler/html-parser/helpers",
     __exports__.postprocessProgram = postprocessProgram;
   });
 define("htmlbars-compiler/html-parser/tokens", 
-  ["simple-html-tokenizer","../ast","exports"],
+  ["../../simple-html-tokenizer","../ast","exports"],
   function(__dependency1__, __dependency2__, __exports__) {
     
     var Chars = __dependency1__.Chars;
@@ -21560,9 +19605,28 @@ define("htmlbars-compiler/html-parser/tokens",
     __exports__.StartTag = StartTag;
     __exports__.EndTag = EndTag;
   });
+define("htmlbars-compiler/utils", 
+  ["exports"],
+  function(__exports__) {
+    
+    function forEach(array, callback, binding) {
+      var i, l;
+      if (binding === undefined) {
+        for (i=0, l=array.length; i<l; i++) {
+          callback(array[i], i);
+        }
+      } else {
+        for (i=0, l=array.length; i<l; i++) {
+          callback.call(binding, array[i], i);
+        }
+      }
+    }
+
+    __exports__.forEach = forEach;
+  });
 define("htmlbars-compiler/html-parser/node-handlers", 
-  ["../ast","../html-parser/helpers","../html-parser/tokens","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
+  ["../ast","../html-parser/helpers","../html-parser/tokens","../utils","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
     
     var BlockNode = __dependency1__.BlockNode;
     var ProgramNode = __dependency1__.ProgramNode;
@@ -21572,6 +19636,7 @@ define("htmlbars-compiler/html-parser/node-handlers",
     var usesMorph = __dependency1__.usesMorph;
     var postprocessProgram = __dependency2__.postprocessProgram;
     var Chars = __dependency3__.Chars;
+    var forEach = __dependency4__.forEach;
 
     var nodeHandlers = {
 
@@ -21623,9 +19688,7 @@ define("htmlbars-compiler/html-parser/node-handlers",
       content: function(content) {
         var tokens = this.tokenizer.tokenizePart(content.string);
 
-        return tokens.forEach(function(token) {
-          this.acceptToken(token);
-        }, this);
+        return forEach(tokens, this.acceptToken, this);
       },
 
       mustache: function(mustache) {
@@ -21657,8 +19720,8 @@ define("htmlbars-compiler/html-parser/node-handlers",
     __exports__["default"] = nodeHandlers;
   });
 define("htmlbars-compiler/html-parser/token-handlers", 
-  ["htmlbars-compiler/ast","htmlbars-compiler/html-parser/helpers","exports"],
-  function(__dependency1__, __dependency2__, __exports__) {
+  ["../ast","./helpers","../utils","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
     
     var ProgramNode = __dependency1__.ProgramNode;
     var ComponentNode = __dependency1__.ComponentNode;
@@ -21666,6 +19729,7 @@ define("htmlbars-compiler/html-parser/token-handlers",
     var TextNode = __dependency1__.TextNode;
     var appendChild = __dependency1__.appendChild;
     var postprocessProgram = __dependency2__.postprocessProgram;
+    var forEach = __dependency3__.forEach;
 
     // This table maps from the state names in the tokenizer to a smaller
     // number of states that control how mustaches are handled
@@ -21684,13 +19748,13 @@ define("htmlbars-compiler/html-parser/token-handlers",
     var voidTagNames = "area base br col command embed hr img input keygen link meta param source track wbr";
     var voidMap = {};
 
-    voidTagNames.split(" ").forEach(function(tagName) {
+    forEach(voidTagNames.split(" "), function(tagName) {
       voidMap[tagName] = true;
     });
 
     var svgNamespace = "http://www.w3.org/2000/svg",
         // http://www.w3.org/html/wg/drafts/html/master/syntax.html#html-integration-point
-        svgHTMLIntegrationPoints = ['foreignObject', 'desc', 'title'];
+        svgHTMLIntegrationPoints = {'foreignObject':true, 'desc':true, 'title':true};
 
     function applyNamespace(tag, element, currentElement){
       if (tag.tagName === 'svg') {
@@ -21705,7 +19769,7 @@ define("htmlbars-compiler/html-parser/token-handlers",
     }
 
     function applyHTMLIntegrationPoint(tag, element){
-      if (svgHTMLIntegrationPoints.indexOf(tag.tagName) !== -1) {
+      if (svgHTMLIntegrationPoints[tag.tagName]) {
         element.isHTMLIntegrationPoint = true;
       }
     }
@@ -21781,16 +19845,16 @@ define("htmlbars-compiler/html-parser/token-handlers",
     __exports__["default"] = tokenHandlers;
   });
 define("htmlbars-compiler/parser", 
-  ["handlebars","simple-html-tokenizer","./html-parser/node-handlers","./html-parser/token-handlers","exports"],
+  ["../handlebars/compiler/base","../simple-html-tokenizer","./html-parser/node-handlers","./html-parser/token-handlers","exports"],
   function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
     
-    var Handlebars = __dependency1__["default"];
+    var parse = __dependency1__.parse;
     var Tokenizer = __dependency2__.Tokenizer;
     var nodeHandlers = __dependency3__["default"];
     var tokenHandlers = __dependency4__["default"];
 
     function preprocess(html, options) {
-      var ast = Handlebars.parse(html);
+      var ast = parse(html);
       var combined = new HTMLProcessor().acceptNode(ast);
       return combined;
     }
@@ -21822,8 +19886,20 @@ define("htmlbars-compiler/compiler/template_visitor",
     
     var push = Array.prototype.push;
 
+    function elementIntroducesNamespace(element, parentElement){
+      return (
+        // Root element. Those that have a namespace are entered.
+        (!parentElement && element.namespaceURI) ||
+        // Inner elements to a namespace
+        ( parentElement &&
+          ( !element.isHTMLIntegrationPoint && parentElement.namespaceURI !== element.namespaceURI )
+        )
+      );
+    }
+
     function Frame() {
       this.parentNode = null;
+      this.children = null;
       this.childIndex = null;
       this.childCount = null;
       this.childTemplateCount = 0;
@@ -21900,6 +19976,7 @@ define("htmlbars-compiler/compiler/template_visitor",
       var programFrame = this.pushFrame();
 
       programFrame.parentNode = program;
+      programFrame.children = program.statements;
       programFrame.childCount = program.statements.length;
       programFrame.blankChildTextNodes = [];
       programFrame.actions.push(['endProgram', [program, this.programDepth]]);
@@ -21926,6 +20003,7 @@ define("htmlbars-compiler/compiler/template_visitor",
       var parentNode = parentFrame.parentNode;
 
       elementFrame.parentNode = element;
+      elementFrame.children = element.children;
       elementFrame.childCount = element.children.length;
       elementFrame.mustacheCount += element.helpers.length;
       elementFrame.blankChildTextNodes = [];
@@ -21937,7 +20015,15 @@ define("htmlbars-compiler/compiler/template_visitor",
         parentNode.type === 'program' && parentFrame.childCount === 1
       ];
 
+      var lastNode = parentFrame.childIndex === parentFrame.childCount-1,
+          introducesNamespace = elementIntroducesNamespace(element, parentFrame.parentNode);
+      if ( !lastNode && introducesNamespace ) {
+        elementFrame.actions.push(['setNamespace', [parentNode.namespaceURI]]);
+      }
       elementFrame.actions.push(['closeElement', actionArgs]);
+      if ( !lastNode && element.isHTMLIntergrationPoint ) {
+        elementFrame.actions.push(['setNamespace', []]);
+      }
 
       for (var i = element.attributes.length - 1; i >= 0; i--) {
         this.visit(element.attributes[i]);
@@ -21948,8 +20034,14 @@ define("htmlbars-compiler/compiler/template_visitor",
         this.visit(element.children[i]);
       }
 
+      if ( element.isHTMLIntergrationPoint ) {
+        elementFrame.actions.push(['setNamespace', []]);
+      }
       elementFrame.actions.push(['openElement', actionArgs.concat([
         elementFrame.mustacheCount, elementFrame.blankChildTextNodes.reverse() ])]);
+      if ( introducesNamespace ) {
+        elementFrame.actions.push(['setNamespace', [element.namespaceURI]]);
+      }
       this.popFrame();
 
       // Propagate the element's frame state to the parent frame
@@ -21987,7 +20079,7 @@ define("htmlbars-compiler/compiler/template_visitor",
       var frame = this.getCurrentFrame();
       var isSingleRoot = frame.parentNode.type === 'program' && frame.childCount === 1;
       if (text.chars === '') {
-        frame.blankChildTextNodes.push(frame.childIndex);
+        frame.blankChildTextNodes.push(domIndexOf(frame.children, text));
       }
       frame.actions.push(['text', [text, frame.childIndex, frame.childCount, isSingleRoot]]);
     };
@@ -22015,6 +20107,29 @@ define("htmlbars-compiler/compiler/template_visitor",
     };
 
     __exports__["default"] = TemplateVisitor;
+
+
+    // Returns the index of `domNode` in the `nodes` array, skipping
+    // over any nodes which do not represent DOM nodes.
+    function domIndexOf(nodes, domNode) {
+      var index = -1;
+
+      for (var i = 0; i < nodes.length; i++) {
+        var node = nodes[i];
+
+        if (node.type !== 'text' && node.type !== 'element') {
+          continue;
+        } else {
+          index++;
+        }
+
+        if (node === domNode) {
+          return index;
+        }
+      }
+
+      return -1;
+    }
   });
 define("htmlbars-compiler/compiler/utils", 
   ["exports"],
@@ -22024,18 +20139,23 @@ define("htmlbars-compiler/compiler/utils",
       for (var i=0, l=opcodes.length; i<l; i++) {
         var method = opcodes[i][0];
         var params = opcodes[i][1];
-        compiler[method].apply(compiler, params);
+        if (params) {
+          compiler[method].apply(compiler, params);
+        } else {
+          compiler[method].call(compiler);
+        }
       }
     }
 
     __exports__.processOpcodes = processOpcodes;
   });
 define("htmlbars-compiler/compiler/fragment_opcode", 
-  ["./template_visitor","./utils","exports"],
-  function(__dependency1__, __dependency2__, __exports__) {
+  ["./template_visitor","./utils","../utils","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
     
     var TemplateVisitor = __dependency1__["default"];
     var processOpcodes = __dependency2__.processOpcodes;
+    var forEach = __dependency3__.forEach;
 
     function FragmentOpcodeCompiler() {
       this.opcodes = [];
@@ -22061,7 +20181,7 @@ define("htmlbars-compiler/compiler/fragment_opcode",
 
     FragmentOpcodeCompiler.prototype.openElement = function(element) {
       this.opcode('createElement', [element.tag]);
-      element.attributes.forEach(this.attribute, this);
+      forEach(element.attributes, this.attribute, this);
     };
 
     FragmentOpcodeCompiler.prototype.closeElement = function(element, childIndex, childCount, isSingleRoot) {
@@ -22089,6 +20209,10 @@ define("htmlbars-compiler/compiler/fragment_opcode",
       if (attr.value.type === 'text') {
         this.opcode('setAttribute', [attr.name, attr.value.chars]);
       }
+    };
+
+    FragmentOpcodeCompiler.prototype.setNamespace = function(namespace) {
+      this.opcode('setNamespace', [namespace]);
     };
 
     __exports__.FragmentOpcodeCompiler = FragmentOpcodeCompiler;
@@ -22187,14 +20311,19 @@ define("htmlbars-compiler/compiler/fragment",
       var el = 'el'+this.depth;
       this.source.push(this.indent+'  dom.appendChild('+el+', '+child+');\n');
     };
+
+    FragmentCompiler.prototype.setNamespace = function(namespace) {
+      this.source.push(this.indent+'  dom.setNamespace('+(namespace ? string(namespace) : 'null')+');\n');
+    };
   });
 define("htmlbars-compiler/compiler/hydration_opcode", 
-  ["./template_visitor","./utils","../html-parser/helpers","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
+  ["./template_visitor","./utils","../utils","../html-parser/helpers","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
     
     var TemplateVisitor = __dependency1__["default"];
     var processOpcodes = __dependency2__.processOpcodes;
-    var buildHashFromAttributes = __dependency3__.buildHashFromAttributes;
+    var forEach = __dependency3__.forEach;
+    var buildHashFromAttributes = __dependency4__.buildHashFromAttributes;
 
     function detectIsElementChecked(element){
       for (var i=0, len=element.attributes.length;i<len;i++) {
@@ -22272,8 +20401,8 @@ define("htmlbars-compiler/compiler/hydration_opcode",
       this.paths.push(this.currentDOMChildIndex);
       this.currentDOMChildIndex = -1;
 
-      element.attributes.forEach(this.attribute, this);
-      element.helpers.forEach(this.nodeHelper, this);
+      forEach(element.attributes, this.attribute, this);
+      forEach(element.helpers, this.nodeHelper, this);
     };
 
     HydrationOpcodeCompiler.prototype.closeElement = function(element, pos, len, isSingleRoot) {
@@ -22403,7 +20532,7 @@ define("htmlbars-compiler/compiler/hydration_opcode",
     };
 
     function processParams(compiler, params) {
-      params.forEach(function(param) {
+      forEach(params, function(param) {
         if (param.type === 'text') {
           compiler.STRING({ stringModeValue: param.chars });
         } else if (param.type) {
@@ -22416,7 +20545,7 @@ define("htmlbars-compiler/compiler/hydration_opcode",
 
     function processHash(compiler, hash) {
       if (hash) {
-        hash.pairs.forEach(function(pair) {
+        forEach(hash.pairs, function(pair) {
           var name = pair[0], param = pair[1];
           compiler[param.type](param);
           compiler.opcode('stackLiteral', name);
@@ -22530,6 +20659,7 @@ define("htmlbars-compiler/compiler/hydration",
       this.mustaches.length = 0;
       this.source.length = 0;
       this.parents.length = 1;
+      this.parents[0] = 'fragment';
       this.morphs.length = 0;
       this.fragmentProcessing.length = 0;
       this.parentCount = 0;
@@ -22591,11 +20721,16 @@ define("htmlbars-compiler/compiler/hydration",
 
     prototype.component = function(tag, morphNum) {
       var prepared = prepareHelper(this.stack, 0);
+      prepared.options.push('morph:morph'+morphNum);
       this.pushWebComponent(string(tag), prepared.options, morphNum);
     };
 
     prototype.ambiguous = function(str, escaped, morphNum) {
-      this.pushMustacheInContent(string(str), '[]', ['escaped:'+escaped], morphNum);
+      var options = [];
+      options.push('context:context');
+      options.push('escaped:'+escaped);
+      options.push('morph:morph'+morphNum);
+      this.pushMustacheInContent(string(str), '[]', options, morphNum);
     };
 
     prototype.ambiguousAttr = function(str, escaped) {
@@ -22759,6 +20894,7 @@ define("htmlbars-compiler/compiler/template",
         indent+'  var cachedFragment;\n' +
         indent+'  return function template(context, env, contextualElement) {\n' +
         indent+'    var dom = env.dom, hooks = env.hooks;\n' +
+        indent+'    dom.detectNamespace(contextualElement);\n' +
         indent+'    if (cachedFragment === undefined) {\n' +
         indent+'      cachedFragment = build(dom);\n' +
         indent+'    }\n' +
@@ -22799,6 +20935,10 @@ define("htmlbars-compiler/compiler/template",
     TemplateCompiler.prototype.mustache = function (mustache, i, l) {
       this.fragmentOpcodeCompiler.mustache(mustache, i, l);
       this.hydrationOpcodeCompiler.mustache(mustache, i, l);
+    };
+
+    TemplateCompiler.prototype.setNamespace = function(namespace) {
+      this.fragmentOpcodeCompiler.setNamespace(namespace);
     };
   });
 define("htmlbars-compiler/compiler", 
@@ -22888,12 +21028,23 @@ define("morph/morph",
     
     var splice = Array.prototype.splice;
 
+    function ensureStartEnd(start, end) {
+      if (start === null || end === null) {
+        throw new Error('a fragment parent must have boundary nodes in order to detect insertion');
+      }
+    }
+
+    function ensureContext(contextualElement) {
+      if (!contextualElement || contextualElement.nodeType !== 1) {
+        throw new Error('An element node must be provided for a contextualElement, you provided ' +
+                        (contextualElement ? 'nodeType ' + contextualElement.nodeType : 'nothing'));
+      }
+    }
+
+    // TODO: this is an internal API, this should be an assert
     function Morph(parent, start, end, domHelper, contextualElement) {
-      // TODO: this is an internal API, this should be an assert
       if (parent.nodeType === 11) {
-        if (start === null || end === null) {
-          throw new Error('a fragment parent must have boundary nodes in order to detect insertion');
-        }
+        ensureStartEnd(start, end);
         this.element = null;
       } else {
         this.element = parent;
@@ -22902,17 +21053,19 @@ define("morph/morph",
       this.start = start;
       this.end = end;
       this.domHelper = domHelper;
-      if (!contextualElement || contextualElement.nodeType !== Node.ELEMENT_NODE) {
-        throw new Error('An element node must be provided for a contextualElement, you provided '+(contextualElement ? 'nodeType '+contextualElement.nodeType : 'nothing'));
-      }
+      ensureContext(contextualElement);
       this.contextualElement = contextualElement;
+      this.reset();
+    }
+
+    Morph.prototype.reset = function() {
       this.text = null;
       this.owner = null;
       this.morphs = null;
       this.before = null;
       this.after = null;
       this.escaped = true;
-    }
+    };
 
     Morph.prototype.parent = function () {
       if (!this.element) {
@@ -23039,39 +21192,43 @@ define("morph/morph",
 
     Morph.prototype.insert = function (index, node) {
       if (this.morphs === null) this.morphs = [];
-      var parent = this.element || this.parent(),
-        morphs = this.morphs,
-        before = index > 0 ? morphs[index-1] : null,
-        after  = index < morphs.length ? morphs[index] : null,
-        start  = before === null ? this.start : (before.end === null ? parent.lastChild : before.end.previousSibling),
-        end    = after === null ? this.end : (after.start === null ? parent.firstChild : after.start.nextSibling),
-        morph  = new Morph(parent, start, end, this.domHelper, this.contextualElement);
+      var parent = this.element || this.parent();
+      var morphs = this.morphs;
+      var before = index > 0 ? morphs[index-1] : null;
+      var after  = index < morphs.length ? morphs[index] : null;
+      var start  = before === null ? this.start : (before.end === null ? parent.lastChild : before.end.previousSibling);
+      var end    = after === null ? this.end : (after.start === null ? parent.firstChild : after.start.nextSibling);
+      var morph  = new Morph(parent, start, end, this.domHelper, this.contextualElement);
+
       morph.owner = this;
       morph._update(parent, node);
+
       if (before !== null) {
         morph.before = before;
         before.end = start.nextSibling;
         before.after = morph;
       }
+
       if (after !== null) {
         morph.after = after;
         after.before = morph;
         after.start = end.previousSibling;
       }
+
       this.morphs.splice(index, 0, morph);
       return morph;
     };
 
     Morph.prototype.replace = function (index, removedLength, addedNodes) {
       if (this.morphs === null) this.morphs = [];
-      var parent = this.element || this.parent(),
-        morphs = this.morphs,
-        before = index > 0 ? morphs[index-1] : null,
-        after = index+removedLength < morphs.length ? morphs[index+removedLength] : null,
-        start = before === null ? this.start : (before.end === null ? parent.lastChild : before.end.previousSibling),
-        end   = after === null ? this.end : (after.start === null ? parent.firstChild : after.start.nextSibling),
-        addedLength = addedNodes === undefined ? 0 : addedNodes.length,
-        args, i, current;
+      var parent = this.element || this.parent();
+      var morphs = this.morphs;
+      var before = index > 0 ? morphs[index-1] : null;
+      var after = index+removedLength < morphs.length ? morphs[index+removedLength] : null;
+      var start = before === null ? this.start : (before.end === null ? parent.lastChild : before.end.previousSibling);
+      var end   = after === null ? this.end : (after.start === null ? parent.firstChild : after.start.nextSibling);
+      var addedLength = addedNodes === undefined ? 0 : addedNodes.length;
+      var args, i, current;
 
       if (removedLength > 0) {
         clear(parent, start, end);
@@ -23118,9 +21275,10 @@ define("morph/morph",
     };
 
     function appendChildren(parent, end, nodeList) {
-      var ref = end,
-          i = nodeList.length,
-          node;
+      var ref = end;
+      var i = nodeList.length;
+      var node;
+
       while (i--) {
         node = nodeList[i];
         parent.insertBefore(node, ref);
@@ -23145,13 +21303,241 @@ define("morph/morph",
 
     __exports__["default"] = Morph;
   });
+define("morph/dom-helper/build-html-dom", 
+  ["exports"],
+  function(__exports__) {
+    
+    var svgHTMLIntegrationPoints = {foreignObject: 1, desc: 1, title: 1};
+    __exports__.svgHTMLIntegrationPoints = svgHTMLIntegrationPoints;var svgNamespace = 'http://www.w3.org/2000/svg';
+    __exports__.svgNamespace = svgNamespace;
+    // Safari does not like using innerHTML on SVG HTML integration
+    // points.
+    var needsIntegrationPointFix = document.createElementNS && (function() {
+      var testEl = document.createElementNS(svgNamespace, 'foreignObject');
+      testEl.innerHTML = "<div></div>";
+      return testEl.childNodes.length === 0;
+    })();
+
+    // Internet Explorer prior to 9 does not allow setting innerHTML if the first element
+    // is a "zero-scope" element. This problem can be worked around by making
+    // the first node an invisible text node. We, like Modernizr, use &shy;
+    var needsShy = (function() {
+      var testEl = document.createElement('div');
+      testEl.innerHTML = "<div></div>";
+      testEl.firstChild.innerHTML = "<script><\/script>";
+      return testEl.firstChild.innerHTML === '';
+    })();
+
+    // IE 8 (and likely earlier) likes to move whitespace preceeding
+    // a script tag to appear after it. This means that we can
+    // accidentally remove whitespace when updating a morph.
+    var movesWhitespace = document && (function() {
+      var testEl = document.createElement('div');
+      testEl.innerHTML = "Test: <script type='text/x-placeholder'><\/script>Value";
+      return testEl.childNodes[0].nodeValue === 'Test:' &&
+              testEl.childNodes[2].nodeValue === ' Value';
+    })();
+
+    // IE 9 and earlier don't allow us to set innerHTML on col, colgroup, frameset,
+    // html, style, table, tbody, tfoot, thead, title, tr. Detect this and add
+    // them to an initial list of corrected tags.
+    //
+    // Here we are only dealing with the ones which can have child nodes.
+    //
+    var tagNamesRequiringInnerHTMLFix, tableNeedsInnerHTMLFix;
+    var tableInnerHTMLTestElement = document.createElement('table');
+    try {
+      tableInnerHTMLTestElement.innerHTML = '<tbody></tbody>';
+    } catch (e) {
+    } finally {
+      tableNeedsInnerHTMLFix = (tableInnerHTMLTestElement.childNodes.length === 0);
+    }
+    if (tableNeedsInnerHTMLFix) {
+      tagNamesRequiringInnerHTMLFix = {
+        colgroup: ['table'],
+        table: [],
+        tbody: ['table'],
+        tfoot: ['table'],
+        thead: ['table'],
+        tr: ['table', 'tbody']
+      };
+    } else {
+      tagNamesRequiringInnerHTMLFix = {};
+    }
+
+    // IE 8 doesn't allow setting innerHTML on a select tag. Detect this and
+    // add it to the list of corrected tags.
+    //
+    var selectInnerHTMLTestElement = document.createElement('select');
+    selectInnerHTMLTestElement.innerHTML = '<option></option>';
+    if (selectInnerHTMLTestElement) {
+      tagNamesRequiringInnerHTMLFix.select = [];
+    }
+
+    function scriptSafeInnerHTML(element, html) {
+      // without a leading text node, IE will drop a leading script tag.
+      html = '&shy;'+html;
+
+      element.innerHTML = html;
+
+      var nodes = element.childNodes;
+
+      // Look for &shy; to remove it.
+      var shyElement = nodes[0];
+      while (shyElement.nodeType === 1 && !shyElement.nodeName) {
+        shyElement = shyElement.firstChild;
+      }
+      // At this point it's the actual unicode character.
+      if (shyElement.nodeType === 3 && shyElement.nodeValue.charAt(0) === "\u00AD") {
+        var newValue = shyElement.nodeValue.slice(1);
+        if (newValue.length) {
+          shyElement.nodeValue = shyElement.nodeValue.slice(1);
+        } else {
+          shyElement.parentNode.removeChild(shyElement);
+        }
+      }
+
+      return nodes;
+    }
+
+    function buildDOMWithFix(html, contextualElement){
+      var tagName = contextualElement.tagName;
+
+      // Firefox versions < 11 do not have support for element.outerHTML.
+      var outerHTML = contextualElement.outerHTML || new XMLSerializer().serializeToString(contextualElement);
+      if (!outerHTML) {
+        throw "Can't set innerHTML on "+tagName+" in this browser";
+      }
+
+      var wrappingTags = tagNamesRequiringInnerHTMLFix[tagName.toLowerCase()];
+      var startTag = outerHTML.match(new RegExp("<"+tagName+"([^>]*)>", 'i'))[0];
+      var endTag = '</'+tagName+'>';
+
+      var wrappedHTML = [startTag, html, endTag];
+
+      var i = wrappingTags.length;
+      var wrappedDepth = 1 + i;
+      while(i--) {
+        wrappedHTML.unshift('<'+wrappingTags[i]+'>');
+        wrappedHTML.push('</'+wrappingTags[i]+'>');
+      }
+
+      var wrapper = document.createElement('div');
+      scriptSafeInnerHTML(wrapper, wrappedHTML.join(''));
+      var element = wrapper;
+      while (wrappedDepth--) {
+        element = element.firstChild;
+        while (element && element.nodeType !== 1) {
+          element = element.nextSibling;
+        }
+      }
+      while (element && element.tagName !== tagName) {
+        element = element.nextSibling;
+      }
+      return element ? element.childNodes : [];
+    }
+
+    var buildDOM;
+    if (needsShy) {
+      buildDOM = function buildDOM(html, contextualElement, dom){
+        contextualElement = dom.cloneNode(contextualElement, false);
+        scriptSafeInnerHTML(contextualElement, html);
+        return contextualElement.childNodes;
+      };
+    } else {
+      buildDOM = function buildDOM(html, contextualElement, dom){
+        contextualElement = dom.cloneNode(contextualElement, false);
+        contextualElement.innerHTML = html;
+        return contextualElement.childNodes;
+      };
+    }
+
+
+    var buildHTMLDOM;
+    // Really, this just means IE8 and IE9 get a slower buildHTMLDOM
+    if (tagNamesRequiringInnerHTMLFix.length > 0 || movesWhitespace) {
+      buildHTMLDOM = function buildHTMLDOM(html, contextualElement, dom) {
+        // Make a list of the leading text on script nodes. Include
+        // script tags without any whitespace for easier processing later.
+        var spacesBefore = [];
+        var spacesAfter = [];
+        html = html.replace(/(\s*)(<script)/g, function(match, spaces, tag) {
+          spacesBefore.push(spaces);
+          return tag;
+        });
+
+        html = html.replace(/(<\/script>)(\s*)/g, function(match, tag, spaces) {
+          spacesAfter.push(spaces);
+          return tag;
+        });
+
+        // Fetch nodes
+        var nodes;
+        if (tagNamesRequiringInnerHTMLFix[contextualElement.tagName.toLowerCase()]) {
+          // buildDOMWithFix uses string wrappers for problematic innerHTML.
+          nodes = buildDOMWithFix(html, contextualElement);
+        } else {
+          nodes = buildDOM(html, contextualElement, dom);
+        }
+
+        // Build a list of script tags, the nodes themselves will be
+        // mutated as we add test nodes.
+        var i, j, node, nodeScriptNodes;
+        var scriptNodes = [];
+        for (i=0;node=nodes[i];i++) {
+          if (node.nodeType !== 1) {
+            continue;
+          }
+          if (node.tagName === 'SCRIPT') {
+            scriptNodes.push(node);
+          } else {
+            nodeScriptNodes = node.getElementsByTagName('script');
+            for (j=0;j<nodeScriptNodes.length;j++) {
+              scriptNodes.push(nodeScriptNodes[j]);
+            }
+          }
+        }
+
+        // Walk the script tags and put back their leading text nodes.
+        var textNode, spaceBefore, spaceAfter;
+        for (i=0;scriptNode=scriptNodes[i];i++) {
+          spaceBefore = spacesBefore[i];
+          if (spaceBefore && spaceBefore.length > 0) {
+            textNode = dom.document.createTextNode(spaceBefore);
+            scriptNode.parentNode.insertBefore(textNode, scriptNode);
+          }
+
+          spaceAfter = spacesAfter[i];
+          if (spaceAfter && spaceAfter.length > 0) {
+            textNode = dom.document.createTextNode(spaceAfter);
+            scriptNode.parentNode.insertBefore(textNode, scriptNode.nextSibling);
+          }
+        }
+
+        return nodes;
+      };
+    } else if (needsIntegrationPointFix) {
+      buildHTMLDOM = function buildHTMLDOM(html, contextualElement, dom){
+        if (svgHTMLIntegrationPoints[contextualElement.tagName]) {
+          return buildDOM(html, document.createElement('div'), dom);
+        } else {
+          return buildDOM(html, contextualElement, dom);
+        }
+      };
+    } else {
+      buildHTMLDOM = buildDOM;
+    }
+
+    __exports__.buildHTMLDOM = buildHTMLDOM;
+  });
 define("morph/dom-helper", 
-  ["morph/morph","exports"],
-  function(__dependency1__, __exports__) {
+  ["../morph/morph","./dom-helper/build-html-dom","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
     
     var Morph = __dependency1__["default"];
-
-    var emptyString = '';
+    var buildHTMLDOM = __dependency2__.buildHTMLDOM;
+    var svgNamespace = __dependency2__.svgNamespace;
+    var svgHTMLIntegrationPoints = __dependency2__.svgHTMLIntegrationPoints;
 
     var deletesBlankTextNodes = (function(){
       var element = document.createElement('div');
@@ -23166,6 +21552,70 @@ define("morph/dom-helper",
       var clonedElement = element.cloneNode(false);
       return !clonedElement.checked;
     })();
+
+    function isSVG(ns){
+      return ns === svgNamespace;
+    }
+
+    // This is not the namespace of the element, but of
+    // the elements inside that elements.
+    function interiorNamespace(element){
+      if (
+        element &&
+        element.namespaceURI === svgNamespace &&
+        !svgHTMLIntegrationPoints[element.tagName]
+      ) {
+        return svgNamespace;
+      } else {
+        return null;
+      }
+    }
+
+    // The HTML spec allows for "omitted start tags". These tags are optional
+    // when their intended child is the first thing in the parent tag. For
+    // example, this is a tbody start tag:
+    //
+    // <table>
+    //   <tbody>
+    //     <tr>
+    //
+    // The tbody may be omitted, and the browser will accept and render:
+    //
+    // <table>
+    //   <tr>
+    //
+    // However, the omitted start tag will still be added to the DOM. Here
+    // we test the string and context to see if the browser is about to
+    // perform this cleanup.
+    //
+    // http://www.whatwg.org/specs/web-apps/current-work/multipage/syntax.html#optional-tags
+    // describes which tags are omittable. The spec for tbody and colgroup
+    // explains this behavior:
+    //
+    // http://www.whatwg.org/specs/web-apps/current-work/multipage/tables.html#the-tbody-element
+    // http://www.whatwg.org/specs/web-apps/current-work/multipage/tables.html#the-colgroup-element
+    //
+
+    var omittedStartTagChildTest = /<([\w:]+)/;
+    function detectOmittedStartTag(string, contextualElement){
+      // Omitted start tags are only inside table tags.
+      if (contextualElement.tagName === 'TABLE') {
+        var omittedStartTagChildMatch = omittedStartTagChildTest.exec(string);
+        if (omittedStartTagChildMatch) {
+          var omittedStartTagChild = omittedStartTagChildMatch[1];
+          // It is already asserted that the contextual element is a table
+          // and not the proper start tag. Just see if a tag was omitted.
+          return omittedStartTagChild === 'tr' ||
+                 omittedStartTagChild === 'col';
+        }
+      }
+    }
+
+    function buildSVGDOM(html, dom){
+      var div = dom.document.createElement('div');
+      div.innerHTML = '<svg>'+html+'</svg>';
+      return div.firstChild.childNodes;
+    }
 
     /*
      * A class wrapping DOM functions to address environment compatibility,
@@ -23186,29 +21636,58 @@ define("morph/dom-helper",
      */
     function DOMHelper(_document){
       this.document = _document || window.document;
+      this.namespace = null;
     }
 
     var prototype = DOMHelper.prototype;
     prototype.constructor = DOMHelper;
 
+    prototype.insertBefore = function(element, childElement, referenceChild) {
+      return element.insertBefore(childElement, referenceChild);
+    };
+
     prototype.appendChild = function(element, childElement) {
-      element.appendChild(childElement);
+      return element.appendChild(childElement);
     };
 
     prototype.appendText = function(element, text) {
-      element.appendChild(this.document.createTextNode(text));
+      return element.appendChild(this.document.createTextNode(text));
     };
 
     prototype.setAttribute = function(element, name, value) {
       element.setAttribute(name, value);
     };
 
-    prototype.createElement = function(tagName) {
-      if (this.namespaceURI) {
-        return this.document.createElementNS(this.namespaceURI, tagName);
-      } else {
+    if (document.createElementNS) {
+      // Only opt into namespace detection if a contextualElement
+      // is passed.
+      prototype.createElement = function(tagName, contextualElement) {
+        var namespace = this.namespace;
+        if (contextualElement) {
+          if (tagName === 'svg') {
+            namespace = svgNamespace;
+          } else {
+            namespace = interiorNamespace(contextualElement);
+          }
+        }
+        if (namespace) {
+          return this.document.createElementNS(namespace, tagName);
+        } else {
+          return this.document.createElement(tagName);
+        }
+      };
+    } else {
+      prototype.createElement = function(tagName) {
         return this.document.createElement(tagName);
-      }
+      };
+    }
+
+    prototype.setNamespace = function(ns) {
+      this.namespace = ns;
+    };
+
+    prototype.detectNamespace = function(element) {
+      this.namespace = interiorNamespace(element);
     };
 
     prototype.createDocumentFragment = function(){
@@ -23222,7 +21701,7 @@ define("morph/dom-helper",
     prototype.repairClonedNode = function(element, blankChildTextNodes, isChecked){
       if (deletesBlankTextNodes && blankChildTextNodes.length > 0) {
         for (var i=0, len=blankChildTextNodes.length;i<len;i++){
-          var textNode = document.createTextNode(emptyString),
+          var textNode = this.document.createTextNode(''),
               offset = blankChildTextNodes[i],
               before = element.childNodes[offset];
           if (before) {
@@ -23243,11 +21722,8 @@ define("morph/dom-helper",
     };
 
     prototype.createMorph = function(parent, start, end, contextualElement){
-      if (!contextualElement && parent.nodeType === Node.ELEMENT_NODE) {
+      if (!contextualElement && parent.nodeType === 1) {
         contextualElement = parent;
-      }
-      if (!contextualElement) {
-        contextualElement = this.document.body;
       }
       return new Morph(parent, start, end, this, contextualElement);
     };
@@ -23261,10 +21737,42 @@ define("morph/dom-helper",
       return this.createMorph(parent, start, end, contextualElement);
     };
 
-    prototype.parseHTML = function(html, contextualElement){
-      var element = this.cloneNode(contextualElement, false);
-      element.innerHTML = html;
-      return element.childNodes;
+    prototype.insertMorphBefore = function(element, referenceChild, contextualElement) {
+      var start = this.document.createTextNode('');
+      var end = this.document.createTextNode('');
+      element.insertBefore(start, referenceChild);
+      element.insertBefore(end, referenceChild);
+      return this.createMorph(element, start, end, contextualElement);
+    };
+
+    prototype.appendMorph = function(element, contextualElement) {
+      var start = this.document.createTextNode('');
+      var end = this.document.createTextNode('');
+      element.appendChild(start);
+      element.appendChild(end);
+      return this.createMorph(element, start, end, contextualElement);
+    };
+
+    prototype.parseHTML = function(html, contextualElement) {
+      var isSVGContent = (
+        isSVG(this.namespace) &&
+        !svgHTMLIntegrationPoints[contextualElement.tagName]
+      );
+
+      if (isSVGContent) {
+        return buildSVGDOM(html, this);
+      } else {
+        var nodes = buildHTMLDOM(html, contextualElement, this);
+        if (detectOmittedStartTag(html, contextualElement)) {
+          var node = nodes[0];
+          while (node && node.nodeType !== 1) {
+            node = node.nextSibling;
+          }
+          return node.childNodes;
+        } else {
+          return nodes;
+        }
+      }
     };
 
     __exports__["default"] = DOMHelper;
@@ -23383,11 +21891,234 @@ define("rebound-runtime/lazy-value",
 
     __exports__["default"] = LazyValue;
   });
+define("rebound-runtime/utils", 
+  ["exports"],
+  function(__exports__) {
+    
+    var utils = {};
+
+    // Applies function `func` depth first to every node in the subtree starting from `root`
+    utils.walkTheDOM = function(root, func) {
+        func(root);
+        root = root.firstChild;
+        while (root) {
+            utils.walkTheDOM(root, func);
+            root = root.nextSibling;
+        }
+    };
+
+    /*  Copyright (C) 2012-2014  Kurt Milam - http://xioup.com | Source: https://gist.github.com/1868955
+     *
+     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+     *
+     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    **/
+
+    // Rolled my own deep extend in leu of having a hard dependancy on lodash.
+    utils.deepDefaults = function(obj) {
+      var parentRE = /#{\s*?_\s*?}/,
+          slice = Array.prototype.slice,
+          hasOwnProperty = Object.prototype.hasOwnProperty;
+
+      _.each(slice.call(arguments, 1), function(def) {
+
+        var objArr, srcArr, objAttr, srcAttr;
+        for (var prop in def) {
+          if (hasOwnProperty.call(def, prop)) {
+            if(_.isUndefined(obj[prop])){
+
+              if(_.isObject(def[prop]) && !_.isFunction(def[prop])){
+                if(def[prop].isCollection){
+                  obj[prop] = utils.deepDefaults([], def[prop].models);
+                }
+                else if(_.isArray(def[prop])){
+                  obj[prop] = utils.deepDefaults([], def[prop]);
+                }
+                else if((def[prop].isModel)){
+                  obj[prop] = utils.deepDefaults({}, def[prop].attributes);
+                }
+                else{
+                  obj[prop] = utils.deepDefaults({}, def[prop]);
+                }
+              }
+              else{
+                obj[prop] = def[prop];
+              }
+            }
+            else if(_.isObject(obj[prop])){
+              if(obj[prop].isCollection || _.isArray(obj[prop])){
+                continue;
+              }
+              else if((obj[prop].isModel)){
+                obj[prop] = utils.deepDefaults({}, obj[prop].attributes, def[prop]);
+              }
+              else{
+                obj[prop] = utils.deepDefaults({}, obj[prop], def[prop]);
+              }
+            }
+          }
+        }
+      });
+
+      return obj;
+    };
+
+
+    // Triggers an event on a given dom node
+    utils.triggerEvent = function(eventName, el){
+      if (document.createEvent) {
+        var event = document.createEvent('HTMLEvents');
+        event.initEvent(eventName, true, false);
+        el.dispatchEvent(event);
+      } else {
+        el.fireEvent('on'+eventName);
+      }
+    };
+
+    function getEventTarget(e) {
+      e = e || window.event;
+      return e.target || e.srcElement;
+    }
+
+    function isDelegate(target, delegate){
+      if(delegate === true){
+        return true;
+      }
+      if(_.isElement(delegate) && target === delegate){
+        return true;
+      }
+      if(_.isString(delegate) && target.matchesSelector && target.matchesSelector(delegate)){
+        return true;
+      }
+      return false;
+    }
+
+    utils.addEventListener = function (el, eventName, delegate, data, handler) {
+      if(_.isFunction(delegate)){
+        handler = delegate;
+        delegate = el;
+        data = {};
+      }
+      if(_.isFunction(data)){
+        handler = data;
+        data = {};
+      }
+
+      var callback = function(e){
+        var target = getEventTarget(e);
+        e.data = data;
+
+        // Travel from target up to parent firing event when delegate matches
+        while(target){
+          if(isDelegate(target, delegate)) {
+            handler.apply(el, arguments);
+            if(_.isElement(delegate) && target === delegate){ break; }
+          }
+          target = target.parentNode;
+        }
+      };
+
+      if (el.addEventListener) {
+        el.addEventListener(eventName, callback);
+      } else {
+        el.attachEvent('on' + eventName, callback);
+      }
+    };
+
+    // http://krasimirtsonev.com/blog/article/Cross-browser-handling-of-Ajax-requests-in-absurdjs
+    utils.ajax = function(ops) {
+        if(typeof ops == 'string') ops = { url: ops };
+        ops.url = ops.url || '';
+        ops.json = ops.json || true;
+        ops.method = ops.method || 'get';
+        ops.data = ops.data || {};
+        var getParams = function(data, url) {
+            var arr = [], str;
+            for(var name in data) {
+                arr.push(name + '=' + encodeURIComponent(data[name]));
+            }
+            str = arr.join('&');
+            if(str !== '') {
+                return url ? (url.indexOf('?') < 0 ? '?' + str : '&' + str) : str;
+            }
+            return '';
+        };
+        var api = {
+            host: {},
+            process: function(ops) {
+                var self = this;
+                this.xhr = null;
+                if(window.ActiveXObject) { this.xhr = new ActiveXObject('Microsoft.XMLHTTP'); }
+                else if(window.XMLHttpRequest) { this.xhr = new XMLHttpRequest(); }
+                if(this.xhr) {
+                    this.xhr.onreadystatechange = function() {
+                        if(self.xhr.readyState == 4 && self.xhr.status == 200) {
+                            var result = self.xhr.responseText;
+                            if(ops.json === true && typeof JSON != 'undefined') {
+                                result = JSON.parse(result);
+                            }
+                            self.doneCallback && self.doneCallback.apply(self.host, [result, self.xhr]);
+                            ops.success && ops.success.apply(self.host, [result, self.xhr]);
+                        } else if(self.xhr.readyState == 4) {
+                            self.failCallback && self.failCallback.apply(self.host, [self.xhr]);
+                            ops.error && ops.error.apply(self.host, [self.xhr]);
+                        }
+                        self.alwaysCallback && self.alwaysCallback.apply(self.host, [self.xhr]);
+                        ops.complete && ops.complete.apply(self.host, [self.xhr]);
+                    };
+                }
+                if(ops.method == 'get') {
+                    this.xhr.open("GET", ops.url + getParams(ops.data, ops.url), true);
+                    this.setHeaders({
+                      'X-Requested-With': 'XMLHttpRequest'
+                    });
+                } else {
+                    this.xhr.open(ops.method, ops.url, true);
+                    this.setHeaders({
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-type': 'application/x-www-form-urlencoded'
+                    });
+                }
+                if(ops.headers && typeof ops.headers == 'object') {
+                    this.setHeaders(ops.headers);
+                }
+                setTimeout(function() {
+                    ops.method == 'get' ? self.xhr.send() : self.xhr.send(getParams(ops.data));
+                }, 20);
+                return this.xhr;
+            },
+            done: function(callback) {
+                this.doneCallback = callback;
+                return this;
+            },
+            fail: function(callback) {
+                this.failCallback = callback;
+                return this;
+            },
+            always: function(callback) {
+                this.alwaysCallback = callback;
+                return this;
+            },
+            setHeaders: function(headers) {
+                for(var name in headers) {
+                    this.xhr && this.xhr.setRequestHeader(name, headers[name]);
+                }
+            }
+        };
+        return api.process(ops);
+    };
+
+
+
+    __exports__["default"] = utils;
+  });
 define("rebound-runtime/helpers", 
-  ["rebound-runtime/lazy-value","exports"],
-  function(__dependency1__, __exports__) {
+  ["rebound-runtime/lazy-value","rebound-runtime/utils","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
     
     var LazyValue = __dependency1__["default"];
+    var utils = __dependency2__["default"];
 
     var helpers = {},
         partials = {};
@@ -23404,6 +22135,8 @@ define("rebound-runtime/helpers",
       env = env || {};
       path = path || '';
 
+      name = name.split(/(?:\.|\[|\])+/)[0];
+
       // If a reserved helpers, return it
       if(name === 'attribute') { return this.attribute; }
       if(name === 'if') { return this.if; }
@@ -23416,7 +22149,7 @@ define("rebound-runtime/helpers",
       if(name === 'concat') { return this.concat; }
 
       // If not a reserved helper, check env, then global helpers, else return false
-      return (env.helpers && env.helpers[path + '.' + name]) || helpers[name] || false;
+      return (env.helpers && env.helpers[((path) ? path + '.' : '') + name]) || helpers[name] || false;
     };
 
     helpers.registerHelper = function(name, callback, params){
@@ -23445,22 +22178,26 @@ define("rebound-runtime/helpers",
     ********************************/
 
     helpers.on = function(params, hash, options, env){
-      var id = $(options.element).attr('data-event') || _.uniqueId('event'),
+      var id = options.element.getAttribute('data-event') || _.uniqueId('event'),
           i, callback,
+          root = this,
           len = params.length,
-          delegate = hash.selector || '[data-event='+id+']',
           data = hash.data && hash.data.isLazyValue && hash.data.value() || hash.data || options.context;
 
       // Set our element's data-event id
-      $(options.element).attr('data-event', id);
+      options.element.setAttribute('data-event', id);
+
+      // Find our root component
+      while(root.__parent){
+        root = root.__parent;
+      }
 
       // Make sure we only attach once for each combination of delagate selector and callback
       for(i = 1; i<len; i++){
         callback = params[i];
-        $(env.dom.document).on(params[0], delegate, data, function(event){
+        utils.addEventListener(root.el, params[0], options.element, data, function(event){
           return options.helpers.__callOnComponent(callback, event);
         });
-        // this.outlet.off(eventName, delegate, this[params[i]]).on(eventName, delegate, data, this[params[i]]);
       }
     };
 
@@ -23490,7 +22227,11 @@ define("rebound-runtime/helpers",
         if(!options.lazyValue.eventsBound){
 
           // If a submit action has been set
-          $(options.element).on('input propertychange', options.context, function(event){
+          utils.addEventListener(options.element, 'input', function(event){
+            options.context.set(options.params[1].path, this.value);
+          });
+
+          utils.addEventListener(options.element, 'propertychange', function(event){
             options.context.set(options.params[1].path, this.value);
           });
 
@@ -23504,8 +22245,8 @@ define("rebound-runtime/helpers",
 
         // If our special input events have not been bound yet, bind them and set flag
         if(!options.lazyValue.eventsBound){
-          $(options.element).on('change', function(){
-            options.context.set(options.params[1].path, this.checked);
+          utils.addEventListener(options.element, 'change', function(event){
+            options.context.set(options.params[1].path, ((this.checked) ? true : false));
           });
 
           options.lazyValue.eventsBound = true;
@@ -23527,7 +22268,7 @@ define("rebound-runtime/helpers",
       }
 
       // If our condition is an array, handle properly
-      if(_.isArray(condition) || Backbone && condition.isCollection){
+      if(_.isArray(condition) || condition.isCollection){
         condition = condition.length ? true : false;
       }
 
@@ -23541,17 +22282,17 @@ define("rebound-runtime/helpers",
 
       // Check our cache. If the value hasn't actually changed, don't evaluate. Important for re-rendering of #each helpers.
       if(options.placeholder.__ifCache === condition){
-        return undefined;
+        return null; // Return null prevent's re-rending of our placeholder.
       }
 
       options.placeholder.__ifCache = condition;
 
       // Render the apropreate block statement
       if(condition && typeof options.render === 'function'){
-        return options.render(options.context, options);
+        return options.render(options.context, options, options.morph.element);
       }
       else if(!condition && typeof options.inverse === 'function'){
-        return options.inverse(options.context, options);
+        return options.inverse(options.context, options, options.morph.element);
       }
 
       return '';
@@ -23569,7 +22310,7 @@ define("rebound-runtime/helpers",
       }
 
       // If our condition is an array, handle properly
-      if(_.isArray(condition) || Backbone && condition.isCollection){
+      if(_.isArray(condition) || condition.isCollection){
         condition = condition.length ? true : false;
       }
 
@@ -23579,16 +22320,18 @@ define("rebound-runtime/helpers",
       }
 
       // Check our cache. If the value hasn't actually changed, don't evaluate. Important for re-rendering of #each helpers.
-      if(options.placeholder.__unlessCache === condition){ return undefined; }
+      if(options.placeholder.__unlessCache === condition){
+        return null; // Return null prevent's re-rending of our placeholder.
+      }
 
       options.placeholder.__unlessCache = condition;
 
       // Render the apropreate block statement
-      if(!condition && typeof options.render === 'function'){
-        return options.render(options.context, options);
+      if(!condition &&  _.isFunction(options.render)){
+        return options.render(options.context, options, options.morph.element);
       }
-      else if(condition && typeof options.inverse === 'function'){
-        return options.inverse(options.context, options);
+      else if(condition && _.isFunction(options.inverse)){
+        return options.inverse(options.context, options, options.morph.element);
       }
 
       return '';
@@ -23618,7 +22361,7 @@ define("rebound-runtime/helpers",
 
     helpers.each = function(params, hash, options, env){
 
-      if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', options.context); return; }
+      if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', options.context); return null; }
 
       var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
           start, end, // used below to remove trailing junk morphs from the dom
@@ -23651,7 +22394,7 @@ define("rebound-runtime/helpers",
 
           // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
           var lazyValue = new LazyValue(function(){
-            return options.render(obj, options);
+            return options.render(obj, options, options.morph.element);
           });
 
           // If this model is rendered somewhere else in the list, destroy it
@@ -23681,14 +22424,15 @@ define("rebound-runtime/helpers",
         options.placeholder.morphs[end].destroy();
       }
 
-      // No need for a return statement. Our placeholder (containing element) now has all the dom we need.
+      // Return null prevent's re-rending of our placeholder. Our placeholder (containing element) now has all the dom we need.
+      return null;
 
     };
 
     helpers.with = function(params, hash, options, env){
 
       // Render the content inside our block helper with the context of this object. Returns a dom tree.
-      return options.render(params[0], options);
+      return options.render(params[0], options, options.morph.element);
 
     };
 
@@ -23701,81 +22445,6 @@ define("rebound-runtime/helpers",
     };
 
     __exports__["default"] = helpers;
-  });
-define("rebound-runtime/utils", 
-  ["exports"],
-  function(__exports__) {
-    
-    var util = {};
-
-    // Applies function `func` to every node in the tree starting from `node`
-    util.walkTheDOM = function(node, func) {
-        func(node);
-        node = node.firstChild;
-        while (node) {
-            util.walkTheDOM(node, func);
-            node = node.nextSibling;
-        }
-    };
-
-    /*  Copyright (C) 2012-2014  Kurt Milam - http://xioup.com | Source: https://gist.github.com/1868955
-     *
-     *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-     *  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-     *
-     *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    **/
-
-    // Rolled my own deep extend in leu of having a hard dependancy on lodash.
-    util.deepDefaults = function(obj) {
-      var parentRE = /#{\s*?_\s*?}/,
-          slice = Array.prototype.slice,
-          hasOwnProperty = Object.prototype.hasOwnProperty;
-
-      _.each(slice.call(arguments, 1), function(def) {
-
-        var objArr, srcArr, objAttr, srcAttr;
-        for (var prop in def) {
-          if (hasOwnProperty.call(def, prop)) {
-            if(_.isUndefined(obj[prop])){
-
-              if(_.isObject(def[prop]) && !_.isFunction(def[prop])){
-                if(def[prop].isCollection){
-                  obj[prop] = util.deepDefaults([], def[prop].models);
-                }
-                else if(_.isArray(def[prop])){
-                  obj[prop] = util.deepDefaults([], def[prop]);
-                }
-                else if((def[prop].isModel)){
-                  obj[prop] = util.deepDefaults({}, def[prop].attributes);
-                }
-                else{
-                  obj[prop] = util.deepDefaults({}, def[prop]);
-                }
-              }
-              else{
-                obj[prop] = def[prop];
-              }
-            }
-            else if(_.isObject(obj[prop])){
-              if(obj[prop].isCollection || _.isArray(obj[prop])){
-                continue;
-              }
-              else if((obj[prop].isModel)){
-                obj[prop] = util.deepDefaults({}, obj[prop].attributes, def[prop]);
-              }
-              else{
-                obj[prop] = util.deepDefaults({}, obj[prop], def[prop]);
-              }
-            }
-          }
-        }
-      });
-
-      return obj;
-    };
-
-    __exports__["default"] = util;
   });
 define("rebound-runtime/hooks", 
   ["rebound-runtime/lazy-value","rebound-runtime/utils","rebound-runtime/helpers","exports"],
@@ -23795,31 +22464,31 @@ define("rebound-runtime/hooks",
     // Given a model and a path return the raw value at that path
     function getRaw(context, path) {
       // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
-      var parts  = {},
-          result = {};
-
-      // Split the path at all '.', '[' and ']' and find the value referanced.
-      parts = _.compact(path.split(/(?:\.|\[|\])+/));
-      // If no path, return current object, otherwise get value of the path
-      result = context;
+      var parts  = _.compact(path.split(/(?:\.|\[|\])+/)), // Split the path at all '.', '[' and ']' and find the value referanced.
+          result = context;
 
       if (parts.length > 0) {
         for (var i = 0, l = parts.length; i < l; i++) {
-          if(_.isFunction(result)){
-            result = result();
+
+          if(_.isUndefined(result) || _.isNull(result)){
+            return result;
           }
-          else if(result.isCollection){
+
+          if(_.isFunction(result)){
+            result = result.call(context);
+          }
+
+          if(result.isCollection){
             result = result.models[parts[i]];
           }
           else if(result.isModel){
             result = result.attributes[parts[i]];
           }
-          else if(result && result[parts[i]]){
+          else if(result && result.hasOwnProperty(parts[i])){
             result = result[parts[i]];
           }
-          else{
-            result = '';
-          }
+
+
         }
       }
 
@@ -23898,10 +22567,10 @@ define("rebound-runtime/hooks",
       }
     }
 
-    function streamComputedProperty(context, path, morph, options ){
+    function streamComputedProperty(context, path, morph, options){
 
       // Our raw computed property function
-      var helper = getRaw(context, path),
+      var helper = getRaw(context, path);
 
       // New lazy value calls each of this computed property's observers and returns its value
       lazyValue = new LazyValue(function() {
@@ -23946,7 +22615,7 @@ define("rebound-runtime/hooks",
       return lazyValue;
     }
 
-    function streamifyArgs(context, params, options, helpers) {
+    function streamifyArgs(context, params, options, helper) {
       // Convert ID params to streams
       var morph = options.placeholder || options.element || true;
 
@@ -23984,7 +22653,7 @@ define("rebound-runtime/hooks",
       options.element = el && el.tagName && el || false;      // FIXME: this kinda sucks
 
       // For each argument passed to our helper, turn them into LazyValues. Params array is now an array of lazy values that will trigger when their value changes.
-      streamifyArgs(context, params, options, env.helpers);
+      streamifyArgs(context, params, options, helper);
 
       // Extend options with hooks and helpers for any subsequent calls from a lazyvalue
       options.params = params;                                 // FIXME: this kinda sucks
@@ -23999,7 +22668,11 @@ define("rebound-runtime/hooks",
         var len = params.length,
             i,
             plainParams = [],
-            plainHash = [];
+            plainHash = [],
+            result,
+            relpath = path.split(/(?:\.|\[|\])+/);
+            relpath.shift();
+            relpath = relpath.join('.');
 
         // Assemble our args and hash variables. For each lazyvalue param, push the lazyValue's value so helpers with no concept of lazyvalues.
         for(i=0; i<len; i++){
@@ -24011,7 +22684,9 @@ define("rebound-runtime/hooks",
         });
 
         // Call our helper functions with our assembled args.
-        return helper.apply(context, [plainParams, plainHash, options, env]);
+        result = helper.apply(context, [plainParams, plainHash, options, env]);
+
+        return get(result, relpath);
       });
 
       options.lazyValue.path = path;
@@ -24084,11 +22759,15 @@ define("rebound-runtime/hooks",
       if (lazyValue) {
         lazyValue.onNotify(function(lazyValue) {
           var val = lazyValue.value();
-          if(val !== undefined){ placeholder.update(val); }
+          value = (_.isUndefined(val)) ? '' : val;
+          if(!_.isNull(val)){
+            placeholder.update(val);
+          }
         });
 
         value = lazyValue.value();
-        if(value !== undefined){ placeholder.append(value); }
+        value = (_.isUndefined(value)) ? '' : value;
+        if(!_.isNull(value)){ placeholder.append(value); }
 
         // Observe this content morph's parent's children.
         // When the morph element's containing element (placeholder) is removed, clean up the lazyvalue.
@@ -24160,7 +22839,7 @@ define("rebound-runtime/hooks",
         Rebound.seedData = data;
         element = document.createElement(path);
         Rebound.seedData = {};
-        component = element.__template;
+        component = element.__component;
 
         // For each param passed to our shared component, create a new lazyValue
         _.each(data, function(value, key) {
@@ -24351,7 +23030,7 @@ define("rebound-compiler/compiler",
       });
 
       // Return a wrapper function that will merge user provided helpers with our defaults
-      var template = function(data, env){
+      var template = function(data, env, context){
         // Ensure we have a well-formed object as var options
         env = env || {};
         env.helpers = env.helpers || {};
@@ -24362,8 +23041,11 @@ define("rebound-compiler/compiler",
         env.helpers = merge(helpers, env.helpers);
         env.hooks = merge(hooks, env.hooks);
 
+        // Set a default context if it doesn't exist
+        context = context || document.body;
+
         // Call our func with merged helpers and hooks
-        return func.call(this, data, env);
+        return func.call(this, data, env, context);
       };
 
       helpers.registerPartial( options.name, template);

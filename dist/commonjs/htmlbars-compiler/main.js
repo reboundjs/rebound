@@ -1,2 +1,4 @@
 "use strict";
-// Stub
+var compilerSpec = require("./htmlbars-compiler/compiler").compilerSpec;
+var compilerSpec;
+exports.compilerSpec = compilerSpec;

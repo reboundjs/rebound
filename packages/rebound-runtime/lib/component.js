@@ -12,8 +12,6 @@ if(!window.Backbone){
   throw "Backbone must be on the page for Rebound to load.";
 }
 
-var componentOptions = ['template', 'routes', 'immortal', 'data'];
-
 // New Backbone Component
 var Component = Model.extend({
 
@@ -22,13 +20,11 @@ var Component = Model.extend({
   constructor: function(options){
 
     options = options || (options = {});
-    this.dom = '';
+    _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent', '_notifySubtree');
+
     this.cid = _.uniqueId('component');
     this.attributes = {};
     this.changed = {};
-
-    _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent');
-
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
@@ -38,6 +34,7 @@ var Component = Model.extend({
 
     // All comptued properties are registered as helpers in the scope of this component
     this.helpers = propertyCompiler.compile();
+
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
     this.helpers.__callOnComponent = this.__callOnComponent;
 
@@ -54,7 +51,7 @@ var Component = Model.extend({
 
     // Set our outlet and template if we have one
     this.el = options.outlet || undefined;
-    this.$el = $(this.el);
+    this.$el = (_.isUndefined(window.$)) ? false : $(this.el);
 
 
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
@@ -76,23 +73,26 @@ var Component = Model.extend({
   },
 
   $: function(selector) {
+    if(!this.$el){
+      return console.error('No DOM manipulation library on the page!');
+    }
     return this.$el.find(selector);
   },
 
   // Trigger all events on both the component and the element
-  trigger: function(){
-    if(this.$el){
-      this.$el.triggerHandler.apply(this, arguments);
+  trigger: function(eventName){
+    if(this.el){
+      util.triggerEvent(eventName, this.el, arguments);
     }
     Backbone.Model.prototype.trigger.apply(this, arguments);
   },
 
   __callOnComponent: function(name, event){
-      this[name].call(this, event);
+    this[name].call(this, event);
   },
 
   _onModelChange: function(model, options){
-    this._notify(model, model.changedAttributes());
+    this._notifySubtree(model, model.changedAttributes());
   },
 
   _onCollectionChange: function(model, collection, options){
@@ -103,10 +103,11 @@ var Component = Model.extend({
     }
     changed[collection.__path()] = collection;
 
-    this._notify(this, changed);
+    this._notifySubtree(this, changed);
   },
 
-  _notify: function(obj, changed){
+  _notifySubtree: function(obj, changed){
+
     var context = this, // This root context
         path = obj.__path(), // The path of the modified object relative to the root context
         parts = _.compact(path.split(/(?:\.|\[|\])+/)), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
@@ -129,6 +130,7 @@ var Component = Model.extend({
         if(paths[0].match(/\[.+\]/g)){
           paths.push(paths[0].replace(/\[.+\]/g, ".@each").replace(/^\./, '')); // test.[1].whatever -> test.@each.whatever
           paths.push(paths[0].split(/\[.+\]/g)[0]); // test.[1].whatever -> test
+          paths[0] = paths[0].replace(/\[([^\]]*)\]/g, '.$1').replace(/^\./, ''); // test[1].whatever -> test.1.whatever
         }
       });
 
@@ -137,6 +139,9 @@ var Component = Model.extend({
 
       // If not at end of path parts, get the next data object
       context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));
+      if(context === undefined){
+        break;
+      }
     }
   }
 });

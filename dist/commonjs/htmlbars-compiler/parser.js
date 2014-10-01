@@ -1,11 +1,11 @@
 "use strict";
-var Handlebars = require("../handlebars")["default"];
+var parse = require("../handlebars/compiler/base").parse;
 var Tokenizer = require("../simple-html-tokenizer").Tokenizer;
 var nodeHandlers = require("./html-parser/node-handlers")["default"];
 var tokenHandlers = require("./html-parser/token-handlers")["default"];
 
 function preprocess(html, options) {
-  var ast = Handlebars.parse(html);
+  var ast = parse(html);
   var combined = new HTMLProcessor().acceptNode(ast);
   return combined;
 }

@@ -14,56 +14,44 @@ var Model = Backbone.Model.extend({
 
   get: function(key, val, options){
 
-    // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
-    var parts  = {},
-        result = {},
-        value,
-        model,
-        i=0, l=0;
-
     // Split the path at all '.', '[' and ']' and find the value referanced.
-    parts = _.compact(key.split(/(?:\.|\[|\])+/));
-    result = this;
-    l = parts.length;
+    var parts  = _.compact(key.split(/(?:\.|\[|\])+/)),
+        result = this,
+        l=parts.length,
+        i=0;
 
-    if(key === undefined){ return; }
+    if(_.isUndefined(key) || _.isNull(key)){ return key; }
 
     if(key === '' || parts.length === 0){ return result; }
 
     if (parts.length > 0) {
-      for ( i = 0; i < l-1; i++) {
-        if( _.isFunction(result )){
-          result = result();
+      for ( i = 0; i < l; i++) {
+
+        if(_.isUndefined(result) || _.isNull(result)){
+          return result;
         }
-        else if( result.isCollection ){
+
+        if( _.isFunction(result )){
+          result = result.call(this);
+        }
+
+        if( result.isCollection ){
           result = result.models[parts[i]];
         }
         else if( result.isModel ){
           result = result.attributes[parts[i]];
         }
-        else if( result && result[parts[i]] ){
+        else if( result && result.hasOwnProperty(parts[i]) ){
           result = result[parts[i]];
-        }
-        else{
-          result = '';
         }
       }
     }
 
-    // Call original backbone get/at function
-    if(result.isCollection){
-      value = result.at(parts[i]);
-    }
-    else if(result.isModel){
-     value = Backbone.Model.prototype.get.call(result, parts[i], val, options);
-   }
-
-    // If value is a computed proeprty, evaluate
-    if(_.isFunction(value)){
-      value = value.call(this);
+    if( _.isFunction(result )){
+      result = result.call(this);
     }
 
-    return value;
+    return result;
   },
 
   set: function(key, val, options){

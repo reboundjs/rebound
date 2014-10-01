@@ -23,6 +23,7 @@ prototype.compile = function(opcodes, options) {
   this.mustaches.length = 0;
   this.source.length = 0;
   this.parents.length = 1;
+  this.parents[0] = 'fragment';
   this.morphs.length = 0;
   this.fragmentProcessing.length = 0;
   this.parentCount = 0;
@@ -84,11 +85,16 @@ prototype.helper = function(name, size, escaped, morphNum) {
 
 prototype.component = function(tag, morphNum) {
   var prepared = prepareHelper(this.stack, 0);
+  prepared.options.push('morph:morph'+morphNum);
   this.pushWebComponent(string(tag), prepared.options, morphNum);
 };
 
 prototype.ambiguous = function(str, escaped, morphNum) {
-  this.pushMustacheInContent(string(str), '[]', ['escaped:'+escaped], morphNum);
+  var options = [];
+  options.push('context:context');
+  options.push('escaped:'+escaped);
+  options.push('morph:morph'+morphNum);
+  this.pushMustacheInContent(string(str), '[]', options, morphNum);
 };
 
 prototype.ambiguousAttr = function(str, escaped) {

@@ -1,10 +1,14 @@
 "use strict";
-var env = require("rebound-runtime/env")["default"];
-
 // If Backbone hasn't been started yet, throw error
 if(!window.Backbone){
   throw "Backbone must be on the page for Rebound to load.";
 }
+
+// Load our client environment
+var env = require("rebound-runtime/env")["default"];
+
+// Load our utils
+var utils = require("rebound-runtime/utils")["default"];
 
 // Load Rebound Data
 var Model = require("rebound-data/rebound-data").Model;
@@ -17,7 +21,10 @@ var Component = require("rebound-runtime/component")["default"];
 var Router = require("rebound-router/rebound-router")["default"];
 
 // Fetch Rebound Config Object
-var Config = jQuery.parseJSON($('#Rebound').html());
+var Config = JSON.parse(document.getElementById('Rebound').innerText);
+
+// If Backbone doesn't have an ajax method from an external DOM library, use ours
+window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Backbone.ajax || utils.ajax;
 
 // Create Global Object
 window.Rebound = {
@@ -29,6 +36,6 @@ window.Rebound = {
   Config: Config
 };
 
-window.Rebound.router = (new Router({config: Config})).router;
+window.Rebound.router = new Router({config: Config});
 
 exports["default"] = Rebound;

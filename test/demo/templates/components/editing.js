@@ -10,35 +10,36 @@ return (function(){
   var cachedFragment;
   return function template(context, env, contextualElement) {
     var dom = env.dom, hooks = env.hooks;
+    dom.detectNamespace(contextualElement);
     if (cachedFragment === undefined) {
       cachedFragment = build(dom);
     }
     var fragment = dom.cloneNode(cachedFragment, true);
     var element0 = fragment;
     hooks.element(element0, "attribute", context, ["value",hooks.subexpr("value", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element0}, env);
-    hooks.element(element0, "on", context, ["blur","doneEditing"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
     hooks.element(element0, "on", context, ["keyup","inputModified"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
+    hooks.element(element0, "on", context, ["focusout","doneEditing"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
     return fragment;
   };
 }());
-  var script = (function(){ return ({ value: 'Default Value', arr: [{f:1}, {g:2}], obj: {a:1, b:2}, createdCallback: function(event){ this.oldValue = this.get('value'); }, attachedCallback: function(event){ this.$('input.edit').focus(); }, detachedCallback: function(){ console.log('removed!', this.el); }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })() || {};
+  var script = (function(){ return ({ value: 'Default Value', arr: [{f:1}, {g:2}], obj: {a:1, b:2}, createdCallback: function(event){ this.oldValue = this.get('value'); }, attachedCallback: function(event){ this.el.querySelector('input.edit').focus(); }, detachedCallback: function(){ }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })() || {};
   var style = "";
   var component = Rebound.Component.extend(script, { __name: "edit-todo" });
   var proto = Object.create(HTMLElement.prototype, {});
   proto.createdCallback = function(){
-    this.__template = new component({template: template, outlet: this, data: Rebound.seedData});
-    script.createdCallback && script.createdCallback.call(this.__template);
+    this.__component = new component({template: template, outlet: this, data: Rebound.seedData});
+    script.createdCallback && script.createdCallback.call(this.__component);
   }
-  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__template)};
+  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component)};
   proto.detachedCallback = function(){
-    this.__template.deinitialize();
-    script.detachedCallback && script.detachedCallback.call(this.__template);
+    this.__component.deinitialize();
+    script.detachedCallback && script.detachedCallback.call(this.__component);
     };
   proto.attributeChangedCallback = function(attrName, oldVal, newVal){
     try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
-    if(newVal === null){ this.__template.unset(attrName); }
-    else{ this.__template.set(attrName, newVal); }
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__template);
+    if(newVal === null){ this.__component.unset(attrName); }
+    else{ this.__component.set(attrName, newVal); }
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component);
   }
   return document.registerElement("edit-todo", {prototype: proto} );
 })();

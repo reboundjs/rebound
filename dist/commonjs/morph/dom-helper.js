@@ -1,7 +1,8 @@
 "use strict";
 var Morph = require("../morph/morph")["default"];
-
-var emptyString = '';
+var buildHTMLDOM = require("./dom-helper/build-html-dom").buildHTMLDOM;
+var svgNamespace = require("./dom-helper/build-html-dom").svgNamespace;
+var svgHTMLIntegrationPoints = require("./dom-helper/build-html-dom").svgHTMLIntegrationPoints;
 
 var deletesBlankTextNodes = (function(){
   var element = document.createElement('div');
@@ -16,6 +17,70 @@ var ignoresCheckedAttribute = (function(){
   var clonedElement = element.cloneNode(false);
   return !clonedElement.checked;
 })();
+
+function isSVG(ns){
+  return ns === svgNamespace;
+}
+
+// This is not the namespace of the element, but of
+// the elements inside that elements.
+function interiorNamespace(element){
+  if (
+    element &&
+    element.namespaceURI === svgNamespace &&
+    !svgHTMLIntegrationPoints[element.tagName]
+  ) {
+    return svgNamespace;
+  } else {
+    return null;
+  }
+}
+
+// The HTML spec allows for "omitted start tags". These tags are optional
+// when their intended child is the first thing in the parent tag. For
+// example, this is a tbody start tag:
+//
+// <table>
+//   <tbody>
+//     <tr>
+//
+// The tbody may be omitted, and the browser will accept and render:
+//
+// <table>
+//   <tr>
+//
+// However, the omitted start tag will still be added to the DOM. Here
+// we test the string and context to see if the browser is about to
+// perform this cleanup.
+//
+// http://www.whatwg.org/specs/web-apps/current-work/multipage/syntax.html#optional-tags
+// describes which tags are omittable. The spec for tbody and colgroup
+// explains this behavior:
+//
+// http://www.whatwg.org/specs/web-apps/current-work/multipage/tables.html#the-tbody-element
+// http://www.whatwg.org/specs/web-apps/current-work/multipage/tables.html#the-colgroup-element
+//
+
+var omittedStartTagChildTest = /<([\w:]+)/;
+function detectOmittedStartTag(string, contextualElement){
+  // Omitted start tags are only inside table tags.
+  if (contextualElement.tagName === 'TABLE') {
+    var omittedStartTagChildMatch = omittedStartTagChildTest.exec(string);
+    if (omittedStartTagChildMatch) {
+      var omittedStartTagChild = omittedStartTagChildMatch[1];
+      // It is already asserted that the contextual element is a table
+      // and not the proper start tag. Just see if a tag was omitted.
+      return omittedStartTagChild === 'tr' ||
+             omittedStartTagChild === 'col';
+    }
+  }
+}
+
+function buildSVGDOM(html, dom){
+  var div = dom.document.createElement('div');
+  div.innerHTML = '<svg>'+html+'</svg>';
+  return div.firstChild.childNodes;
+}
 
 /*
  * A class wrapping DOM functions to address environment compatibility,
@@ -36,29 +101,58 @@ var ignoresCheckedAttribute = (function(){
  */
 function DOMHelper(_document){
   this.document = _document || window.document;
+  this.namespace = null;
 }
 
 var prototype = DOMHelper.prototype;
 prototype.constructor = DOMHelper;
 
+prototype.insertBefore = function(element, childElement, referenceChild) {
+  return element.insertBefore(childElement, referenceChild);
+};
+
 prototype.appendChild = function(element, childElement) {
-  element.appendChild(childElement);
+  return element.appendChild(childElement);
 };
 
 prototype.appendText = function(element, text) {
-  element.appendChild(this.document.createTextNode(text));
+  return element.appendChild(this.document.createTextNode(text));
 };
 
 prototype.setAttribute = function(element, name, value) {
   element.setAttribute(name, value);
 };
 
-prototype.createElement = function(tagName) {
-  if (this.namespaceURI) {
-    return this.document.createElementNS(this.namespaceURI, tagName);
-  } else {
+if (document.createElementNS) {
+  // Only opt into namespace detection if a contextualElement
+  // is passed.
+  prototype.createElement = function(tagName, contextualElement) {
+    var namespace = this.namespace;
+    if (contextualElement) {
+      if (tagName === 'svg') {
+        namespace = svgNamespace;
+      } else {
+        namespace = interiorNamespace(contextualElement);
+      }
+    }
+    if (namespace) {
+      return this.document.createElementNS(namespace, tagName);
+    } else {
+      return this.document.createElement(tagName);
+    }
+  };
+} else {
+  prototype.createElement = function(tagName) {
     return this.document.createElement(tagName);
-  }
+  };
+}
+
+prototype.setNamespace = function(ns) {
+  this.namespace = ns;
+};
+
+prototype.detectNamespace = function(element) {
+  this.namespace = interiorNamespace(element);
 };
 
 prototype.createDocumentFragment = function(){
@@ -72,7 +166,7 @@ prototype.createTextNode = function(text){
 prototype.repairClonedNode = function(element, blankChildTextNodes, isChecked){
   if (deletesBlankTextNodes && blankChildTextNodes.length > 0) {
     for (var i=0, len=blankChildTextNodes.length;i<len;i++){
-      var textNode = document.createTextNode(emptyString),
+      var textNode = this.document.createTextNode(''),
           offset = blankChildTextNodes[i],
           before = element.childNodes[offset];
       if (before) {
@@ -93,11 +187,8 @@ prototype.cloneNode = function(element, deep){
 };
 
 prototype.createMorph = function(parent, start, end, contextualElement){
-  if (!contextualElement && parent.nodeType === Node.ELEMENT_NODE) {
+  if (!contextualElement && parent.nodeType === 1) {
     contextualElement = parent;
-  }
-  if (!contextualElement) {
-    contextualElement = this.document.body;
   }
   return new Morph(parent, start, end, this, contextualElement);
 };
@@ -111,10 +202,42 @@ prototype.createMorphAt = function(parent, startIndex, endIndex, contextualEleme
   return this.createMorph(parent, start, end, contextualElement);
 };
 
-prototype.parseHTML = function(html, contextualElement){
-  var element = this.cloneNode(contextualElement, false);
-  element.innerHTML = html;
-  return element.childNodes;
+prototype.insertMorphBefore = function(element, referenceChild, contextualElement) {
+  var start = this.document.createTextNode('');
+  var end = this.document.createTextNode('');
+  element.insertBefore(start, referenceChild);
+  element.insertBefore(end, referenceChild);
+  return this.createMorph(element, start, end, contextualElement);
+};
+
+prototype.appendMorph = function(element, contextualElement) {
+  var start = this.document.createTextNode('');
+  var end = this.document.createTextNode('');
+  element.appendChild(start);
+  element.appendChild(end);
+  return this.createMorph(element, start, end, contextualElement);
+};
+
+prototype.parseHTML = function(html, contextualElement) {
+  var isSVGContent = (
+    isSVG(this.namespace) &&
+    !svgHTMLIntegrationPoints[contextualElement.tagName]
+  );
+
+  if (isSVGContent) {
+    return buildSVGDOM(html, this);
+  } else {
+    var nodes = buildHTMLDOM(html, contextualElement, this);
+    if (detectOmittedStartTag(html, contextualElement)) {
+      var node = nodes[0];
+      while (node && node.nodeType !== 1) {
+        node = node.nextSibling;
+      }
+      return node.childNodes;
+    } else {
+      return nodes;
+    }
+  }
 };
 
 exports["default"] = DOMHelper;

@@ -3,7 +3,7 @@
     <style>
     </style>
 
-    <input class="edit" value="{{value}}" type="text" {{on 'blur' 'doneEditing'}} {{on 'keyup' 'inputModified'}}>
+    <input class="edit" value="{{value}}" type="text"  {{on 'keyup' 'inputModified'}} {{on 'focusout' 'doneEditing'}}>
 
   </template>
   <script>
@@ -15,15 +15,16 @@
         this.oldValue = this.get('value');
       },
       attachedCallback: function(event){
-        this.$('input.edit').focus();
+        this.el.querySelector('input.edit').focus();
       },
       detachedCallback: function(){
-        console.log('removed!', this.el);
+
       },
       doneEditing: function(event){
         this.set('editing', false);
       },
       inputModified: function(event){
+
         // If enter
         if(event.keyCode == 13)
           this.doneEditing(event);

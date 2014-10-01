@@ -36,7 +36,7 @@ env.notify = function(obj, path) {
 
   // For each path, alert each observer and call its callback
   _.each(path, function(path){
-    if(_.isArray(obj.__observers[path])){
+    if(obj.__observers && _.isArray(obj.__observers[path])){
       _.each(obj.__observers[path], function(callback, index) {
         if(callback){ callback(); }
         else{ delete obj.__observers[path][index]; }

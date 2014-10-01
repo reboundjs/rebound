@@ -1,4 +1,5 @@
 import LazyValue from "rebound-runtime/lazy-value";
+import utils from "rebound-runtime/utils";
 
 var helpers = {},
     partials = {};
@@ -15,6 +16,8 @@ helpers.lookupHelper = function(name, env, path) {
   env = env || {};
   path = path || '';
 
+  name = name.split(/(?:\.|\[|\])+/)[0];
+
   // If a reserved helpers, return it
   if(name === 'attribute') { return this.attribute; }
   if(name === 'if') { return this.if; }
@@ -27,7 +30,7 @@ helpers.lookupHelper = function(name, env, path) {
   if(name === 'concat') { return this.concat; }
 
   // If not a reserved helper, check env, then global helpers, else return false
-  return (env.helpers && env.helpers[path + '.' + name]) || helpers[name] || false;
+  return (env.helpers && env.helpers[((path) ? path + '.' : '') + name]) || helpers[name] || false;
 };
 
 helpers.registerHelper = function(name, callback, params){
@@ -56,22 +59,26 @@ helpers.registerHelper = function(name, callback, params){
 ********************************/
 
 helpers.on = function(params, hash, options, env){
-  var id = $(options.element).attr('data-event') || _.uniqueId('event'),
+  var id = options.element.getAttribute('data-event') || _.uniqueId('event'),
       i, callback,
+      root = this,
       len = params.length,
-      delegate = hash.selector || '[data-event='+id+']',
       data = hash.data && hash.data.isLazyValue && hash.data.value() || hash.data || options.context;
 
   // Set our element's data-event id
-  $(options.element).attr('data-event', id);
+  options.element.setAttribute('data-event', id);
+
+  // Find our root component
+  while(root.__parent){
+    root = root.__parent;
+  }
 
   // Make sure we only attach once for each combination of delagate selector and callback
   for(i = 1; i<len; i++){
     callback = params[i];
-    $(env.dom.document).on(params[0], delegate, data, function(event){
+    utils.addEventListener(root.el, params[0], options.element, data, function(event){
       return options.helpers.__callOnComponent(callback, event);
     });
-    // this.outlet.off(eventName, delegate, this[params[i]]).on(eventName, delegate, data, this[params[i]]);
   }
 };
 
@@ -101,7 +108,11 @@ helpers.attribute = function(params, hash, options, env) {
     if(!options.lazyValue.eventsBound){
 
       // If a submit action has been set
-      $(options.element).on('input propertychange', options.context, function(event){
+      utils.addEventListener(options.element, 'input', function(event){
+        options.context.set(options.params[1].path, this.value);
+      });
+
+      utils.addEventListener(options.element, 'propertychange', function(event){
         options.context.set(options.params[1].path, this.value);
       });
 
@@ -115,8 +126,8 @@ helpers.attribute = function(params, hash, options, env) {
 
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.eventsBound){
-      $(options.element).on('change', function(){
-        options.context.set(options.params[1].path, this.checked);
+      utils.addEventListener(options.element, 'change', function(event){
+        options.context.set(options.params[1].path, ((this.checked) ? true : false));
       });
 
       options.lazyValue.eventsBound = true;
@@ -138,7 +149,7 @@ helpers.if = function(params, hash, options, env){
   }
 
   // If our condition is an array, handle properly
-  if(_.isArray(condition) || Backbone && condition.isCollection){
+  if(_.isArray(condition) || condition.isCollection){
     condition = condition.length ? true : false;
   }
 
@@ -152,17 +163,17 @@ helpers.if = function(params, hash, options, env){
 
   // Check our cache. If the value hasn't actually changed, don't evaluate. Important for re-rendering of #each helpers.
   if(options.placeholder.__ifCache === condition){
-    return undefined;
+    return null; // Return null prevent's re-rending of our placeholder.
   }
 
   options.placeholder.__ifCache = condition;
 
   // Render the apropreate block statement
   if(condition && typeof options.render === 'function'){
-    return options.render(options.context, options);
+    return options.render(options.context, options, options.morph.element);
   }
   else if(!condition && typeof options.inverse === 'function'){
-    return options.inverse(options.context, options);
+    return options.inverse(options.context, options, options.morph.element);
   }
 
   return '';
@@ -180,7 +191,7 @@ helpers.unless = function(params, hash, options, env){
   }
 
   // If our condition is an array, handle properly
-  if(_.isArray(condition) || Backbone && condition.isCollection){
+  if(_.isArray(condition) || condition.isCollection){
     condition = condition.length ? true : false;
   }
 
@@ -190,16 +201,18 @@ helpers.unless = function(params, hash, options, env){
   }
 
   // Check our cache. If the value hasn't actually changed, don't evaluate. Important for re-rendering of #each helpers.
-  if(options.placeholder.__unlessCache === condition){ return undefined; }
+  if(options.placeholder.__unlessCache === condition){
+    return null; // Return null prevent's re-rending of our placeholder.
+  }
 
   options.placeholder.__unlessCache = condition;
 
   // Render the apropreate block statement
-  if(!condition && typeof options.render === 'function'){
-    return options.render(options.context, options);
+  if(!condition &&  _.isFunction(options.render)){
+    return options.render(options.context, options, options.morph.element);
   }
-  else if(condition && typeof options.inverse === 'function'){
-    return options.inverse(options.context, options);
+  else if(condition && _.isFunction(options.inverse)){
+    return options.inverse(options.context, options, options.morph.element);
   }
 
   return '';
@@ -229,7 +242,7 @@ function findIndex(arr, predicate, cid) {
 
 helpers.each = function(params, hash, options, env){
 
-  if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', options.context); return; }
+  if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', options.context); return null; }
 
   var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
       start, end, // used below to remove trailing junk morphs from the dom
@@ -262,7 +275,7 @@ helpers.each = function(params, hash, options, env){
 
       // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
       var lazyValue = new LazyValue(function(){
-        return options.render(obj, options);
+        return options.render(obj, options, options.morph.element);
       });
 
       // If this model is rendered somewhere else in the list, destroy it
@@ -292,14 +305,15 @@ helpers.each = function(params, hash, options, env){
     options.placeholder.morphs[end].destroy();
   }
 
-  // No need for a return statement. Our placeholder (containing element) now has all the dom we need.
+  // Return null prevent's re-rending of our placeholder. Our placeholder (containing element) now has all the dom we need.
+  return null;
 
 };
 
 helpers.with = function(params, hash, options, env){
 
   // Render the content inside our block helper with the context of this object. Returns a dom tree.
-  return options.render(params[0], options);
+  return options.render(params[0], options, options.morph.element);
 
 };
 

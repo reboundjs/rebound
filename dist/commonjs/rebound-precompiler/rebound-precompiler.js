@@ -3,15 +3,39 @@ var htmlbarsCompile = require("../htmlbars-compiler/compiler").compile;
 var htmlbarsCompileSpec = require("../htmlbars-compiler/compiler").compileSpec;
 var merge = require("../htmlbars-runtime/utils").merge;
 
+function getScript(str){
+  return '(function(){' + str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2') + '})() || {}';
+}
+
+function getStyle(str){
+  return str.replace(/(.*<style>)(.*)(<\/style>.*)/ig, '$2').replace(/"/g, '\\"');
+}
+
+function getTemplate(str){
+  return str.replace(/.*<template>(.*)<\/template>.*/gi, '$1').replace(/(.*)<style>.*<\/style>(.*)/ig, '$1$2');
+}
+
+function getName(str){
+  return str.replace(/.*<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>.*/ig, '$2');
+}
+
+function minify(str){
+  return str.replace(/\s+/g, ' ').replace(/\n|(>) (<)/g, '$1$2');
+}
+
+function removeComments(str){
+  return str.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s])+\/\/(?:.*)$)/gm, '$1');
+}
+
 function precompile(str, options){
   if( !str || str.length === 0 ){
     return console.error('No template provided!');
   }
 
   // Remove comments
-  str = str.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s])+\/\/(?:.*)$)/gm, '$1');
+  str = removeComments(str);
   // Minify everything
-  str = str.replace(/\s+/g, ' ').replace(/\n|(>) (<)/g, '$1$2');
+  str = minify(str);
 
   options = options || {};
   options.baseDest = options.baseDest || '';
@@ -33,24 +57,11 @@ function precompile(str, options){
 
     isPartial = false;
 
-    name = str.replace(/.*<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>.*/ig, '$2');
+    name = getName(str);
+    style = getStyle(str);
+    template = getTemplate(str);
+    script = getScript(str);
 
-    // If the template tag exists, extract it.
-    if(str.indexOf('<template>') > -1 && str.indexOf('</template>') > -1){
-      // If style tag exists, extract it and remove it from the template
-      if(str.indexOf('<style>') > -1 && str.indexOf('</style>') > -1){
-        style = str.replace(/(.*<style>)(.*)(<\/style>.*)/ig, '$2');
-        style = style.replace(/"/g, '\\"');
-        template = str.replace(/(.*)<style>.*<\/style>(.*)/ig, '$1$2');
-      }
-      template = template.replace(/.*<template>(.*)<\/template>.*/gi, '$1');
-    }
-
-    // If script tag exists, extract it
-    if(str.indexOf('<script>') > -1 && str.indexOf('</script>') > -1){
-      script = str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2');
-      script = '(function(){' + script + '})() || {}';
-    }
   }
 
 
@@ -95,20 +106,20 @@ function precompile(str, options){
                '  var proto = Object.create(HTMLElement.prototype, {});\n' +
                '  proto.createdCallback = function(){\n' +
                     // When element is created, instantiate its associated Rebound component object
-               '    this.__template = new component({template: template, outlet: this, data: Rebound.seedData});\n' +
-               '    script.createdCallback && script.createdCallback.call(this.__template);\n' +
+               '    this.__component = new component({template: template, outlet: this, data: Rebound.seedData});\n' +
+               '    script.createdCallback && script.createdCallback.call(this.__component);\n' +
                '  }\n' +
-               '  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__template)};\n' +
+               '  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component)};\n' +
                '  proto.detachedCallback = function(){\n' +
                     // When element is removed, deinitilize its associated Rebound component object
-               '    this.__template.deinitialize();\n' +
-               '    script.detachedCallback && script.detachedCallback.call(this.__template);\n' +
+               '    this.__component.deinitialize();\n' +
+               '    script.detachedCallback && script.detachedCallback.call(this.__component);\n' +
                '    };\n' +
                '  proto.attributeChangedCallback = function(attrName, oldVal, newVal){\n' +
                '    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }\n' +
-               '    if(newVal === null){ this.__template.unset(attrName); }\n' +
-               '    else{ this.__template.set(attrName, newVal); }\n' +
-               '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__template);\n' +
+               '    if(newVal === null){ this.__component.unset(attrName); }\n' +
+               '    else{ this.__component.set(attrName, newVal); }\n' +
+               '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component);\n' +
                '  }\n' +
                '  return document.registerElement("' + name + '", {prototype: proto} );\n' +
                '})();\n';

@@ -68,8 +68,10 @@ module.exports = function(grunt) {
           src: ['**/*'],
           dest: 'tmp/htmlbars-runtime',
         },{
-          'tmp/morph/morph.js': 'bower_components/htmlbars/packages/morph/lib/morph.js',
-          'tmp/morph/dom-helper.js': 'bower_components/htmlbars/packages/morph/lib/dom-helper.js'
+          expand: true,
+          cwd: 'bower_components/htmlbars/packages/morph/lib',
+          src: ['**/*'],
+          dest: 'tmp/morph',
         },{
           expand: true,
           cwd: 'bower_components/handlebars/lib',
@@ -217,11 +219,15 @@ module.exports = function(grunt) {
           out: "dist/rebound.runtime.js",
           wrap: {
             startFile: [
-              'bower_components/WeakMap/weakmap.js',
-              'bower_components/MutationObservers/MutationObserver.js',
-              'bower_components/custom-elements/src/scope.js',
-              'bower_components/custom-elements/src/Observer.js',
-              'bower_components/custom-elements/src/CustomElements.js',
+              'shims/classList.js',
+              'shims/matchesSelector.js',
+              'shims/mutationObserver.js',
+              // 'bower_components/WeakMap/weakmap.js',
+              // 'bower_components/MutationObservers/MutationObserver.js',
+              // 'bower_components/custom-elements/src/scope.js',
+              // 'bower_components/custom-elements/src/Observer.js',
+              // 'bower_components/custom-elements/src/CustomElements.js',
+              'bower_components/document-register-element/build/document-register-element.js',
               // 'bower_components/lodash/dist/lodash.js',
               'bower_components/underscore/underscore.js',
               'bower_components/jquery/dist/jquery.js',
@@ -242,6 +248,8 @@ module.exports = function(grunt) {
           out: "dist/rebound.compiler.js",
           wrap: {
             startFile: [
+              'shims/classList.js',
+              'shims/matchesSelector.js',
               'bower_components/WeakMap/weakmap.js',
               'bower_components/MutationObservers/MutationObserver.js',
               'bower_components/custom-elements/src/scope.js',
@@ -262,16 +270,21 @@ module.exports = function(grunt) {
       runtimeMin: {
         options: {
           optimize: "uglify",
+          preserveLicenseComments: false,
           name: "rebound-runtime/rebound-runtime",
           baseUrl: "./dist/amd",
           out: "dist/rebound.runtime.min.js",
           wrap: {
             startFile: [
-              'bower_components/WeakMap/weakmap.js',
-              'bower_components/MutationObservers/MutationObserver.js',
-              'bower_components/custom-elements/src/scope.js',
-              'bower_components/custom-elements/src/Observer.js',
-              'bower_components/custom-elements/src/CustomElements.js',
+              'shims/classList.js',
+              'shims/matchesSelector.js',
+              'shims/mutationObserver.js',
+              // 'bower_components/WeakMap/weakmap.js',
+              // 'bower_components/MutationObservers/MutationObserver.js',
+              // 'bower_components/custom-elements/src/scope.js',
+              // 'bower_components/custom-elements/src/Observer.js',
+              // 'bower_components/custom-elements/src/CustomElements.js',
+              'bower_components/document-register-element/build/document-register-element.js',
               // 'bower_components/lodash/dist/lodash.js',
               'bower_components/underscore/underscore.js',
               'bower_components/jquery/dist/jquery.js',
@@ -284,14 +297,51 @@ module.exports = function(grunt) {
           },
         }
       },
+      runtimeProd: {
+        options: {
+          optimize: "uglify",
+          preserveLicenseComments: false,
+          uglify: {
+            beautify: false,
+            no_mangle: false
+          },
+          name: "rebound-runtime/rebound-runtime",
+          baseUrl: "./dist/amd",
+          out: "dist/rebound.runtime.prod.js",
+          wrap: {
+            startFile: [
+              'shims/classList.js',
+              'shims/matchesSelector.js',
+              'shims/mutationObserver.js',
+              // 'bower_components/WeakMap/weakmap.js',
+              // 'bower_components/MutationObservers/MutationObserver.js',
+              // 'bower_components/custom-elements/src/scope.js',
+              // 'bower_components/custom-elements/src/Observer.js',
+              // 'bower_components/custom-elements/src/CustomElements.js',
+              'bower_components/document-register-element/build/document-register-element.js',
+              // 'bower_components/lodash/dist/lodash.js',
+              'bower_components/underscore/underscore.js',
+              'bower_components/jquery/dist/jquery.js',
+              'bower_components/backbone/backbone.js',
+              'bower_components/almond/almond.js',
+              // 'bower_components/requirejs/require.js',
+              'wrap/start.frag'
+            ],
+            endFile: ["wrap/end.runtime.frag"]
+          },
+        }
+      },
       compilerMin: {
         options: {
           optimize: "uglify",
+          preserveLicenseComments: false,
           name: "rebound-compiler/rebound-compiler",
           baseUrl: "./dist/amd",
           out: "dist/rebound.compiler.min.js",
           wrap: {
             startFile: [
+              'shims/classList.js',
+              'shims/matchesSelector.js',
               'bower_components/WeakMap/weakmap.js',
               'bower_components/MutationObservers/MutationObserver.js',
               'bower_components/custom-elements/src/scope.js',
@@ -369,7 +419,8 @@ module.exports = function(grunt) {
     'requirejs:runtime',
     'requirejs:runtimeMin',
     'requirejs:compiler',
-    'requirejs:compilerMin'
+    // 'requirejs:compilerMin',
+    // 'requirejs:runtimeProd'
   ]);
 
   // TODO: generate our cjs runtime deps off of htmlbars'

@@ -1,6 +1,7 @@
 "use strict";
 var TemplateVisitor = require("./template_visitor")["default"];
 var processOpcodes = require("./utils").processOpcodes;
+var forEach = require("../utils").forEach;
 
 function FragmentOpcodeCompiler() {
   this.opcodes = [];
@@ -26,7 +27,7 @@ FragmentOpcodeCompiler.prototype.text = function(text, childIndex, childCount, i
 
 FragmentOpcodeCompiler.prototype.openElement = function(element) {
   this.opcode('createElement', [element.tag]);
-  element.attributes.forEach(this.attribute, this);
+  forEach(element.attributes, this.attribute, this);
 };
 
 FragmentOpcodeCompiler.prototype.closeElement = function(element, childIndex, childCount, isSingleRoot) {
@@ -54,6 +55,10 @@ FragmentOpcodeCompiler.prototype.attribute = function(attr) {
   if (attr.value.type === 'text') {
     this.opcode('setAttribute', [attr.name, attr.value.chars]);
   }
+};
+
+FragmentOpcodeCompiler.prototype.setNamespace = function(namespace) {
+  this.opcode('setNamespace', [namespace]);
 };
 
 exports.FragmentOpcodeCompiler = FragmentOpcodeCompiler;

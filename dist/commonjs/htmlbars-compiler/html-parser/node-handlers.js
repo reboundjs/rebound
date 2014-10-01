@@ -7,6 +7,7 @@ var appendChild = require("../ast").appendChild;
 var usesMorph = require("../ast").usesMorph;
 var postprocessProgram = require("../html-parser/helpers").postprocessProgram;
 var Chars = require("../html-parser/tokens").Chars;
+var forEach = require("../utils").forEach;
 
 var nodeHandlers = {
 
@@ -58,9 +59,7 @@ var nodeHandlers = {
   content: function(content) {
     var tokens = this.tokenizer.tokenizePart(content.string);
 
-    return tokens.forEach(function(token) {
-      this.acceptToken(token);
-    }, this);
+    return forEach(tokens, this.acceptToken, this);
   },
 
   mustache: function(mustache) {

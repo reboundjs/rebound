@@ -189,7 +189,9 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
 
       template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
+
       partial = compiler.compile('{{partial "test/partial"}}', 'test');
+
       data = {foo:'bar', bar:'foo', bool: false};
       dom = partial(data);
       data.foo = 'foo';

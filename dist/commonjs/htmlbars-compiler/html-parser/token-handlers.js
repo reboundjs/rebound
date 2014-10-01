@@ -1,10 +1,11 @@
 "use strict";
-var ProgramNode = require("../../htmlbars-compiler/ast").ProgramNode;
-var ComponentNode = require("../../htmlbars-compiler/ast").ComponentNode;
-var ElementNode = require("../../htmlbars-compiler/ast").ElementNode;
-var TextNode = require("../../htmlbars-compiler/ast").TextNode;
-var appendChild = require("../../htmlbars-compiler/ast").appendChild;
-var postprocessProgram = require("../../htmlbars-compiler/html-parser/helpers").postprocessProgram;
+var ProgramNode = require("../ast").ProgramNode;
+var ComponentNode = require("../ast").ComponentNode;
+var ElementNode = require("../ast").ElementNode;
+var TextNode = require("../ast").TextNode;
+var appendChild = require("../ast").appendChild;
+var postprocessProgram = require("./helpers").postprocessProgram;
+var forEach = require("../utils").forEach;
 
 // This table maps from the state names in the tokenizer to a smaller
 // number of states that control how mustaches are handled
@@ -23,13 +24,13 @@ var states = {
 var voidTagNames = "area base br col command embed hr img input keygen link meta param source track wbr";
 var voidMap = {};
 
-voidTagNames.split(" ").forEach(function(tagName) {
+forEach(voidTagNames.split(" "), function(tagName) {
   voidMap[tagName] = true;
 });
 
 var svgNamespace = "http://www.w3.org/2000/svg",
     // http://www.w3.org/html/wg/drafts/html/master/syntax.html#html-integration-point
-    svgHTMLIntegrationPoints = ['foreignObject', 'desc', 'title'];
+    svgHTMLIntegrationPoints = {'foreignObject':true, 'desc':true, 'title':true};
 
 function applyNamespace(tag, element, currentElement){
   if (tag.tagName === 'svg') {
@@ -44,7 +45,7 @@ function applyNamespace(tag, element, currentElement){
 }
 
 function applyHTMLIntegrationPoint(tag, element){
-  if (svgHTMLIntegrationPoints.indexOf(tag.tagName) !== -1) {
+  if (svgHTMLIntegrationPoints[tag.tagName]) {
     element.isHTMLIntegrationPoint = true;
   }
 }

@@ -13,31 +13,31 @@ var hooks = {};
 // Given a model and a path return the raw value at that path
 function getRaw(context, path) {
   // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
-  var parts  = {},
-      result = {};
-
-  // Split the path at all '.', '[' and ']' and find the value referanced.
-  parts = _.compact(path.split(/(?:\.|\[|\])+/));
-  // If no path, return current object, otherwise get value of the path
-  result = context;
+  var parts  = _.compact(path.split(/(?:\.|\[|\])+/)), // Split the path at all '.', '[' and ']' and find the value referanced.
+      result = context;
 
   if (parts.length > 0) {
     for (var i = 0, l = parts.length; i < l; i++) {
-      if(_.isFunction(result)){
-        result = result();
+
+      if(_.isUndefined(result) || _.isNull(result)){
+        return result;
       }
-      else if(result.isCollection){
+
+      if(_.isFunction(result)){
+        result = result.call(context);
+      }
+
+      if(result.isCollection){
         result = result.models[parts[i]];
       }
       else if(result.isModel){
         result = result.attributes[parts[i]];
       }
-      else if(result && result[parts[i]]){
+      else if(result && result.hasOwnProperty(parts[i])){
         result = result[parts[i]];
       }
-      else{
-        result = '';
-      }
+
+
     }
   }
 
@@ -116,10 +116,10 @@ function addComputedPropertyObservers(lazyValue, helper, context, morph){
   }
 }
 
-function streamComputedProperty(context, path, morph, options ){
+function streamComputedProperty(context, path, morph, options){
 
   // Our raw computed property function
-  var helper = getRaw(context, path),
+  var helper = getRaw(context, path);
 
   // New lazy value calls each of this computed property's observers and returns its value
   lazyValue = new LazyValue(function() {
@@ -164,7 +164,7 @@ function streamStaticProperty(context, path, morph, options) {
   return lazyValue;
 }
 
-function streamifyArgs(context, params, options, helpers) {
+function streamifyArgs(context, params, options, helper) {
   // Convert ID params to streams
   var morph = options.placeholder || options.element || true;
 
@@ -202,7 +202,7 @@ function constructHelper(el, path, context, params, options, env, helper) {
   options.element = el && el.tagName && el || false;      // FIXME: this kinda sucks
 
   // For each argument passed to our helper, turn them into LazyValues. Params array is now an array of lazy values that will trigger when their value changes.
-  streamifyArgs(context, params, options, env.helpers);
+  streamifyArgs(context, params, options, helper);
 
   // Extend options with hooks and helpers for any subsequent calls from a lazyvalue
   options.params = params;                                 // FIXME: this kinda sucks
@@ -217,7 +217,11 @@ function constructHelper(el, path, context, params, options, env, helper) {
     var len = params.length,
         i,
         plainParams = [],
-        plainHash = [];
+        plainHash = [],
+        result,
+        relpath = path.split(/(?:\.|\[|\])+/);
+        relpath.shift();
+        relpath = relpath.join('.');
 
     // Assemble our args and hash variables. For each lazyvalue param, push the lazyValue's value so helpers with no concept of lazyvalues.
     for(i=0; i<len; i++){
@@ -229,7 +233,9 @@ function constructHelper(el, path, context, params, options, env, helper) {
     });
 
     // Call our helper functions with our assembled args.
-    return helper.apply(context, [plainParams, plainHash, options, env]);
+    result = helper.apply(context, [plainParams, plainHash, options, env]);
+
+    return get(result, relpath);
   });
 
   options.lazyValue.path = path;
@@ -302,11 +308,15 @@ hooks.content = function(placeholder, path, context, params, options, env) {
   if (lazyValue) {
     lazyValue.onNotify(function(lazyValue) {
       var val = lazyValue.value();
-      if(val !== undefined){ placeholder.update(val); }
+      value = (_.isUndefined(val)) ? '' : val;
+      if(!_.isNull(val)){
+        placeholder.update(val);
+      }
     });
 
     value = lazyValue.value();
-    if(value !== undefined){ placeholder.append(value); }
+    value = (_.isUndefined(value)) ? '' : value;
+    if(!_.isNull(value)){ placeholder.append(value); }
 
     // Observe this content morph's parent's children.
     // When the morph element's containing element (placeholder) is removed, clean up the lazyvalue.
@@ -378,7 +388,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
     Rebound.seedData = data;
     element = document.createElement(path);
     Rebound.seedData = {};
-    component = element.__template;
+    component = element.__component;
 
     // For each param passed to our shared component, create a new lazyValue
     _.each(data, function(value, key) {

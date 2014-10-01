@@ -49,3 +49,7 @@ FragmentCompiler.prototype.appendChild = function() {
   var el = 'el'+this.depth;
   this.source.push(this.indent+'  dom.appendChild('+el+', '+child+');\n');
 };
+
+FragmentCompiler.prototype.setNamespace = function(namespace) {
+  this.source.push(this.indent+'  dom.setNamespace('+(namespace ? string(namespace) : 'null')+');\n');
+};

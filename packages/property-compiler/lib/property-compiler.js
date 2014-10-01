@@ -22,6 +22,7 @@ function compile(){
         root,
         paths = [],
         path,
+        tmpPath,
         attrs = [],
         workingpath = [],
         terminators = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '&&', '||'];
@@ -37,17 +38,20 @@ function compile(){
       // TODO: handle gets on collections
       if(token.value === 'get'){
         path = nextToken();
-        while(!path.value){
+        while(_.isUndefined(path.value)){
           path = nextToken();
         }
-        workingpath.push(path.value);
+
+        // Replace any access to a collection with the generic @each placeholder and push dependancy
+        workingpath.push(path.value.replace(/\[.+\]/g, ".@each").replace(/^\./, ''));
       }
 
       if(token.value === 'pluck'){
         path = nextToken();
-        while(!path.value){
+        while(_.isUndefined(path.value)){
           path = nextToken();
         }
+
         workingpath.push('@each.' + path.value);
       }
 
@@ -57,13 +61,15 @@ function compile(){
       }
 
       if(token.value === 'at'){
-        // workingpath.push('@each');
+
         path = nextToken();
-        while(!path.value){
+        while(_.isUndefined(path.value)){
           path = nextToken();
         }
         // workingpath[workingpath.length -1] = workingpath[workingpath.length -1] + '[' + path.value + ']';
-        workingpath.push('[' + path.value + ']');
+        // workingpath.push('[' + path.value + ']');
+        workingpath.push('@each');
+
       }
 
       if(token.value === 'where' || token.value === 'findWhere'){
@@ -107,7 +113,7 @@ function compile(){
     prop.val.__params = finishedPaths;
 
     // Add it to our output
-    output[prop.path + '.' + prop.key] = prop.val;
+    output[(prop.path ? prop.path + '.' : '') + prop.key] = prop.val;
 
   });
 

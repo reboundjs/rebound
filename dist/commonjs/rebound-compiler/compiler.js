@@ -23,7 +23,7 @@ function compile(string, options){
   });
 
   // Return a wrapper function that will merge user provided helpers with our defaults
-  var template = function(data, env){
+  var template = function(data, env, context){
     // Ensure we have a well-formed object as var options
     env = env || {};
     env.helpers = env.helpers || {};
@@ -34,8 +34,11 @@ function compile(string, options){
     env.helpers = merge(helpers, env.helpers);
     env.hooks = merge(hooks, env.hooks);
 
+    // Set a default context if it doesn't exist
+    context = context || document.body;
+
     // Call our func with merged helpers and hooks
-    return func.call(this, data, env);
+    return func.call(this, data, env, context);
   };
 
   helpers.registerPartial( options.name, template);

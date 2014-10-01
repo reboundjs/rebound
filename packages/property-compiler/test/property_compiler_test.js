@@ -46,7 +46,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       };
       compiler.register({}, 'key', func, 'path');
       res = compiler.compile();
-      deepEqual( res['path.key'].__params, ['[1]'], 'Property Compiler returns proper dependancy for root level at()' );
+      deepEqual( res['path.key'].__params, ['@each'], 'Property Compiler returns proper dependancy for root level at()' );
 
 
 
@@ -55,7 +55,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       };
       compiler.register({}, 'key', func, 'path');
       res = compiler.compile();
-      deepEqual( res['path.key'].__params, ['test[1].more'], 'Property Compiler returns proper dependancy for get including array referance' );
+      deepEqual( res['path.key'].__params, ['test.@each.more'], 'Property Compiler returns proper dependancy for get including array referance' );
 
 
 
@@ -64,7 +64,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       };
       compiler.register({}, 'key', func, 'path');
       res = compiler.compile();
-      deepEqual( res['path.key'].__params, ['test.more[1].again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
+      deepEqual( res['path.key'].__params, ['test.more.@each.again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
 
 
 
@@ -73,7 +73,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       };
       compiler.register({}, 'key', func, 'path');
       res = compiler.compile();
-      deepEqual( res['path.key'].__params, ['test.more[1].again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
+      deepEqual( res['path.key'].__params, ['test.more.@each.again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
 
 
 

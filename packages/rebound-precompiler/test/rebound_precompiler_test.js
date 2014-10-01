@@ -1,4 +1,4 @@
-require(['rebound-precompiler/rebound-precompiler', 'simple-html-tokenizer'], function(compiler, tokenizer){
+require(['rebound-precompiler/rebound-precompiler'], function(compiler){
 
     function equalTokens(fragment, html) {
       var div = document.createElement("div");
@@ -31,10 +31,29 @@ require(['rebound-precompiler/rebound-precompiler', 'simple-html-tokenizer'], fu
 
     QUnit.test('Rebound Precompiler', function() {
 
-      var dom = compiler.precompile('<div></div>', {name: 'test/filepath'}).replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," "),
-          expected = 'define( [], function(){ (function(){var template = (function() { function build(dom) { var el0 = dom.createElement("div"); return el0; } var cachedFragment; return function template(context, env, contextualElement) { var dom = env.dom, hooks = env.hooks; if (cachedFragment === undefined) { cachedFragment = build(dom); } var fragment = dom.cloneNode(cachedFragment, true); return fragment; }; }()); window.Rebound.registerPartial( "test/filepath", template);})(); });';
+      var out, exp;
 
-      equal(dom, expected, 'Pre-compiler can handle partials');
+      out = compiler.precompile('<div></div>', {name: 'test/filepath'}).replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," ");
+      exp = 'define( [], function(){ (function(){var template = (function() { function build(dom) { var el0 = dom.createElement("div"); return el0; } var cachedFragment; return function template(context, env, contextualElement) { var dom = env.dom, hooks = env.hooks; dom.detectNamespace(contextualElement); if (cachedFragment === undefined) { cachedFragment = build(dom); } var fragment = dom.cloneNode(cachedFragment, true); return fragment; }; }()); window.Rebound.registerPartial( "test/filepath", template);})(); });';
+
+      equal(out, exp, 'Pre-compiler can handle partials');
+
+
+
+      out = compiler.precompile(
+        '<element name="test-element">\n'         +
+        '  <template>\n'      +
+        '    <style>\n'       +
+        '      .test{}\n'     +
+        '    </style>\n'      +
+        '    Test\n'          +
+        '  </template>\n'     +
+        '  <script>\n'        +
+        '    alert(0)\n'      +
+        '  </script>\n'       +
+        '</element>\n');
+      exp = 'define( [], function(){ (function(){var template = (function() { function build(dom) { var el0 = dom.createElement("div"); return el0; } var cachedFragment; return function template(context, env, contextualElement) { var dom = env.dom, hooks = env.hooks; if (cachedFragment === undefined) { cachedFragment = build(dom); } var fragment = dom.cloneNode(cachedFragment, true); return fragment; }; }()); window.Rebound.registerPartial( "test/filepath", template);})(); });';
+
 
     });
 
