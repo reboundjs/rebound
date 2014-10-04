@@ -58,7 +58,7 @@ You can include Rebound on your page like this:
 ```js
 <script src="/javascripts/lib/rebound.runtime.js" id="Rebound">
 {
-  "appContext": "/",
+  "root": "/",
   "globalComponents": {"chrome" : "nav"},
   "jsPrefix": "/javascripts/apps/:route/",
   "jsSuffix": "",
@@ -75,7 +75,7 @@ Because the Rebound script tag contains a src, nothing inside it gets executed, 
 
 ##### Config Options
 
- - __appContext__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
+ - __root__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
  - __globalComponents__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
  - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
  - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
