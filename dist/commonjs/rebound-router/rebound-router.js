@@ -1,6 +1,5 @@
 "use strict";
-var utils = require("rebound-runtime/utils")["default"];
-
+var $ = require("rebound-runtime/utils")["default"];
 
 // If Rebound Runtime has already been run, throw error
 if(Rebound.Router){ throw 'Rebound is already loaded on the page!'; }
@@ -11,7 +10,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
   // Clean up old page component and load routes from our new page component
   function installResources(PageApp, primaryRoute, isGlobal) {
-    var oldPageName, pageInstance, container;
+    var oldPageName, pageInstance, container, router = this;
 
     // De-initialize the previous app before rendering a new app
     // This way we can ensure that every new page starts with a clean slate
@@ -22,13 +21,13 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       // Unset Previous Application's Routes. For each route in the page app:
       _.each(this.current.__component.routes, function (value, key) {
 
-        var regExp = this._routeToRegExp(key).toString();
+        var regExp = router._routeToRegExp(key).toString();
 
         // Remove the handler from our route object
         Backbone.history.handlers = _.filter(Backbone.history.handlers, function(obj){return obj.route.toString() !== regExp;});
 
         // Delete our referance to the route's callback
-        delete this[ '_function_' + key ];
+        delete router[ '_function_' + key ];
 
       });
 
@@ -59,9 +58,9 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       var routeFunctionName = '_function_' + key,
           functionName;
       // Add the new callback referance on to our router
-      this[routeFunctionName] =  function () { pageInstance.__component[value].apply(pageInstance.__component, arguments); };
+      router[routeFunctionName] =  function () { pageInstance.__component[value].apply(pageInstance.__component, arguments); };
       // Add the route handler
-      this.route(key, value, this[routeFunctionName]);
+      router.route(key, value, this[routeFunctionName]);
     }, this);
 
     if(!isGlobal){
@@ -93,7 +92,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         cssElement.setAttribute('href', cssUrl);
         cssElement.setAttribute('id', primaryRoute + '-css');
         document.head.appendChild(cssElement);
-        utils.addEventListener(cssElement, 'load', function(event){
+        $(cssElement).on('load', function(event){
             if((cssLoaded = true) && jsLoaded){
               // Install The Loaded Resources
               installResources.call(router, PageApp, primaryRoute, isGlobal);
@@ -123,7 +122,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
           jsElement.setAttribute('src', '/'+jsUrl+'.js');
           jsElement.setAttribute('id', primaryRoute + '-js');
           document.head.appendChild(jsElement);
-          utils.addEventListener(jsElement, 'load', function(event){
+          $(jsElement).on('load', function(event){
             // AMD Will Manage Dependancies For Us. Load The App.
             require([jsUrl], function(PageClass){
 
@@ -187,7 +186,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       var primaryRoute = (route) ? route.split('/')[0] : '';
 
       // Use Any Custom Route Mappings
-      _.find(this.config.handlers, function(handler) {
+      _.any(this.config.handlers, function(handler) {
         if (handler.route.test(route)) {
           primaryRoute = handler.primaryRoute;
           return true;
@@ -216,12 +215,13 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       // Convert our routeMappings to regexps and push to our handlers
       _.each(this.config.routeMapping, function(value, route){
-        if (!_.isRegExp(route)) route = this._routeToRegExp(route);
-        this.config.handlers.unshift({ route: route, primaryRoute: value });
+        if (!_.isRegExp(route)) route = router._routeToRegExp(route);
+        router.config.handlers.unshift({ route: route, primaryRoute: value });
       }, this);
 
       // Navigate to route for any link with a relative href
-      utils.addEventListener(document, 'click', 'a', function(e){
+      $(document).on('click', 'a', function(e){
+
         var path = e.target.getAttribute('href');
 
         // If path is not an absolute url, or blank, try and navigate to that route.

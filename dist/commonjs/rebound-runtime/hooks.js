@@ -1,6 +1,6 @@
 "use strict";
 var LazyValue = require("rebound-runtime/lazy-value")["default"];
-var util = require("rebound-runtime/utils")["default"];
+var $ = require("rebound-runtime/utils")["default"];
 var helpers = require("rebound-runtime/helpers")["default"];
 
 var hooks = {};
@@ -267,7 +267,7 @@ function cleanSubtree(mutations, observer){
   mutations.forEach(function(mutation) {
     if(mutation.removedNodes){
       _.each(mutation.removedNodes, function(node, index){
-        util.walkTheDOM(node, function(n){
+        $(node).walkTheDOM(function(n){
           if(n.__lazyValue && n.__lazyValue.destroy()){
             n.__lazyValue.destroy();
           }
@@ -370,6 +370,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
 
   var component,
       element,
+      outlet,
       data = {},
       lazyData = {},
       lazyValue;
@@ -511,6 +512,12 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
     End data dependancy chain
 
   *******************************************************/
+
+    // If an outlet marker is present in component's template, and options.render is a function, render it into <content>
+    outlet = element.getElementsByTagName('content')[0];
+    if(_.isFunction(options.render) && _.isElement(outlet)){
+      outlet.appendChild(options.render(options.context, env, outlet));
+    }
 
     // Return the new element.
     return element;

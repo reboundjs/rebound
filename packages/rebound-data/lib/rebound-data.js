@@ -1,5 +1,7 @@
 import Model from "rebound-data/model";
 import Collection from "rebound-data/collection";
+import $ from "rebound-runtime/utils";
+
 
 /**
  * Deinitializes the current class and subclasses associated with it
@@ -24,6 +26,17 @@ Collection.prototype.deinitialize = function () {
   // unbind events
   if (this.off) {
     this.off();
+  }
+
+  // if data has a dom element associated with it, remove all dom events
+  if(this.el && this.el.__events){
+    _.each(this.el.__events, function(callbacks, eventType){
+      _.each(callbacks, function(callback){
+        $(this.el).off(eventType, callback);
+      }, this);
+      this.el.__events[eventType].length = 0;
+    }, this);
+    delete this.el.__events;
   }
 
   // mark it as deinitialized

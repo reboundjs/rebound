@@ -18,7 +18,7 @@
 						{{#each filteredTodos}}
 							<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 								{{#if editing}}
-		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}}>asdf</edit-todo>
+		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}}></edit-todo>
 								{{else}}
 									<input type="checkbox" class="toggle" checked="{{isCompleted}}">
 									<label {{on "dblclick" "editTodo" }}>{{title}}</label>
@@ -157,7 +157,7 @@
 			this.get('todos').remove(event.data);
 		},
 		editTodo: function(event){
-			event.data.set('editing', true);
+			event.data.set('editing', true); // Event.data by default is the context the element was rendered in
 		},
 		filterList: function(filter){
 			this.set('filter', filter)

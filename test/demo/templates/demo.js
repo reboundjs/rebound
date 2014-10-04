@@ -6,7 +6,7 @@ return (function(){
       var child0 = (function() {
         var child0 = (function() {
           function build(dom) {
-            var el0 = dom.createTextNode("asdf");
+            var el0 = dom.createDocumentFragment();
             return el0;
           }
           var cachedFragment;

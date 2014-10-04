@@ -1,6 +1,7 @@
 "use strict";
 var LazyValue = require("rebound-runtime/lazy-value")["default"];
-var utils = require("rebound-runtime/utils")["default"];
+var $ = require("rebound-runtime/utils")["default"];
+
 
 var helpers = {},
     partials = {};
@@ -77,7 +78,7 @@ helpers.on = function(params, hash, options, env){
   // Make sure we only attach once for each combination of delagate selector and callback
   for(i = 1; i<len; i++){
     callback = params[i];
-    utils.addEventListener(root.el, params[0], options.element, data, function(event){
+    $(root.el).on(params[0], options.element, data, function(event){
       return options.helpers.__callOnComponent(callback, event);
     });
   }
@@ -109,11 +110,11 @@ helpers.attribute = function(params, hash, options, env) {
     if(!options.lazyValue.eventsBound){
 
       // If a submit action has been set
-      utils.addEventListener(options.element, 'input', function(event){
+      $(options.element).on('input', function(event){
         options.context.set(options.params[1].path, this.value);
       });
 
-      utils.addEventListener(options.element, 'propertychange', function(event){
+      $(options.element).on('propertychange', function(event){
         options.context.set(options.params[1].path, this.value);
       });
 
@@ -127,7 +128,7 @@ helpers.attribute = function(params, hash, options, env) {
 
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.eventsBound){
-      utils.addEventListener(options.element, 'change', function(event){
+      $(options.element).on('change', function(event){
         options.context.set(options.params[1].path, ((this.checked) ? true : false));
       });
 

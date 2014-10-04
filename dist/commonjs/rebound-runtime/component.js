@@ -1,9 +1,10 @@
 "use strict";
 var propertyCompiler = require("property-compiler/property-compiler")["default"];
-var util = require("rebound-runtime/utils")["default"];
+var $ = require("rebound-runtime/utils")["default"];
 var env = require("rebound-runtime/env")["default"];
 var Model = require("rebound-data/rebound-data").Model;
 var Collection = require("rebound-data/rebound-data").Collection;
+
 
 // If Rebound Runtime has already been run, throw error
 if(Rebound.Component){
@@ -31,7 +32,7 @@ var Component = Model.extend({
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and registerd as compiled properties
-    this.set(util.deepDefaults({}, (options.data || {}), (this.defaults || {})));
+    this.set($.deepDefaults({}, (options.data || {}), (this.defaults || {})));
 
 
     // All comptued properties are registered as helpers in the scope of this component
@@ -53,7 +54,7 @@ var Component = Model.extend({
 
     // Set our outlet and template if we have one
     this.el = options.outlet || undefined;
-    this.$el = (_.isUndefined(window.$)) ? false : $(this.el);
+    this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
 
 
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
@@ -84,12 +85,13 @@ var Component = Model.extend({
   // Trigger all events on both the component and the element
   trigger: function(eventName){
     if(this.el){
-      util.triggerEvent(eventName, this.el, arguments);
+      $(this.el).trigger(eventName, arguments);
     }
     Backbone.Model.prototype.trigger.apply(this, arguments);
   },
 
   __callOnComponent: function(name, event){
+    if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
     this[name].call(this, event);
   },
 

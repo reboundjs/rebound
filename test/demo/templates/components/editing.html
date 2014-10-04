@@ -2,9 +2,39 @@
   <template>
     <style>
     </style>
-
+    <content></content>
     <input class="edit" value="{{value}}" type="text"  {{on 'keyup' 'inputModified'}} {{on 'focusout' 'doneEditing'}}>
 
   </template>
+  <script>
+    return ({
+      value: 'Default Value',
+      arr: [{f:1}, {g:2}],
+      obj: {a:1, b:2},
+      createdCallback: function(event){
+        this.oldValue = this.get('value');
+      },
+      attachedCallback: function(event){
+        this.el.querySelector('input.edit').focus();
+      },
+      detachedCallback: function(){
 
+      },
+      doneEditing: function(event){
+        this.set('editing', false);
+      },
+      inputModified: function(event){
+
+        // If enter
+        if(event.keyCode == 13)
+          this.doneEditing(event);
+
+        // If escape
+        if(event.keyCode == 27){
+          this.set('value', this.oldValue);
+          this.doneEditing(event);
+        }
+      }
+    })
+  </script>
 </element>

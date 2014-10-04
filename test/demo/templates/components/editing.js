@@ -2,9 +2,13 @@ define( [], function(){
 return (function(){
   var template = (function() {
   function build(dom) {
-    var el0 = dom.createElement("input");
-    dom.setAttribute(el0,"class","edit");
-    dom.setAttribute(el0,"type","text");
+    var el0 = dom.createDocumentFragment();
+    var el1 = dom.createElement("content");
+    dom.appendChild(el0, el1);
+    var el1 = dom.createElement("input");
+    dom.setAttribute(el1,"class","edit");
+    dom.setAttribute(el1,"type","text");
+    dom.appendChild(el0, el1);
     return el0;
   }
   var cachedFragment;
@@ -15,14 +19,14 @@ return (function(){
       cachedFragment = build(dom);
     }
     var fragment = dom.cloneNode(cachedFragment, true);
-    var element0 = fragment;
+    var element0 = fragment.childNodes[1];
     hooks.element(element0, "attribute", context, ["value",hooks.subexpr("value", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element0}, env);
     hooks.element(element0, "on", context, ["keyup","inputModified"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
     hooks.element(element0, "on", context, ["focusout","doneEditing"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element0}, env);
     return fragment;
   };
 }());
-  var script = {};
+  var script = (function(){ return ({ value: 'Default Value', arr: [{f:1}, {g:2}], obj: {a:1, b:2}, createdCallback: function(event){ this.oldValue = this.get('value'); }, attachedCallback: function(event){ this.el.querySelector('input.edit').focus(); }, detachedCallback: function(){ }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })();
   var style = "";
   var component = Rebound.Component.extend(script, { __name: "edit-todo" });
   var proto = Object.create(HTMLElement.prototype, {});
