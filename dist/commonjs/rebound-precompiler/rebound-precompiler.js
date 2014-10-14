@@ -110,9 +110,9 @@ function precompile(str, options){
                '  }\n' +
                '  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};\n' +
                '  proto.detachedCallback = function(){\n' +
-                    // When element is removed, deinitilize its associated Rebound component object
-               '    this.__component__.deinitialize();\n' +
                '    script.detachedCallback && script.detachedCallback.call(this.__component__);\n' +
+               // When element is removed, deinitilize its associated Rebound component object
+               '    this.__component__.deinitialize();\n' +
                '    };\n' +
                '  proto.attributeChangedCallback = function(attrName, oldVal, newVal){\n' +
                '    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }\n' +

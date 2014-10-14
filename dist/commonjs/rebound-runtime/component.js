@@ -68,10 +68,8 @@ var Component = Model.extend({
     this.listenTo(this, 'add remove reset', this._onCollectionChange);
 
 
-    // Render our dom
-    this.dom = this.template(this, {helpers: this.helpers});
-    // Place the dom in our custom element
-    this.el.appendChild(this.dom);
+    // Render our dom and place the dom in our custom element
+    this.el.appendChild(this.template(this, {helpers: this.helpers}));
 
   },
 

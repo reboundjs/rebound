@@ -35,8 +35,8 @@ return (function(){
   }
   proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};
   proto.detachedCallback = function(){
-    this.__component__.deinitialize();
     script.detachedCallback && script.detachedCallback.call(this.__component__);
+    this.__component__.deinitialize();
     };
   proto.attributeChangedCallback = function(attrName, oldVal, newVal){
     try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }

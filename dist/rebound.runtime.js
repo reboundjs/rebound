@@ -7925,15 +7925,23 @@ define("rebound-data/rebound-data",
         this.off();
       }
 
-      // if data has a dom element associated with it, remove all dom events
-      if(this.el && this.el.__events){
-        _.each(this.el.__events, function(callbacks, eventType){
-          _.each(callbacks, function(callback){
-            $(this.el).off(eventType, callback);
-          }, this);
-          this.el.__events[eventType].length = 0;
-        }, this);
+      // if data has a dom element associated with it, remove all dom events and the dom referance
+      if(this.el){
+
+        // Recursively remove all event bindings on dom tree
+        $(this.el).walkTheDOM(function(el){
+          _.each(el.__events, function(callbacks, eventType){
+            _.each(callbacks, function(callback){
+              console.log('off', el, eventType);
+              $(el).off(eventType, callback);
+            });
+            el.__events[eventType].length = 0;
+          });
+        });
+
         delete this.el.__events;
+        delete this.$el;
+        delete this.el;
       }
 
       // mark it as deinitialized
@@ -8096,10 +8104,8 @@ define("rebound-runtime/component",
         this.listenTo(this, 'add remove reset', this._onCollectionChange);
 
 
-        // Render our dom
-        this.dom = this.template(this, {helpers: this.helpers});
-        // Place the dom in our custom element
-        this.el.appendChild(this.dom);
+        // Render our dom and place the dom in our custom element
+        this.el.appendChild(this.template(this, {helpers: this.helpers}));
 
       },
 
