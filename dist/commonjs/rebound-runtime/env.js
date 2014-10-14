@@ -3,6 +3,9 @@ var merge = require("htmlbars-runtime/utils").merge;
 var DOMHelper = require("morph/dom-helper")["default"];
 var hooks = require("rebound-runtime/hooks")["default"];
 var helpers = require("rebound-runtime/helpers")["default"];
+var Model = require("rebound-data/rebound-data").Model;
+var Collection = require("rebound-data/rebound-data").Collection;
+
 
 var env = {
   registerPartial: helpers.registerPartial,
@@ -15,7 +18,8 @@ env.hydrate = function(spec, options){
   // Return a wrapper function that will merge user provided helpers and hooks with our defaults
   return function(data, options){
     // Ensure we have a well-formed object as var options
-    var env = options || {};
+    var env = options || {},
+        contextElement = data.el || document.documentElement;
     env.helpers = env.helpers || {};
     env.hooks = env.hooks || {};
     env.dom = env.dom || new DOMHelper();
@@ -25,7 +29,7 @@ env.hydrate = function(spec, options){
     env.hooks = merge(env.hooks, hooks);
 
     // Call our func with merged helpers and hooks
-    return spec.call(this, data, env);
+    return spec.call(this, data, env, contextElement);
   };
 };
 

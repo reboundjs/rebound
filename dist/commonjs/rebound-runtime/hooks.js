@@ -10,56 +10,27 @@ var hooks = {};
         Hook Utils
 ********************************/
 
-// Given a model and a path return the raw value at that path
-function getRaw(context, path) {
-  // Get function now checks for collection, model or vanillajs object. Accesses appropreately.
-  var parts  = _.compact(path.split(/(?:\.|\[|\])+/)), // Split the path at all '.', '[' and ']' and find the value referanced.
-      result = context;
-
-  if (parts.length > 0) {
-    for (var i = 0, l = parts.length; i < l; i++) {
-
-      if(_.isUndefined(result) || _.isNull(result)){
-        return result;
-      }
-
-      if(_.isFunction(result)){
-        result = result.call(context);
-      }
-
-      if(result.isCollection){
-        result = result.models[parts[i]];
-      }
-      else if(result.isModel){
-        result = result.attributes[parts[i]];
-      }
-      else if(result && result.hasOwnProperty(parts[i])){
-        result = result[parts[i]];
-      }
-
-
-    }
-  }
-
-  return result;
-
-}
-
-// Takes the raw value at that path and makes it pretty. Computed values are evaluated, undefineds are empty strings
-function get(context, path) {
-  var val = getRaw(context, path);
-  if( _.isFunction(val)){ return val.call(context); }
-  return val;
-}
-
 // Returns the computed property's function if true, else false
 function isComputedProperty(model, path){
-  return _.isFunction(getRaw(model, path));
+  return _.isFunction(model.get(path, {raw: true}));
 }
 
 // Add a callback to a given context to trigger when its value at 'path' changes.
 function addObserver(context, path, lazyValue, morph) {
-  var length;
+  var length,
+      paths = $.splitPath(path);
+
+  if(!_.isObject(context) || !_.isString(path) || !_.isObject(lazyValue) || !_.isObject(morph)){
+    console.error('Error adding observer for', context, path, lazyValue, morph);
+    return;
+  }
+
+  // Get actual context if any @parent calls
+  while(paths[0] === '@parent'){
+    context = context.__parent__;
+    paths.shift();
+  }
+  path = paths.join('.');
 
   // Ensure _observers exists and is an object
   context.__observers = context.__observers || {};
@@ -102,7 +73,7 @@ function addComputedPropertyObservers(lazyValue, helper, context, morph){
           var collectionPath = helper.__params[i].split(/\.?@each\.?/);
 
           // Delagated on the collection, when the collection receives a change event for the specified child model attribute, notify our lazyvalue.
-          lazyValue.saveObserver(addObserver(get(context, collectionPath[0]), '@each.' + collectionPath[1], lazyValue, morph));
+          lazyValue.saveObserver(addObserver(context.get(collectionPath[0]), '@each.' + collectionPath[1], lazyValue, morph));
 
           // Listen to collection changes (add, remove, reset, etc)
           lazyValue.saveObserver(addObserver(context, collectionPath[0], lazyValue, morph));
@@ -119,11 +90,11 @@ function addComputedPropertyObservers(lazyValue, helper, context, morph){
 function streamComputedProperty(context, path, morph, options){
 
   // Our raw computed property function
-  var helper = getRaw(context, path);
+  var helper = context.get(path, {raw: true}),
+      res;
 
   // New lazy value calls each of this computed property's observers and returns its value
   lazyValue = new LazyValue(function() {
-
     // Notify all computed properties that depend on this computed property of its change
     if(_.isArray(context.__observers[path])){
       _.each(context.__observers[path], function(callback, index) {
@@ -136,7 +107,9 @@ function streamComputedProperty(context, path, morph, options){
       });
     }
 
-    return get(context, path);
+    res = context.get(path);
+
+    return res;
   });
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
@@ -152,7 +125,7 @@ function streamComputedProperty(context, path, morph, options){
 function streamStaticProperty(context, path, morph, options) {
   // Lazy value that returns the value of context.path
   var lazyValue = new LazyValue(function() {
-    return get(context, path);
+    return context.get(path);
   });
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
@@ -219,7 +192,7 @@ function constructHelper(el, path, context, params, options, env, helper) {
         plainParams = [],
         plainHash = [],
         result,
-        relpath = path.split(/(?:\.|\[|\])+/);
+        relpath = $.splitPath(path);
         relpath.shift();
         relpath = relpath.join('.');
 
@@ -235,7 +208,7 @@ function constructHelper(el, path, context, params, options, env, helper) {
     // Call our helper functions with our assembled args.
     result = helper.apply(context, [plainParams, plainHash, options, env]);
 
-    return get(result, relpath);
+    return result && result.get && result.get(relpath) || _.isObject(result) && result.hasOwnProperty(relpath) && result[relpath] || result;
   });
 
   options.lazyValue.path = path;
@@ -289,7 +262,7 @@ hooks.content = function(placeholder, path, context, params, options, env) {
   var lazyValue,
       value,
       observer = subtreeObserver,
-      helper = helpers.lookupHelper(path, env, (context.__path ? context.__path() : ''));
+      helper = helpers.lookupHelper(path, env, context);
 
   // TODO: just set escaped on the placeholder in HTMLBars
   placeholder.escaped = options.escaped;
@@ -335,7 +308,7 @@ hooks.content = function(placeholder, path, context, params, options, env) {
 
 // Handle placeholders in element tags
 hooks.element = function(element, path, context, params, options, env) {
-  var helper = helpers.lookupHelper(path, env, (context.__path ? context.__path() : '')),
+  var helper = helpers.lookupHelper(path, env, context),
       lazyValue,
       value;
 
@@ -389,7 +362,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
     Rebound.seedData = data;
     element = document.createElement(path);
     Rebound.seedData = {};
-    component = element.__component;
+    component = element.__component__;
 
     // For each param passed to our shared component, create a new lazyValue
     _.each(data, function(value, key) {
@@ -445,10 +418,10 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
     context.listenTo(component, 'change', function(model){
 
       var componentPath = (model.__path()),
-          contextPath = '',
-          json = model.toJSON(),
           componentAttrs = model.changedAttributes(),
-          contextAttrs = {};
+          contextPath = '',
+          contextAttrs = {},
+          json = model.toJSON();
 
       // If changed model is our top level component object, then the value changed is a primitive
       // Only update the values that were passed in to our component
@@ -461,23 +434,21 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
             contextAttrs[options.hash[componentKey].path] = value;
           }
         });
+        context.get(contextPath).set(contextAttrs);
       }
       // If changed model is a sub object of the component, only update the values that were passed in to our component
       else{
         // If base model was renamed, create the actual path on the context we're updating
-        contextPath = componentPath.split('.');
+        contextPath = $.splitPath(componentPath);
         if(options.hash.hasOwnProperty(contextPath[0])){
           contextPath[0] = options.hash[contextPath[0]].path;
+          contextPath = contextPath.join('.');
+          // All values were passed in as is, use all of them
+          contextAttrs = componentAttrs;
+          context.get(contextPath).set(contextAttrs);
         }
-        contextPath = contextPath.join('.');
-
-        // All values were passed in as is, use all of them
-        contextAttrs = componentAttrs;
       }
 
-      // Update our context at the right path with the right attrubutes
-      context.get(contextPath).set(contextAttrs);
-      // context.set(contextAttrs);
 
       // Set the properties on our element for visual referance if we are on a top level attribute
       if(componentPath === ""){
@@ -541,7 +512,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
 
 hooks.subexpr = function(path, context, params, options, env) {
 
-  var helper = helpers.lookupHelper(path, env, (context.__path ? context.__path() : '')),
+  var helper = helpers.lookupHelper(path, env, context),
       lazyValue;
 
   if (helper) {

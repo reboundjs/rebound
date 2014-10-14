@@ -44,10 +44,6 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       });
     }
 
-    // Add get method to all objects to simulate models
-    Object.prototype.get = function(key){ return this[key]; };
-    Object.prototype.set = function(key, val){ this[val] = val; };
-
     helpers = helpers.default;
 
 
@@ -58,10 +54,30 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     *************************************************************/
 
     QUnit.test('Rebound Helpers - Register', function() {
+
+      /*******************************************************************/
+      /** The only interface these helpers should need is get and set.  **/
+      /**      Augment the object prototype to provide this api         **/
+
+          Object.prototype.get = function(key){ return this[key]; };
+          Object.prototype.set = function(key, val){ this[val] = val; };
+
+      /*******************************************************************/
+
+
       var func = function(){ return 1; };
       helpers.registerHelper('test', func);
       var regFunc = helpers.lookupHelper('test');
       equal(func, regFunc, 'helpers.register adds a helper to the global scope which can be fetched by Helpers.lookupHelper');
+
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+          Object.prototype.get = undefined;
+          Object.prototype.set = undefined;
+
+      /*******************************************************************/
     });
 
 
@@ -72,6 +88,16 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     *************************************************************/
 
     QUnit.test('Rebound Helpers - Attribute', function() {
+
+
+      /*******************************************************************/
+      /** The only interface these helpers should need is get and set.  **/
+      /**      Augment the object prototype to provide this api         **/
+
+          Object.prototype.get = function(key){ return this[key]; };
+          Object.prototype.set = function(key, val){ this[val] = val; };
+
+      /*******************************************************************/
 
       var template, data, dom;
 
@@ -168,6 +194,15 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       notify(data, ['bool']);
       equalTokens(dom, '<input type="checkbox" checked="true">', 'Checked Attribute on checkbox present on true, removed on false and is data bound');
 
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+          Object.prototype.get = undefined;
+          Object.prototype.set = undefined;
+
+      /*******************************************************************/
+
     });
 
 
@@ -178,6 +213,16 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     *************************************************************/
 
     QUnit.test('Rebound Helpers - Partial', function() {
+
+
+      /*******************************************************************/
+      /** The only interface these helpers should need is get and set.  **/
+      /**      Augment the object prototype to provide this api         **/
+
+          Object.prototype.get = function(key){ return this[key]; };
+          Object.prototype.set = function(key, val){ this[val] = val; };
+
+      /*******************************************************************/
 
       var template, data, dom, partial;
 
@@ -199,6 +244,15 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       notify(data, ['foo', 'bar']);
       equalTokens(dom, '<div class="bar">foo</div>', 'Partial is data bound');
 
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+          Object.prototype.get = undefined;
+          Object.prototype.set = undefined;
+
+      /*******************************************************************/
+
     });
 
     /************************************************************
@@ -208,6 +262,16 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     *************************************************************/
 
     QUnit.test('Rebound Helpers - If', function() {
+
+
+      /*******************************************************************/
+      /** The only interface these helpers should need is get and set.  **/
+      /**      Augment the object prototype to provide this api         **/
+
+          Object.prototype.get = function(key){ return this[key]; };
+          Object.prototype.set = function(key, val){ this[val] = val; };
+
+      /*******************************************************************/
 
       var template, data, dom;
 
@@ -299,6 +363,15 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       notify(data, 'bool');
       equalTokens(dom, '<div>bar</div>', 'Inline If helper is data bound');
 
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+          Object.prototype.get = undefined;
+          Object.prototype.set = undefined;
+
+      /*******************************************************************/
+
     });
 
     /************************************************************
@@ -308,6 +381,16 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     *************************************************************/
 
     QUnit.test('Rebound Helpers - Unless', function() {
+
+
+      /*******************************************************************/
+      /** The only interface these helpers should need is get and set.  **/
+      /**      Augment the object prototype to provide this api         **/
+
+          Object.prototype.get = function(key){ return this[key]; };
+          Object.prototype.set = function(key, val){ this[val] = val; };
+
+      /*******************************************************************/
 
       var template, data, dom;
 
@@ -400,6 +483,15 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       notify(data, 'bool');
       equalTokens(dom, '<div>foo</div>', 'Inline Unless helper is data bound');
 
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+          Object.prototype.get = undefined;
+          Object.prototype.set = undefined;
+
+      /*******************************************************************/
+
     });
 
 
@@ -410,5 +502,6 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     // TODO: Add length helper tests
 
     // TODO: Add on helper tests
+
 
 });

@@ -114,8 +114,15 @@ $.Event.prototype = {
 };
 
 
-// Applies function `func` depth first to every node in the subtree starting from `root`
 utils.prototype = {
+
+  // Given a valid data path, split it into an array of its parts.
+  // ex: foo.bar[0].baz --> ['foo', 'var', '0', 'baz']
+  splitPath: function(path){
+    return _.compact(path.split(/(?:\.|\[|\])+/));
+  },
+
+  // Applies function `func` depth first to every node in the subtree starting from `root`
   walkTheDOM: function(func) {
     var el, root, len = this.length;
     while(len--){
@@ -139,51 +146,38 @@ utils.prototype = {
 
   // Rolled my own deep extend in leu of having a hard dependancy on lodash.
   deepDefaults: function(obj) {
-    var slice = Array.prototype.slice,
-        hasOwnProperty = Object.prototype.hasOwnProperty;
+      var slice = Array.prototype.slice,
+          hasOwnProperty = Object.prototype.hasOwnProperty;
 
-    _.each(slice.call(arguments, 1), function(def) {
+      _.each(slice.call(arguments, 1), function(def) {
 
-      var objArr, srcArr, objAttr, srcAttr;
-      for (var prop in def) {
-        if (hasOwnProperty.call(def, prop)) {
-          if(_.isUndefined(obj[prop])){
-
-            if(_.isObject(def[prop]) && !_.isFunction(def[prop])){
-              if(def[prop].isCollection){
-                obj[prop] = $.deepDefaults([], def[prop].models);
+        var objArr, srcArr, objAttr, srcAttr;
+        for (var prop in def) {
+          if (hasOwnProperty.call(def, prop)) {
+            if(_.isUndefined(obj[prop])){
+                obj[prop] = def[prop];
+            }
+            else if(_.isObject(obj[prop])){
+              if(obj[prop].isCollection){
+                def[prop].models = $.deepDefaults([], obj[prop].models, def[prop]);
+                obj[prop] = def[prop];
               }
-              else if(_.isArray(def[prop])){
-                obj[prop] = $.deepDefaults([], def[prop]);
+              else if(_.isArray(obj[prop])){
+                obj[prop] = $.deepDefaults([], obj[prop], def[prop]);
               }
-              else if((def[prop].isModel)){
-                obj[prop] = $.deepDefaults({}, def[prop].attributes);
+              else if((obj[prop].isModel)){
+                obj[prop] = $.deepDefaults({}, obj[prop].attributes, def[prop]);
               }
               else{
-                obj[prop] = $.deepDefaults({}, def[prop]);
+                obj[prop] = $.deepDefaults({}, obj[prop], def[prop]);
               }
-            }
-            else{
-              obj[prop] = def[prop];
-            }
-          }
-          else if(_.isObject(obj[prop])){
-            if(obj[prop].isCollection || _.isArray(obj[prop])){
-              continue;
-            }
-            else if((obj[prop].isModel)){
-              obj[prop] = $.deepDefaults({}, obj[prop].attributes, def[prop]);
-            }
-            else{
-              obj[prop] = $.deepDefaults({}, obj[prop], def[prop]);
             }
           }
         }
-      }
-    });
+      });
 
-    return obj;
-  },
+      return obj;
+    },
 
 
   // Triggers an event on a given dom node
@@ -218,52 +212,56 @@ utils.prototype = {
   },
 
   on: function (eventName, delegate, data, handler) {
-    var el, len = this.length;
+    var el,
+        len = this.length,
+        eventNames = eventName.split(' ');
+
     while(len--){
-
       el = this[len];
+      _.each(eventNames, function(eventName){
 
-      if(_.isFunction(delegate)){
-        handler = delegate;
-        delegate = el;
-        data = {};
-      }
-      if(_.isFunction(data)){
-        handler = data;
-        data = {};
-      }
+        if(_.isFunction(delegate)){
+          handler = delegate;
+          delegate = el;
+          data = {};
+        }
+        if(_.isFunction(data)){
+          handler = data;
+          data = {};
+        }
 
-      var callback = function(event){
-            var target;
-            event = new $.Event((event || window.event)); // Convert to mutable event
-            target = event.target || event.srcElement;
-            event.data = data;
+        var callback = function(event){
+              var target;
+              event = new $.Event((event || window.event)); // Convert to mutable event
+              target = event.target || event.srcElement;
+              event.data = data;
 
-            // Travel from target up to parent firing event when delegate matches
-            while(target){
-              if(isDelegate(target, delegate)) {
-                event.target = event.srcElement = target;
-                event.result = handler.call(el, event);
-                // If callback returns false, prevent default and propagation
-                if ( event.result === false ) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  break;
+              // Travel from target up to parent firing event when delegate matches
+              while(target){
+                if(isDelegate(target, delegate)) {
+                  event.target = event.srcElement = target;
+                  event.result = handler.call(el, event);
+                  // If callback returns false, prevent default and propagation
+                  if ( event.result === false ) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    break;
+                  }
                 }
+                target = target.parentNode;
               }
-              target = target.parentNode;
-            }
-          };
+            };
 
-      if (el.addEventListener) {
-        el.addEventListener(eventName, callback);
-      } else {
-        el.attachEvent('on' + eventName, callback);
-      }
+        if (el.addEventListener) {
+          el.addEventListener(eventName, callback);
+        } else {
+          el.attachEvent('on' + eventName, callback);
+        }
 
-      el.__events = el.__events || {};
-      el.__events[eventName] = el.__events[eventName] || [];
-      el.__events[eventName].push(callback);
+        el.__events = el.__events || {};
+        el.__events[eventName] = el.__events[eventName] || [];
+        el.__events[eventName].push(callback);
+      }, this);
     }
   },
 

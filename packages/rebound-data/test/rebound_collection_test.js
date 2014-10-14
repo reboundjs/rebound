@@ -2,7 +2,7 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
     var Model = window.Rebound.Model = reboundData.Model,
         Collection =  window.Rebound.Collection = reboundData.Collection;
 
-    QUnit.test('Reboudn Data - Collection', function() {
+    QUnit.test('Reboudnd Data - Collection', function() {
       var model, collection;
 
 
@@ -24,16 +24,16 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
 
 
       collection = new Collection();
+
       collection.set({'test2': [{'test3': 'foo'}]});
+      equal(collection.models[0].attributes.test2.models[0].__path(), '[0].test2[0]', 'Nested Models inherit path of parents');
+      equal(collection.models[0].attributes.test2.__path(), '[0].test2', 'Nested Collections inherit path of parents');
 
-      equal(collection.models[0].attributes.test2.models[0].__path(), 'test2[0]', 'Nested Models inherit path of parents');
-      equal(collection.models[0].attributes.test2.__path(), 'test2', 'Nested Collections inherit path of parents');
       deepEqual(collection.toJSON(), [{'test2': [{'test3': 'foo'}]}], 'Collection\'s toJSON method is recursive');
-
       collection.at(0).get('test2').at(0).set('test3', collection);
       deepEqual(collection.toJSON(), [{'test2': [{'test3': [collection.at(0).cid]}]}], 'Collection\'s toJSON handles cyclic dependancies');
 
-      equal(collection.at(0).__parent.cid, collection.cid, 'Model\'s ancestry is set when child of a Collection');
+      equal(collection.at(0).__parent__.cid, collection.cid, 'Model\'s ancestry is set when child of a Collection');
 
       collection.on('change', function(model, options){
         deepEqual(model.changedAttributes(), {test2: 'foo'}, 'Events are propagated up to parent');

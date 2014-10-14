@@ -103,21 +103,20 @@ function precompile(str, options){
                '  var component = Rebound.Component.extend(script, { __name: "'+name+'" });\n' +
                '  var proto = Object.create(HTMLElement.prototype, {});\n' +
                '  proto.createdCallback = function(){\n' +
-                    // When element is created, instantiate its associated Rebound component object
-               '    this.__component = new component({template: template, outlet: this, data: Rebound.seedData});\n' +
-               '    script.createdCallback && script.createdCallback.call(this.__component);\n' +
+                    // When element is created, instantiate its associated Rebound component object. User defined created callback called in the constructor
+               '    this.__component__ = new component({template: template, outlet: this, data: Rebound.seedData});\n' +
                '  }\n' +
-               '  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component)};\n' +
+               '  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};\n' +
                '  proto.detachedCallback = function(){\n' +
                     // When element is removed, deinitilize its associated Rebound component object
-               '    this.__component.deinitialize();\n' +
-               '    script.detachedCallback && script.detachedCallback.call(this.__component);\n' +
+               '    this.__component__.deinitialize();\n' +
+               '    script.detachedCallback && script.detachedCallback.call(this.__component__);\n' +
                '    };\n' +
                '  proto.attributeChangedCallback = function(attrName, oldVal, newVal){\n' +
                '    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }\n' +
-               '    if(newVal === null){ this.__component.unset(attrName); }\n' +
-               '    else{ this.__component.set(attrName, newVal); }\n' +
-               '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component);\n' +
+               '    if(newVal === null){ this.__component__.unset(attrName); }\n' +
+               '    else{ this.__component__.set(attrName, newVal); }\n' +
+               '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__);\n' +
                '  }\n' +
                '  return document.registerElement("' + name + '", {prototype: proto} );\n' +
                '})();\n';

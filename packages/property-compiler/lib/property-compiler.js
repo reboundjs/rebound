@@ -25,7 +25,7 @@ function compile(){
         tmpPath,
         attrs = [],
         workingpath = [],
-        terminators = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '&&', '||'];
+        terminators = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '===', '&&', '||'];
     do{
 
       token = nextToken();
@@ -113,7 +113,8 @@ function compile(){
     prop.val.__params = finishedPaths;
 
     // Add it to our output
-    output[(prop.path ? prop.path + '.' : '') + prop.key] = prop.val;
+    output[prop.obj.cid] = output[prop.obj.cid] || {};
+    output[prop.obj.cid][prop.key] = prop.val;
 
   });
 
@@ -124,8 +125,8 @@ function compile(){
 
 }
 
-function register(context, key, func, path){
-  computedProperties.push({obj: context, key: key, val: func, path: path});
+function register(context, key, func){
+  computedProperties.push({obj: context, key: key, val: func});
 }
 
 export default { register: register, compile: compile };

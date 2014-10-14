@@ -18,7 +18,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       oldPageName = this.current.__name;
       // Unset Previous Application's Routes. For each route in the page app:
-      _.each(this.current.__component.routes, function (value, key) {
+      _.each(this.current.__component__.routes, function (value, key) {
 
         var regExp = router._routeToRegExp(key).toString();
 
@@ -31,7 +31,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       });
 
       // Un-hook Event Bindings, Delete Objects
-      this.current.__component.deinitialize();
+      this.current.__component__.deinitialize();
 
       // Disable old css if it exists
       setTimeout(function(){
@@ -52,18 +52,18 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
 
     // Augment ApplicationRouter with new routes from PageApp
-    _.each(pageInstance.__component.routes, function (value, key) {
+    _.each(pageInstance.__component__.routes, function (value, key) {
       // Generate our route callback's new name
       var routeFunctionName = '_function_' + key,
           functionName;
       // Add the new callback referance on to our router
-      router[routeFunctionName] =  function () { pageInstance.__component[value].apply(pageInstance.__component, arguments); };
+      router[routeFunctionName] =  function () { pageInstance.__component__[value].apply(pageInstance.__component__, arguments); };
       // Add the route handler
       router.route(key, value, this[routeFunctionName]);
     }, this);
 
     if(!isGlobal){
-      window.Rebound.page = (this.current = pageInstance).__component;
+      window.Rebound.page = (this.current = pageInstance).__component__;
     }
 
     // Return our newly installed app

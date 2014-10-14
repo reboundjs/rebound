@@ -99,8 +99,11 @@ LazyValue.prototype = {
     });
 
     this.parent = this.children = this.cache = this.valueFn = this.subscribers = this._childValues = null;
+
     _.each(this.observers, function(observer){
-      delete observer.context.__observers[observer.path][observer.index];
+      if(_.isObject(observer.context.__observers[observer.path])){
+        delete observer.context.__observers[observer.path][observer.index];
+      }
     });
 
     this.observers = null;

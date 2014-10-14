@@ -31,19 +31,18 @@ return (function(){
   var component = Rebound.Component.extend(script, { __name: "edit-todo" });
   var proto = Object.create(HTMLElement.prototype, {});
   proto.createdCallback = function(){
-    this.__component = new component({template: template, outlet: this, data: Rebound.seedData});
-    script.createdCallback && script.createdCallback.call(this.__component);
+    this.__component__ = new component({template: template, outlet: this, data: Rebound.seedData});
   }
-  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component)};
+  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};
   proto.detachedCallback = function(){
-    this.__component.deinitialize();
-    script.detachedCallback && script.detachedCallback.call(this.__component);
+    this.__component__.deinitialize();
+    script.detachedCallback && script.detachedCallback.call(this.__component__);
     };
   proto.attributeChangedCallback = function(attrName, oldVal, newVal){
     try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
-    if(newVal === null){ this.__component.unset(attrName); }
-    else{ this.__component.set(attrName, newVal); }
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component);
+    if(newVal === null){ this.__component__.unset(attrName); }
+    else{ this.__component__.set(attrName, newVal); }
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__);
   }
   return document.registerElement("edit-todo", {prototype: proto} );
 })();

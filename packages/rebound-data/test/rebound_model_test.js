@@ -3,7 +3,7 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
         Collection =  window.Rebound.Collection = reboundData.Collection;
 
     QUnit.test('Reboudn Data - Model', function() {
-      var model, collection;
+      var model, collection, model2, model3;
 
       model = new Model();
       model.set('str', 'test');
@@ -16,6 +16,17 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model = new Model();
       model.set('obj', {a:1});
       equal(model.attributes.obj.isModel, true, 'Model.set promotes vanilla objects to Models');
+      model.set('obj', {b:2});
+      deepEqual(model.attributes.obj.attributes, {a:1, b:2}, 'Model.set adds to existing models when passed vanilla objects');
+
+
+      model = new Model();
+      model2 = new Model({b:2});
+      model.set('obj', model2);
+      equal(model.attributes.obj.cid, model2.cid, 'Model.set, when passed another model, adds that exact model.');
+      model3 = new Model({c:3});
+      model.set('obj', model3);
+      equal(model.attributes.obj.cid, model3.cid, 'Model.set, when passed another model, replaces the existing model.');
 
 
 
@@ -41,8 +52,6 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.set('test', {'test2': {'test3': 'foo'}});
       equal(model.get('test.test2.test3'), 'foo', 'Model.get works n levels deep - Models only');
 
-
-
       model = new Model();
       model.set('test', {'test2': [{'test3': 'foo'}]});
       equal(model.get('test.test2[0].test3'), 'foo', 'Model.get works n levels deep - Collections included');
@@ -53,14 +62,28 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.set('test.test2.[0].test3', model);
       deepEqual(model.toJSON(), {'test': {'test2': [{'test3': model.cid}]}}, 'Model\'s toJSON handles cyclic dependancies');
 
-      equal(model.get('test').__parent.cid, model.cid, 'Model\'s ancestery is set when child of a Model');
-      deepEqual(model.get('test.test2[0]').__parent, model.get('test.test2'), 'Model\'s ancestry is set when child of a Collection');
+      equal(model.get('test').__parent__.cid, model.cid, 'Model\'s ancestery is set when child of a Model');
+      deepEqual(model.get('test.test2[0]').__parent__, model.get('test.test2'), 'Model\'s ancestry is set when child of a Collection');
 
 
       model.on('change', function(model, options){
         deepEqual(model.changedAttributes(), {test3: 'foo'}, 'Events are propagated up to parent');
       });
       model.set('test.test2.[0].test3', 'foo');
+
+
+
+      model = new Model();
+      collection = Collection.extend({
+        model: Model.extend({
+          defaults: {
+            test: true
+          }
+        })
+      });
+      model.set('test', new collection());
+      model.set('test', [{foo: 'bar'}, {biz: 'baz'}, {test: false}]);
+      deepEqual(model.toJSON(), {'test': [{foo: 'bar', test: true}, {biz: 'baz', test: true}, {test: false}]}, 'Defaults set in a component are retained');
 
     });
 });

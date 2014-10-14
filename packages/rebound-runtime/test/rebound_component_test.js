@@ -65,7 +65,7 @@ require(['rebound-runtime/component', 'simple-html-tokenizer'], function(Compone
         }
       });
 
-      el.__component = new component({template: template, outlet: el});
+      el.__root__ = new component({template: template, outlet: el});
 
       equal(1, 1);
 

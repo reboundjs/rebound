@@ -22,19 +22,16 @@ var Component = Model.extend({
 
     options = options || (options = {});
     _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent', '_notifySubtree');
-
     this.cid = _.uniqueId('component');
     this.attributes = {};
     this.changed = {};
+    this.helpers = {};
+    this.__parent__ = this.__root__ = this;
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and registerd as compiled properties
     this.set($.deepDefaults({}, (options.data || {}), (this.defaults || {})));
-
-
-    // All comptued properties are registered as helpers in the scope of this component
-    this.helpers = propertyCompiler.compile();
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
     this.helpers.__callOnComponent = this.__callOnComponent;
@@ -54,6 +51,9 @@ var Component = Model.extend({
     this.el = options.outlet || undefined;
     this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
 
+    if(_.isFunction(this.createdCallback)){
+      this.createdCallback.call(this);
+    }
 
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
     if(!options.template && !this.template){ throw('Template must provided for ' + this.__name + ' component!'); }
@@ -112,7 +112,7 @@ var Component = Model.extend({
 
     var context = this, // This root context
         path = obj.__path(), // The path of the modified object relative to the root context
-        parts = _.compact(path.split(/(?:\.|\[|\])+/)), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
+        parts = $.splitPath(path), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
         keys = _.keys(changed), // Array of all changed keys
         i = 0,
         len = parts.length,

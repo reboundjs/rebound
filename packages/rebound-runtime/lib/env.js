@@ -2,6 +2,8 @@ import { merge } from "htmlbars-runtime/utils";
 import DOMHelper from "morph/dom-helper";
 import hooks from "rebound-runtime/hooks";
 import helpers from "rebound-runtime/helpers";
+import {Model, Collection} from "rebound-data/rebound-data";
+
 
 var env = {
   registerPartial: helpers.registerPartial,
@@ -14,7 +16,8 @@ env.hydrate = function(spec, options){
   // Return a wrapper function that will merge user provided helpers and hooks with our defaults
   return function(data, options){
     // Ensure we have a well-formed object as var options
-    var env = options || {};
+    var env = options || {},
+        contextElement = data.el || document.documentElement;
     env.helpers = env.helpers || {};
     env.hooks = env.hooks || {};
     env.dom = env.dom || new DOMHelper();
@@ -24,7 +27,7 @@ env.hydrate = function(spec, options){
     env.hooks = merge(env.hooks, hooks);
 
     // Call our func with merged helpers and hooks
-    return spec.call(this, data, env);
+    return spec.call(this, data, env, contextElement);
   };
 };
 

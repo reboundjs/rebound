@@ -31,12 +31,30 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function
 
     QUnit.test('Rebound Compiler', function() {
 
+      /*******************************************************************/
+      /**    The only interface compile should need is get and set.     **/
+      /**      Augment the object prototype to provide this api         **/
+
+          Object.prototype.get = function(key){ return this[key]; };
+          Object.prototype.set = function(key, val){ this[val] = val; };
+
+      /*******************************************************************/
+
       var template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name:'test/partial'});
       var dom = template({foo:'bar', bar:'foo'});
       equalTokens(dom, '<div class="foo">bar</div>', 'Compiler accepts plain HTMLBars strings');
 
       var partial = (compiler.compile('{{partial "test/partial"}}', {name:'test'}))({foo:'bar', bar:'foo'});
       equalTokens(dom, '<div class="foo">bar</div>', 'Compiler interperts plain HTMLBars strings as partials');
+
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+          Object.prototype.get = undefined;
+          Object.prototype.set = undefined;
+
+      /*******************************************************************/
 
     });
 

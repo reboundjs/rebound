@@ -12,12 +12,11 @@ helpers.registerPartial = function(name, func){
 };
 
 // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
-helpers.lookupHelper = function(name, env, path) {
+helpers.lookupHelper = function(name, env, context) {
 
   env = env || {};
-  path = path || '';
 
-  name = name.split(/(?:\.|\[|\])+/)[0];
+  name = $.splitPath(name)[0];
 
   // If a reserved helpers, return it
   if(name === 'attribute') { return this.attribute; }
@@ -31,7 +30,7 @@ helpers.lookupHelper = function(name, env, path) {
   if(name === 'concat') { return this.concat; }
 
   // If not a reserved helper, check env, then global helpers, else return false
-  return (env.helpers && env.helpers[((path) ? path + '.' : '') + name]) || helpers[name] || false;
+  return (env.helpers && _.isObject(context) && _.isObject(env.helpers[context.cid]) && env.helpers[context.cid][name]) || helpers[name] || false;
 };
 
 helpers.registerHelper = function(name, callback, params){
@@ -70,9 +69,7 @@ helpers.on = function(params, hash, options, env){
   options.element.setAttribute('data-event', id);
 
   // Find our root component
-  while(root.__parent){
-    root = root.__parent;
-  }
+  root = root.__root__;
 
   // Make sure we only attach once for each combination of delagate selector and callback
   for(i = 1; i<len; i++){
@@ -106,28 +103,25 @@ helpers.attribute = function(params, hash, options, env) {
   if(options.element.tagName === 'INPUT' && inputTypes[type] && params[0] === 'value' && !options.params[1].children ){
 
     // If our special input events have not been bound yet, bind them and set flag
-    if(!options.lazyValue.eventsBound){
+    if(!options.lazyValue.inputObserver){
 
       // If a submit action has been set
-      $(options.element).on('input', function(event){
+      $(options.element).on('change input propertychange', function(event){
         options.context.set(options.params[1].path, this.value);
       });
 
-      $(options.element).on('propertychange', function(event){
-        options.context.set(options.params[1].path, this.value);
-      });
+      options.lazyValue.inputObserver = true;
 
-      options.lazyValue.eventsBound = true;
     }
 
     return options.context.get(options.params[1].path);
   }
 
-  if(options.element.tagName === 'INPUT' && options.element.getAttribute("type") === 'checkbox' && params[0] === 'checked' && !options.params[1].children ){
+  if(options.element.tagName === 'INPUT' && (options.element.getAttribute("type") === 'checkbox' || options.element.getAttribute("type") === 'radio') && params[0] === 'checked' && !options.params[1].children ){
 
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.eventsBound){
-      $(options.element).on('change', function(event){
+      $(options.element).on('change propertychange', function(event){
         options.context.set(options.params[1].path, ((this.checked) ? true : false));
       });
 
@@ -270,9 +264,6 @@ helpers.each = function(params, hash, options, env){
 
     // If this model is not the morph element at this index
     if(position !== key){
-
-      // If this model was added silently, but is now being rendered, removing it will need to update the dom.
-      if(obj.__silent){ delete obj.__silent; }
 
       // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
       var lazyValue = new LazyValue(function(){

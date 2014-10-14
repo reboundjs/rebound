@@ -5,10 +5,8 @@
 
 		<section id="todoapp">
 
-
-
 			<header id="header">
-				<h1>{{firstTodo.title}}</h1>
+				<h1>todos</h1>
 		    <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" {{on 'keyup' 'createTodo'}}>
 			</header>
 
@@ -96,11 +94,11 @@
 			},{
 				title: "Look Dapper",
 				editing: false,
-				isCompleted: false,
+				isCompleted: false
 			},{
 				title: "Profit",
 				editing: false,
-				isCompleted: false,
+				isCompleted: false
 			}
 		],
 
@@ -120,6 +118,9 @@
 		},
 		firstTodo: function(){
 			return this.get('filteredTodos[0]');
+		},
+		secondTodo: function(){
+			return this.get('filteredTodos[1]');
 		},
 		filteredTodos: function(){
 			if(this.get('filter') == 'all')
