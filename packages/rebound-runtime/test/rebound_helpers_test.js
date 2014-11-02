@@ -60,7 +60,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /**      Augment the object prototype to provide this api         **/
 
           Object.prototype.get = function(key){ return this[key]; };
-          Object.prototype.set = function(key, val){ this[val] = val; };
+          Object.prototype.set = function(key, val){ this[key] = val; };
 
       /*******************************************************************/
 
@@ -95,9 +95,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /**      Augment the object prototype to provide this api         **/
 
           Object.prototype.get = function(key){ return this[key]; };
-          Object.prototype.set = function(key, val){ this[val] = val; };
+          Object.prototype.set = function(key, val){ this[key] = val; };
 
       /*******************************************************************/
+
+      var evt = document.createEvent("HTMLEvents");
+      evt.initEvent("change", false, true);
 
       var template, data, dom;
 
@@ -127,9 +130,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input value="bar">', 'Value attribute on text input is two way data bound data -> element');
-      dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input value="Hello World">', 'Value attribute on text input is two way data bound element -> data');
+      equal(dom.value, 'bar', 'Value of text input is two way data bound data -> element');
+      equalTokens(dom, '<input value="bar">', 'Value Attribute on text input is two way data bound element -> data');
+      dom.value = 'Hello World';
+      dom.dispatchEvent(evt);
+      notify(data, ['bar']);
+      equal(data.bar, 'Hello World', 'Value on text input is two way data bound element -> data');
 
 
 
@@ -138,9 +144,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="email" value="bar">', 'Value Attribute on email input is two way data bound data -> element');
-      dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="email" value="Hello World">', 'Value Attribute on email input is two way data bound element -> data');
+      equal(dom.value, 'bar', 'Value of email input is two way data bound data -> element');
+      equalTokens(dom, '<input type="email" value="bar">', 'Value Attribute on email input is two way data bound element -> data');
+      dom.value = 'Hello World';
+      dom.dispatchEvent(evt);
+      notify(data, ['bar']);
+      equal(data.bar, 'Hello World', 'Value on email input is two way data bound element -> data');
 
 
 
@@ -149,9 +158,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="password" value="bar">', 'Value Attribute on password input is two way data bound data -> element');
-      dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="password" value="Hello World">', 'Value Attribute on password input is two way data bound element -> data');
+      equal(dom.value, 'bar', 'Value of password input is two way data bound data -> element');
+      equalTokens(dom, '<input type="password" value="bar">', 'Value Attribute on password input is two way data bound element -> data');
+      dom.value = 'Hello World';
+      dom.dispatchEvent(evt);
+      notify(data, ['bar']);
+      equal(data.bar, 'Hello World', 'Value on password input is two way data bound element -> data');
 
 
 
@@ -160,9 +172,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="search" value="bar">', 'Value Attribute on search input is two way data bound data -> element');
-      dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="search" value="Hello World">', 'Value Attribute on search input is two way data bound element -> data');
+      equal(dom.value, 'bar', 'Value of search input is two way data bound data -> element');
+      equalTokens(dom, '<input type="search" value="bar">', 'Value Attribute on search input is two way data bound element -> data');
+      dom.value = 'Hello World';
+      dom.dispatchEvent(evt);
+      notify(data, ['bar']);
+      equal(data.bar, 'Hello World', 'Value on search input is two way data bound element -> data');
 
 
 
@@ -171,9 +186,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="url" value="bar">', 'Value Attribute on url input is two way data bound data -> element');
-      dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="url" value="Hello World">', 'Value Attribute on url input is two way data bound element -> data');
+      equal(dom.value, 'bar', 'Value of url input is two way data bound data -> element');
+      equalTokens(dom, '<input type="url" value="bar">', 'Value Attribute on url input is two way data bound element -> data');
+      dom.value = 'Hello World';
+      dom.dispatchEvent(evt);
+      notify(data, ['bar']);
+      equal(data.bar, 'Hello World', 'Value on url input is two way data bound element -> data');
 
 
 
@@ -182,17 +200,21 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equalTokens(dom, '<input type="tel" value="bar">', 'Value Attribute on tel input is two way data bound data -> element');
-      dom.setAttribute('value',"Hello World");
-      equalTokens(dom, '<input type="tel" value="Hello World">', 'Value Attribute on tel input is two way data bound element -> data');
+      equal(dom.value, 'bar', 'Value of tel input is two way data bound data -> element');
+      equalTokens(dom, '<input type="tel" value="bar">', 'Value Attribute on tel input is two way data bound element -> data');
+      dom.value = 'Hello World';
+      dom.dispatchEvent(evt);
+      notify(data, ['bar']);
+      equal(data.bar, 'Hello World', 'Value on tel input is two way data bound element -> data');
 
 
       template = compiler.compile('<input type="checkbox" checked={{bool}}>', {name: 'test/partial'});
       data = {bool: false};
       dom = template(data);
+      equalTokens(dom, "<input type='checkbox'>", 'Checked Attribute on checkbox not present on false');
       data.bool = true;
       notify(data, ['bool']);
-      equalTokens(dom, '<input type="checkbox" checked="true">', 'Checked Attribute on checkbox present on true, removed on false and is data bound');
+      equalTokens(dom, "<input type='checkbox' checked='true'>", 'Checked Attribute on checkbox present on true, and is data bound');
 
 
       /*******************************************************************/
@@ -220,7 +242,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /**      Augment the object prototype to provide this api         **/
 
           Object.prototype.get = function(key){ return this[key]; };
-          Object.prototype.set = function(key, val){ this[val] = val; };
+          Object.prototype.set = function(key, val){ this[key] = val; };
 
       /*******************************************************************/
 
@@ -228,14 +250,14 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
       dom = template({foo:'bar', bar:'foo'});
-      partial = (compiler.compile('{{partial "test/partial"}}', 'test'))({foo:'bar', bar:'foo'});
+      partial = (compiler.compile('{{partial "test/partial"}}', {name: 'test'}))({foo:'bar', bar:'foo'});
       equalTokens(dom, '<div class="foo">bar</div>', 'Partial helper inserts partial template');
 
 
 
       template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name: 'test/partial'});
 
-      partial = compiler.compile('{{partial "test/partial"}}', 'test');
+      partial = compiler.compile('{{partial "test/partial"}}', {name: 'test'});
 
       data = {foo:'bar', bar:'foo', bool: false};
       dom = partial(data);
@@ -269,7 +291,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /**      Augment the object prototype to provide this api         **/
 
           Object.prototype.get = function(key){ return this[key]; };
-          Object.prototype.set = function(key, val){ this[val] = val; };
+          Object.prototype.set = function(key, val){ this[key] = val; };
 
       /*******************************************************************/
 
@@ -388,7 +410,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /**      Augment the object prototype to provide this api         **/
 
           Object.prototype.get = function(key){ return this[key]; };
-          Object.prototype.set = function(key, val){ this[val] = val; };
+          Object.prototype.set = function(key, val){ this[key] = val; };
 
       /*******************************************************************/
 
@@ -503,5 +525,6 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
     // TODO: Add on helper tests
 
+    // TODO: Computed properties passed to helpers evaluate properly (specifically they break lazyvalue caches when their dependancies re evaluate)
 
 });

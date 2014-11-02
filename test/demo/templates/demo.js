@@ -171,7 +171,6 @@ return (function(){
       var el3 = dom.createElement("li");
       var el4 = dom.createElement("a");
       dom.setAttribute(el4,"href","/all");
-      dom.setAttribute(el4,"class","selected");
       var el5 = dom.createTextNode("All");
       dom.appendChild(el4, el5);
       dom.appendChild(el3, el4);
@@ -212,6 +211,10 @@ return (function(){
       var element6 = element5.childNodes[1];
       dom.repairClonedNode(element6,[],true);
       var element7 = fragment.childNodes[2];
+      var element8 = element7.childNodes[1];
+      var element9 = element8.childNodes[0].childNodes[0];
+      var element10 = element8.childNodes[1].childNodes[0];
+      var element11 = element8.childNodes[2].childNodes[0];
       var morph0 = dom.createMorphAt(element5.childNodes[0],0,1);
       var morph1 = dom.createMorphAt(element7.childNodes[0].childNodes[0],-1,-1);
       var morph2 = dom.createMorphAt(element7,2,3);
@@ -219,6 +222,9 @@ return (function(){
       hooks.element(element6, "attribute", context, ["checked",hooks.subexpr("allAreDone", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element6}, env);
       hooks.element(element6, "on", context, ["click","toggleAll"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element6}, env);
       hooks.content(morph1, "remaining", context, [], {context:context,escaped:true,morph:morph1}, env);
+      hooks.element(element9, "attribute", context, ["class",hooks.subexpr("if", context, ["isAll","selected"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element9}, env);
+      hooks.element(element10, "attribute", context, ["class",hooks.subexpr("if", context, ["isActive","selected"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element10}, env);
+      hooks.element(element11, "attribute", context, ["class",hooks.subexpr("if", context, ["isCompleted","selected"], {context:context,types:["id","string"],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element11}, env);
       hooks.content(morph2, "unless", context, ["noneAreDone"], {context:context,types:["id"],hashTypes:{},hash:{},render:child1,escaped:true,morph:morph2}, env);
       return fragment;
     };
@@ -281,16 +287,16 @@ return (function(){
       cachedFragment = build(dom);
     }
     var fragment = dom.cloneNode(cachedFragment, true);
-    var element8 = fragment.childNodes[0];
-    var element9 = element8.childNodes[0].childNodes[1];
-    var morph0 = dom.createMorphAt(element8,1,2);
-    hooks.element(element9, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element9}, env);
-    hooks.element(element9, "on", context, ["keyup","createTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element9}, env);
+    var element12 = fragment.childNodes[0];
+    var element13 = element12.childNodes[0].childNodes[1];
+    var morph0 = dom.createMorphAt(element12,1,2);
+    hooks.element(element13, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element13}, env);
+    hooks.element(element13, "on", context, ["keyup","createTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element13}, env);
     hooks.content(morph0, "if", context, ["todos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
     return fragment;
   };
 }());
-  var script = (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, firstTodo: function(){ return this.get('filteredTodos[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.data); }, editTodo: function(event){ event.data.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })();
+  var script = (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, firstTodo: function(){ return this.get('filteredTodos[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.data); }, editTodo: function(event){ event.data.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })();
   var style = "";
   var component = Rebound.Component.extend(script, { __name: "rebound-demo" });
   var proto = Object.create(HTMLElement.prototype, {});

@@ -1,12 +1,10 @@
 "use strict";
-var NIL = function NIL(){}, // TODO: microoptimize... object literal or fn? :P
+var NIL = function NIL(){},
     EMPTY_ARRAY = [];
 
 function LazyValue(fn) {
   this.valueFn = fn;
 }
-
-// TODO: Function.prototype.makeLazy helper?
 
 LazyValue.prototype = {
   isLazyValue: true,

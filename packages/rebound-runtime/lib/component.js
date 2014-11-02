@@ -1,4 +1,3 @@
-import propertyCompiler from "property-compiler/property-compiler";
 import $ from "rebound-runtime/utils";
 import env from "rebound-runtime/env";
 import { Model, Collection} from "rebound-data/rebound-data";
@@ -31,7 +30,16 @@ var Component = Model.extend({
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and registerd as compiled properties
+    _.each(this.defaults, function(val){
+      if(val && (val.isModel || val.isCollection)){
+        val.__parent__ = this;
+        val.__root__ = this;
+      }
+    }, this);
+
+    // Set our component's context with the passed data merged with the component's defaults
     this.set($.deepDefaults({}, (options.data || {}), (this.defaults || {})));
+
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
     this.helpers.__callOnComponent = this.__callOnComponent;
@@ -41,7 +49,6 @@ var Component = Model.extend({
     this.routes =  _.defaults((options.routes || {}), this.routes);
     // Ensure that all route functions exist
     _.each(this.routes, function(value, key, routes){
-        // TODO: Better error output
         if(typeof value !== 'string'){ throw('Function name passed to routes in  ' + this.__name + ' component must be a string!'); }
         if(!this[value]){ throw('Callback function '+value+' does not exist on the  ' + this.__name + ' component!'); }
     }, this);
@@ -88,7 +95,7 @@ var Component = Model.extend({
 
   __callOnComponent: function(name, event){
     if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
-    this[name].call(this, event);
+    return this[name].call(this, event);
   },
 
   _onModelChange: function(model, options){
@@ -129,7 +136,7 @@ var Component = Model.extend({
         // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
         if(paths[0].match(/\[.+\]/g)){
           paths.push(paths[0].replace(/\[.+\]/g, ".@each").replace(/^\./, '')); // test.[1].whatever -> test.@each.whatever
-          paths.push(paths[0].split(/\[.+\]/g)[0]); // test.[1].whatever -> test
+          // paths.push(paths[0].split(/\[.+\]/g)[0]); // test.[1].whatever -> test
           paths[0] = paths[0].replace(/\[([^\]]*)\]/g, '.$1').replace(/^\./, ''); // test[1].whatever -> test.1.whatever
         }
       });

@@ -15,20 +15,6 @@ var utils = function(query){
   return this;
 };
 
-
-
-function isDelegate(target, delegate){
-  if(delegate === true){
-    return true;
-  }
-  if(_.isElement(delegate) && target === delegate){
-    return true;
-  }
-  if(_.isString(delegate) && target.matchesSelector && target.matchesSelector(delegate)){
-    return true;
-  }
-  return false;
-}
 function returnFalse(){return false;}
 function returnTrue(){return true;}
 
@@ -63,11 +49,13 @@ $.Event = function( src, props ) {
 	}
 
   // Copy over all original event properties
-  // TODO: make efficient
-  _.extend(this, _.pick( this.originalEvent, ("altKey bubbles cancelable ctrlKey currentTarget eventPhase " +
-                 "metaKey relatedTarget shiftKey target timeStamp view which " +
-                 "char charCode key keyCode button buttons clientX clientY "   +
-                 " offsetX offsetY pageX pageY screenX screenY toElement").split(" ")));
+  _.extend(this, _.pick( this.originalEvent, [
+      "altKey", "bubbles", "cancelable", "ctrlKey", "currentTarget", "eventPhase",
+      "metaKey", "relatedTarget", "shiftKey", "target", "timeStamp", "view",
+      "which", "char", "charCode", "key", "keyCode", "button", "buttons",
+      "clientX", "clientY", "", "offsetX", "offsetY", "pageX", "pageY", "screenX",
+      "screenY", "toElement"
+    ]));
 
 	// Create a timestamp if incoming event doesn't have one
 	this.timeStamp = src && src.timeStamp || (new Date()).getTime();
@@ -145,40 +133,72 @@ utils.prototype = {
   **/
 
   // Rolled my own deep extend in leu of having a hard dependancy on lodash.
-  deepDefaults: function(obj) {
+  deepDefaults: function(dest) {
       var slice = Array.prototype.slice,
           hasOwnProperty = Object.prototype.hasOwnProperty;
 
-      _.each(slice.call(arguments, 1), function(def) {
+      _.each(slice.call(arguments, 1), function(src){
 
-        var objArr, srcArr, objAttr, srcAttr;
-        for (var prop in def) {
-          if (hasOwnProperty.call(def, prop)) {
-            if(_.isUndefined(obj[prop])){
-                obj[prop] = def[prop];
+        // For each property in this object
+        for (var prop in src) {
+          if (hasOwnProperty.call(src, prop)) {
+            // If destination
+            if(_.isUndefined(dest[prop])){
+                dest[prop] = src[prop];
             }
-            else if(_.isObject(obj[prop])){
-              if(obj[prop].isCollection){
-                def[prop].models = $.deepDefaults([], obj[prop].models, def[prop]);
-                obj[prop] = def[prop];
+            else if(_.isObject(dest[prop])){
+              if(dest[prop].isCollection){
+                // Collection -> Collection
+                if(src[prop].isCollection){
+                  // Preserve object defaults from the dest with the models from the data src
+                  src[prop].set(dest[prop].models);
+                }
+                // Array -> Collection
+                else if(_.isArray(src[prop])){
+                  dest[prop].set(src[prop]);
+                  continue;
+                }
+                //
+                else{
+                  src[prop] = $.deepDefaults([], dest[prop].models, src[prop]);
+                }
+                dest[prop] = src[prop];
               }
-              else if(_.isArray(obj[prop])){
-                obj[prop] = $.deepDefaults([], obj[prop], def[prop]);
+              else if(_.isArray(dest[prop])){
+                dest[prop] = $.deepDefaults([], dest[prop], src[prop]);
               }
-              else if((obj[prop].isModel)){
-                obj[prop] = $.deepDefaults({}, obj[prop].attributes, def[prop]);
+              else if((dest[prop].isModel)){
+                dest[prop] = $.deepDefaults({}, dest[prop].attributes, src[prop]);
               }
               else{
-                obj[prop] = $.deepDefaults({}, obj[prop], def[prop]);
+                dest[prop] = $.deepDefaults({}, dest[prop], src[prop]);
               }
             }
           }
         }
       });
 
-      return obj;
+      return dest;
     },
 
+  // Events registry. An object containing all events bound through this util shared among all instances.
+  _events: {},
+
+  // Takes the targed the event fired on and returns all callbacks for the delegated element
+  _hasDelegate: function(target, delegate, eventType){
+    var callbacks = [];
+
+    // Get our callbacks
+    if(target.delegateGroup && this._events[target.delegateGroup][eventType]){
+      _.each(this._events[target.delegateGroup][eventType], function(callbacksList, delegateId){
+        if(_.isArray(callbacksList) && (delegateId === delegate.delegateId || ( delegate.matchesSelector && delegate.matchesSelector(delegateId) )) ){
+          callbacks = callbacks.concat(callbacksList);
+        }
+      });
+    }
+
+    return callbacks;
+  },
 
   // Triggers an event on a given dom node
   trigger: function(eventName, options){
@@ -196,15 +216,32 @@ utils.prototype = {
   },
 
   off: function(eventType, handler){
-    var el, len = this.length;
+    var el, len = this.length, eventCount;
+
     while(len--){
 
       el = this[len];
+      eventCount = 0;
 
-      if (el.removeEventListener){
+      if(el.delegateGroup){
+        if(this._events[el.delegateGroup][eventType] && _.isArray(this._events[el.delegateGroup][eventType][el.delegateId])){
+          _.each(this._events[el.delegateGroup][eventType], function(delegate, index, delegateList){
+            _.each(delegateList, function(callback, index, callbackList){
+              if(callback === handler){
+                delete callbackList[index];
+                return;
+              }
+              eventCount++;
+            });
+          });
+        }
+      }
+
+      // If there are no more of this event type delegated for this group, remove the listener
+      if (eventCount === 0 && el.removeEventListener){
         el.removeEventListener(eventType, handler, false);
       }
-      if (el.detachEvent){
+      if (eventCount === 0 && el.detachEvent){
         el.detachEvent('on'+eventType, handler);
       }
 
@@ -213,54 +250,83 @@ utils.prototype = {
 
   on: function (eventName, delegate, data, handler) {
     var el,
+        events = this._events,
         len = this.length,
-        eventNames = eventName.split(' ');
+        eventNames = eventName.split(' '),
+        delegateId, delegateGroup;
 
     while(len--){
       el = this[len];
+
+      // Normalize data input
+      if(_.isFunction(delegate)){
+        handler = delegate;
+        delegate = el;
+        data = {};
+      }
+      if(_.isFunction(data)){
+        handler = data;
+        data = {};
+      }
+      if(!_.isString(delegate) && !_.isElement(delegate)){
+        console.error("Delegate value passed to Rebound's $.on is neither an element or css selector");
+        return false;
+      }
+
+      delegateId = _.isString(delegate) ? delegate : (delegate.delegateId = delegate.delegateId || _.uniqueId('event'));
+      delegateGroup = el.delegateGroup = (el.delegateGroup || _.uniqueId('delegateGroup'));
+
       _.each(eventNames, function(eventName){
 
-        if(_.isFunction(delegate)){
-          handler = delegate;
-          delegate = el;
-          data = {};
-        }
-        if(_.isFunction(data)){
-          handler = data;
-          data = {};
-        }
+        // Ensure event obj existance
+        events[delegateGroup] = events[delegateGroup] || {};
 
+        // TODO: take out of loop
         var callback = function(event){
-              var target;
+              var target, i, len, eventList, callbacks, callback, falsy;
               event = new $.Event((event || window.event)); // Convert to mutable event
               target = event.target || event.srcElement;
-              event.data = data;
 
-              // Travel from target up to parent firing event when delegate matches
+              // Travel from target up to parent firing event on delegate when it exizts
               while(target){
-                if(isDelegate(target, delegate)) {
-                  event.target = event.srcElement = target;
-                  event.result = handler.call(el, event);
-                  // If callback returns false, prevent default and propagation
-                  if ( event.result === false ) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    break;
-                  }
+
+                // Get all specified callbacks (element specific and selector specified)
+                callbacks = $._hasDelegate(el, target, event.type);
+
+                len = callbacks.length;
+                for(i=0;i<len;i++){
+                  event.target = event.srcElement = target;               // Attach this level's target
+                  event.data = callbacks[i].data;                         // Attach our data to the event
+                  event.result = callbacks[i].callback.call(el, event);   // Call the callback
+                  falsy = ( event.result === false ) ? true : falsy;      // If any callback returns false, log it as falsy
                 }
+
+                // If any of the callbacks returned false, prevent default and stop propagation
+                if(falsy){
+                  event.preventDefault();
+                  event.stopPropagation();
+                  return false;
+                }
+
                 target = target.parentNode;
               }
             };
 
-        if (el.addEventListener) {
-          el.addEventListener(eventName, callback);
-        } else {
-          el.attachEvent('on' + eventName, callback);
+        // If this is the first event of its type, add the event handler
+        if(!events[delegateGroup][eventName]){
+          if (el.addEventListener) {
+            el.addEventListener(eventName, callback);
+          } else {
+            el.attachEvent('on' + eventName, callback);
+          }
         }
 
-        el.__events = el.__events || {};
-        el.__events[eventName] = el.__events[eventName] || [];
-        el.__events[eventName].push(callback);
+
+        // Add our listener
+        events[delegateGroup][eventName] = events[delegateGroup][eventName] || {};
+        events[delegateGroup][eventName][delegateId] = events[delegateGroup][eventName][delegateId] || [];
+        events[delegateGroup][eventName][delegateId].push({callback: handler, data: data});
+
       }, this);
     }
   },

@@ -58,7 +58,7 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       equal(model.get('test.test2').__path(), 'test.test2', 'Nested Models inherit path of parents');
       equal(model.get('test.test2[0]').__path(), 'test.test2[0]', 'Nested Collections inherit path of parents');
       deepEqual(model.toJSON(), {'test': {'test2': [{'test3': 'foo'}]}}, 'Model\'s toJSON method is recursive');
-
+      
       model.set('test.test2.[0].test3', model);
       deepEqual(model.toJSON(), {'test': {'test2': [{'test3': model.cid}]}}, 'Model\'s toJSON handles cyclic dependancies');
 

@@ -32,18 +32,24 @@ Collection.prototype.deinitialize = function () {
   // if data has a dom element associated with it, remove all dom events and the dom referance
   if(this.el){
 
-    // Recursively remove all event bindings on dom tree
+    _.each(this.el.__listeners, function(handler, eventType){
+      console.log(eventType, this.el);
+      if (this.el.removeEventListener){ this.el.removeEventListener(eventType, handler, false); }
+      if (this.el.detachEvent){ this.el.detachEvent('on'+eventType, handler); }
+    }, this);
+
+    // Remove all event delegates
+    delete this.el.__listeners;
+    delete this.el.__events;
+
+    // Recursively remove element lazyvalues
     $(this.el).walkTheDOM(function(el){
-      _.each(el.__events, function(callbacks, eventType){
-        _.each(callbacks, function(callback){
-          console.log('off', el, eventType);
-          $(el).off(eventType, callback);
-        });
-        el.__events[eventType].length = 0;
-      });
+      if(el.__lazyValue && el.__lazyValue.destroy()){
+        n.__lazyValue.destroy();
+      }
     });
 
-    delete this.el.__events;
+    // Remove element referances
     delete this.$el;
     delete this.el;
   }

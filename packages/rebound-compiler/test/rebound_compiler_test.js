@@ -36,7 +36,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function
       /**      Augment the object prototype to provide this api         **/
 
           Object.prototype.get = function(key){ return this[key]; };
-          Object.prototype.set = function(key, val){ this[val] = val; };
+          Object.prototype.set = function(key, val){ this[key] = val; };
 
       /*******************************************************************/
 

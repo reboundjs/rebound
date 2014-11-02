@@ -31,13 +31,13 @@
 					<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
 					<ul id="filters">
 						<li>
-							<a href="/all" class="selected" >All</a>
+							<a href="/all" class="{{if isAll 'selected'}}" >All</a>
 						</li>
 						<li>
-							<a href="/active" >Active</a>
+							<a href="/active" class="{{if isActive 'selected'}}" >Active</a>
 						</li>
 						<li>
-		          <a href="/completed">Completed</a>
+		          <a href="/completed" class="{{if isCompleted 'selected'}}">Completed</a>
 						</li>
 					</ul>
 					{{#unless noneAreDone}}
@@ -130,6 +130,10 @@
 			if(this.get('filter') == 'completed')
 				return this.get('todos').where({'isCompleted': true});
 		},
+		isAll: function(){ return this.get('filter') === 'all'; },
+		isActive: function(){ return this.get('filter') === 'active'; },
+		isCompleted: function(){ return this.get('filter') === 'completed'; },
+
 
 	/************** Component Methods *****************/
 

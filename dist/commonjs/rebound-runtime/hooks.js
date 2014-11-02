@@ -42,7 +42,6 @@ function addObserver(context, path, lazyValue, morph) {
 
   // Add our callback
   context.__observers[path].push(function() {
-    // TODO: Add a garbage collector that periodically walks over the data and cleans observers? May not be needed.
     try{
       return lazyValue.notify();
     } catch(err) {
@@ -234,7 +233,6 @@ function constructHelper(el, path, context, params, options, env, helper) {
 }
 
 // Given a root element, cleans all of the morph lazyValues for a given subtree
-// TODO: Theres probably a more efficient way to write this function.
 function cleanSubtree(mutations, observer){
   // For each mutation observed, if there are nodes removed, destroy all associated lazyValues
   mutations.forEach(function(mutation) {
@@ -263,9 +261,6 @@ hooks.content = function(placeholder, path, context, params, options, env) {
       value,
       observer = subtreeObserver,
       helper = helpers.lookupHelper(path, env, context);
-
-  // TODO: just set escaped on the placeholder in HTMLBars
-  placeholder.escaped = options.escaped;
 
   // If we were passed a helper, and it was found in our registered helpers
   if (helper) {
@@ -297,8 +292,8 @@ hooks.content = function(placeholder, path, context, params, options, env) {
     if(placeholder._parent){
       placeholder._parent.__lazyValue = lazyValue;
       setTimeout(function(){
-        if(placeholder._parent.parentNode){
-          observer.observe(placeholder._parent.parentNode, { attributes: false, childList: true, characterData: false, subtree: true });
+        if(placeholder.contextualElement){
+          observer.observe(placeholder.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
         }
       }, 0);
     }
@@ -321,22 +316,11 @@ hooks.element = function(element, path, context, params, options, env) {
 
   // When we have our lazy value run it and start listening for updates.
   lazyValue.onNotify(function(lazyValue) {
-    var val = lazyValue.value();
-    // If an input element, set its new value if different
-    if(params[0] === 'value' && val !== undefined && element.value !== val){
-        element.value = val;
-    }
-    if(val !== undefined){ element.setAttribute(params[0], val); }
+    lazyValue.value();
   });
 
   value = lazyValue.value();
-  // If an input element, set its new value if different
-  if(params[0] === 'value' && value !== undefined && element.value !== value){
-      element.value = value;
-  }
-  if(value !== undefined){
-    element.setAttribute(params[0], value);
-  }
+
 };
 
 hooks.webComponent = function(placeholder, path, context, options, env) {
@@ -456,7 +440,9 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
           // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
           if((_.isObject(value))){ return; }
           value = (_.isObject(value)) ? JSON.stringify(value) : value;
-          element.setAttribute(key, value);
+          if(!_.isUndefined(value)){
+            element.setAttribute(key, value);
+          }
         });
       }
     });
@@ -467,7 +453,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
       var path = model.__path(),
           split = path.split('.');
 
-      if(!options.hash[split[1]]){
+      if(!options.hash[split[0]]){
         return;
       }
 
@@ -478,11 +464,26 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
 
     /** The attributeChangedCallback on our custom element updates the component's data. **/
 
+
   /*******************************************************
 
     End data dependancy chain
 
   *******************************************************/
+
+
+    // TODO: break this out into its own function
+    // Set the properties on our element for visual referance if we are on a top level attribute
+    var compjson = component.toJSON();
+    _.each(compjson, function(value, key){
+      // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
+      if((_.isObject(value))){ return; }
+      value = (_.isObject(value)) ? JSON.stringify(value) : value;
+      if(!_.isNull(value) && !_.isUndefined(value)){
+        element.setAttribute(key, value);
+      }
+    });
+
 
     // If an outlet marker is present in component's template, and options.render is a function, render it into <content>
     outlet = element.getElementsByTagName('content')[0];

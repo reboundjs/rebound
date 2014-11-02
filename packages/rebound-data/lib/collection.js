@@ -36,11 +36,16 @@ var Collection = Backbone.Collection.extend({
         lineage,
         i=0, l;
 
-    // Make a copy of all of our models so we aren't sharing any memory
-    models = (!_.isArray(models)) ? (models ? [models] : []) : _.clone(models);
+    // Ensure models is an array
+    models = (!_.isArray(models)) ? (models ? [models] : []) : models;
 
     for (i = 0, l = models.length; i < l; i++) {
       model = data = models[i] || {};
+
+      if(model.__parent__ == this){
+        models[i] = model;
+        continue;
+      }
 
       lineage = {
         __parent__: this,
@@ -49,15 +54,14 @@ var Collection = Backbone.Collection.extend({
         _hasAncestry: true
       };
 
-      // If model is a backbone model, awesome. If not, make it one. Add its ancestary.
-      if (model && model.isModel) {
-        _.extend(model, lineage);
-      } else {
-        options = options ? _.clone(options) : {};
-        options.collection = this;
-        lineage.defaults = _.defaults(data, this.model.prototype.defaults);
-        model = new (this.model.extend(lineage))();
-      }
+      // Ensure that this element now knows that it has children now. WIthout this cyclic dependancies cause issues
+      this._hasAncestry = true;
+
+     // TODO: This will override things set by the new model to appease the collection's model's defaults. Do a smart default set here.
+      options = options ? _.clone(options) : {};
+      options.collection = this;
+      lineage.defaults = _.defaults(((data.isModel) ? data.attributes : data), this.model.prototype.defaults);
+      model = new (this.model.extend(lineage))();
 
       models[i] = model;
     }

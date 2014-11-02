@@ -71,15 +71,15 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
   }
 
   // Fetches Pare HTML and CSS
-  function fetchResources(primaryRoute, isGlobal) {
+  function fetchResources(appName, primaryRoute, isGlobal) {
 
     // Expecting Module Definition as 'SearchApp' Where 'Search' a Primary Route
-    var jsUrl = this.config.jsPrefix.replace(/:route/g, primaryRoute) + primaryRoute + this.config.jsSuffix,
-        cssUrl = this.config.cssPrefix.replace(/:route/g, primaryRoute) + primaryRoute + this.config.cssSuffix + '.css',
+    var jsUrl = this.config.jsPath.replace(/:route/g, primaryRoute).replace(/:app/g, appName),
+        cssUrl = this.config.cssPath.replace(/:route/g, primaryRoute).replace(/:app/g, appName),
         cssLoaded = false,
         jsLoaded = false,
-        cssElement = document.getElementById(primaryRoute + '-css'),
-        jsElement = document.getElementById(primaryRoute + '-js'),
+        cssElement = document.getElementById(appName + '-css'),
+        jsElement = document.getElementById(appName + '-js'),
         router = this,
         PageApp;
 
@@ -89,12 +89,12 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         cssElement.setAttribute('type', 'text/css');
         cssElement.setAttribute('rel', 'stylesheet');
         cssElement.setAttribute('href', cssUrl);
-        cssElement.setAttribute('id', primaryRoute + '-css');
+        cssElement.setAttribute('id', appName + '-css');
         document.head.appendChild(cssElement);
         $(cssElement).on('load', function(event){
             if((cssLoaded = true) && jsLoaded){
               // Install The Loaded Resources
-              installResources.call(router, PageApp, primaryRoute, isGlobal);
+              installResources.call(router, PageApp, appName, isGlobal);
 
               // Re-trigger route so the newly added route may execute if there's a route match.
               // If no routes are matched, app will hit wildCard route which will then trigger 404
@@ -119,7 +119,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
           jsElement = document.createElement('script');
           jsElement.setAttribute('type', 'text/javascript');
           jsElement.setAttribute('src', '/'+jsUrl+'.js');
-          jsElement.setAttribute('id', primaryRoute + '-js');
+          jsElement.setAttribute('id', appName + '-js');
           document.head.appendChild(jsElement);
           $(jsElement).on('load', function(event){
             // AMD Will Manage Dependancies For Us. Load The App.
@@ -128,7 +128,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
               if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
                 // Install The Loaded Resources
-                installResources.call(router, PageApp, primaryRoute, isGlobal);
+                installResources.call(router, PageApp, appName, isGlobal);
                 // Re-trigger route so the newly added route may execute if there's a route match.
                 // If no routes are matched, app will hit wildCard route which will then trigger 404
                 if(!isGlobal && router.config.triggerOnFirstLoad){
@@ -151,7 +151,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
           if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
             // Install The Loaded Resources
-            installResources.call(router, PageApp, primaryRoute, isGlobal);
+            installResources.call(router, PageApp, appName, isGlobal);
             // Re-trigger route so the newly added route may execute if there's a route match.
             // If no routes are matched, app will hit wildCard route which will then trigger 404
             if(!isGlobal && router.config.triggerOnFirstLoad){
@@ -177,17 +177,18 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
     // Called when no matching routes are found. Extracts root route and fetches it resources
     wildcardRoute: function(route) {
+      var appName, primaryRoute;
 
       // If empty route sent, route home
       route = route || '';
 
       // Get Root of Route
-      var primaryRoute = (route) ? route.split('/')[0] : '';
+      appName = primaryRoute = (route) ? route.split('/')[0] : 'index';
 
-      // Use Any Custom Route Mappings
+      // Find Any Custom Route Mappings
       _.any(this.config.handlers, function(handler) {
         if (handler.route.test(route)) {
-          primaryRoute = handler.primaryRoute;
+          appName = handler.primaryRoute;
           return true;
         }
       });
@@ -199,7 +200,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       // Fetch Resources
       document.body.classList.add("loading");
-      fetchResources.call(this, primaryRoute);
+      fetchResources.call(this, appName, primaryRoute);
     },
 
     // On startup, save our config object and start the router
@@ -232,7 +233,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       // Install our global components
       _.each(this.config.globalComponents, function(selector, route){
-        fetchResources.call(router, route, selector);
+        fetchResources.call(router, route, route, selector);
       });
 
 

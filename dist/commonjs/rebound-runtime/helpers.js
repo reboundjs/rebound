@@ -60,25 +60,33 @@ helpers.registerHelper = function(name, callback, params){
 ********************************/
 
 helpers.on = function(params, hash, options, env){
-  var id = options.element.getAttribute('data-event') || _.uniqueId('event'),
-      i, callback,
+  var i, callback, delegate, eventName, element,
       root = this,
       len = params.length,
       data = hash.data && hash.data.isLazyValue && hash.data.value() || hash.data || options.context;
 
-  // Set our element's data-event id
-  options.element.setAttribute('data-event', id);
-
   // Find our root component
   root = root.__root__;
 
-  // Make sure we only attach once for each combination of delagate selector and callback
-  for(i = 1; i<len; i++){
-    callback = params[i];
-    $(root.el).on(params[0], options.element, data, function(event){
-      return options.helpers.__callOnComponent(callback, event);
-    });
+  eventName = params[0];
+
+  // By default everything is delegated on parent component
+  if(len === 2){
+    callback = params[1];
+    delegate = options.element;
+    element = root.el;
   }
+  // If a selector is provided, delegate on the helper's element
+  else if(len === 3){
+    callback = params[2];
+    delegate = params[1];
+    element = options.element;
+  }
+
+  // Attach event
+  $(element).on(eventName, delegate, data, function(event){
+    return options.helpers.__callOnComponent(callback, event);
+  });
 };
 
 helpers.concat = function(params, hash, options, env) {
@@ -97,7 +105,7 @@ helpers.length = function(params, hash, options, env){
 helpers.attribute = function(params, hash, options, env) {
   var checkboxChange,
       type = options.element.getAttribute("type"),
-      inputTypes = {'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true,},
+      inputTypes = {'null': true, 'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true},
       attr;
 
   // If is a text input element's value prop with only one variable, wire default events
@@ -106,7 +114,6 @@ helpers.attribute = function(params, hash, options, env) {
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.inputObserver){
 
-      // If a submit action has been set
       $(options.element).on('change input propertychange', function(event){
         options.context.set(options.params[1].path, this.value);
       });
@@ -115,13 +122,19 @@ helpers.attribute = function(params, hash, options, env) {
 
     }
 
-    return options.context.get(options.params[1].path);
+    // Set the attribute on our element for visual referance
+    (_.isUndefined(params[1])) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
+
+    attr = options.context.get(options.params[1].path);
+
+    return options.element.value = (attr) ? attr : '';
   }
 
-  if(options.element.tagName === 'INPUT' && (options.element.getAttribute("type") === 'checkbox' || options.element.getAttribute("type") === 'radio') && params[0] === 'checked' && !options.params[1].children ){
+  else if(options.element.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && params[0] === 'checked' && !options.params[1].children ){
 
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.eventsBound){
+
       $(options.element).on('change propertychange', function(event){
         options.context.set(options.params[1].path, ((this.checked) ? true : false));
       });
@@ -129,10 +142,26 @@ helpers.attribute = function(params, hash, options, env) {
       options.lazyValue.eventsBound = true;
     }
 
+    // Set the attribute on our element for visual referance
+    (!params[1]) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
+
     return options.element.checked = (params[1]) ? true : undefined;
   }
 
-  return params[1];
+  else {
+    // attr = (params[1]) ? params[1] : undefined;
+    if(_.isUndefined(params[1])){
+      return options.element.removeAttribute(params[0]);
+    }
+    else{
+      return options.element.setAttribute(params[0], params[1]);
+    }
+  }
+
+  // If param is falsey, return undefined so we don't render the attr
+
+
+  return attr;
 };
 
 helpers.if = function(params, hash, options, env){
