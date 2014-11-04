@@ -4,7 +4,7 @@
   <a href="https://travis-ci.org/epicmiller/rebound">
     <img src="https://travis-ci.org/epicmiller/rebound.svg?branch=master" alt="Build Status" />
     <br>
-    <a href="https://trello.com/b/IKShh3Nt/rebound">Trello Board</a>
+    <a href="http://zenhub.io" target="_blank"><img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png" height="18px" alt="Powered by ZenHub"/></a>
   </a>
   <h3 align="center">Automatic data binding for Backbone using HTMLBars.</h3>
 </p>
