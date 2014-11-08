@@ -5874,7 +5874,7 @@ define("rebound-runtime/helpers",
       var condition = params[0];
 
       if(condition === undefined){
-        return;
+        return null;
       }
 
       if(condition.isModel){
@@ -5918,7 +5918,7 @@ define("rebound-runtime/helpers",
       var condition = params[0];
 
       if(condition === undefined){
-        return;
+        return null;
       }
 
       if(condition.isModel){

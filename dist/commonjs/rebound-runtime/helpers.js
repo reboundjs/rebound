@@ -166,7 +166,7 @@ helpers.if = function(params, hash, options, env){
   var condition = params[0];
 
   if(condition === undefined){
-    return;
+    return null;
   }
 
   if(condition.isModel){
@@ -210,7 +210,7 @@ helpers.unless = function(params, hash, options, env){
   var condition = params[0];
 
   if(condition === undefined){
-    return;
+    return null;
   }
 
   if(condition.isModel){
