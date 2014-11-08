@@ -20,8 +20,8 @@ function addObserver(context, path, lazyValue, morph) {
   var length,
       paths = $.splitPath(path);
 
-  if(!_.isObject(context) || !_.isString(path) || !_.isObject(lazyValue) || !_.isObject(morph)){
-    console.error('Error adding observer for', context, path, lazyValue, morph);
+  if(!_.isObject(context) || !_.isString(path) || !_.isObject(lazyValue)){
+    console.error('Error adding observer for', context, path, lazyValue);
     return;
   }
 
@@ -56,98 +56,67 @@ function addObserver(context, path, lazyValue, morph) {
   return {context: context, path: path, index: length};
 }
 
-function addComputedPropertyObservers(lazyValue, helper, context, morph){
+function streamComputedPropertyArgs(lazyValue, helper, context){
 
-  if(_.isArray(helper.__params)){
-    var len = helper.__params.length;
-    // For each extra paramater dependancy, computed or user provided
-    for (var i = 0; i < len; i++) {
+  if(helper && _.isArray(helper.__params)){
 
-      if(_.isString(helper.__params[i])){
+    streamifyArgs(context, helper.__params, {types: (new Array(helper.__params.length+1)).join('id,').split(',')}, helper, lazyValue);
 
-        // If it contains an @each statement in the path,
-        if(helper.__params[i].indexOf('@each') > 0){
+    helper.__params.forEach(function(node) {
 
-          // TODO: If the property is n levels deep in nested collections, handle that
-          var collectionPath = helper.__params[i].split(/\.?@each\.?/);
+      // Re-evaluate this expression when our condition changes
+      node.onNotify(function(){
+        lazyValue.value();
+      });
 
-          // Delagated on the collection, when the collection receives a change event for the specified child model attribute, notify our lazyvalue.
-          lazyValue.saveObserver(addObserver(context.get(collectionPath[0]), '@each.' + collectionPath[1], lazyValue, morph));
+      lazyValue.addDependentValue(node);
 
-          // Listen to collection changes (add, remove, reset, etc)
-          lazyValue.saveObserver(addObserver(context, collectionPath[0], lazyValue, morph));
+      // Whenever context.path changes, have LazyValue notify its listeners.
+      // If it contains an @each statement in the path,
+      if(node.path.indexOf('@each') > 0){
 
-        }
-        else{
-          lazyValue.saveObserver(addObserver(context, helper.__params[i], lazyValue, morph));
-        }
+        // TODO: If the property is n levels deep in nested collections, handle that
+        // Listen for changes to collection (add, remove, reset, etc)
+        lazyValue.saveObserver(addObserver(context, node.path.split(/\.?@each\.?/)[0], lazyValue));
+
       }
-    }
+      else{
+        lazyValue.saveObserver(addObserver(context, node.path, lazyValue));
+      }
+
+    });
   }
+
 }
 
-function streamComputedProperty(context, path, morph, options){
+// Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
+function streamProperty(context, path) {
 
-  // Our raw computed property function
-  var helper = context.get(path, {raw: true}),
-      res;
-
-  // New lazy value calls each of this computed property's observers and returns its value
-  lazyValue = new LazyValue(function() {
-    // Notify all computed properties that depend on this computed property of its change
-    if(_.isArray(context.__observers[path])){
-      _.each(context.__observers[path], function(callback, index) {
-        if(callback){
-          callback();
-        }
-        else{
-          delete context.__observers[path][index];
-        }
+    // Our raw value at this path
+  var value = context.get(path, {raw: true}),
+    // Lazy value that returns the value of context.path
+      lazyValue = new LazyValue(function() {
+        return context.get(path);
       });
-    }
-
-    res = context.get(path);
-
-    return res;
-  });
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
   lazyValue.path = path;
 
   // If we have custom defined observers, bind to those vars.
-  addComputedPropertyObservers(lazyValue, helper, context, morph);
+  streamComputedPropertyArgs(lazyValue, value, context);
+
+  lazyValue.saveObserver(addObserver(context, path, lazyValue));
 
   return lazyValue;
 }
 
-// Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
-function streamStaticProperty(context, path, morph, options) {
-  // Lazy value that returns the value of context.path
-  var lazyValue = new LazyValue(function() {
-    return context.get(path);
-  });
-
-  // Save our path so parent lazyvalues can know the data var or helper they are getting info from
-  lazyValue.path = path;
-
-  // Whenever context.path changes, have LazyValue notify its listeners.
-  lazyValue.saveObserver(addObserver(context, path, lazyValue, morph));
-
-  return lazyValue;
-}
-
-function streamifyArgs(context, params, options, helper) {
+function streamifyArgs(context, params, options) {
   // Convert ID params to streams
   var morph = options.placeholder || options.element || true;
 
   for (var i = 0, l = params.length; i < l; i++) {
-    if (options.types[i] === 'id') {
-      if (isComputedProperty(context, params[i])){
-        params[i] = streamComputedProperty(context, params[i], morph, options);
-      }
-      else {
-        params[i] = streamStaticProperty(context, params[i], morph, options);
-      }
+    if (options.types[i] === 'id' && !params[i].isLazyValue) {
+      params[i] = streamProperty(context, params[i]);
     }
   }
 
@@ -156,12 +125,7 @@ function streamifyArgs(context, params, options, helper) {
       hashTypes = options.hashTypes;
   for (var key in hash) {
     if (hashTypes[key] === 'id') {
-      if (isComputedProperty(context, params[i])){
-        hash[key] = streamComputedProperty(context, hash[key], morph, options);
-      }
-      else {
-        hash[key] = streamStaticProperty(context, hash[key], morph, options);
-      }
+      hash[key] = streamProperty(context, hash[key]);
     }
   }
 }
@@ -172,9 +136,6 @@ function constructHelper(el, path, context, params, options, env, helper) {
   // Extend options with the helper's containeing Morph element. Used by streamify to track data observers
   options.placeholder = el && !el.tagName && el || false; // FIXME: this kinda sucks
   options.element = el && el.tagName && el || false;      // FIXME: this kinda sucks
-
-  // For each argument passed to our helper, turn them into LazyValues. Params array is now an array of lazy values that will trigger when their value changes.
-  streamifyArgs(context, params, options, helper);
 
   // Extend options with hooks and helpers for any subsequent calls from a lazyvalue
   options.params = params;                                 // FIXME: this kinda sucks
@@ -191,9 +152,15 @@ function constructHelper(el, path, context, params, options, env, helper) {
         plainParams = [],
         plainHash = [],
         result,
-        relpath = $.splitPath(path);
+        relpath = $.splitPath(path),
+        first, rest;
         relpath.shift();
         relpath = relpath.join('.');
+
+        rest = $.splitPath(relpath);
+        first = rest.shift();
+        rest = rest.join('.');
+
 
     // Assemble our args and hash variables. For each lazyvalue param, push the lazyValue's value so helpers with no concept of lazyvalues.
     for(i=0; i<len; i++){
@@ -207,8 +174,27 @@ function constructHelper(el, path, context, params, options, env, helper) {
     // Call our helper functions with our assembled args.
     result = helper.apply(context, [plainParams, plainHash, options, env]);
 
-    return result && result.get && result.get(relpath) || _.isObject(result) && result.hasOwnProperty(relpath) && result[relpath] || result;
+    // TODO: Shouldnt have to do this. Its bad.
+    // Promote arrays returnd by helpers to collections
+    result = (_.isArray(result)) ? new Rebound.Collection(result) : result;
+
+
+    if(result && relpath && ( result.isModel || result.isCollection )){
+      return result.get(relpath);
+    }
+
+    if(result && relpath &&  (_.isObject(result) || _.isArray(result)) && result.hasOwnProperty(relpath)){
+      console.log(relpath, first, rest);
+      return result[first].get(rest);
+    }
+
+    return result;
+
   });
+
+
+  // For each argument passed to our helper, turn them into LazyValues. Params array is now an array of lazy values that will trigger when their value changes.
+  streamifyArgs(context, params, options);
 
   options.lazyValue.path = path;
 
@@ -227,7 +213,7 @@ function constructHelper(el, path, context, params, options, env, helper) {
   });
 
   // If we have custom defined observers, bind to those vars.
-  addComputedPropertyObservers(options.lazyValue, helper, context, (options.placeholder || options.element));
+  streamComputedPropertyArgs(options.lazyValue, helper, context);
 
   return options.lazyValue;
 }
@@ -268,7 +254,7 @@ hooks.content = function(placeholder, path, context, params, options, env) {
     lazyValue = constructHelper(placeholder, path, context, params, options, env, helper);
   } else {
     // If not a helper, just subscribe to the value
-    lazyValue = streamStaticProperty(context, path, placeholder, options);
+    lazyValue = streamProperty(context, path, placeholder, options);
   }
 
   // If we have our lazy value, update our dom.
@@ -311,7 +297,7 @@ hooks.element = function(element, path, context, params, options, env) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
     lazyValue = constructHelper(element, path, context, params, options, env, helper);
   } else {
-    lazyValue = streamStaticProperty(context, path, element, options);
+    lazyValue = streamProperty(context, path, element, options);
   }
 
   // When we have our lazy value run it and start listening for updates.
@@ -350,7 +336,7 @@ hooks.webComponent = function(placeholder, path, context, options, env) {
 
     // For each param passed to our shared component, create a new lazyValue
     _.each(data, function(value, key) {
-      lazyData[key] = streamStaticProperty(component, key, placeholder, options);
+      lazyData[key] = streamProperty(component, key, placeholder, options);
     });
 
     // For each param passed to our helper, have it update the original context when changed.
@@ -520,7 +506,7 @@ hooks.subexpr = function(path, context, params, options, env) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
     lazyValue = constructHelper((options || true), path, context, params, options, env, helper);
   } else {
-    lazyValue = streamStaticProperty(context, path, (options || true), options);
+    lazyValue = streamProperty(context, path, (options || true), options);
   }
 
   return lazyValue;

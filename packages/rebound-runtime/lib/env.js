@@ -37,6 +37,15 @@ env.notify = function(obj, path) {
   // If path is not an array of keys, wrap it in array
   path = (_.isString(path)) ? [path] : path;
 
+  // If this is a change from a model inside of a collection, alert all collection's watchers of the change too
+  _.each(path, function(path, index, arr){
+    // TODO: Make this work for nexted collections. Only works at 1 level right now.
+    var collectionPath = path.split('.@each.')[0];
+    if(collectionPath){
+      arr.push(collectionPath);
+    }
+  });
+
   // For each path, alert each observer and call its callback
   _.each(path, function(path){
     if(obj.__observers && _.isArray(obj.__observers[path])){

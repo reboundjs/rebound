@@ -33,7 +33,6 @@ Collection.prototype.deinitialize = function () {
   if(this.el){
 
     _.each(this.el.__listeners, function(handler, eventType){
-      console.log(eventType, this.el);
       if (this.el.removeEventListener){ this.el.removeEventListener(eventType, handler, false); }
       if (this.el.detachEvent){ this.el.detachEvent('on'+eventType, handler); }
     }, this);

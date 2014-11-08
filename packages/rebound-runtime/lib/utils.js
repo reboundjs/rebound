@@ -141,6 +141,7 @@ utils.prototype = {
         // For each property in this object
         for (var prop in src) {
           if (hasOwnProperty.call(src, prop)) {
+
             // If destination
             if(_.isUndefined(dest[prop])){
                 dest[prop] = src[prop];
@@ -150,7 +151,7 @@ utils.prototype = {
                 // Collection -> Collection
                 if(src[prop].isCollection){
                   // Preserve object defaults from the dest with the models from the data src
-                  src[prop].set(dest[prop].models);
+                  dest[prop] = $.deepDefaults([], dest[prop].models, src[prop].models);
                 }
                 // Array -> Collection
                 else if(_.isArray(src[prop])){
@@ -159,9 +160,8 @@ utils.prototype = {
                 }
                 //
                 else{
-                  src[prop] = $.deepDefaults([], dest[prop].models, src[prop]);
+                  dest[prop] = $.deepDefaults([], dest[prop].models, src[prop]);
                 }
-                dest[prop] = src[prop];
               }
               else if(_.isArray(dest[prop])){
                 dest[prop] = $.deepDefaults([], dest[prop], src[prop]);

@@ -39,9 +39,9 @@ var Component = Model.extend({
       }
     }, this);
 
-    // if(this.__name == 'styled-dropdown'){debugger;}
+    // Set our component's context with the passed data merged with the component's defaults
     this.set($.deepDefaults({}, (options.data || {}), (this.defaults || {})));
-    // if(this.__name == 'styled-dropdown'){debugger;}
+
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
     this.helpers.__callOnComponent = this.__callOnComponent;

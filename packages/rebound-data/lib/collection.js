@@ -1,4 +1,5 @@
 import Model from "rebound-data/model";
+import $ from "rebound-runtime/utils";
 
 // If Rebound Runtime has already been run, throw error
 if(Rebound.Collection){
@@ -28,6 +29,65 @@ var Collection = Backbone.Collection.extend({
   },
 
   model: this.model || Model,
+
+
+  get: function(key, options){
+
+    // If the key is a number or object, default to backbone's collection get
+    if(typeof key == 'number' || typeof key == 'object'){
+      return Backbone.Collection.prototype.get.call(this, key);
+    }
+
+    // If key is not a string, return undefined
+    if (!_.isString(key)){ return void 0; }
+
+    // Split the path at all '.', '[' and ']' and find the value referanced.
+    var parts  = $.splitPath(key),
+        result = this,
+        l=parts.length,
+        i=0;
+        options = _.defaults((options || {}), { parent: 0, raw: false });
+
+    if(_.isUndefined(key) || _.isNull(key)){ return key; }
+
+    if(key === '' || parts.length === 0){ return result; }
+
+    if (parts.length > 0) {
+      for ( i = 0; i < l - options.parent; i++) {
+
+        if( _.isFunction(result )){
+          // If returning raw, always return the first computed property in a chian.
+          if(options.raw){ return result; }
+          result = evaluateComputedProperty(result, result.__parent__, parts[i-1]);
+        }
+
+        if(_.isUndefined(result) || _.isNull(result)){
+          return result;
+        }
+
+        if(parts[i] === '@parent'){
+          result = result.__parent__;
+        }
+        else if( result.isCollection ){
+          result = result.models[parts[i]];
+        }
+        else if( result.isModel ){
+          result = result.attributes[parts[i]];
+        }
+        else if( result && result.hasOwnProperty(parts[i]) ){
+          result = result[parts[i]];
+        }
+      }
+    }
+
+    if( _.isFunction(result) && !options.raw){
+
+      result = evaluateComputedProperty(result, this, parts[i-1]);
+
+    }
+
+    return result;
+  },
 
   set: function(models, options){
     var id,
