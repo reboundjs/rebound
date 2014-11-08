@@ -56,12 +56,17 @@ function addObserver(context, path, lazyValue, morph) {
 }
 
 function streamComputedPropertyArgs(lazyValue, helper, context){
-
   if(helper && _.isArray(helper.__params)){
 
-    streamifyArgs(context, helper.__params, {types: (new Array(helper.__params.length+1)).join('id,').split(',')}, helper, lazyValue);
+    var params = [];
 
-    helper.__params.forEach(function(node) {
+    for (var i = 0, l = helper.__params.length; i < l; i++) {
+      if (!helper.__params[i].isLazyValue) {
+        params[i] = streamProperty(context, helper.__params[i]);
+      }
+    }
+
+    params.forEach(function(node) {
 
       // Re-evaluate this expression when our condition changes
       node.onNotify(function(){
@@ -123,7 +128,7 @@ function streamifyArgs(context, params, options) {
   var hash = options.hash,
       hashTypes = options.hashTypes;
   for (var key in hash) {
-    if (hashTypes[key] === 'id') {
+    if (hashTypes[key] === 'id' && !params[i].isLazyValue) {
       hash[key] = streamProperty(context, hash[key]);
     }
   }
