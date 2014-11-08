@@ -5851,7 +5851,6 @@ define("rebound-runtime/helpers",
         }
 
         // Set the attribute on our element for visual referance
-        console.log('check', options.element, params[1]);
         (!params[1]) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
 
         return options.element.checked = (params[1]) ? true : undefined;
