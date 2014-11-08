@@ -165,7 +165,7 @@ helpers.attribute = function(params, hash, options, env) {
 helpers.if = function(params, hash, options, env){
   var condition = params[0];
 
-  if(condition === undefined){ return console.warn("Condition passed to if helper is undefined! Maybe try setting a default value?", options.context); }
+  // if(condition === undefined){ return console.warn("Condition passed to if helper is undefined! Maybe try setting a default value?", options.morph.element, options.params[0].path); }
 
   if(condition.isModel){
     condition = true;
@@ -207,7 +207,7 @@ helpers.if = function(params, hash, options, env){
 helpers.unless = function(params, hash, options, env){
   var condition = params[0];
 
-  if(condition === undefined){ return console.warn("Condition passed to unless helper is undefined! Maybe try setting a default value?", options.context); }
+  // if(condition === undefined){ return console.warn("Condition passed to unless helper is undefined! Maybe try setting a default value?", options.morph.element, options.context); }
 
   if(condition.isModel){
     condition = true;
