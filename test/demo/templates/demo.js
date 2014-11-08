@@ -233,10 +233,6 @@ return (function(){
     var el0 = dom.createDocumentFragment();
     var el1 = dom.createElement("section");
     dom.setAttribute(el1,"id","todoapp");
-    var el2 = dom.createElement("h2");
-    dom.appendChild(el1, el2);
-    var el2 = dom.createElement("h2");
-    dom.appendChild(el1, el2);
     var el2 = dom.createElement("header");
     dom.setAttribute(el2,"id","header");
     var el3 = dom.createElement("h1");
@@ -292,19 +288,15 @@ return (function(){
     }
     var fragment = dom.cloneNode(cachedFragment, true);
     var element12 = fragment.childNodes[0];
-    var element13 = element12.childNodes[2].childNodes[1];
-    var morph0 = dom.createMorphAt(element12.childNodes[0],-1,-1);
-    var morph1 = dom.createMorphAt(element12.childNodes[1],-1,-1);
-    var morph2 = dom.createMorphAt(element12,3,4);
-    hooks.content(morph0, "firstTodo.title", context, [], {context:context,escaped:true,morph:morph0}, env);
-    hooks.content(morph1, "filteredTodos.0.title", context, [], {context:context,escaped:true,morph:morph1}, env);
+    var element13 = element12.childNodes[0].childNodes[1];
+    var morph0 = dom.createMorphAt(element12,1,2);
     hooks.element(element13, "attribute", context, ["value",hooks.subexpr("newTitle", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element13}, env);
     hooks.element(element13, "on", context, ["keyup","createTodo"], {context:context,types:["string","string"],hashTypes:{},hash:{},element:element13}, env);
-    hooks.content(morph2, "if", context, ["todos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph2}, env);
+    hooks.content(morph0, "if", context, ["todos"], {context:context,types:["id"],hashTypes:{},hash:{},render:child0,escaped:true,morph:morph0}, env);
     return fragment;
   };
 }());
-  var script = (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, firstTodo: function(){ return this.get('filteredTodos[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.data); }, editTodo: function(event){ event.data.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })();
+  var script = (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ console.log('allaredone'); return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, firstTodo: function(){ return this.get('filteredTodos[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.data); }, editTodo: function(event){ event.data.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })();
   var style = "";
   var component = Rebound.Component.extend(script, { __name: "rebound-demo" });
   var proto = Object.create(HTMLElement.prototype, {});

@@ -109,7 +109,7 @@ helpers.attribute = function(params, hash, options, env) {
       attr;
 
   // If is a text input element's value prop with only one variable, wire default events
-  if(options.element.tagName === 'INPUT' && inputTypes[type] && params[0] === 'value' && !options.params[1].children ){
+  if(options.element.tagName === 'INPUT' && inputTypes[type] && params[0] === 'value' ){
 
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.inputObserver){
@@ -130,7 +130,7 @@ helpers.attribute = function(params, hash, options, env) {
     return options.element.value = (attr) ? attr : '';
   }
 
-  else if(options.element.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && params[0] === 'checked' && !options.params[1].children ){
+  else if(options.element.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && params[0] === 'checked' ){
 
     // If our special input events have not been bound yet, bind them and set flag
     if(!options.lazyValue.eventsBound){
@@ -143,6 +143,7 @@ helpers.attribute = function(params, hash, options, env) {
     }
 
     // Set the attribute on our element for visual referance
+    console.log('check', options.element, params[1]);
     (!params[1]) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
 
     return options.element.checked = (params[1]) ? true : undefined;
@@ -159,8 +160,6 @@ helpers.attribute = function(params, hash, options, env) {
   }
 
   // If param is falsey, return undefined so we don't render the attr
-
-
   return attr;
 };
 

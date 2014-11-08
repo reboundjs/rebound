@@ -161,7 +161,6 @@ function constructHelper(el, path, context, params, options, env, helper) {
         first = rest.shift();
         rest = rest.join('.');
 
-
     // Assemble our args and hash variables. For each lazyvalue param, push the lazyValue's value so helpers with no concept of lazyvalues.
     for(i=0; i<len; i++){
       plainParams.push(( (params[i].isLazyValue) ? params[i].value() : params[i] ));

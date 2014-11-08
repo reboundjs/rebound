@@ -4,8 +4,6 @@
 		<link href="/test/demo/templates/components/editing.html">
 
 		<section id="todoapp">
-			<h2>{{firstTodo.title}}</h2>
-			<h2>{{filteredTodos.0.title}}</h2>
 
 			<header id="header">
 				<h1>todos</h1>
@@ -107,6 +105,7 @@
 	/************** Computed Properties *****************/
 
 		allAreDone: function(){
+			console.log('allaredone');
 			return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length;
 		},
 		noneAreDone: function(){
