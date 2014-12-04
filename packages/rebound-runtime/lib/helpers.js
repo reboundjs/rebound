@@ -3,10 +3,10 @@ import $ from "rebound-runtime/utils";
 
 
 var helpers = {},
-    partials = {};
+    partials = {asdf: 1};
 
 helpers.registerPartial = function(name, func){
-  if(_.isFunction(func) && typeof name === 'string'){
+  if(func && func.isHTMLBars && typeof name === 'string'){
     partials[name] = func;
   }
 };
@@ -59,6 +59,7 @@ helpers.registerHelper = function(name, callback, params){
 ********************************/
 
 helpers.on = function(params, hash, options, env){
+
   var i, callback, delegate, eventName, element,
       root = this,
       len = params.length,
@@ -90,6 +91,8 @@ helpers.on = function(params, hash, options, env){
 
 helpers.concat = function(params, hash, options, env) {
   var value = "";
+  // TODO: HTMLBars has a bug where hashes containing a single expression are still placed in a concat()
+  if(params.length === 1){ return params[0]; }
   for (var i = 0, l = params.length; i < l; i++) {
     value += params[i];
   }
@@ -114,7 +117,7 @@ helpers.attribute = function(params, hash, options, env) {
     if(!options.lazyValue.inputObserver){
 
       $(options.element).on('change input propertychange', function(event){
-        options.context.set(options.params[1].path, this.value);
+        options.context.set(options.params[1].path, this.value, {quiet: true});
       });
 
       options.lazyValue.inputObserver = true;
@@ -135,7 +138,7 @@ helpers.attribute = function(params, hash, options, env) {
     if(!options.lazyValue.eventsBound){
 
       $(options.element).on('change propertychange', function(event){
-        options.context.set(options.params[1].path, ((this.checked) ? true : false));
+        options.context.set(options.params[1].path, ((this.checked) ? true : false), {quiet: true});
       });
 
       options.lazyValue.eventsBound = true;
@@ -153,7 +156,7 @@ helpers.attribute = function(params, hash, options, env) {
       return options.element.removeAttribute(params[0]);
     }
     else{
-      return options.element.setAttribute(params[0], params[1]);
+      return options.element.setAttribute(params.shift(), params.join(''));
     }
   }
 
@@ -162,6 +165,7 @@ helpers.attribute = function(params, hash, options, env) {
 };
 
 helpers.if = function(params, hash, options, env){
+
   var condition = params[0];
 
   if(condition === undefined){
@@ -193,11 +197,11 @@ helpers.if = function(params, hash, options, env){
   options.placeholder.__ifCache = condition;
 
   // Render the apropreate block statement
-  if(condition && typeof options.render === 'function'){
-    return options.render(options.context, options, options.morph.element);
+  if(condition && options.template){
+    return options.template.render(options.context, options, options.morph.element);
   }
-  else if(!condition && typeof options.inverse === 'function'){
-    return options.inverse(options.context, options, options.morph.element);
+  else if(!condition && options.inverse){
+    return options.inverse.render(options.context, options, options.morph.element);
   }
 
   return '';
@@ -234,11 +238,11 @@ helpers.unless = function(params, hash, options, env){
   options.placeholder.__unlessCache = condition;
 
   // Render the apropreate block statement
-  if(!condition &&  _.isFunction(options.render)){
-    return options.render(options.context, options, options.morph.element);
+  if(!condition &&  options.template){
+    return options.template.render(options.context, options, options.morph.element);
   }
-  else if(condition && _.isFunction(options.inverse)){
-    return options.inverse(options.context, options, options.morph.element);
+  else if(condition && options.inverse){
+    return options.inverse.render(options.context, options, options.morph.element);
   }
 
   return '';
@@ -298,7 +302,7 @@ helpers.each = function(params, hash, options, env){
 
       // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
       var lazyValue = new LazyValue(function(){
-        return options.render(obj, options, options.morph.element);
+        return options.template.render(obj, options, options.morph.contextualElement);
       });
 
       // If this model is rendered somewhere else in the list, destroy it
@@ -336,14 +340,14 @@ helpers.each = function(params, hash, options, env){
 helpers.with = function(params, hash, options, env){
 
   // Render the content inside our block helper with the context of this object. Returns a dom tree.
-  return options.render(params[0], options, options.morph.element);
+  return options.template.render(params[0], options, options.morph.element);
 
 };
 
 helpers.partial = function(params, hash, options, env){
-
-  if(typeof partials[params[0]] === 'function'){
-    return partials[params[0]](options.context, env);
+  var partial = partials[params[0]];
+  if( partial && partial.isHTMLBars ){
+    return partial.render(options.context, env);
   }
 
 };

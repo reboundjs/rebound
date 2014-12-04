@@ -40,6 +40,7 @@ var create = function() {
   hb.SafeString = SafeString;
   hb.Exception = Exception;
   hb.Utils = Utils;
+  hb.escapeExpression = Utils.escapeExpression;
 
   hb.VM = runtime;
   hb.template = function(spec) {
@@ -51,5 +52,16 @@ var create = function() {
 
 var Handlebars = create();
 Handlebars.create = create;
+
+/*jshint -W040 */
+var root = typeof global !== 'undefined' ? global : window,
+    $Handlebars = root.Handlebars;
+Handlebars.noConflict = function() {
+  if (root.Handlebars === Handlebars) {
+    root.Handlebars = $Handlebars;
+  }
+};
+
+Handlebars['default'] = Handlebars;
 
 exports["default"] = Handlebars;

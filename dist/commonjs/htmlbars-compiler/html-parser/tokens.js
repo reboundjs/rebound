@@ -2,16 +2,17 @@
 var Chars = require("../../simple-html-tokenizer").Chars;
 var StartTag = require("../../simple-html-tokenizer").StartTag;
 var EndTag = require("../../simple-html-tokenizer").EndTag;
-var AttrNode = require("../ast").AttrNode;
-var TextNode = require("../ast").TextNode;
-var MustacheNode = require("../ast").MustacheNode;
-var StringNode = require("../ast").StringNode;
-var IdNode = require("../ast").IdNode;
+var buildText = require("../builders").buildText;
+var buildAttr = require("../builders").buildAttr;
+var buildString = require("../builders").buildString;
 
 StartTag.prototype.startAttribute = function(char) {
-  this.finalizeAttributeValue();
-  this.currentAttribute = new AttrNode(char.toLowerCase(), []);
+  this.currentAttribute = buildAttr(char.toLowerCase(), [], null);
   this.attributes.push(this.currentAttribute);
+};
+
+StartTag.prototype.markAttributeQuoted = function(value) {
+  this.currentAttribute.quoted = value;
 };
 
 StartTag.prototype.addToAttributeName = function(char) {
@@ -21,54 +22,41 @@ StartTag.prototype.addToAttributeName = function(char) {
 StartTag.prototype.addToAttributeValue = function(char) {
   var value = this.currentAttribute.value;
 
-  if (char.type === 'mustache') {
+  if (char.type === 'SubExpression' || char.type === 'PathExpression') {
     value.push(char);
   } else {
-    if (value.length > 0 && value[value.length - 1].type === 'text') {
+    if (value.length > 0 && value[value.length - 1].type === 'TextNode') {
       value[value.length - 1].chars += char;
     } else {
-      value.push(new TextNode(char));
+      value.push(buildText(char));
     }
   }
 };
 
 StartTag.prototype.finalize = function() {
   this.finalizeAttributeValue();
-  delete this.currentAttribute;
   return this;
 };
 
 StartTag.prototype.finalizeAttributeValue = function() {
-  var attr = this.currentAttribute;
+  if (!this.currentAttribute) {
+    return;
+  }
 
-  if (!attr) return;
+  var parts = this.currentAttribute.value;
 
-  if (attr.value.length === 1) {
-    // Unwrap a single TextNode or MustacheNode
-    attr.value = attr.value[0];
-  } else {
-    // If the attr value has multiple parts combine them into
-    // a single MustacheNode with the concat helper
-    var params = [ new IdNode([{ part: 'concat' }]) ];
-
-    for (var i = 0; i < attr.value.length; i++) {
-      var part = attr.value[i];
-      if (part.type === 'text') {
-        params.push(new StringNode(part.chars));
-      } else if (part.type === 'mustache') {
-        var sexpr = part.sexpr;
-        delete sexpr.isRoot;
-
-        if (sexpr.isHelper) {
-          sexpr.isHelper = true;
-        }
-
-        params.push(sexpr);
+  if (parts.length === 0) {
+    parts.push(buildText(''));
+  } else if (parts.length > 1) {
+    // Convert TextNode to StringNode
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].type === 'TextNode') {
+        parts[i] = buildString(parts[i].chars);
       }
     }
-
-    attr.value = new MustacheNode(params, undefined, true, { left: false, right: false });
   }
+
+  delete this.currentAttribute;
 };
 
 StartTag.prototype.addTagHelper = function(helper) {

@@ -76,7 +76,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'bower_components/handlebars/lib',
           src: ['handlebars.js', 'handlebars.runtime.js', 'handlebars/**/*'],
-          dest: 'tmp',
+          dest: 'tmp/htmlbars-compiler',
         },{
           expand: true,
           cwd: 'bower_components/simple-html-tokenizer/lib',
@@ -356,7 +356,6 @@ module.exports = function(grunt) {
     var precompile = require('./dist/commonjs/rebound-precompiler/rebound-precompiler').precompile,
         fs = require('fs');
 
-
     var data = fs.readFile('./test/demo/templates/demo.html', 'utf8', function (err,data) {
       if (err) {
         return console.log(err);
@@ -426,6 +425,10 @@ module.exports = function(grunt) {
 
   grunt.registerTask('start', 'Run the test server', function() {
     grunt.task.run(['build', 'precompileDemo', 'connect:test', 'watch']);
+  });
+
+  grunt.registerTask('dev', 'Run the test server', function() {
+    grunt.task.run(['connect:test', 'watch']);
   });
 
 }

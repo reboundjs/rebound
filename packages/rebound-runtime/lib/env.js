@@ -2,8 +2,6 @@ import { merge } from "htmlbars-runtime/utils";
 import DOMHelper from "morph/dom-helper";
 import hooks from "rebound-runtime/hooks";
 import helpers from "rebound-runtime/helpers";
-import {Model, Collection} from "rebound-data/rebound-data";
-
 
 var env = {
   registerPartial: helpers.registerPartial,
@@ -27,34 +25,29 @@ env.hydrate = function(spec, options){
     env.hooks = merge(env.hooks, hooks);
 
     // Call our func with merged helpers and hooks
-    return spec.call(this, data, env, contextElement);
+    return spec.render(data, env, contextElement);
   };
 };
 
 // Notify all of a object's observers of the change, execute the callback
-env.notify = function(obj, path) {
+env.notify = function(obj, paths, type) {
 
-  // If path is not an array of keys, wrap it in array
-  path = (_.isString(path)) ? [path] : path;
-
-  // If this is a change from a model inside of a collection, alert all collection's watchers of the change too
-  _.each(path, function(path, index, arr){
-    // TODO: Make this work for nexted collections. Only works at 1 level right now.
-    var collectionPath = path.split('.@each.')[0];
-    if(collectionPath){
-      arr.push(collectionPath);
-    }
-  });
+    // If path is not an array of keys, wrap it in array
+  paths = (!_.isArray(paths)) ? [paths] : paths;
 
   // For each path, alert each observer and call its callback
-  _.each(path, function(path){
-    if(obj.__observers && _.isArray(obj.__observers[path])){
-      _.each(obj.__observers[path], function(callback, index) {
-        if(callback){ callback(); }
-        else{ delete obj.__observers[path][index]; }
-      });
-    }
+  _.each(paths, function(path){
+    _.each(obj.__observers, function(observers, obsPath){
+      // Trigger all partial or exact observer matches
+      if(obsPath === path || obsPath.indexOf(path + '.') === 0 || path.indexOf(obsPath + '.') === 0){
+        _.each(observers, function(callback, index) {
+          // If this is a collection change (add, sort, remove) trigger everything, otherwise only trigger property change callbacks
+          if(_.isFunction(callback) && (callback.type === 'model' || type === 'collection')){ callback(); }
+        });
+      }
+    });
   });
+
 };
 
 export default env;

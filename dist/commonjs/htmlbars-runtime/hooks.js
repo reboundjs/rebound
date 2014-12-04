@@ -1,120 +1,98 @@
 "use strict";
-var merge = require("./utils").merge;
-var SafeString = require("../handlebars/safe-string")["default"];
+var concat = require("./helpers").concat;
 
-function content(morph, helperName, context, params, options, env) {
-  var value, helper = this.lookupHelper(helperName, context, options);
+function content(morph, path, context, params, hash, options, env) {
+  var value, helper = lookupHelper(context, path, env);
   if (helper) {
-    value = helper(params, options, env);
+    value = helper.call(context, params, hash, options, env);
   } else {
-    value = this.simple(context, helperName, options);
-  }
-  if (!options.escaped) {
-    value = new SafeString(value);
+    value = get(context, path);
   }
   morph.update(value);
 }
 
-exports.content = content;function webComponent(morph, tagName, context, options, env) {
-  var value, helper = this.lookupHelper(tagName, context, options);
+exports.content = content;function element(domElement, helperName, context, params, hash, options, env) {
+  var helper = lookupHelper(context, helperName, env);
   if (helper) {
-    value = helper(null, options, env);
+    helper.call(context, params, hash, options, env);
+  }
+}
+
+exports.element = element;function attribute(domElement, attributeName, quoted, context, parts, options) {
+  var attrValue;
+
+  if (quoted) {
+    attrValue = concat.call(context, parts, null, options);
   } else {
-    value = this.webComponentFallback(morph, tagName, context, options, env);
+    attrValue = parts[0];
   }
-  morph.update(value);
-}
-
-exports.webComponent = webComponent;function webComponentFallback(morph, tagName, context, options, env) {
-  var element = env.dom.createElement(tagName);
-  var hash = options.hash, hashTypes = options.hashTypes;
-
-  for (var name in hash) {
-    if (hashTypes[name] === 'id') {
-      element.setAttribute(name, this.simple(context, hash[name], options));
-    } else {
-      element.setAttribute(name, hash[name]);
-    }
-  }
-  element.appendChild(options.render(context, env, morph.contextualElement));
-  return element;
-}
-
-exports.webComponentFallback = webComponentFallback;function element(domElement, helperName, context, params, options, env) {
-  var helper = this.lookupHelper(helperName, context, options);
-  if (helper) {
-    helper(params, options, env);
-  }
-}
-
-exports.element = element;function attribute(params, options, env) {
-  var attrName = params[0]; 
-  var attrValue = params[1];
 
   if (attrValue === null) {
-    options.element.removeAttribute(attrName);
+    domElement.removeAttribute(attributeName);
   } else {
-    options.element.setAttribute(attrName, attrValue);
+    domElement.setAttribute(attributeName, attrValue);
   }
 }
 
-exports.attribute = attribute;function concat(params, options, env) {
-  var context = options.context;
-  var value = "";
-  for (var i = 0, l = params.length; i < l; i++) {
-    if (options.types[i] === 'id') {
-      value += this.simple(context, params[i], options);
+exports.attribute = attribute;function subexpr(helperName, context, params, hash, options, env) {
+  var helper = lookupHelper(context, helperName, env);
+  if (helper) {
+    return helper.call(context, params, hash, options, env);
+  } else {
+    return get(context, helperName, options);
+  }
+}
+
+exports.subexpr = subexpr;function get(context, path) {
+  if (path === '') {
+    return context;
+  }
+
+  var keys = path.split('.');
+  var value = context;
+  for (var i = 0; i < keys.length; i++) {
+    if (value) {
+      value = value[keys[i]];
     } else {
-      value += params[i];
+      break;
     }
   }
   return value;
 }
 
-exports.concat = concat;function partial(params, options, env) {
-  return env.partials[params[0]](options.context, env);
+exports.get = get;function set(context, name, value) {
+  context[name] = value;
 }
 
-exports.partial = partial;function subexpr(helperName, context, params, options, env) {
-  var helper = this.lookupHelper(helperName, context, options);
+exports.set = set;function component(morph, tagName, context, hash, options, env) {
+  var value, helper = lookupHelper(context, tagName, env);
   if (helper) {
-    return helper(params, options, env);
+    value = helper.call(context, null, hash, options, env);
   } else {
-    return this.simple(context, helperName, options);
+    value = componentFallback(morph, tagName, context, hash, options, env);
   }
+  morph.update(value);
 }
 
-exports.subexpr = subexpr;function lookupHelper(helperName, context, options) {
-  if (helperName === 'attribute') {
-    return this.attribute;
+exports.component = component;function componentFallback(morph, tagName, context, hash, options, env) {
+  var element = env.dom.createElement(tagName);
+  for (var name in hash) {
+    element.setAttribute(name, hash[name]);
   }
-  else if (helperName === 'partial'){
-    return this.partial;
-  }
-  else if (helperName === 'concat') {
-    return this.concat;
-  }
+  element.appendChild(options.template.render(context, env, morph.contextualElement));
+  return element;
 }
 
-exports.lookupHelper = lookupHelper;function simple(context, name, options) {
-  return context[name];
+function lookupHelper(context, helperName, env) {
+  return env.helpers[helperName];
 }
 
-exports.simple = simple;function hydrationHooks(extensions) {
-  var base = {
-    content: content,
-    webComponent: webComponent,
-    webComponentFallback: webComponentFallback,
-    element: element,
-    attribute: attribute,
-    concat: concat,
-    subexpr: subexpr,
-    lookupHelper: lookupHelper,
-    simple: simple,
-    partial: partial
-  };
-
-  return extensions ? merge(extensions, base) : base;
-}
-
-exports.hydrationHooks = hydrationHooks;
+exports["default"] = {
+  content: content,
+  component: component,
+  element: element,
+  attribute: attribute,
+  subexpr: subexpr,
+  get: get,
+  set: set
+};

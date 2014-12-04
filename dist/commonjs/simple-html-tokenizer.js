@@ -79,6 +79,14 @@ Tokenizer.prototype = {
     this.token.addToAttributeName(char);
   },
 
+  markAttributeQuoted: function(value) {
+    this.token.markAttributeQuoted(value);
+  },
+
+  finalizeAttributeValue: function() {
+    this.token.finalizeAttributeValue();
+  },
+
   addToAttributeValue: function(char) {
     this.token.addToAttributeValue(char);
   },
@@ -197,7 +205,7 @@ Tokenizer.prototype = {
     },
 
     markupDeclaration: function(char) {
-      if (char === "-" && this.input[this.char] === "-") {
+      if (char === "-" && this.input.charAt(this.char) === "-") {
         this.char++;
         this.commentStart();
       }
@@ -299,6 +307,7 @@ Tokenizer.prototype = {
       } else if (char === ">") {
         return this.emitToken();
       } else {
+        this.finalizeAttributeValue();
         this.attribute(char);
       }
     },
@@ -308,18 +317,22 @@ Tokenizer.prototype = {
         return;
       } else if (char === '"') {
         this.state = 'attributeValueDoubleQuoted';
+        this.markAttributeQuoted(true);
       } else if (char === "'") {
         this.state = 'attributeValueSingleQuoted';
+        this.markAttributeQuoted(true);
       } else if (char === ">") {
         return this.emitToken();
       } else {
         this.state = 'attributeValueUnquoted';
+        this.markAttributeQuoted(false);
         this.addToAttributeValue(char);
       }
     },
 
     attributeValueDoubleQuoted: function(char) {
       if (char === '"') {
+        this.finalizeAttributeValue();
         this.state = 'afterAttributeValueQuoted';
       } else if (char === "&") {
         this.addToAttributeValue(this.consumeCharRef('"') || "&");
@@ -330,6 +343,7 @@ Tokenizer.prototype = {
 
     attributeValueSingleQuoted: function(char) {
       if (char === "'") {
+        this.finalizeAttributeValue();
         this.state = 'afterAttributeValueQuoted';
       } else if (char === "&") {
         this.addToAttributeValue(this.consumeCharRef("'") || "&");
@@ -340,6 +354,7 @@ Tokenizer.prototype = {
 
     attributeValueUnquoted: function(char) {
       if (isSpace(char)) {
+        this.finalizeAttributeValue();
         this.state = 'beforeAttributeName';
       } else if (char === "&") {
         this.addToAttributeValue(this.consumeCharRef(">") || "&");
@@ -395,7 +410,7 @@ Tag.prototype = {
   },
 
   startAttribute: function(char) {
-    this.currentAttribute = [char.toLowerCase(), null];
+    this.currentAttribute = [char.toLowerCase(), "", null];
     this.attributes.push(this.currentAttribute);
   },
 
@@ -403,13 +418,26 @@ Tag.prototype = {
     this.currentAttribute[0] += char;
   },
 
+  markAttributeQuoted: function(value) {
+    this.currentAttribute[2] = value;
+  },
+
   addToAttributeValue: function(char) {
     this.currentAttribute[1] = this.currentAttribute[1] || "";
     this.currentAttribute[1] += char;
   },
 
+  finalizeAttributeValue: function() {
+    if (this.currentAttribute) {
+      if (this.currentAttribute[2] === null) {
+        this.currentAttribute[2] = false;
+      }
+      delete this.currentAttribute;
+    }
+  },
+
   finalize: function() {
-    delete this.currentAttribute;
+    this.finalizeAttributeValue();
     return this;
   }
 };

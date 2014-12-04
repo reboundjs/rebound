@@ -156,7 +156,7 @@ utils.prototype = {
                 }
                 // Array -> Collection
                 else if(_.isArray(src[prop])){
-                  dest[prop].set(src[prop]);
+                  dest[prop].set(src[prop], {remove: false, add: false});
                   continue;
                 }
                 //

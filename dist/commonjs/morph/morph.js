@@ -28,6 +28,7 @@ function Morph(parent, start, end, domHelper, contextualElement) {
   this.domHelper = domHelper;
   ensureContext(contextualElement);
   this.contextualElement = contextualElement;
+  this.escaped = true;
   this.reset();
 }
 
@@ -37,14 +38,16 @@ Morph.prototype.reset = function() {
   this.morphs = null;
   this.before = null;
   this.after = null;
-  this.escaped = true;
 };
 
 Morph.prototype.parent = function () {
   if (!this.element) {
     var parent = this.start.parentNode;
     if (this._parent !== parent) {
-      this.element = this._parent = parent;
+      this._parent = parent;
+    }
+    if (parent.nodeType === 1) {
+      this.element = parent;
     }
   }
   return this._parent;
@@ -74,7 +77,9 @@ Morph.prototype.update = function (nodeOrString) {
 
 Morph.prototype.updateNode = function (node) {
   var parent = this.element || this.parent();
-  if (!node) return this._updateText(parent, '');
+  if (!node) {
+    return this._updateText(parent, '');
+  }
   this._updateNode(parent, node);
 };
 
@@ -84,7 +89,9 @@ Morph.prototype.updateText = function (text) {
 
 Morph.prototype.updateHTML = function (html) {
   var parent = this.element || this.parent();
-  if (!html) return this._updateText(parent, '');
+  if (!html) {
+    return this._updateText(parent, '');
+  }
   this._updateHTML(parent, html);
 };
 
@@ -158,13 +165,17 @@ Morph.prototype._updateHTML = function (parent, html) {
 };
 
 Morph.prototype.append = function (node) {
-  if (this.morphs === null) this.morphs = [];
+  if (this.morphs === null) {
+    this.morphs = [];
+  }
   var index = this.morphs.length;
   return this.insert(index, node);
 };
 
 Morph.prototype.insert = function (index, node) {
-  if (this.morphs === null) this.morphs = [];
+  if (this.morphs === null) {
+    this.morphs = [];
+  }
   var parent = this.element || this.parent();
   var morphs = this.morphs;
   var before = index > 0 ? morphs[index-1] : null;
@@ -193,7 +204,9 @@ Morph.prototype.insert = function (index, node) {
 };
 
 Morph.prototype.replace = function (index, removedLength, addedNodes) {
-  if (this.morphs === null) this.morphs = [];
+  if (this.morphs === null) {
+    this.morphs = [];
+  }
   var parent = this.element || this.parent();
   var morphs = this.morphs;
   var before = index > 0 ? morphs[index-1] : null;

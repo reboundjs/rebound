@@ -15,7 +15,7 @@ var badChars = /[&<>"'`]/g;
 var possible = /[&<>"'`]/;
 
 function escapeChar(chr) {
-  return escape[chr] || "&amp;";
+  return escape[chr];
 }
 
 function extend(obj /* , ...source */) {
@@ -38,6 +38,7 @@ var isFunction = function(value) {
   return typeof value === 'function';
 };
 // fallback for older versions of Chrome and Safari
+/* istanbul ignore next */
 if (isFunction(/x/)) {
   isFunction = function(value) {
     return typeof value === 'function' && toString.call(value) === '[object Function]';
@@ -45,6 +46,7 @@ if (isFunction(/x/)) {
 }
 var isFunction;
 exports.isFunction = isFunction;
+/* istanbul ignore next */
 var isArray = Array.isArray || function(value) {
   return (value && typeof value === 'object') ? toString.call(value) === '[object Array]' : false;
 };
@@ -52,10 +54,12 @@ exports.isArray = isArray;
 
 function escapeExpression(string) {
   // don't escape SafeStrings, since they're already safe
-  if (string instanceof SafeString) {
-    return string.toString();
-  } else if (!string && string !== 0) {
+  if (string && string.toHTML) {
+    return string.toHTML();
+  } else if (string == null) {
     return "";
+  } else if (!string) {
+    return string + '';
   }
 
   // Force a string conversion as this will be done by the append regardless and

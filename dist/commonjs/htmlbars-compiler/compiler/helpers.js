@@ -1,36 +1,38 @@
 "use strict";
 var array = require("./quoting").array;
 var hash = require("./quoting").hash;
-var string = require("./quoting").string;
 
 function prepareHelper(stack, size) {
-  var args = [],
-      types = [],
+  var params = [],
+      paramTypes = [],
       hashPairs = [],
       hashTypes = [],
       keyName,
+      name,
       i;
 
   var hashSize = stack.pop();
 
   for (i=0; i<hashSize; i++) {
     keyName = stack.pop();
-    hashPairs.unshift(keyName + ':' + stack.pop());
-    hashTypes.unshift(keyName + ':' + stack.pop());
+    hashPairs.unshift('"' + keyName + '":' + stack.pop());
+    hashTypes.unshift('"' + keyName + '":' + stack.pop());
   }
 
   for (i=0; i<size; i++) {
-    args.unshift(stack.pop());
-    types.unshift(stack.pop());
+    params.unshift(stack.pop());
+    paramTypes.unshift(stack.pop());
   }
+
+  name = stack.pop();
 
   var programId = stack.pop();
   var inverseId = stack.pop();
 
-  var options = ['context:context', 'types:' + array(types), 'hashTypes:' + hash(hashTypes), 'hash:' + hash(hashPairs)];
+  var options = [];
 
   if (programId !== null) {
-    options.push('render:child' + programId);
+    options.push('template:child' + programId);
   }
 
   if (inverseId !== null) {
@@ -38,8 +40,10 @@ function prepareHelper(stack, size) {
   }
 
   return {
-    options: options,
-    args: array(args)
+    name: name,
+    params: array(params),
+    hash: hash(hashPairs),
+    options: options
   };
 }
 

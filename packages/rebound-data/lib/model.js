@@ -1,4 +1,4 @@
-import propertyCompiler from "property-compiler/property-compiler";
+import ComputedProperty from "rebound-data/computed-property";
 import $ from "rebound-runtime/utils";
 
 // If Rebound Runtime has already been run, throw error
@@ -13,57 +13,6 @@ function pathGenerator(parent, key){
   };
 }
 
-// TODO: I dont like this recursively setting elements root when one element's root changes. Fix this.
-function setRoot(obj, root){
-  obj.__root__ = root;
-  _.each(((obj.isCollection) ? obj.models : obj.attributes), function(value, key){
-    if(value.isData){
-      setRoot(value, root);
-    }
-  });
-}
-
-function cloneComputedProperty(prop, name){
-  prop = prop.originalFunction || prop;
-  prop = (prop.__params) ? prop : propertyCompiler.compile(prop, name);
-  var func = function(){
-    return prop.apply(this, arguments);
-  };
-  func.__params = prop.__params;
-  func.originalFunction = prop;
-  func.isComputedProperty = true;
-  return func;
-}
-
-function evaluateComputedProperty(computedProperty, context, path){
-  var data, result, lineage;
-  result = data = computedProperty.call(context);
-
-  // if(_.isUndefined(result) || _.isNull(result)){ return result; }
-
-  // Save this object's ancestary
-  lineage = {
-    __parent__: context,
-    __root__: context.__root__,
-    __path: pathGenerator(context, path),
-    _hasAncestry: true
-  };
-
-  if(_.isArray(result)){
-    result = new (Rebound.Collection.extend(lineage))();
-    result.models = data;
-  }
-  else if(_.isObject(result) && result && !result.isModel && !result.isCollection){
-    lineage.defaults = data;
-    result = new (Rebound.Model.extend(lineage))();
-  }
-  else if(result && result.isModel || result && result.isCollection){
-    _.defaults(result, lineage);
-  }
-
-  return result;
-
-}
 
 var Model = Backbone.Model.extend({
 
@@ -72,21 +21,40 @@ var Model = Backbone.Model.extend({
 
   __path: function(){ return ''; },
 
-  initialize: function(){
-    this.__parent__ = this.__parent__ || this;
-    this.__root__ =  this.__root__ || this;
+  constructor: function(attributes, options){
+    options = options || {};
     this.helpers = {};
+    this.synced = {};
+    this.__observers = {};
+    this.defaults = this.defaults || {};
+
+    Backbone.Model.apply( this, arguments );
+
+    this.setParent( options.parent || this );
+    this.setRoot( options.root || this );
+    this.__path = options.path || this.__path;
+
   },
 
-  hasParent: function(obj){
-    var tmp = this;
-    while(tmp !== obj){
-      tmp = tmp.__parent__;
-      if(_.isUndefined(tmp)){ return false; }
-      if(tmp === obj){ return true; }
-      if(tmp.__parent__ === tmp){ return false; }
-    }
-    return true;
+  reset: function(obj, options){
+
+    options || (options = {});
+
+    _.each(this.attributes, function(value, key, model){
+      if (_.isUndefined(this.attributes[key])    ||
+          key === this.idAttribute               ||
+          this.attributes[key].isComputedProperty ) return;
+      if (this.attributes[key].isCollection) return this.attributes[key].reset((obj[key]||[]));
+      if (this.attributes[key].isModel) return this.attributes[key].reset((obj[key]||{}));
+      if (obj.hasOwnProperty(key)) return;
+      if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])) return obj[key] = this.defaults[key];
+      return this.unset(key, {silent: true});
+    }, this);
+
+    obj = this.set(obj, _.extend({silent: true}, options));
+
+    if (!options.silent) this.trigger('reset', this, options);
+    return obj;
   },
 
   get: function(key, options){
@@ -105,10 +73,10 @@ var Model = Backbone.Model.extend({
     if (parts.length > 0) {
       for ( i = 0; i < l - options.parent; i++) {
 
-        if( _.isFunction(result )){
+        if( result && result.isComputedProperty ){
           // If returning raw, always return the first computed property in a chian.
           if(options.raw){ return result; }
-          result = evaluateComputedProperty(result, result.__parent__, parts[i-1]);
+          result = result.call();
         }
 
         if(_.isUndefined(result) || _.isNull(result)){
@@ -130,10 +98,8 @@ var Model = Backbone.Model.extend({
       }
     }
 
-    if( _.isFunction(result) && !options.raw){
-
-      result = evaluateComputedProperty(result, this, parts[i-1]);
-
+    if( result && result.isComputedProperty && !options.raw){
+      result = result.call();
     }
 
     return result;
@@ -141,106 +107,79 @@ var Model = Backbone.Model.extend({
 
   // TODO: Moving the head of a data tree should preserve ancestry
   set: function(key, val, options){
-    var attrs, attr, newKey, obj, target, destination, isOriginalObject, props;
+
+    var attrs, attr, newKey, target, destination, props, lineage;
 
     // Set is able to take a object or a key value pair. Normalize this input.
     if (typeof key === 'object') {
-      attrs = key;
+      attrs = (key.isModel) ? key.attributes : key;
       options = val;
     } else {
       (attrs = {})[key] = val;
     }
+    options || (options = {});
+
+    // TODO: Give models a reset option
+    // if(options.reset === true){
+    //   return this.reset(attrs);
+    // }
 
     if(_.isEmpty(attrs)){ return; }
 
     // For each key and value
-    for (key in attrs) {
+    _.each(attrs, function(val, key){
 
-      val = attrs[key];                               // Our value
-      attr  = $.splitPath(key).pop();                 // The key      ex: foo[0].bar --> bar
-      target = this.get(key, {raw: true, parent: 1}); // The element  ex: foo.bar.baz --> foo.bar
-      destination = target.get(attr) || {};           // The current value of attr
-      isOriginalObject = false;                       // If this is the original object passed or a copy
-      obj = undefined;                                // The new data object, we will be constructing this as we go.
+      attr  = $.splitPath(key).pop();                 // The key        ex: foo[0].bar --> bar
+      target = this.get(key, {parent: 1});            // The element    ex: foo.bar.baz --> foo.bar
+      destination = target.get(attr, {raw: true}) || {};           // The current value of attr
+      lineage = {
+        name: key,
+        parent: this,
+        root: this.__root__,
+        path: pathGenerator(this, key)
+      };
 
       // If val is null, set to undefined
       if(val === null || val === undefined){
         val = undefined;
       }
-      // If this value is a Model or Collection and is not an ancester in the data tree (circular dependancy)
-      else if(val.isData){
-        if(!this.hasParent(val) && val._hasAncestry){
-          // Check if already has its ancestery set, but is not an ancester here
-          // It is coming from a different data tree. Make a copy to prevent shared memory across data trees
-          obj = new val.constructor();
-          val = (val.isModel) ? val.attributes : val.models;
-        }
-        // Otherwise, is a fresh new object, set its ancestry
-        else{
-          obj = val;
-          isOriginalObject = true;
-        }
-      }
-      // If this value is a Computed Property, register it for compilation.
+      // If this value is a Function, turn it into a Computed Property
       else if(_.isFunction(val)){
-
-        obj = cloneComputedProperty(val, key);
-
-        // All comptued properties' dependancies are calculated and added to their __params attribute. Save these in the context's helper cache.
-        this.__root__.helpers[this.cid] = this.__root__.helpers[this.cid] || {};
-        this.__root__.helpers[this.cid][key] = obj;
-
-      }
-      // If this value is a vanilla object, and we aren't adding to an existing model, turn it into a model
-      else if(_.isObject(val) && !_.isArray(val) && !destination.isModel){
-        obj = new Rebound.Model();
-      }
-      // If this value is an array, and we aren't adding to an existing collection, turn it into a collection
-      else if(_.isArray(val) && !destination.isCollection){
-        obj = new Rebound.Collection();
+        val = new ComputedProperty(val, lineage);
       }
 
-      // Given an object to modify, set ancestry
-      if(!_.isUndefined(obj)){
-        if( !obj._hasAncestry ){
-
-          // Save this object's ancestry
-          obj.__parent__ = this;
-          setRoot(obj, this.__root__);
-          obj.__path = pathGenerator(obj.__parent__, key);
-          obj._hasAncestry = true;
-
-          // If an eventable object, propagate its events up the chain
-          if(obj.isData){
-            obj.on('all', this.trigger, this);
-          }
-
-        }
-        //  Set its values if this is not the original data object passed in
-        if(obj.isData && !isOriginalObject){
-          obj.set(val);
-        }
-        // Save our changes
-        val = attrs[key] = obj;
-
-        // This object is now a parent. Ensure that it knows it. Without this the root element will never have this bool set
-        this._hasAncestry = true;
+      // If updating an existing object with its respective data type, let Backbone handle the merge
+      else if( destination.isComputedProperty &&  _.isObject(val)  ||
+              ( destination.isCollection && ( _.isArray(val) || val.isCollection )) ||
+              ( destination.isModel && ( _.isObject(val) || val.isModel ))){
+        return destination.set(val, options);
       }
+      else if(destination.isComputedProperty){
+        return destination.set(key, val, options);
+      }
+      // If this value is a Model or Collection, create a new instance of it using its constructor
+      // This will keep the defaults from the original, but make a new copy so memory isnt shared between data objects
+      else if(val.isModel || val.isCollection){
+        val = new val.constructor((val.attributes || val.models), lineage); // TODO: This will override defaults set by this model in favor of the passed in model. Do deep defaults here.
+      }
+      // If this value is an Array, turn it into a collection
+      else if(_.isArray(val)){
+        val = new Rebound.Collection(val, lineage); // TODO: Remove global referance
+      }
+      // If this value is a Object, turn it into a model
+      else if(_.isObject(val)){
+        val = new Model(val, lineage);
+      }
+      // Else val is a primitive value, set it accordingly
 
-      // If existing collection and is an vanilla array, add the models
-      if( destination.isCollection && (!val.isData || _.isArray(val))){
-        destination.set(((val.isCollection) ? val.models : val), options);
-      }
-      // If existing model and is a vanilla object, augment it
-      else if(destination.isModel && !val.isData && _.isObject(val) && !_.isArray(val) ){
-        destination.set(val, options);
-      }
-      // Otherwise, replace the existing value
-      else{
-        // TODO: Event cleanup when replacing a model or collection with another value
-        Backbone.Model.prototype.set.call(target, attr, val, options);
-      }
-    }
+
+      // If val is a data object, let this object know it is now a parent
+        this._hasAncestry = (val && val.isData || false);
+
+      // Replace the existing value
+      return Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
+
+    }, this);
   },
 
   toJSON: function() {

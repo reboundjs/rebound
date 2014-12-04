@@ -12,9 +12,9 @@ exports.FragmentCompiler = FragmentCompiler;FragmentCompiler.prototype.compile =
   this.depth = -1;
   this.indent = (options && options.indent) || "";
 
-  this.source.push(this.indent+'function build(dom) {\n');
+  this.source.push('function build(dom) {\n');
   processOpcodes(this, opcodes);
-  this.source.push(this.indent+'}\n');
+  this.source.push(this.indent+'}');
 
   return this.source.join('');
 };
@@ -32,6 +32,11 @@ FragmentCompiler.prototype.createElement = function(tagName) {
 FragmentCompiler.prototype.createText = function(str) {
   var el = 'el'+(++this.depth);
   this.source.push(this.indent+'  var '+el+' = dom.createTextNode('+string(str)+');\n');
+};
+
+FragmentCompiler.prototype.createComment = function(str) {
+  var el = 'el'+(++this.depth);
+  this.source.push(this.indent+'  var '+el+' = dom.createComment('+string(str)+');\n');
 };
 
 FragmentCompiler.prototype.returnNode = function() {

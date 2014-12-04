@@ -109,13 +109,15 @@ function precompile(str, options){
                '  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};\n' +
                '  proto.detachedCallback = function(){\n' +
                '    script.detachedCallback && script.detachedCallback.call(this.__component__);\n' +
-               // When element is removed, deinitilize its associated Rebound component object
+                    // When element is removed, deinitilize its associated Rebound component object
                '    this.__component__.deinitialize();\n' +
                '    };\n' +
                '  proto.attributeChangedCallback = function(attrName, oldVal, newVal){\n' +
                '    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }\n' +
+                    // data attributes should be referanced by their camel case name
+               '    attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });\n' +
                '    if(newVal === null){ this.__component__.unset(attrName); }\n' +
-               '    else{ this.__component__.set(attrName, newVal); }\n' +
+               '    else{ this.__component__.set(attrName, newVal, {quiet: true}); }\n' +
                '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__);\n' +
                '  }\n' +
                '  return document.registerElement("' + name + '", {prototype: proto} );\n' +

@@ -10,7 +10,7 @@ import env  from "rebound-runtime/env";
 import utils from "rebound-runtime/utils";
 
 // Load Rebound Data
-import { Model, Collection} from "rebound-data/rebound-data";
+import { Model, Collection, ComputedProperty } from "rebound-data/rebound-data";
 
 // Load Rebound Components
 import Component from "rebound-runtime/component";
@@ -30,6 +30,7 @@ window.Rebound = {
   registerPartial: env.registerPartial,
   Model: Model,
   Collection: Collection,
+  ComputedProperty: ComputedProperty,
   Component: Component,
   Config: Config
 };

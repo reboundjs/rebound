@@ -4440,6 +4440,7 @@ define("morph/morph",
       this.domHelper = domHelper;
       ensureContext(contextualElement);
       this.contextualElement = contextualElement;
+      this.escaped = true;
       this.reset();
     }
 
@@ -4449,14 +4450,16 @@ define("morph/morph",
       this.morphs = null;
       this.before = null;
       this.after = null;
-      this.escaped = true;
     };
 
     Morph.prototype.parent = function () {
       if (!this.element) {
         var parent = this.start.parentNode;
         if (this._parent !== parent) {
-          this.element = this._parent = parent;
+          this._parent = parent;
+        }
+        if (parent.nodeType === 1) {
+          this.element = parent;
         }
       }
       return this._parent;
@@ -4486,7 +4489,9 @@ define("morph/morph",
 
     Morph.prototype.updateNode = function (node) {
       var parent = this.element || this.parent();
-      if (!node) return this._updateText(parent, '');
+      if (!node) {
+        return this._updateText(parent, '');
+      }
       this._updateNode(parent, node);
     };
 
@@ -4496,7 +4501,9 @@ define("morph/morph",
 
     Morph.prototype.updateHTML = function (html) {
       var parent = this.element || this.parent();
-      if (!html) return this._updateText(parent, '');
+      if (!html) {
+        return this._updateText(parent, '');
+      }
       this._updateHTML(parent, html);
     };
 
@@ -4570,13 +4577,17 @@ define("morph/morph",
     };
 
     Morph.prototype.append = function (node) {
-      if (this.morphs === null) this.morphs = [];
+      if (this.morphs === null) {
+        this.morphs = [];
+      }
       var index = this.morphs.length;
       return this.insert(index, node);
     };
 
     Morph.prototype.insert = function (index, node) {
-      if (this.morphs === null) this.morphs = [];
+      if (this.morphs === null) {
+        this.morphs = [];
+      }
       var parent = this.element || this.parent();
       var morphs = this.morphs;
       var before = index > 0 ? morphs[index-1] : null;
@@ -4605,7 +4616,9 @@ define("morph/morph",
     };
 
     Morph.prototype.replace = function (index, removedLength, addedNodes) {
-      if (this.morphs === null) this.morphs = [];
+      if (this.morphs === null) {
+        this.morphs = [];
+      }
       var parent = this.element || this.parent();
       var morphs = this.morphs;
       var before = index > 0 ? morphs[index-1] : null;
@@ -4692,72 +4705,109 @@ define("morph/dom-helper/build-html-dom",
   ["exports"],
   function(__exports__) {
     
+    /* global XMLSerializer:false */
     var svgHTMLIntegrationPoints = {foreignObject: 1, desc: 1, title: 1};
     __exports__.svgHTMLIntegrationPoints = svgHTMLIntegrationPoints;var svgNamespace = 'http://www.w3.org/2000/svg';
     __exports__.svgNamespace = svgNamespace;
+    var doc = typeof document === 'undefined' ? false : document;
+
     // Safari does not like using innerHTML on SVG HTML integration
-    // points.
-    var needsIntegrationPointFix = document.createElementNS && (function() {
-      var testEl = document.createElementNS(svgNamespace, 'foreignObject');
+    // points (desc/title/foreignObject).
+    var needsIntegrationPointFix = doc && (function(document) {
+      if (document.createElementNS === undefined) {
+        return;
+      }
+      // In FF title will not accept innerHTML.
+      var testEl = document.createElementNS(svgNamespace, 'title');
       testEl.innerHTML = "<div></div>";
-      return testEl.childNodes.length === 0;
-    })();
+      return testEl.childNodes.length === 0 || testEl.childNodes[0].nodeType !== 1;
+    })(doc);
 
     // Internet Explorer prior to 9 does not allow setting innerHTML if the first element
     // is a "zero-scope" element. This problem can be worked around by making
     // the first node an invisible text node. We, like Modernizr, use &shy;
-    var needsShy = (function() {
+    var needsShy = doc && (function(document) {
       var testEl = document.createElement('div');
       testEl.innerHTML = "<div></div>";
       testEl.firstChild.innerHTML = "<script><\/script>";
       return testEl.firstChild.innerHTML === '';
-    })();
+    })(doc);
 
     // IE 8 (and likely earlier) likes to move whitespace preceeding
     // a script tag to appear after it. This means that we can
     // accidentally remove whitespace when updating a morph.
-    var movesWhitespace = document && (function() {
+    var movesWhitespace = doc && (function(document) {
       var testEl = document.createElement('div');
       testEl.innerHTML = "Test: <script type='text/x-placeholder'><\/script>Value";
       return testEl.childNodes[0].nodeValue === 'Test:' &&
               testEl.childNodes[2].nodeValue === ' Value';
-    })();
+    })(doc);
 
-    // IE 9 and earlier don't allow us to set innerHTML on col, colgroup, frameset,
-    // html, style, table, tbody, tfoot, thead, title, tr. Detect this and add
-    // them to an initial list of corrected tags.
-    //
-    // Here we are only dealing with the ones which can have child nodes.
-    //
-    var tagNamesRequiringInnerHTMLFix, tableNeedsInnerHTMLFix;
-    var tableInnerHTMLTestElement = document.createElement('table');
-    try {
-      tableInnerHTMLTestElement.innerHTML = '<tbody></tbody>';
-    } catch (e) {
-    } finally {
-      tableNeedsInnerHTMLFix = (tableInnerHTMLTestElement.childNodes.length === 0);
-    }
-    if (tableNeedsInnerHTMLFix) {
-      tagNamesRequiringInnerHTMLFix = {
-        colgroup: ['table'],
-        table: [],
-        tbody: ['table'],
-        tfoot: ['table'],
-        thead: ['table'],
-        tr: ['table', 'tbody']
-      };
+    // IE8 create a selected attribute where they should only
+    // create a property
+    var createsSelectedAttribute = doc && (function(document) {
+      var testEl = document.createElement('div');
+      testEl.innerHTML = "<select><option></option></select>";
+      return testEl.childNodes[0].childNodes[0].getAttribute('selected') === 'selected';
+    })(doc);
+
+    var detectAutoSelectedOption;
+    if (createsSelectedAttribute) {
+      detectAutoSelectedOption = (function(){
+        var detectAutoSelectedOptionRegex = /<option[^>]*selected/;
+        return function detectAutoSelectedOption(select, option, html) { //jshint ignore:line
+          return select.selectedIndex === 0 &&
+                 !detectAutoSelectedOptionRegex.test(html);
+        };
+      })();
     } else {
-      tagNamesRequiringInnerHTMLFix = {};
+      detectAutoSelectedOption = function detectAutoSelectedOption(select, option, html) { //jshint ignore:line
+        var selectedAttribute = option.getAttribute('selected');
+        return select.selectedIndex === 0 && (
+                 selectedAttribute === null ||
+                 ( selectedAttribute !== '' && selectedAttribute.toLowerCase() !== 'selected' )
+                );
+      };
     }
 
-    // IE 8 doesn't allow setting innerHTML on a select tag. Detect this and
-    // add it to the list of corrected tags.
-    //
-    var selectInnerHTMLTestElement = document.createElement('select');
-    selectInnerHTMLTestElement.innerHTML = '<option></option>';
-    if (selectInnerHTMLTestElement) {
-      tagNamesRequiringInnerHTMLFix.select = [];
-    }
+    var tagNamesRequiringInnerHTMLFix = doc && (function(document) {
+      var tagNamesRequiringInnerHTMLFix;
+      // IE 9 and earlier don't allow us to set innerHTML on col, colgroup, frameset,
+      // html, style, table, tbody, tfoot, thead, title, tr. Detect this and add
+      // them to an initial list of corrected tags.
+      //
+      // Here we are only dealing with the ones which can have child nodes.
+      //
+      var tableNeedsInnerHTMLFix;
+      var tableInnerHTMLTestElement = document.createElement('table');
+      try {
+        tableInnerHTMLTestElement.innerHTML = '<tbody></tbody>';
+      } catch (e) {
+      } finally {
+        tableNeedsInnerHTMLFix = (tableInnerHTMLTestElement.childNodes.length === 0);
+      }
+      if (tableNeedsInnerHTMLFix) {
+        tagNamesRequiringInnerHTMLFix = {
+          colgroup: ['table'],
+          table: [],
+          tbody: ['table'],
+          tfoot: ['table'],
+          thead: ['table'],
+          tr: ['table', 'tbody']
+        };
+      }
+
+      // IE 8 doesn't allow setting innerHTML on a select tag. Detect this and
+      // add it to the list of corrected tags.
+      //
+      var selectInnerHTMLTestElement = document.createElement('select');
+      selectInnerHTMLTestElement.innerHTML = '<option></option>';
+      if (!selectInnerHTMLTestElement.childNodes[0]) {
+        tagNamesRequiringInnerHTMLFix = tagNamesRequiringInnerHTMLFix || {};
+        tagNamesRequiringInnerHTMLFix.select = [];
+      }
+      return tagNamesRequiringInnerHTMLFix;
+    })(doc);
 
     function scriptSafeInnerHTML(element, html) {
       // without a leading text node, IE will drop a leading script tag.
@@ -4837,11 +4887,9 @@ define("morph/dom-helper/build-html-dom",
       };
     }
 
-
-    var buildHTMLDOM;
-    // Really, this just means IE8 and IE9 get a slower buildHTMLDOM
-    if (tagNamesRequiringInnerHTMLFix.length > 0 || movesWhitespace) {
-      buildHTMLDOM = function buildHTMLDOM(html, contextualElement, dom) {
+    var buildIESafeDOM;
+    if (tagNamesRequiringInnerHTMLFix || movesWhitespace) {
+      buildIESafeDOM = function buildIESafeDOM(html, contextualElement, dom) {
         // Make a list of the leading text on script nodes. Include
         // script tags without any whitespace for easier processing later.
         var spacesBefore = [];
@@ -4869,7 +4917,8 @@ define("morph/dom-helper/build-html-dom",
         // mutated as we add test nodes.
         var i, j, node, nodeScriptNodes;
         var scriptNodes = [];
-        for (i=0;node=nodes[i];i++) {
+        for (i=0;i<nodes.length;i++) {
+          node=nodes[i];
           if (node.nodeType !== 1) {
             continue;
           }
@@ -4884,8 +4933,9 @@ define("morph/dom-helper/build-html-dom",
         }
 
         // Walk the script tags and put back their leading text nodes.
-        var textNode, spaceBefore, spaceAfter;
-        for (i=0;scriptNode=scriptNodes[i];i++) {
+        var scriptNode, textNode, spaceBefore, spaceAfter;
+        for (i=0;i<scriptNodes.length;i++) {
+          scriptNode = scriptNodes[i];
           spaceBefore = spacesBefore[i];
           if (spaceBefore && spaceBefore.length > 0) {
             textNode = dom.document.createTextNode(spaceBefore);
@@ -4901,42 +4951,198 @@ define("morph/dom-helper/build-html-dom",
 
         return nodes;
       };
-    } else if (needsIntegrationPointFix) {
+    } else {
+      buildIESafeDOM = buildDOM;
+    }
+
+    // When parsing innerHTML, the browser may set up DOM with some things
+    // not desired. For example, with a select element context and option
+    // innerHTML the first option will be marked selected.
+    //
+    // This method cleans up some of that, resetting those values back to
+    // their defaults.
+    //
+    function buildSafeDOM(html, contextualElement, dom) {
+      var childNodes = buildIESafeDOM(html, contextualElement, dom);
+
+      if (contextualElement.tagName === 'SELECT') {
+        // Walk child nodes
+        for (var i = 0; childNodes[i]; i++) {
+          // Find and process the first option child node
+          if (childNodes[i].tagName === 'OPTION') {
+            if (detectAutoSelectedOption(childNodes[i].parentNode, childNodes[i], html)) {
+              // If the first node is selected but does not have an attribute,
+              // presume it is not really selected.
+              childNodes[i].parentNode.selectedIndex = -1;
+            }
+            break;
+          }
+        }
+      }
+
+      return childNodes;
+    }
+
+    var buildHTMLDOM;
+    if (needsIntegrationPointFix) {
       buildHTMLDOM = function buildHTMLDOM(html, contextualElement, dom){
         if (svgHTMLIntegrationPoints[contextualElement.tagName]) {
-          return buildDOM(html, document.createElement('div'), dom);
+          return buildSafeDOM(html, document.createElement('div'), dom);
         } else {
-          return buildDOM(html, contextualElement, dom);
+          return buildSafeDOM(html, contextualElement, dom);
         }
       };
     } else {
-      buildHTMLDOM = buildDOM;
+      buildHTMLDOM = buildSafeDOM;
     }
 
     __exports__.buildHTMLDOM = buildHTMLDOM;
   });
-define("morph/dom-helper", 
-  ["../morph/morph","./dom-helper/build-html-dom","exports"],
-  function(__dependency1__, __dependency2__, __exports__) {
+define("morph/dom-helper/classes", 
+  ["exports"],
+  function(__exports__) {
     
+    var doc = typeof document === 'undefined' ? false : document;
+
+    // PhantomJS has a broken classList. See https://github.com/ariya/phantomjs/issues/12782
+    var canClassList = doc && (function(){
+      var d = document.createElement('div');
+      if (!d.classList) {
+        return false;
+      }
+      d.classList.add('boo');
+      d.classList.add('boo', 'baz');
+      return (d.className === 'boo baz');
+    })();
+
+    function buildClassList(element) {
+      var classString = (element.getAttribute('class') || '');
+      return classString !== '' && classString !== ' ' ? classString.split(' ') : [];
+    }
+
+    function intersect(containingArray, valuesArray) {
+      var containingIndex = 0;
+      var containingLength = containingArray.length;
+      var valuesIndex = 0;
+      var valuesLength = valuesArray.length;
+
+      var intersection = new Array(valuesLength);
+
+      // TODO: rewrite this loop in an optimal manner
+      for (;containingIndex<containingLength;containingIndex++) {
+        valuesIndex = 0;
+        for (;valuesIndex<valuesLength;valuesIndex++) {
+          if (valuesArray[valuesIndex] === containingArray[containingIndex]) {
+            intersection[valuesIndex] = containingIndex;
+            break;
+          }
+        }
+      }
+
+      return intersection;
+    }
+
+    function addClassesViaAttribute(element, classNames) {
+      var existingClasses = buildClassList(element);
+
+      var indexes = intersect(existingClasses, classNames);
+      var didChange = false;
+
+      for (var i=0, l=classNames.length; i<l; i++) {
+        if (indexes[i] === undefined) {
+          didChange = true;
+          existingClasses.push(classNames[i]);
+        }
+      }
+
+      if (didChange) {
+        element.setAttribute('class', existingClasses.length > 0 ? existingClasses.join(' ') : '');
+      }
+    }
+
+    function removeClassesViaAttribute(element, classNames) {
+      var existingClasses = buildClassList(element);
+
+      var indexes = intersect(classNames, existingClasses);
+      var didChange = false;
+      var newClasses = [];
+
+      for (var i=0, l=existingClasses.length; i<l; i++) {
+        if (indexes[i] === undefined) {
+          newClasses.push(existingClasses[i]);
+        } else {
+          didChange = true;
+        }
+      }
+
+      if (didChange) {
+        element.setAttribute('class', newClasses.length > 0 ? newClasses.join(' ') : '');
+      }
+    }
+
+    var addClasses, removeClasses;
+    if (canClassList) {
+      addClasses = function addClasses(element, classNames) {
+        if (element.classList) {
+          if (classNames.length === 1) {
+            element.classList.add(classNames[0]);
+          } else if (classNames.length === 2) {
+            element.classList.add(classNames[0], classNames[1]);
+          } else {
+            element.classList.add.apply(element.classList, classNames);
+          }
+        } else {
+          addClassesViaAttribute(element, classNames);
+        }
+      };
+      removeClasses = function removeClasses(element, classNames) {
+        if (element.classList) {
+          if (classNames.length === 1) {
+            element.classList.remove(classNames[0]);
+          } else if (classNames.length === 2) {
+            element.classList.remove(classNames[0], classNames[1]);
+          } else {
+            element.classList.remove.apply(element.classList, classNames);
+          }
+        } else {
+          removeClassesViaAttribute(element, classNames);
+        }
+      };
+    } else {
+      addClasses = addClassesViaAttribute;
+      removeClasses = removeClassesViaAttribute;
+    }
+
+    __exports__.addClasses = addClasses;
+    __exports__.removeClasses = removeClasses;
+  });
+define("morph/dom-helper", 
+  ["../morph/morph","./dom-helper/build-html-dom","./dom-helper/classes","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
+    
+    /* global window:false */
     var Morph = __dependency1__["default"];
     var buildHTMLDOM = __dependency2__.buildHTMLDOM;
     var svgNamespace = __dependency2__.svgNamespace;
     var svgHTMLIntegrationPoints = __dependency2__.svgHTMLIntegrationPoints;
+    var addClasses = __dependency3__.addClasses;
+    var removeClasses = __dependency3__.removeClasses;
 
-    var deletesBlankTextNodes = (function(){
+    var doc = typeof document === 'undefined' ? false : document;
+
+    var deletesBlankTextNodes = doc && (function(document){
       var element = document.createElement('div');
       element.appendChild( document.createTextNode('') );
       var clonedElement = element.cloneNode(true);
       return clonedElement.childNodes.length === 0;
-    })();
+    })(doc);
 
-    var ignoresCheckedAttribute = (function(){
+    var ignoresCheckedAttribute = doc && (function(document){
       var element = document.createElement('input');
       element.setAttribute('checked', 'checked');
       var clonedElement = element.cloneNode(false);
       return !clonedElement.checked;
-    })();
+    })(doc);
 
     function isSVG(ns){
       return ns === svgNamespace;
@@ -5043,7 +5249,15 @@ define("morph/dom-helper",
       element.setAttribute(name, value);
     };
 
-    if (document.createElementNS) {
+    prototype.removeAttribute = function(element, name) {
+      element.removeAttribute(name);
+    };
+
+    prototype.setProperty = function(element, name, value) {
+      element[name] = value;
+    };
+
+    if (doc && doc.createElementNS) {
       // Only opt into namespace detection if a contextualElement
       // is passed.
       prototype.createElement = function(tagName, contextualElement) {
@@ -5067,6 +5281,9 @@ define("morph/dom-helper",
       };
     }
 
+    prototype.addClasses = addClasses;
+    prototype.removeClasses = removeClasses;
+
     prototype.setNamespace = function(ns) {
       this.namespace = ns;
     };
@@ -5081,6 +5298,10 @@ define("morph/dom-helper",
 
     prototype.createTextNode = function(text){
       return this.document.createTextNode(text);
+    };
+
+    prototype.createComment = function(text){
+      return this.document.createComment(text);
     };
 
     prototype.repairClonedNode = function(element, blankChildTextNodes, isChecked){
@@ -5113,6 +5334,12 @@ define("morph/dom-helper",
       return new Morph(parent, start, end, this, contextualElement);
     };
 
+    prototype.createUnsafeMorph = function(parent, start, end, contextualElement){
+      var morph = this.createMorph(parent, start, end, contextualElement);
+      morph.escaped = false;
+      return morph;
+    };
+
     // This helper is just to keep the templates good looking,
     // passing integers instead of element references.
     prototype.createMorphAt = function(parent, startIndex, endIndex, contextualElement){
@@ -5120,6 +5347,12 @@ define("morph/dom-helper",
           start = startIndex === -1 ? null : childNodes[startIndex],
           end = endIndex === -1 ? null : childNodes[endIndex];
       return this.createMorph(parent, start, end, contextualElement);
+    };
+
+    prototype.createUnsafeMorphAt = function(parent, startIndex, endIndex, contextualElement) {
+      var morph = this.createMorphAt(parent, startIndex, endIndex, contextualElement);
+      morph.escaped = false;
+      return morph;
     };
 
     prototype.insertMorphBefore = function(element, referenceChild, contextualElement) {
@@ -5438,7 +5671,7 @@ define("rebound-runtime/utils",
                     }
                     // Array -> Collection
                     else if(_.isArray(src[prop])){
-                      dest[prop].set(src[prop]);
+                      dest[prop].set(src[prop], {remove: false, add: false});
                       continue;
                     }
                     //
@@ -5712,10 +5945,10 @@ define("rebound-runtime/helpers",
 
 
     var helpers = {},
-        partials = {};
+        partials = {asdf: 1};
 
     helpers.registerPartial = function(name, func){
-      if(_.isFunction(func) && typeof name === 'string'){
+      if(func && func.isHTMLBars && typeof name === 'string'){
         partials[name] = func;
       }
     };
@@ -5768,6 +6001,7 @@ define("rebound-runtime/helpers",
     ********************************/
 
     helpers.on = function(params, hash, options, env){
+
       var i, callback, delegate, eventName, element,
           root = this,
           len = params.length,
@@ -5799,6 +6033,8 @@ define("rebound-runtime/helpers",
 
     helpers.concat = function(params, hash, options, env) {
       var value = "";
+      // TODO: HTMLBars has a bug where hashes containing a single expression are still placed in a concat()
+      if(params.length === 1){ return params[0]; }
       for (var i = 0, l = params.length; i < l; i++) {
         value += params[i];
       }
@@ -5823,7 +6059,7 @@ define("rebound-runtime/helpers",
         if(!options.lazyValue.inputObserver){
 
           $(options.element).on('change input propertychange', function(event){
-            options.context.set(options.params[1].path, this.value);
+            options.context.set(options.params[1].path, this.value, {quiet: true});
           });
 
           options.lazyValue.inputObserver = true;
@@ -5844,7 +6080,7 @@ define("rebound-runtime/helpers",
         if(!options.lazyValue.eventsBound){
 
           $(options.element).on('change propertychange', function(event){
-            options.context.set(options.params[1].path, ((this.checked) ? true : false));
+            options.context.set(options.params[1].path, ((this.checked) ? true : false), {quiet: true});
           });
 
           options.lazyValue.eventsBound = true;
@@ -5862,7 +6098,7 @@ define("rebound-runtime/helpers",
           return options.element.removeAttribute(params[0]);
         }
         else{
-          return options.element.setAttribute(params[0], params[1]);
+          return options.element.setAttribute(params.shift(), params.join(''));
         }
       }
 
@@ -5871,6 +6107,7 @@ define("rebound-runtime/helpers",
     };
 
     helpers.if = function(params, hash, options, env){
+
       var condition = params[0];
 
       if(condition === undefined){
@@ -5902,11 +6139,11 @@ define("rebound-runtime/helpers",
       options.placeholder.__ifCache = condition;
 
       // Render the apropreate block statement
-      if(condition && typeof options.render === 'function'){
-        return options.render(options.context, options, options.morph.element);
+      if(condition && options.template){
+        return options.template.render(options.context, options, options.morph.element);
       }
-      else if(!condition && typeof options.inverse === 'function'){
-        return options.inverse(options.context, options, options.morph.element);
+      else if(!condition && options.inverse){
+        return options.inverse.render(options.context, options, options.morph.element);
       }
 
       return '';
@@ -5943,11 +6180,11 @@ define("rebound-runtime/helpers",
       options.placeholder.__unlessCache = condition;
 
       // Render the apropreate block statement
-      if(!condition &&  _.isFunction(options.render)){
-        return options.render(options.context, options, options.morph.element);
+      if(!condition &&  options.template){
+        return options.template.render(options.context, options, options.morph.element);
       }
-      else if(condition && _.isFunction(options.inverse)){
-        return options.inverse(options.context, options, options.morph.element);
+      else if(condition && options.inverse){
+        return options.inverse.render(options.context, options, options.morph.element);
       }
 
       return '';
@@ -6007,7 +6244,7 @@ define("rebound-runtime/helpers",
 
           // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
           var lazyValue = new LazyValue(function(){
-            return options.render(obj, options, options.morph.element);
+            return options.template.render(obj, options, options.morph.contextualElement);
           });
 
           // If this model is rendered somewhere else in the list, destroy it
@@ -6045,14 +6282,14 @@ define("rebound-runtime/helpers",
     helpers.with = function(params, hash, options, env){
 
       // Render the content inside our block helper with the context of this object. Returns a dom tree.
-      return options.render(params[0], options, options.morph.element);
+      return options.template.render(params[0], options, options.morph.element);
 
     };
 
     helpers.partial = function(params, hash, options, env){
-
-      if(typeof partials[params[0]] === 'function'){
-        return partials[params[0]](options.context, env);
+      var partial = partials[params[0]];
+      if( partial && partial.isHTMLBars ){
+        return partial.render(options.context, env);
       }
 
     };
@@ -6067,7 +6304,31 @@ define("rebound-runtime/hooks",
     var $ = __dependency2__["default"];
     var helpers = __dependency3__["default"];
 
-    var hooks = {};
+    var hooks = {},
+        attributes = {  abbr: 1,       "accept-charset": 1,  accept: 1,      accesskey: 1,     action: 1,
+                        align: 1,      alink: 1,             alt: 1,         archive: 1,       axis: 1,
+                        background: 1, bgcolor: 1,           border: 1,      cellpadding: 1,   cellspacing: 1,
+                        char: 1,       charoff: 1,           charset: 1,     checked: 1,       cite: 1,
+                        class: 1,      classid: 1,           clear: 1,       code: 1,          codebase: 1,
+                        codetype: 1,   color: 1,             cols: 1,        colspan: 1,       compact: 1,
+                        content: 1,    coords: 1,            data: 1,        datetime: 1,      declare: 1,
+                        defer: 1,      dir: 1,               disabled: 1,    enctype: 1,       face: 1,
+                        for: 1,        frame: 1,             frameborder: 1, headers: 1,       height: 1,
+                        href: 1,       hreflang: 1,          hspace: 1,      "http-equiv": 1,  id: 1,
+                        ismap: 1,      label: 1,             lang: 1,        language: 1,      link: 1,
+                        longdesc: 1,   marginheight: 1,      marginwidth: 1, maxlength: 1,     media: 1,
+                        method: 1,     multiple: 1,          name: 1,        nohref: 1,        noresize: 1,
+                        noshade: 1,    nowrap: 1,            object: 1,      onblur: 1,        onchange: 1,
+                        onclick: 1,    ondblclick: 1,        onfocus: 1,     onkeydown: 1,     onkeypress: 1,
+                        onkeyup: 1,    onload: 1,            onmousedown: 1, onmousemove: 1,   onmouseout: 1,
+                        onmouseover: 1,onmouseup: 1,         onreset: 1,     onselect: 1,      onsubmit: 1,
+                        onunload: 1,   profile: 1,           prompt: 1,      readonly: 1,      rel: 1,
+                        rev: 1,        rows: 1,              rowspan: 1,     rules: 1,         scheme: 1,
+                        scope: 1,      scrolling: 1,         selected: 1,    shape: 1,         size: 1,
+                        span: 1,       src: 1,               standby: 1,     start: 1,         style: 1,
+                        summary: 1,    tabindex: 1,          target: 1,      text: 1,          title: 1,
+                        type: 1,       usemap: 1,            valign: 1,      value: 1,         valuetype: 1,
+                        version: 1,    vlink: 1,             vspace: 1,      width: 1  };
 
 
     /*******************************
@@ -6081,7 +6342,7 @@ define("rebound-runtime/hooks",
 
     // Add a callback to a given context to trigger when its value at 'path' changes.
     function addObserver(context, path, lazyValue, morph) {
-      var length,
+      var length, res,
           paths = $.splitPath(path);
 
       if(!_.isObject(context) || !_.isString(path) || !_.isObject(lazyValue)){
@@ -6117,56 +6378,22 @@ define("rebound-runtime/hooks",
         }
       });
 
+      res = context.get(lazyValue.path);
+
+      context.__observers[path][length].type = (res && res.isCollection) ? 'collection' : 'model';
+
       return {context: context, path: path, index: length};
-    }
-
-    function streamComputedPropertyArgs(lazyValue, helper, context){
-      if(helper && _.isArray(helper.__params)){
-
-        var params = [];
-
-        for (var i = 0, l = helper.__params.length; i < l; i++) {
-          if (!helper.__params[i].isLazyValue) {
-            params[i] = streamProperty(context, helper.__params[i]);
-          }
-        }
-
-        params.forEach(function(node) {
-
-          // Re-evaluate this expression when our condition changes
-          node.onNotify(function(){
-            lazyValue.value();
-          });
-
-          lazyValue.addDependentValue(node);
-
-          // Whenever context.path changes, have LazyValue notify its listeners.
-          // If it contains an @each statement in the path,
-          if(node.path.indexOf('@each') > 0){
-
-            // TODO: If the property is n levels deep in nested collections, handle that
-            // Listen for changes to collection (add, remove, reset, etc)
-            lazyValue.saveObserver(addObserver(context, node.path.split(/\.?@each\.?/)[0], lazyValue));
-
-          }
-          else{
-            lazyValue.saveObserver(addObserver(context, node.path, lazyValue));
-          }
-
-        });
-      }
-
     }
 
     // Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
     function streamProperty(context, path) {
 
-        // Our raw value at this path
+      // Our raw value at this path
       var value = context.get(path, {raw: true}),
-        // Lazy value that returns the value of context.path
-          lazyValue = new LazyValue(function() {
-            return context.get(path);
-          });
+      // Lazy value that returns the value of context.path
+      lazyValue = new LazyValue(function() {
+        return context.get(path);
+      });
 
       // Save our path so parent lazyvalues can know the data var or helper they are getting info from
       lazyValue.path = path;
@@ -6174,32 +6401,35 @@ define("rebound-runtime/hooks",
       // If we have custom defined observers, bind to those vars.
       streamComputedPropertyArgs(lazyValue, value, context);
 
+      // Save the observer at this path
       lazyValue.saveObserver(addObserver(context, path, lazyValue));
 
       return lazyValue;
     }
 
-    function streamifyArgs(context, params, options) {
-      // Convert ID params to streams
-      var morph = options.placeholder || options.element || true;
+    function streamComputedPropertyArgs(lazyValue, computedProperty, context){
+      if(computedProperty && _.isArray(computedProperty.deps)){
 
-      for (var i = 0, l = params.length; i < l; i++) {
-        if (options.types[i] === 'id' && !params[i].isLazyValue) {
-          params[i] = streamProperty(context, params[i]);
-        }
-      }
+        var params = [];
 
-      // Convert hash ID values to streams
-      var hash = options.hash,
-          hashTypes = options.hashTypes;
-      for (var key in hash) {
-        if (hashTypes[key] === 'id' && !params[i].isLazyValue) {
-          hash[key] = streamProperty(context, hash[key]);
+        for (var i = 0, l = computedProperty.deps.length; i < l; i++) {
+          if(!computedProperty.deps[i].isLazyValue) {
+            params[i] = streamProperty(context, computedProperty.deps[i]);
+          }
+          // Re-evaluate this expression when our condition changes
+          params[i].onNotify(function(){
+            lazyValue.value();
+          });
+
+          lazyValue.addDependentValue(params[i]);
+
+          // Whenever context.path changes, have LazyValue notify its listeners.
+          lazyValue.saveObserver(addObserver(context, params[i].path, lazyValue));
         }
       }
     }
 
-    function constructHelper(el, path, context, params, options, env, helper) {
+    function constructHelper(el, path, context, params, hash, options, env, helper) {
       var lazyValue;
 
       // Extend options with the helper's containeing Morph element. Used by streamify to track data observers
@@ -6213,12 +6443,11 @@ define("rebound-runtime/hooks",
       options.context = context;                               // FIXME: this kinda sucks
       options.dom = env.dom;                                   // FIXME: this kinda sucks
       options.path = path;                                     // FIXME: this kinda sucks
+      options.hash = hash || [];                               // FIXME: this kinda sucks
 
       // Create a lazy value that returns the value of our evaluated helper.
       options.lazyValue = new LazyValue(function() {
-        var len = params.length,
-            i,
-            plainParams = [],
+        var plainParams = [],
             plainHash = [],
             result,
             relpath = $.splitPath(path),
@@ -6231,38 +6460,30 @@ define("rebound-runtime/hooks",
             rest = rest.join('.');
 
         // Assemble our args and hash variables. For each lazyvalue param, push the lazyValue's value so helpers with no concept of lazyvalues.
-        for(i=0; i<len; i++){
-          plainParams.push(( (params[i].isLazyValue) ? params[i].value() : params[i] ));
-        }
-
-        _.each(options.hash, function(hash, key){
-          plainHash[key] = (hash.isLazyValue) ? hash.value() : hash;
+        _.each(params, function(param, index){
+          plainParams.push(( (param && param.isLazyValue) ? param.value() : param ));
+        });
+        _.each(hash, function(hash, key){
+          plainHash[key] = (hash && hash.isLazyValue) ? hash.value() : hash;
         });
 
         // Call our helper functions with our assembled args.
         result = helper.apply(context, [plainParams, plainHash, options, env]);
 
-        // TODO: Shouldnt have to do this. Its bad.
-        // Promote arrays returnd by helpers to collections
-        result = (_.isArray(result)) ? new Rebound.Collection(result) : result;
-
-
-        if(result && relpath && ( result.isModel || result.isCollection )){
+        if(result && relpath){
           return result.get(relpath);
         }
 
-        if(result && relpath &&  (_.isObject(result) || _.isArray(result)) && result.hasOwnProperty(relpath)){
-          console.log(relpath, first, rest);
-          return result[first].get(rest);
-        }
-
         return result;
-
       });
 
-
-      // For each argument passed to our helper, turn them into LazyValues. Params array is now an array of lazy values that will trigger when their value changes.
-      streamifyArgs(context, params, options);
+      if(helper.deps){
+        var computedPropLazyVal = streamProperty(context, path);
+        computedPropLazyVal.onNotify(function(){
+          options.lazyValue.value();
+        });
+        options.lazyValue.addDependentValue(computedPropLazyVal);
+      }
 
       options.lazyValue.path = path;
 
@@ -6309,7 +6530,11 @@ define("rebound-runtime/hooks",
             Default Hooks
     ********************************/
 
-    hooks.content = function(placeholder, path, context, params, options, env) {
+    hooks.get = function(context, path){
+      return streamProperty(context, path);
+    };
+
+    hooks.content = function(placeholder, path, context, params, hash, options, env) {
 
       var lazyValue,
           value,
@@ -6319,10 +6544,10 @@ define("rebound-runtime/hooks",
       // If we were passed a helper, and it was found in our registered helpers
       if (helper) {
         // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-        lazyValue = constructHelper(placeholder, path, context, params, options, env, helper);
+        lazyValue = constructHelper(placeholder, path, context, params, hash, options, env, helper);
       } else {
         // If not a helper, just subscribe to the value
-        lazyValue = streamProperty(context, path, placeholder, options);
+        lazyValue = streamProperty(context, path);
       }
 
       // If we have our lazy value, update our dom.
@@ -6330,7 +6555,7 @@ define("rebound-runtime/hooks",
       if (lazyValue) {
         lazyValue.onNotify(function(lazyValue) {
           var val = lazyValue.value();
-          value = (_.isUndefined(val)) ? '' : val;
+          val = (_.isUndefined(val)) ? '' : val;
           if(!_.isNull(val)){
             placeholder.update(val);
           }
@@ -6355,17 +6580,22 @@ define("rebound-runtime/hooks",
       }
     };
 
+    hooks.attribute = function(domElement, attributeName, quoted, context, parts, options, env){
+      parts.unshift(attributeName);
+      hooks.element(domElement, 'attribute', context, parts, [], options, env);
+    };
+
     // Handle placeholders in element tags
-    hooks.element = function(element, path, context, params, options, env) {
+    hooks.element = function(element, path, context, params, hash, options, env) {
       var helper = helpers.lookupHelper(path, env, context),
           lazyValue,
           value;
 
       if (helper) {
         // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-        lazyValue = constructHelper(element, path, context, params, options, env, helper);
+        lazyValue = constructHelper(element, path, context, params, hash, options, env, helper);
       } else {
-        lazyValue = streamProperty(context, path, element, options);
+        lazyValue = streamProperty(context, path);
       }
 
       // When we have our lazy value run it and start listening for updates.
@@ -6377,8 +6607,7 @@ define("rebound-runtime/hooks",
 
     };
 
-    hooks.webComponent = function(placeholder, path, context, options, env) {
-
+    hooks.component = function(placeholder, path, context, hash, options, env) {
       var component,
           element,
           outlet,
@@ -6387,7 +6616,7 @@ define("rebound-runtime/hooks",
           lazyValue;
 
       // Create a plain data object from the lazyvalues/values passed to our component
-      _.each(options.hash, function(value, key) {
+      _.each(hash, function(value, key) {
         data[key] = (value.isLazyValue) ? value.value() : value;
       });
 
@@ -6404,7 +6633,7 @@ define("rebound-runtime/hooks",
 
         // For each param passed to our shared component, create a new lazyValue
         _.each(data, function(value, key) {
-          lazyData[key] = streamProperty(component, key, placeholder, options);
+          lazyData[key] = streamProperty(component, key);
         });
 
         // For each param passed to our helper, have it update the original context when changed.
@@ -6412,16 +6641,17 @@ define("rebound-runtime/hooks",
         _.each( lazyData, function(value, key){
 
           // If this value was passed in from outside, set up our two way data binding
-          if(options.hash[key]){
+          // TODO: Make this sync work with complex arguments with more than one part
+          if(hash[key] && hash[key].children && hash[key].children.length === 1){
             value.onNotify(function(){
               // Update the context where we inherited this value from.
-              options.context.set(options.hash[key].path, value.value());
+              context.set(hash[key].children[0].path, value.value());
             });
 
             // For each param passed to our component, if it exists, add it to our component's dependant list. Value will re-evaluate when its original changes.
-            if(options.hash[key] && options.hash[key].isLazyValue){
-              options.hash[key].onNotify(function(){
-                component.set(key, options.hash[key].value());
+            if(hash[key] && hash[key].isLazyValue){
+              hash[key].onNotify(function(){
+                component.set(key, hash[key].value());
                 value.notify();
               });
             }
@@ -6453,13 +6683,14 @@ define("rebound-runtime/hooks",
       *******************************************************/
 
         // For each change on our component, update the states of the original context and the element's proeprties.
-        context.listenTo(component, 'change', function(model){
+        context.listenTo(component, 'change ', function(model){
 
           var componentPath = (model.__path()),
               componentAttrs = model.changedAttributes(),
               contextPath = '',
               contextAttrs = {},
               json = model.toJSON();
+
 
           // If changed model is our top level component object, then the value changed is a primitive
           // Only update the values that were passed in to our component
@@ -6468,8 +6699,9 @@ define("rebound-runtime/hooks",
           if(componentPath === ""){
             // For each attribute modified on our component, update the context's corrosponding key
             _.each(componentAttrs, function(value, componentKey){
-              if(options.hash[componentKey] && options.hash[componentKey].path){
-                contextAttrs[options.hash[componentKey].path] = value;
+              // TODO: Make this sync work with complex arguments with more than one part
+              if(hash[componentKey] && hash[componentKey].children &&  hash[componentKey].children.length === 1){
+                contextAttrs[hash[componentKey].children[0].path] = value;
               }
             });
             context.get(contextPath).set(contextAttrs);
@@ -6478,8 +6710,9 @@ define("rebound-runtime/hooks",
           else{
             // If base model was renamed, create the actual path on the context we're updating
             contextPath = $.splitPath(componentPath);
-            if(options.hash.hasOwnProperty(contextPath[0])){
-              contextPath[0] = options.hash[contextPath[0]].path;
+            if(hash.hasOwnProperty(contextPath[0])){
+              // TODO: Make this sync work with complex arguments with more than one part
+              contextPath[0] = hash[contextPath[0]].children[0].path;
               contextPath = contextPath.join('.');
               // All values were passed in as is, use all of them
               contextAttrs = componentAttrs;
@@ -6495,7 +6728,10 @@ define("rebound-runtime/hooks",
               if((_.isObject(value))){ return; }
               value = (_.isObject(value)) ? JSON.stringify(value) : value;
               if(!_.isUndefined(value)){
-                element.setAttribute(key, value);
+                try{ (attributes[key]) ? element.setAttribute(key, value) : element.dataset[key] = value; }
+                catch(e){
+                  console.error(e.message);
+                }
               }
             });
           }
@@ -6507,7 +6743,7 @@ define("rebound-runtime/hooks",
           var path = model.__path(),
               split = path.split('.');
 
-          if(!options.hash[split[0]]){
+          if(!hash[split[0]]){
             return;
           }
 
@@ -6534,15 +6770,18 @@ define("rebound-runtime/hooks",
           if((_.isObject(value))){ return; }
           value = (_.isObject(value)) ? JSON.stringify(value) : value;
           if(!_.isNull(value) && !_.isUndefined(value)){
-            element.setAttribute(key, value);
+            try{ (attributes[key]) ? element.setAttribute(key, value) : element.dataset[key] = value; }
+            catch(e){
+              console.error(e.message);
+            }
           }
         });
 
 
         // If an outlet marker is present in component's template, and options.render is a function, render it into <content>
         outlet = element.getElementsByTagName('content')[0];
-        if(_.isFunction(options.render) && _.isElement(outlet)){
-          outlet.appendChild(options.render(options.context, env, outlet));
+        if(options.template && _.isElement(outlet)){
+          outlet.appendChild(options.template.render(context, env, outlet));
         }
 
         // Return the new element.
@@ -6565,16 +6804,16 @@ define("rebound-runtime/hooks",
     };
 
 
-    hooks.subexpr = function(path, context, params, options, env) {
+    hooks.subexpr = function(path, context, params, hash, options, env) {
 
       var helper = helpers.lookupHelper(path, env, context),
           lazyValue;
 
       if (helper) {
         // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-        lazyValue = constructHelper((options || true), path, context, params, options, env, helper);
+        lazyValue = constructHelper((options || true), path, context, params, hash, options, env, helper);
       } else {
-        lazyValue = streamProperty(context, path, (options || true), options);
+        lazyValue = streamProperty(context, path);
       }
 
       return lazyValue;
@@ -6583,6 +6822,64 @@ define("rebound-runtime/hooks",
     // registerHelper is a publically available function to register a helper with HTMLBars
 
     __exports__["default"] = hooks;
+  });
+define("rebound-runtime/env", 
+  ["htmlbars-runtime/utils","morph/dom-helper","rebound-runtime/hooks","rebound-runtime/helpers","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
+    
+    var merge = __dependency1__.merge;
+    var DOMHelper = __dependency2__["default"];
+    var hooks = __dependency3__["default"];
+    var helpers = __dependency4__["default"];
+
+    var env = {
+      registerPartial: helpers.registerPartial,
+      registerHelper: helpers.registerHelper,
+      helpers: helpers.helpers,
+      hooks: hooks
+    };
+
+    env.hydrate = function(spec, options){
+      // Return a wrapper function that will merge user provided helpers and hooks with our defaults
+      return function(data, options){
+        // Ensure we have a well-formed object as var options
+        var env = options || {},
+            contextElement = data.el || document.documentElement;
+        env.helpers = env.helpers || {};
+        env.hooks = env.hooks || {};
+        env.dom = env.dom || new DOMHelper();
+
+        // Merge our default helpers and hooks with user provided helpers
+        env.helpers = merge(env.helpers, helpers.helpers);
+        env.hooks = merge(env.hooks, hooks);
+
+        // Call our func with merged helpers and hooks
+        return spec.render(data, env, contextElement);
+      };
+    };
+
+    // Notify all of a object's observers of the change, execute the callback
+    env.notify = function(obj, paths, type) {
+
+        // If path is not an array of keys, wrap it in array
+      paths = (!_.isArray(paths)) ? [paths] : paths;
+
+      // For each path, alert each observer and call its callback
+      _.each(paths, function(path){
+        _.each(obj.__observers, function(observers, obsPath){
+          // Trigger all partial or exact observer matches
+          if(obsPath === path || obsPath.indexOf(path + '.') === 0 || path.indexOf(obsPath + '.') === 0){
+            _.each(observers, function(callback, index) {
+              // If this is a collection change (add, sort, remove) trigger everything, otherwise only trigger property change callbacks
+              if(_.isFunction(callback) && (callback.type === 'model' || type === 'collection')){ callback(); }
+            });
+          }
+        });
+      });
+
+    };
+
+    __exports__["default"] = env;
   });
 define("property-compiler/tokenizer", 
   ["exports"],
@@ -7632,21 +7929,174 @@ define("property-compiler/property-compiler",
 
       console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
 
-      // Save this property's dependancies in its __params attribute
-      prop.__params = finishedPaths;
-
-
-      return prop;
+      // Return the dependancies list
+      return finishedPaths;
 
     }
 
     __exports__["default"] = { compile: compile };
   });
-define("rebound-data/model", 
+define("rebound-data/computed-property", 
   ["property-compiler/property-compiler","rebound-runtime/utils","exports"],
   function(__dependency1__, __dependency2__, __exports__) {
     
     var propertyCompiler = __dependency1__["default"];
+    var $ = __dependency2__["default"];
+
+    // If Rebound Runtime has already been run, throw error
+    if(Rebound.ComputedProperty){ throw 'Rebound ComputedProperty is already loaded on the page!'; }
+    // If Backbone hasn't been started yet, throw error
+    if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
+
+    var ComputedProperty = function(prop, options){
+
+      options = options || {};
+
+      // Assign unique id
+      this.cid = _.uniqueId('computedPropety');
+      this.name = options.name;
+      this.__observers = {};
+      this.helpers = {};
+
+      options.parent = this.setParent( options.parent || this );
+      options.root = this.setRoot( options.root || options.parent || this );
+      options.path = this.__path = options.path || this.__path;
+
+      // All comptued properties' dependancies are calculated and added to their __params attribute. Save these in the context's helper cache.
+      options.root.helpers[options.parent.cid] = options.root.helpers[options.parent.cid] || {};
+      options.root.helpers[options.parent.cid][options.name] = this;
+
+      // Compute the property function's dependancies
+      this.deps = prop.__params = prop.__params || propertyCompiler.compile(prop, this.name);
+
+      // Save referance original function
+      this.func = prop;
+
+      // Cached result objects
+      this.cache = {
+        model: new Rebound.Model({}, {
+          parent: this.__parent__,
+          root: this.__root__,
+          path: this.__path
+        }),
+        collection: new Rebound.Collection([], {
+          parent: this.__parent__,
+          root: this.__root__,
+          path: this.__path
+        }),
+        value: undefined // TODO: On set value, trigger change event on parent? Maybe?
+      };
+
+      // Propagate cache's changes to parent
+      // this.cache.model.on('all', this.__parent__.trigger, this.__parent__);
+      // this.cache.collection.on('all', this.__parent__.trigger, this.__parent__);
+
+    };
+
+    _.extend(ComputedProperty.prototype, Backbone.Events, {
+
+      isComputedProperty: true,
+      isData: true,
+      returnType: 'value',
+
+      __path: function(){ return ''; },
+
+      hasParent: function(obj){
+        var tmp = this;
+        while(tmp !== obj){
+          tmp = tmp.__parent__;
+          if(_.isUndefined(tmp)){ return false; }
+          if(tmp === obj){ return true; }
+          if(tmp.__parent__ === tmp){ return false; }
+        }
+        return true;
+      },
+
+      call: function(){
+        var args = Array.prototype.slice.call(arguments),
+            context = args.shift();
+        return this.apply(context, args);
+
+      },
+
+      apply: function(context, params){
+
+        // Get result from computed property function
+        var result = this.func.apply(context || this.__parent__, params);
+
+        // Get raw data from result
+        result = (result && (result.attributes || result.models)) || result;
+
+            // Set result and return type
+        if(_.isArray(result)){
+          this.returnType = 'collection';
+          this.isCollection = true;
+          this.isModel = false;
+          this.cache.collection.set(result);
+        }
+        else if(result && _.isObject(result)){
+          this.returnType = 'model';
+          this.isCollection = false;
+          this.isModel = true;
+          this.cache.model.set(result);
+        }
+        else{
+          this.returnType = 'value';
+          this.isCollection = this.isModel = false;
+          this.cache.value = result;
+        }
+
+        return this.cache[this.returnType];
+      },
+
+      get: function(key, options){
+        options || (options = {});
+        if(this.returnType === 'value'){
+          if(!options.quiet){ console.error('Called get on the `'+ this.name +'` computed property which returns a primitive value.'); }
+          return undefined;
+        }
+
+        return this.cache[this.returnType].get(key, options);
+
+      },
+
+      // TODO: Moving the head of a data tree should preserve ancestry
+      set: function(key, val, options){
+        if (typeof key === 'object') {
+          attrs = (key.isModel) ? key.attributes : key;
+          options = val;
+        } else {
+          (attrs = {})[key] = val;
+        }
+        options || (options = {});
+        if(this.returnType === 'value'){
+          if(!options.quiet){ console.error('Called set on the `'+ this.name +'` computed property which returns a primitive value.'); }
+          return undefined;
+        }
+
+        return this.cache[this.returnType].set(key, val, options);
+
+      },
+
+      toJSON: function() {
+        if (this._isSerializing) {
+            return this.cid;
+        }
+        this._isSerializing = true;
+        var json = (this.returnType === 'value') ? this.cache.value : this.cache[this.returnType].toJSON();
+        this._isSerializing = false;
+        return json;
+      }
+
+    });
+
+    __exports__["default"] = ComputedProperty;
+  });
+define("rebound-data/model", 
+  ["rebound-data/computed-property","rebound-runtime/utils","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
+    
+    var ComputedProperty = __dependency1__["default"];
     var $ = __dependency2__["default"];
 
     // If Rebound Runtime has already been run, throw error
@@ -7661,57 +8111,6 @@ define("rebound-data/model",
       };
     }
 
-    // TODO: I dont like this recursively setting elements root when one element's root changes. Fix this.
-    function setRoot(obj, root){
-      obj.__root__ = root;
-      _.each(((obj.isCollection) ? obj.models : obj.attributes), function(value, key){
-        if(value.isData){
-          setRoot(value, root);
-        }
-      });
-    }
-
-    function cloneComputedProperty(prop, name){
-      prop = prop.originalFunction || prop;
-      prop = (prop.__params) ? prop : propertyCompiler.compile(prop, name);
-      var func = function(){
-        return prop.apply(this, arguments);
-      };
-      func.__params = prop.__params;
-      func.originalFunction = prop;
-      func.isComputedProperty = true;
-      return func;
-    }
-
-    function evaluateComputedProperty(computedProperty, context, path){
-      var data, result, lineage;
-      result = data = computedProperty.call(context);
-
-      // if(_.isUndefined(result) || _.isNull(result)){ return result; }
-
-      // Save this object's ancestary
-      lineage = {
-        __parent__: context,
-        __root__: context.__root__,
-        __path: pathGenerator(context, path),
-        _hasAncestry: true
-      };
-
-      if(_.isArray(result)){
-        result = new (Rebound.Collection.extend(lineage))();
-        result.models = data;
-      }
-      else if(_.isObject(result) && result && !result.isModel && !result.isCollection){
-        lineage.defaults = data;
-        result = new (Rebound.Model.extend(lineage))();
-      }
-      else if(result && result.isModel || result && result.isCollection){
-        _.defaults(result, lineage);
-      }
-
-      return result;
-
-    }
 
     var Model = Backbone.Model.extend({
 
@@ -7720,21 +8119,40 @@ define("rebound-data/model",
 
       __path: function(){ return ''; },
 
-      initialize: function(){
-        this.__parent__ = this.__parent__ || this;
-        this.__root__ =  this.__root__ || this;
+      constructor: function(attributes, options){
+        options = options || {};
         this.helpers = {};
+        this.synced = {};
+        this.__observers = {};
+        this.defaults = this.defaults || {};
+
+        Backbone.Model.apply( this, arguments );
+
+        this.setParent( options.parent || this );
+        this.setRoot( options.root || this );
+        this.__path = options.path || this.__path;
+
       },
 
-      hasParent: function(obj){
-        var tmp = this;
-        while(tmp !== obj){
-          tmp = tmp.__parent__;
-          if(_.isUndefined(tmp)){ return false; }
-          if(tmp === obj){ return true; }
-          if(tmp.__parent__ === tmp){ return false; }
-        }
-        return true;
+      reset: function(obj, options){
+
+        options || (options = {});
+
+        _.each(this.attributes, function(value, key, model){
+          if (_.isUndefined(this.attributes[key])    ||
+              key === this.idAttribute               ||
+              this.attributes[key].isComputedProperty ) return;
+          if (this.attributes[key].isCollection) return this.attributes[key].reset((obj[key]||[]));
+          if (this.attributes[key].isModel) return this.attributes[key].reset((obj[key]||{}));
+          if (obj.hasOwnProperty(key)) return;
+          if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])) return obj[key] = this.defaults[key];
+          return this.unset(key, {silent: true});
+        }, this);
+
+        obj = this.set(obj, _.extend({silent: true}, options));
+
+        if (!options.silent) this.trigger('reset', this, options);
+        return obj;
       },
 
       get: function(key, options){
@@ -7753,10 +8171,10 @@ define("rebound-data/model",
         if (parts.length > 0) {
           for ( i = 0; i < l - options.parent; i++) {
 
-            if( _.isFunction(result )){
+            if( result && result.isComputedProperty ){
               // If returning raw, always return the first computed property in a chian.
               if(options.raw){ return result; }
-              result = evaluateComputedProperty(result, result.__parent__, parts[i-1]);
+              result = result.call();
             }
 
             if(_.isUndefined(result) || _.isNull(result)){
@@ -7778,10 +8196,8 @@ define("rebound-data/model",
           }
         }
 
-        if( _.isFunction(result) && !options.raw){
-
-          result = evaluateComputedProperty(result, this, parts[i-1]);
-
+        if( result && result.isComputedProperty && !options.raw){
+          result = result.call();
         }
 
         return result;
@@ -7789,106 +8205,79 @@ define("rebound-data/model",
 
       // TODO: Moving the head of a data tree should preserve ancestry
       set: function(key, val, options){
-        var attrs, attr, newKey, obj, target, destination, isOriginalObject, props;
+
+        var attrs, attr, newKey, target, destination, props, lineage;
 
         // Set is able to take a object or a key value pair. Normalize this input.
         if (typeof key === 'object') {
-          attrs = key;
+          attrs = (key.isModel) ? key.attributes : key;
           options = val;
         } else {
           (attrs = {})[key] = val;
         }
+        options || (options = {});
+
+        // TODO: Give models a reset option
+        // if(options.reset === true){
+        //   return this.reset(attrs);
+        // }
 
         if(_.isEmpty(attrs)){ return; }
 
         // For each key and value
-        for (key in attrs) {
+        _.each(attrs, function(val, key){
 
-          val = attrs[key];                               // Our value
-          attr  = $.splitPath(key).pop();                 // The key      ex: foo[0].bar --> bar
-          target = this.get(key, {raw: true, parent: 1}); // The element  ex: foo.bar.baz --> foo.bar
-          destination = target.get(attr) || {};           // The current value of attr
-          isOriginalObject = false;                       // If this is the original object passed or a copy
-          obj = undefined;                                // The new data object, we will be constructing this as we go.
+          attr  = $.splitPath(key).pop();                 // The key        ex: foo[0].bar --> bar
+          target = this.get(key, {parent: 1});            // The element    ex: foo.bar.baz --> foo.bar
+          destination = target.get(attr, {raw: true}) || {};           // The current value of attr
+          lineage = {
+            name: key,
+            parent: this,
+            root: this.__root__,
+            path: pathGenerator(this, key)
+          };
 
           // If val is null, set to undefined
           if(val === null || val === undefined){
             val = undefined;
           }
-          // If this value is a Model or Collection and is not an ancester in the data tree (circular dependancy)
-          else if(val.isData){
-            if(!this.hasParent(val) && val._hasAncestry){
-              // Check if already has its ancestery set, but is not an ancester here
-              // It is coming from a different data tree. Make a copy to prevent shared memory across data trees
-              obj = new val.constructor();
-              val = (val.isModel) ? val.attributes : val.models;
-            }
-            // Otherwise, is a fresh new object, set its ancestry
-            else{
-              obj = val;
-              isOriginalObject = true;
-            }
-          }
-          // If this value is a Computed Property, register it for compilation.
+          // If this value is a Function, turn it into a Computed Property
           else if(_.isFunction(val)){
-
-            obj = cloneComputedProperty(val, key);
-
-            // All comptued properties' dependancies are calculated and added to their __params attribute. Save these in the context's helper cache.
-            this.__root__.helpers[this.cid] = this.__root__.helpers[this.cid] || {};
-            this.__root__.helpers[this.cid][key] = obj;
-
-          }
-          // If this value is a vanilla object, and we aren't adding to an existing model, turn it into a model
-          else if(_.isObject(val) && !_.isArray(val) && !destination.isModel){
-            obj = new Rebound.Model();
-          }
-          // If this value is an array, and we aren't adding to an existing collection, turn it into a collection
-          else if(_.isArray(val) && !destination.isCollection){
-            obj = new Rebound.Collection();
+            val = new ComputedProperty(val, lineage);
           }
 
-          // Given an object to modify, set ancestry
-          if(!_.isUndefined(obj)){
-            if( !obj._hasAncestry ){
-
-              // Save this object's ancestry
-              obj.__parent__ = this;
-              setRoot(obj, this.__root__);
-              obj.__path = pathGenerator(obj.__parent__, key);
-              obj._hasAncestry = true;
-
-              // If an eventable object, propagate its events up the chain
-              if(obj.isData){
-                obj.on('all', this.trigger, this);
-              }
-
-            }
-            //  Set its values if this is not the original data object passed in
-            if(obj.isData && !isOriginalObject){
-              obj.set(val);
-            }
-            // Save our changes
-            val = attrs[key] = obj;
-
-            // This object is now a parent. Ensure that it knows it. Without this the root element will never have this bool set
-            this._hasAncestry = true;
+          // If updating an existing object with its respective data type, let Backbone handle the merge
+          else if( destination.isComputedProperty &&  _.isObject(val)  ||
+                  ( destination.isCollection && ( _.isArray(val) || val.isCollection )) ||
+                  ( destination.isModel && ( _.isObject(val) || val.isModel ))){
+            return destination.set(val, options);
           }
+          else if(destination.isComputedProperty){
+            return destination.set(key, val, options);
+          }
+          // If this value is a Model or Collection, create a new instance of it using its constructor
+          // This will keep the defaults from the original, but make a new copy so memory isnt shared between data objects
+          else if(val.isModel || val.isCollection){
+            val = new val.constructor((val.attributes || val.models), lineage); // TODO: This will override defaults set by this model in favor of the passed in model. Do deep defaults here.
+          }
+          // If this value is an Array, turn it into a collection
+          else if(_.isArray(val)){
+            val = new Rebound.Collection(val, lineage); // TODO: Remove global referance
+          }
+          // If this value is a Object, turn it into a model
+          else if(_.isObject(val)){
+            val = new Model(val, lineage);
+          }
+          // Else val is a primitive value, set it accordingly
 
-          // If existing collection and is an vanilla array, add the models
-          if( destination.isCollection && (!val.isData || _.isArray(val))){
-            destination.set(((val.isCollection) ? val.models : val), options);
-          }
-          // If existing model and is a vanilla object, augment it
-          else if(destination.isModel && !val.isData && _.isObject(val) && !_.isArray(val) ){
-            destination.set(val, options);
-          }
-          // Otherwise, replace the existing value
-          else{
-            // TODO: Event cleanup when replacing a model or collection with another value
-            Backbone.Model.prototype.set.call(target, attr, val, options);
-          }
-        }
+
+          // If val is a data object, let this object know it is now a parent
+            this._hasAncestry = (val && val.isData || false);
+
+          // Replace the existing value
+          return Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
+
+        }, this);
       },
 
       toJSON: function() {
@@ -7931,20 +8320,51 @@ define("rebound-data/collection",
       };
     }
 
+    function linkedModels(original){
+      return function(model){
+        if(model.collection === undefined){
+          return model.deinitialize();
+        }
+        if(original.collection === undefined){
+          return original.deinitialize();
+        }
+        if(original.collection === model.collection){
+          return;
+        }
+
+        if(!original.synced[model._cid]){
+          model.synced[original._cid] = true;
+          original.set(model.changedAttributes());
+          model.synced[original._cid] = false;
+        }
+      };
+    }
+
     var Collection = Backbone.Collection.extend({
 
       isCollection: true,
       isData: true,
 
-      __path: function(){return '';},
-
-      initialize: function(){
-        this.__parent__ = this.__parent__ || this;
-        this.__root__ =  this.__root__ || this;
-      },
-
       model: this.model || Model,
 
+      __path: function(){return '';},
+
+      constructor: function(models, options){
+        options = options || {};
+        this.__observers = {};
+        this.helpers = {};
+
+        Backbone.Collection.apply( this, arguments );
+
+        this.setParent( options.parent || this );
+        this.setRoot( options.root || this );
+        this.__path = options.path || this.__path;
+
+        this.on('remove', function(model, collection, options){
+          model.deinitialize();
+        });
+
+      },
 
       get: function(key, options){
 
@@ -7970,10 +8390,10 @@ define("rebound-data/collection",
         if (parts.length > 0) {
           for ( i = 0; i < l - options.parent; i++) {
 
-            if( _.isFunction(result )){
+            if( result && result.isComputedProperty ){
               // If returning raw, always return the first computed property in a chian.
               if(options.raw){ return result; }
-              result = evaluateComputedProperty(result, result.__parent__, parts[i-1]);
+              result = result.call();
             }
 
             if(_.isUndefined(result) || _.isNull(result)){
@@ -7995,54 +8415,74 @@ define("rebound-data/collection",
           }
         }
 
-        if( _.isFunction(result) && !options.raw){
-
-          result = evaluateComputedProperty(result, this, parts[i-1]);
-
+        if( result && result.isComputedProperty && !options.raw){
+          result = result.call();
         }
 
         return result;
       },
 
       set: function(models, options){
-        var id,
-            model,
-            data,
-            lineage,
-            i=0, l;
+        var newModels = [];
+            options = options || {};
 
-        // Ensure models is an array
-        models = (!_.isArray(models)) ? (models ? [models] : []) : models;
-
-        for (i = 0, l = models.length; i < l; i++) {
-          model = data = models[i] || {};
-
-          if(model.__parent__ == this){
-            models[i] = model;
-            continue;
-          }
-
-          lineage = {
-            __parent__: this,
-            __root__: this.__root__,
-            __path: pathGenerator(this),
-            _hasAncestry: true
-          };
-
-          // Ensure that this element now knows that it has children now. WIthout this cyclic dependancies cause issues
-          this._hasAncestry = true;
-
-         // TODO: This will override things set by the new model to appease the collection's model's defaults. Do a smart default set here.
-          options = options ? _.clone(options) : {};
-          options.collection = this;
-          lineage.defaults = _.defaults(((data.isModel) ? data.attributes : data), this.model.prototype.defaults);
-          model = new (this.model.extend(lineage))();
-
-          models[i] = model;
+        if(!_.isObject(models)){
+          return console.error('Collection.set must be passed a Model, Object, array or Models and Objects, or another Collection');
         }
 
-        // Call original set function
-        Backbone.Collection.prototype.set.call(this, models, options);
+        // If another collection, treat like an array
+        models = (models.isCollection) ? models.models : models;
+
+        // Ensure models is an array
+        models = (!_.isArray(models)) ? [models] : models;
+
+        // For each model, construct a copy of it
+        _.each(models, function(data, index){
+          var model,
+              id = (data instanceof Model)  ? data : data[this.model.idAttribute || 'id'];
+
+          // If the model already exists in this collection, let Backbone handle the merge
+          if(this.get(id)){
+            return newModels[index] = data;
+          }
+
+          // TODO: This will override things set by the passed model to appease the collection's model's defaults. Do a smart default set here.
+          model = new this.model((data.isModel && data.attributes || data), _.defaults({
+             parent: this,
+             root: this.__root__,
+             path: pathGenerator(this)
+           }, options));
+
+           // Keep this new collection's models in sync with the originals.
+           if(data.isModel){
+
+              // Preserve each Model's original cid value
+              model._cid = model._cid || model.cid;
+              data._cid = data._cid || data.cid;
+
+              // Synced Model should share the same cid so helpers interpert them as the same object
+              model.cid = data.cid;
+
+              if(!model.synced[data._cid]){
+                data.on('change', linkedModels(model));
+                model.synced[data._cid] = false;
+              }
+
+              if(!data.synced[model._cid]){
+                model.on('change', linkedModels(data));
+                data.synced[model._cid] = false;
+              }
+            }
+
+           newModels[index] = model;
+
+        }, this);
+
+        // Ensure that this element now knows that it has children now. Without this cyclic dependancies cause issues
+        this._hasAncestry = this._hasAncestry || (newModels.length > 0);
+
+        // Call original set function with model duplicates
+        Backbone.Collection.prototype.set.call(this, newModels, options);
 
       }
 
@@ -8051,158 +8491,149 @@ define("rebound-data/collection",
     __exports__["default"] = Collection;
   });
 define("rebound-data/rebound-data", 
-  ["rebound-data/model","rebound-data/collection","rebound-runtime/utils","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
+  ["rebound-data/model","rebound-data/collection","rebound-data/computed-property","rebound-runtime/utils","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
     
     var Model = __dependency1__["default"];
     var Collection = __dependency2__["default"];
-    var $ = __dependency3__["default"];
+    var ComputedProperty = __dependency3__["default"];
+    var $ = __dependency4__["default"];
 
 
-    /**
-     * Deinitializes the current class and subclasses associated with it
-     * Note: this functionality is common for all Backbone derived class
-     *
-     */
-    Model.prototype.deinitialize =
-    Collection.prototype.deinitialize = function () {
+    var sharedMethods = {
+      setParent: function(parent){
 
-      // deinitialize current class
+        if(this.__parent__){
+          this.off('all', this.__parent__.trigger);
+        }
 
-      // undelegate events..(events specified as part of event:{})
-      if (this.undelegateEvents) {
-        this.undelegateEvents();
-      }
+        this.__parent__ = parent;
+        this._hasAncestry = true;
 
-      // stop listening model events
-      if (this.stopListening) {
-        this.stopListening();
-      }
+        // If parent is not self, propagate all events up
+        if(parent !== this && !parent.isCollection){
+          this.on('all', parent.trigger, parent);
+        }
 
-      // unbind events
-      if (this.off) {
-        this.off();
-      }
+        return parent;
 
-      // if data has a dom element associated with it, remove all dom events and the dom referance
-      if(this.el){
+      },
 
-        _.each(this.el.__listeners, function(handler, eventType){
-          if (this.el.removeEventListener){ this.el.removeEventListener(eventType, handler, false); }
-          if (this.el.detachEvent){ this.el.detachEvent('on'+eventType, handler); }
-        }, this);
+      // TODO: I dont like this recursively setting elements root when one element's root changes. Fix this.
+      setRoot: function (root){
+        var obj = this;
+        obj.__root__ = root;
+        var val = obj.models ||  obj.attributes || obj.cache;
+        _.each(val, function(value, key){
+          if(value && value.isData){
+            value.setRoot(root);
+          }
+        });
+        return root;
+      },
 
-        // Remove all event delegates
-        delete this.el.__listeners;
-        delete this.el.__events;
+      hasParent: function(obj){
+        var tmp = this;
+        while(tmp !== obj){
+          tmp = tmp.__parent__;
+          if(_.isUndefined(tmp)){ return false; }
+          if(tmp === obj){ return true; }
+          if(tmp.__parent__ === tmp){ return false; }
+        }
+        return true;
+      },
 
-        // Recursively remove element lazyvalues
-        $(this.el).walkTheDOM(function(el){
-          if(el.__lazyValue && el.__lazyValue.destroy()){
-            n.__lazyValue.destroy();
+      deinitialize: function () {
+
+        // deinitialize current class
+
+        // undelegate events..(events specified as part of event:{})
+        if (this.undelegateEvents) {
+          this.undelegateEvents();
+        }
+
+        // stop listening model events
+        if (this.stopListening) {
+          this.stopListening();
+        }
+
+        // unbind events
+        if (this.off) {
+          this.off();
+        }
+
+        delete this.__parent__;
+        delete this.__root__;
+        delete this.__path;
+
+        // if data has a dom element associated with it, remove all dom events and the dom referance
+        if(this.el){
+
+          _.each(this.el.__listeners, function(handler, eventType){
+            if (this.el.removeEventListener){ this.el.removeEventListener(eventType, handler, false); }
+            if (this.el.detachEvent){ this.el.detachEvent('on'+eventType, handler); }
+          }, this);
+
+          // Remove all event delegates
+          delete this.el.__listeners;
+          delete this.el.__events;
+
+          // Recursively remove element lazyvalues
+          $(this.el).walkTheDOM(function(el){
+            if(el.__lazyValue && el.__lazyValue.destroy()){
+              n.__lazyValue.destroy();
+            }
+          });
+
+          // Remove element referances
+          delete this.$el;
+          delete this.el;
+        }
+
+        // Mark it as deinitialized
+        this.deinitialized = true;
+        // deinitialize subclasses
+        if(this.data && this.data.deinitialize){
+          this.data.deinitialize();
+        }
+
+        // De-init all models in a collection
+        _.each(this.models, function (value, index) {
+          if (value && value.deinitialize) {
+            value.deinitialize();
           }
         });
 
-        // Remove element referances
-        delete this.$el;
-        delete this.el;
-      }
+        // De-init all attributes in a model
+        _.each(this.attributes, function (value, index) {
+          if (value && value.deinitialize) {
+            value.deinitialize();
+          }
+        });
 
-      // mark it as deinitialized
-      this.deinitialized = true;
-      // deinitialize subclasses
-      if(this.data && this.data.deinitialize){
-        this.data.deinitialize();
-      }
-
-      _.each(this.models, function (value, index) {
-        if (value && value.deinitialize) {
-          value.deinitialize();
+        // De-init computed proeprties' cache objects
+        if(this.cache){
+          this.cache.collection.deinitialize();
+          this.cache.model.deinitialize();
         }
-      });
 
-      _.each(this.attributes, function (value, index) {
-        if (value && value.deinitialize) {
-          value.deinitialize();
-        }
-      });
+        // clean up references
+        this.__observers = {};
+        // this.models = [];
+        this.data = {};
+        // this.attributes = {};
 
-      // clean up references
-      this.__observers = {};
-      // this.models = [];
-      this.data = {};
-      // this.attributes = {};
-
+      }
     };
+
+    _.extend(Model.prototype, sharedMethods);
+    _.extend(Collection.prototype, sharedMethods);
+    _.extend(ComputedProperty.prototype, sharedMethods);
+
 
     __exports__.Model = Model;
     __exports__.Collection = Collection;
-  });
-define("rebound-runtime/env", 
-  ["htmlbars-runtime/utils","morph/dom-helper","rebound-runtime/hooks","rebound-runtime/helpers","rebound-data/rebound-data","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __exports__) {
-    
-    var merge = __dependency1__.merge;
-    var DOMHelper = __dependency2__["default"];
-    var hooks = __dependency3__["default"];
-    var helpers = __dependency4__["default"];
-    var Model = __dependency5__.Model;
-    var Collection = __dependency5__.Collection;
-
-
-    var env = {
-      registerPartial: helpers.registerPartial,
-      registerHelper: helpers.registerHelper,
-      helpers: helpers.helpers,
-      hooks: hooks
-    };
-
-    env.hydrate = function(spec, options){
-      // Return a wrapper function that will merge user provided helpers and hooks with our defaults
-      return function(data, options){
-        // Ensure we have a well-formed object as var options
-        var env = options || {},
-            contextElement = data.el || document.documentElement;
-        env.helpers = env.helpers || {};
-        env.hooks = env.hooks || {};
-        env.dom = env.dom || new DOMHelper();
-
-        // Merge our default helpers and hooks with user provided helpers
-        env.helpers = merge(env.helpers, helpers.helpers);
-        env.hooks = merge(env.hooks, hooks);
-
-        // Call our func with merged helpers and hooks
-        return spec.call(this, data, env, contextElement);
-      };
-    };
-
-    // Notify all of a object's observers of the change, execute the callback
-    env.notify = function(obj, path) {
-
-      // If path is not an array of keys, wrap it in array
-      path = (_.isString(path)) ? [path] : path;
-
-      // If this is a change from a model inside of a collection, alert all collection's watchers of the change too
-      _.each(path, function(path, index, arr){
-        // TODO: Make this work for nexted collections. Only works at 1 level right now.
-        var collectionPath = path.split('.@each.')[0];
-        if(collectionPath){
-          arr.push(collectionPath);
-        }
-      });
-
-      // For each path, alert each observer and call its callback
-      _.each(path, function(path){
-        if(obj.__observers && _.isArray(obj.__observers[path])){
-          _.each(obj.__observers[path], function(callback, index) {
-            if(callback){ callback(); }
-            else{ delete obj.__observers[path][index]; }
-          });
-        }
-      });
-    };
-
-    __exports__["default"] = env;
+    __exports__.ComputedProperty = ComputedProperty;
   });
 define("rebound-runtime/component", 
   ["rebound-runtime/utils","rebound-runtime/env","rebound-data/rebound-data","exports"],
@@ -8212,6 +8643,7 @@ define("rebound-runtime/component",
     var env = __dependency2__["default"];
     var Model = __dependency3__.Model;
     var Collection = __dependency3__.Collection;
+    var ComputedProperty = __dependency3__.ComputedProperty;
 
 
     // If Rebound Runtime has already been run, throw error
@@ -8229,7 +8661,6 @@ define("rebound-runtime/component",
       isComponent: true,
 
       constructor: function(options){
-
         options = options || (options = {});
         _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent', '_notifySubtree');
         this.cid = _.uniqueId('component');
@@ -8281,11 +8712,12 @@ define("rebound-runtime/component",
 
         // Listen to relevent data change events
         this.listenTo(this, 'change', this._onModelChange);
-        this.listenTo(this, 'add remove reset', this._onCollectionChange);
+        this.listenTo(this, 'add remove', this._onCollectionChange);
+        this.listenTo(this, 'reset', this._onReset);
 
 
         // Render our dom and place the dom in our custom element
-        this.el.appendChild(this.template(this, {helpers: this.helpers}));
+        this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
 
       },
 
@@ -8309,22 +8741,34 @@ define("rebound-runtime/component",
         return this[name].call(this, event);
       },
 
+      _onReset: function(data, options){
+        return console.error('reset triggered idiot', arguments);
+        // return ((data.isCollection) ? this._onCollectionChange : this._onModelChange)(data, options);
+      },
+
       _onModelChange: function(model, options){
-        this._notifySubtree(model, model.changedAttributes());
+        this._notifySubtree(model, model.changedAttributes(), 'model');
       },
 
       _onCollectionChange: function(model, collection, options){
-        var changed = {};
+        var changed = {},
+            that = this;
         if(model.isCollection){
           options = collection;
           collection = model;
         }
-        changed[collection.__path()] = collection;
 
-        this._notifySubtree(this, changed);
+        changed[collection.__path()] = collection;
+        if(collection._timeout){
+          clearTimeout(collection._timeout);
+          collection._timeout = undefined;
+        }
+        collection._timeout = setTimeout(function(){
+          that._notifySubtree(that, changed, 'collection');
+        }, 20);
       },
 
-      _notifySubtree: function(obj, changed){
+      _notifySubtree: function(obj, changed, type){
 
         var context = this, // This root context
             path = obj.__path(), // The path of the modified object relative to the root context
@@ -8332,28 +8776,27 @@ define("rebound-runtime/component",
             keys = _.keys(changed), // Array of all changed keys
             i = 0,
             len = parts.length,
-            paths;
+            paths,
+            triggers;
 
         // Call notify on every object down the data tree starting at the root and all the way down element that triggered the change
         for(i;i<=len;i++){
 
           // Reset paths for each data layer
           paths = [];
+          triggers = [];
 
           // For every key changed
           _.each(keys, function(attr){
+
             // Constructs paths variable relative to current data element
-            paths.push((path + '.' + attr).replace(context.__path(), '').replace(/^\./, ''));
-            // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
-            if(paths[0].match(/\[.+\]/g)){
-              paths.push(paths[0].replace(/\[.+\]/g, ".@each").replace(/^\./, '')); // test.[1].whatever -> test.@each.whatever
-              // paths.push(paths[0].split(/\[.+\]/g)[0]); // test.[1].whatever -> test
-              paths[0] = paths[0].replace(/\[([^\]]*)\]/g, '.$1').replace(/^\./, ''); // test[1].whatever -> test.1.whatever
-            }
+            paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[([^\]]+)\]/g, ".$1").replace(/^\./, ''));
+            paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, ''));
+            paths = _.uniq(paths);
           });
 
           // Call all listeners
-          env.notify(context, paths);
+          env.notify(context, paths, type);
 
           // If not at end of path parts, get the next data object
           context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));
@@ -8691,6 +9134,7 @@ define("rebound-runtime/rebound-runtime",
     // Load Rebound Data
     var Model = __dependency3__.Model;
     var Collection = __dependency3__.Collection;
+    var ComputedProperty = __dependency3__.ComputedProperty;
 
     // Load Rebound Components
     var Component = __dependency4__["default"];
@@ -8710,6 +9154,7 @@ define("rebound-runtime/rebound-runtime",
       registerPartial: env.registerPartial,
       Model: Model,
       Collection: Collection,
+      ComputedProperty: ComputedProperty,
       Component: Component,
       Config: Config
     };

@@ -17,20 +17,51 @@ function pathGenerator(collection){
   };
 }
 
+function linkedModels(original){
+  return function(model){
+    if(model.collection === undefined){
+      return model.deinitialize();
+    }
+    if(original.collection === undefined){
+      return original.deinitialize();
+    }
+    if(original.collection === model.collection){
+      return;
+    }
+
+    if(!original.synced[model._cid]){
+      model.synced[original._cid] = true;
+      original.set(model.changedAttributes());
+      model.synced[original._cid] = false;
+    }
+  };
+}
+
 var Collection = Backbone.Collection.extend({
 
   isCollection: true,
   isData: true,
 
-  __path: function(){return '';},
-
-  initialize: function(){
-    this.__parent__ = this.__parent__ || this;
-    this.__root__ =  this.__root__ || this;
-  },
-
   model: this.model || Model,
 
+  __path: function(){return '';},
+
+  constructor: function(models, options){
+    options = options || {};
+    this.__observers = {};
+    this.helpers = {};
+
+    Backbone.Collection.apply( this, arguments );
+
+    this.setParent( options.parent || this );
+    this.setRoot( options.root || this );
+    this.__path = options.path || this.__path;
+
+    this.on('remove', function(model, collection, options){
+      model.deinitialize();
+    });
+
+  },
 
   get: function(key, options){
 
@@ -56,10 +87,10 @@ var Collection = Backbone.Collection.extend({
     if (parts.length > 0) {
       for ( i = 0; i < l - options.parent; i++) {
 
-        if( _.isFunction(result )){
+        if( result && result.isComputedProperty ){
           // If returning raw, always return the first computed property in a chian.
           if(options.raw){ return result; }
-          result = evaluateComputedProperty(result, result.__parent__, parts[i-1]);
+          result = result.call();
         }
 
         if(_.isUndefined(result) || _.isNull(result)){
@@ -81,54 +112,74 @@ var Collection = Backbone.Collection.extend({
       }
     }
 
-    if( _.isFunction(result) && !options.raw){
-
-      result = evaluateComputedProperty(result, this, parts[i-1]);
-
+    if( result && result.isComputedProperty && !options.raw){
+      result = result.call();
     }
 
     return result;
   },
 
   set: function(models, options){
-    var id,
-        model,
-        data,
-        lineage,
-        i=0, l;
+    var newModels = [];
+        options = options || {};
 
-    // Ensure models is an array
-    models = (!_.isArray(models)) ? (models ? [models] : []) : models;
-
-    for (i = 0, l = models.length; i < l; i++) {
-      model = data = models[i] || {};
-
-      if(model.__parent__ == this){
-        models[i] = model;
-        continue;
-      }
-
-      lineage = {
-        __parent__: this,
-        __root__: this.__root__,
-        __path: pathGenerator(this),
-        _hasAncestry: true
-      };
-
-      // Ensure that this element now knows that it has children now. WIthout this cyclic dependancies cause issues
-      this._hasAncestry = true;
-
-     // TODO: This will override things set by the new model to appease the collection's model's defaults. Do a smart default set here.
-      options = options ? _.clone(options) : {};
-      options.collection = this;
-      lineage.defaults = _.defaults(((data.isModel) ? data.attributes : data), this.model.prototype.defaults);
-      model = new (this.model.extend(lineage))();
-
-      models[i] = model;
+    if(!_.isObject(models)){
+      return console.error('Collection.set must be passed a Model, Object, array or Models and Objects, or another Collection');
     }
 
-    // Call original set function
-    Backbone.Collection.prototype.set.call(this, models, options);
+    // If another collection, treat like an array
+    models = (models.isCollection) ? models.models : models;
+
+    // Ensure models is an array
+    models = (!_.isArray(models)) ? [models] : models;
+
+    // For each model, construct a copy of it
+    _.each(models, function(data, index){
+      var model,
+          id = (data instanceof Model)  ? data : data[this.model.idAttribute || 'id'];
+
+      // If the model already exists in this collection, let Backbone handle the merge
+      if(this.get(id)){
+        return newModels[index] = data;
+      }
+
+      // TODO: This will override things set by the passed model to appease the collection's model's defaults. Do a smart default set here.
+      model = new this.model((data.isModel && data.attributes || data), _.defaults({
+         parent: this,
+         root: this.__root__,
+         path: pathGenerator(this)
+       }, options));
+
+       // Keep this new collection's models in sync with the originals.
+       if(data.isModel){
+
+          // Preserve each Model's original cid value
+          model._cid = model._cid || model.cid;
+          data._cid = data._cid || data.cid;
+
+          // Synced Model should share the same cid so helpers interpert them as the same object
+          model.cid = data.cid;
+
+          if(!model.synced[data._cid]){
+            data.on('change', linkedModels(model));
+            model.synced[data._cid] = false;
+          }
+
+          if(!data.synced[model._cid]){
+            model.on('change', linkedModels(data));
+            data.synced[model._cid] = false;
+          }
+        }
+
+       newModels[index] = model;
+
+    }, this);
+
+    // Ensure that this element now knows that it has children now. Without this cyclic dependancies cause issues
+    this._hasAncestry = this._hasAncestry || (newModels.length > 0);
+
+    // Call original set function with model duplicates
+    Backbone.Collection.prototype.set.call(this, newModels, options);
 
   }
 

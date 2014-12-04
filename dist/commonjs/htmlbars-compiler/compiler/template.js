@@ -5,10 +5,10 @@ var HydrationOpcodeCompiler = require("./hydration_opcode").HydrationOpcodeCompi
 var HydrationCompiler = require("./hydration").HydrationCompiler;
 var TemplateVisitor = require("./template_visitor")["default"];
 var processOpcodes = require("./utils").processOpcodes;
-var string = require("./quoting").string;
 var repeat = require("./quoting").repeat;
 
-function TemplateCompiler() {
+function TemplateCompiler(options) {
+  this.options = options || {};
   this.fragmentOpcodeCompiler = new FragmentOpcodeCompiler();
   this.fragmentCompiler = new FragmentCompiler();
   this.hydrationOpcodeCompiler = new HydrationOpcodeCompiler();
@@ -36,13 +36,36 @@ TemplateCompiler.prototype.startProgram = function(program, childTemplateCount, 
   }
 };
 
+TemplateCompiler.prototype.getChildTemplateVars = function(indent) {
+  var vars = '';
+  if (this.childTemplates) {
+    for (var i = 0; i < this.childTemplates.length; i++) {
+      vars += indent + 'var child' + i + ' = ' + this.childTemplates[i] + ';\n';
+    }
+  }
+  return vars;
+};
+
+TemplateCompiler.prototype.getHydrationHooks = function(indent, hooks) {
+  var hookVars = [];
+  for (var hook in hooks) {
+    hookVars.push(hook + ' = hooks.' + hook);
+  }
+
+  if (hookVars.length > 0) {
+    return indent + 'var hooks = env.hooks, ' + hookVars.join(', ') + ';\n';
+  } else {
+    return '';
+  }
+};
+
 TemplateCompiler.prototype.endProgram = function(program, programDepth) {
   this.fragmentOpcodeCompiler.endProgram(program);
   this.hydrationOpcodeCompiler.endProgram(program);
 
   var indent = repeat("  ", programDepth);
   var options = {
-    indent: indent + "  "
+    indent: indent + "    "
   };
 
   // function build(dom) { return fragment; }
@@ -57,27 +80,33 @@ TemplateCompiler.prototype.endProgram = function(program, programDepth) {
     options
   );
 
-  var childTemplateVars = "";
-  for (var i=0, l=this.childTemplates.length; i<l; i++) {
-    childTemplateVars += indent+'  var child' + i + ' = ' + this.childTemplates[i] + '\n';
+  var blockParams = program.blockParams || [];
+
+  var templateSignature = 'context, env, contextualElement';
+  if (blockParams.length > 0) {
+    templateSignature += ', blockArguments';
   }
 
   var template =
     '(function() {\n' +
-    childTemplateVars +
-    fragmentProgram +
-    indent+'  var cachedFragment;\n' +
-    indent+'  return function template(context, env, contextualElement) {\n' +
-    indent+'    var dom = env.dom, hooks = env.hooks;\n' +
-    indent+'    dom.detectNamespace(contextualElement);\n' +
-    indent+'    if (cachedFragment === undefined) {\n' +
-    indent+'      cachedFragment = build(dom);\n' +
-    indent+'    }\n' +
-    indent+'    var fragment = dom.cloneNode(cachedFragment, true);\n' +
+    this.getChildTemplateVars(indent + '  ') +
+    indent+'  return {\n' +
+    indent+'    isHTMLBars: true,\n' +
+    indent+'    cachedFragment: null,\n' +
+    indent+'    build: ' + fragmentProgram + ',\n' +
+    indent+'    render: function render(' + templateSignature + ') {\n' +
+    indent+'      var dom = env.dom;\n' +
+    this.getHydrationHooks(indent + '      ', this.hydrationCompiler.hooks) +
+    indent+'      dom.detectNamespace(contextualElement);\n' +
+    indent+'      if (this.cachedFragment === null) {\n' +
+    indent+'        this.cachedFragment = this.build(dom);\n' +
+    indent+'      }\n' +
+    indent+'      var fragment = dom.cloneNode(this.cachedFragment, true);\n' +
     hydrationProgram +
-    indent+'    return fragment;\n' +
+    indent+'      return fragment;\n' +
+    indent+'    }\n' +
     indent+'  };\n' +
-    indent+'}());';
+    indent+'}())';
 
   this.templates.push(template);
 };
@@ -105,6 +134,11 @@ TemplateCompiler.prototype.block = function(block, i, l) {
 TemplateCompiler.prototype.text = function(string, i, l, r) {
   this.fragmentOpcodeCompiler.text(string, i, l, r);
   this.hydrationOpcodeCompiler.text(string, i, l, r);
+};
+
+TemplateCompiler.prototype.comment = function(string, i, l, r) {
+  this.fragmentOpcodeCompiler.comment(string, i, l, r);
+  this.hydrationOpcodeCompiler.comment(string, i, l, r);
 };
 
 TemplateCompiler.prototype.mustache = function (mustache, i, l) {

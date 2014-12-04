@@ -25,15 +25,16 @@ function __es6_transpiler_build_module_object__(name, imported) {
 var Utils = __es6_transpiler_build_module_object__("Utils", require("./utils"));
 var Exception = require("./exception")["default"];
 
-var VERSION = "2.0.0-alpha.4";
-exports.VERSION = VERSION;var COMPILER_REVISION = 5;
+var VERSION = "2.0.0";
+exports.VERSION = VERSION;var COMPILER_REVISION = 6;
 exports.COMPILER_REVISION = COMPILER_REVISION;
 var REVISION_CHANGES = {
   1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
   2: '== 1.0.0-rc.3',
   3: '== 1.0.0-rc.4',
   4: '== 1.x.x',
-  5: '>= 2.0.0'
+  5: '== 2.0.0-alpha.x',
+  6: '>= 2.0.0-beta.1'
 };
 exports.REVISION_CHANGES = REVISION_CHANGES;
 var isArray = Utils.isArray,
@@ -54,12 +55,11 @@ exports.HandlebarsEnvironment = HandlebarsEnvironment;HandlebarsEnvironment.prot
   logger: logger,
   log: log,
 
-  registerHelper: function(name, fn, inverse) {
+  registerHelper: function(name, fn) {
     if (toString.call(name) === objectType) {
-      if (inverse || fn) { throw new Exception('Arg not supported with multiple helpers'); }
+      if (fn) { throw new Exception('Arg not supported with multiple helpers'); }
       Utils.extend(this.helpers, name);
     } else {
-      if (inverse) { fn.not = inverse; }
       this.helpers[name] = fn;
     }
   },
@@ -67,11 +67,14 @@ exports.HandlebarsEnvironment = HandlebarsEnvironment;HandlebarsEnvironment.prot
     delete this.helpers[name];
   },
 
-  registerPartial: function(name, str) {
+  registerPartial: function(name, partial) {
     if (toString.call(name) === objectType) {
       Utils.extend(this.partials,  name);
     } else {
-      this.partials[name] = str;
+      if (typeof partial === 'undefined') {
+        throw new Exception('Attempting to register a partial as undefined');
+      }
+      this.partials[name] = partial;
     }
   },
   unregisterPartial: function(name) {
@@ -91,9 +94,8 @@ function registerDefaultHelpers(instance) {
   });
 
   instance.registerHelper('blockHelperMissing', function(context, options) {
-    var inverse = options.inverse || function() {}, fn = options.fn;
-
-    if (isFunction(context)) { context = context.call(this); }
+    var inverse = options.inverse,
+        fn = options.fn;
 
     if(context === true) {
       return fn(this);
@@ -139,35 +141,42 @@ function registerDefaultHelpers(instance) {
       data = createFrame(options.data);
     }
 
+    function execIteration(key, i, last) {
+      if (data) {
+        data.key = key;
+        data.index = i;
+        data.first = i === 0;
+        data.last  = !!last;
+
+        if (contextPath) {
+          data.contextPath = contextPath + key;
+        }
+      }
+      ret = ret + fn(context[key], { data: data });
+    }
+
     if(context && typeof context === 'object') {
       if (isArray(context)) {
         for(var j = context.length; i<j; i++) {
-          if (data) {
-            data.index = i;
-            data.first = (i === 0);
-            data.last  = (i === (context.length-1));
-
-            if (contextPath) {
-              data.contextPath = contextPath + i;
-            }
-          }
-          ret = ret + fn(context[i], { data: data });
+          execIteration(i, i, i === context.length-1);
         }
       } else {
+        var priorKey;
+
         for(var key in context) {
           if(context.hasOwnProperty(key)) {
-            if(data) {
-              data.key = key;
-              data.index = i;
-              data.first = (i === 0);
-
-              if (contextPath) {
-                data.contextPath = contextPath + key;
-              }
+            // We're running the iterations one step out of sync so we can detect
+            // the last iteration without have to scan the object twice and create
+            // an itermediate keys array. 
+            if (priorKey) {
+              execIteration(priorKey, i-1);
             }
-            ret = ret + fn(context[key], {data: data});
+            priorKey = key;
             i++;
           }
+        }
+        if (priorKey) {
+          execIteration(priorKey, i-1, true);
         }
       }
     }
@@ -209,15 +218,17 @@ function registerDefaultHelpers(instance) {
       }
 
       return fn(context, options);
+    } else {
+      return options.inverse(this);
     }
   });
 
-  instance.registerHelper('log', function(context, options) {
+  instance.registerHelper('log', function(message, options) {
     var level = options.data && options.data.level != null ? parseInt(options.data.level, 10) : 1;
-    instance.log(level, context);
+    instance.log(level, message);
   });
 
-  instance.registerHelper('lookup', function(obj, field, options) {
+  instance.registerHelper('lookup', function(obj, field) {
     return obj && obj[field];
   });
 }
@@ -232,20 +243,20 @@ var logger = {
   ERROR: 3,
   level: 3,
 
-  // can be overridden in the host environment
-  log: function(level, obj) {
+  // Can be overridden in the host environment
+  log: function(level, message) {
     if (logger.level <= level) {
       var method = logger.methodMap[level];
       if (typeof console !== 'undefined' && console[method]) {
-        console[method].call(console, obj);
+        console[method].call(console, message);
       }
     }
   }
 };
 exports.logger = logger;
-function log(level, obj) { logger.log(level, obj); }
-
-exports.log = log;var createFrame = function(object) {
+var log = logger.log;
+exports.log = log;
+var createFrame = function(object) {
   var frame = Utils.extend({}, object);
   frame._parent = object;
   return frame;

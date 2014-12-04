@@ -1,22 +1,27 @@
 "use strict";
+/* global window:false */
 var Morph = require("../morph/morph")["default"];
 var buildHTMLDOM = require("./dom-helper/build-html-dom").buildHTMLDOM;
 var svgNamespace = require("./dom-helper/build-html-dom").svgNamespace;
 var svgHTMLIntegrationPoints = require("./dom-helper/build-html-dom").svgHTMLIntegrationPoints;
+var addClasses = require("./dom-helper/classes").addClasses;
+var removeClasses = require("./dom-helper/classes").removeClasses;
 
-var deletesBlankTextNodes = (function(){
+var doc = typeof document === 'undefined' ? false : document;
+
+var deletesBlankTextNodes = doc && (function(document){
   var element = document.createElement('div');
   element.appendChild( document.createTextNode('') );
   var clonedElement = element.cloneNode(true);
   return clonedElement.childNodes.length === 0;
-})();
+})(doc);
 
-var ignoresCheckedAttribute = (function(){
+var ignoresCheckedAttribute = doc && (function(document){
   var element = document.createElement('input');
   element.setAttribute('checked', 'checked');
   var clonedElement = element.cloneNode(false);
   return !clonedElement.checked;
-})();
+})(doc);
 
 function isSVG(ns){
   return ns === svgNamespace;
@@ -123,7 +128,15 @@ prototype.setAttribute = function(element, name, value) {
   element.setAttribute(name, value);
 };
 
-if (document.createElementNS) {
+prototype.removeAttribute = function(element, name) {
+  element.removeAttribute(name);
+};
+
+prototype.setProperty = function(element, name, value) {
+  element[name] = value;
+};
+
+if (doc && doc.createElementNS) {
   // Only opt into namespace detection if a contextualElement
   // is passed.
   prototype.createElement = function(tagName, contextualElement) {
@@ -147,6 +160,9 @@ if (document.createElementNS) {
   };
 }
 
+prototype.addClasses = addClasses;
+prototype.removeClasses = removeClasses;
+
 prototype.setNamespace = function(ns) {
   this.namespace = ns;
 };
@@ -161,6 +177,10 @@ prototype.createDocumentFragment = function(){
 
 prototype.createTextNode = function(text){
   return this.document.createTextNode(text);
+};
+
+prototype.createComment = function(text){
+  return this.document.createComment(text);
 };
 
 prototype.repairClonedNode = function(element, blankChildTextNodes, isChecked){
@@ -193,6 +213,12 @@ prototype.createMorph = function(parent, start, end, contextualElement){
   return new Morph(parent, start, end, this, contextualElement);
 };
 
+prototype.createUnsafeMorph = function(parent, start, end, contextualElement){
+  var morph = this.createMorph(parent, start, end, contextualElement);
+  morph.escaped = false;
+  return morph;
+};
+
 // This helper is just to keep the templates good looking,
 // passing integers instead of element references.
 prototype.createMorphAt = function(parent, startIndex, endIndex, contextualElement){
@@ -200,6 +226,12 @@ prototype.createMorphAt = function(parent, startIndex, endIndex, contextualEleme
       start = startIndex === -1 ? null : childNodes[startIndex],
       end = endIndex === -1 ? null : childNodes[endIndex];
   return this.createMorph(parent, start, end, contextualElement);
+};
+
+prototype.createUnsafeMorphAt = function(parent, startIndex, endIndex, contextualElement) {
+  var morph = this.createMorphAt(parent, startIndex, endIndex, contextualElement);
+  morph.escaped = false;
+  return morph;
 };
 
 prototype.insertMorphBefore = function(element, referenceChild, contextualElement) {

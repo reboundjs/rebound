@@ -1,6 +1,6 @@
 import $ from "rebound-runtime/utils";
 import env from "rebound-runtime/env";
-import { Model, Collection} from "rebound-data/rebound-data";
+import { Model, Collection, ComputedProperty } from "rebound-data/rebound-data";
 
 
 // If Rebound Runtime has already been run, throw error
@@ -18,7 +18,6 @@ var Component = Model.extend({
   isComponent: true,
 
   constructor: function(options){
-
     options = options || (options = {});
     _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent', '_notifySubtree');
     this.cid = _.uniqueId('component');
@@ -70,11 +69,12 @@ var Component = Model.extend({
 
     // Listen to relevent data change events
     this.listenTo(this, 'change', this._onModelChange);
-    this.listenTo(this, 'add remove reset', this._onCollectionChange);
+    this.listenTo(this, 'add remove', this._onCollectionChange);
+    this.listenTo(this, 'reset', this._onReset);
 
 
     // Render our dom and place the dom in our custom element
-    this.el.appendChild(this.template(this, {helpers: this.helpers}));
+    this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
 
   },
 
@@ -98,22 +98,34 @@ var Component = Model.extend({
     return this[name].call(this, event);
   },
 
+  _onReset: function(data, options){
+    return console.error('reset triggered idiot', arguments);
+    // return ((data.isCollection) ? this._onCollectionChange : this._onModelChange)(data, options);
+  },
+
   _onModelChange: function(model, options){
-    this._notifySubtree(model, model.changedAttributes());
+    this._notifySubtree(model, model.changedAttributes(), 'model');
   },
 
   _onCollectionChange: function(model, collection, options){
-    var changed = {};
+    var changed = {},
+        that = this;
     if(model.isCollection){
       options = collection;
       collection = model;
     }
-    changed[collection.__path()] = collection;
 
-    this._notifySubtree(this, changed);
+    changed[collection.__path()] = collection;
+    if(collection._timeout){
+      clearTimeout(collection._timeout);
+      collection._timeout = undefined;
+    }
+    collection._timeout = setTimeout(function(){
+      that._notifySubtree(that, changed, 'collection');
+    }, 20);
   },
 
-  _notifySubtree: function(obj, changed){
+  _notifySubtree: function(obj, changed, type){
 
     var context = this, // This root context
         path = obj.__path(), // The path of the modified object relative to the root context
@@ -121,28 +133,27 @@ var Component = Model.extend({
         keys = _.keys(changed), // Array of all changed keys
         i = 0,
         len = parts.length,
-        paths;
+        paths,
+        triggers;
 
     // Call notify on every object down the data tree starting at the root and all the way down element that triggered the change
     for(i;i<=len;i++){
 
       // Reset paths for each data layer
       paths = [];
+      triggers = [];
 
       // For every key changed
       _.each(keys, function(attr){
+
         // Constructs paths variable relative to current data element
-        paths.push((path + '.' + attr).replace(context.__path(), '').replace(/^\./, ''));
-        // For elements in array syntax for a specific element, also notify of a change on the collection for any element changing
-        if(paths[0].match(/\[.+\]/g)){
-          paths.push(paths[0].replace(/\[.+\]/g, ".@each").replace(/^\./, '')); // test.[1].whatever -> test.@each.whatever
-          // paths.push(paths[0].split(/\[.+\]/g)[0]); // test.[1].whatever -> test
-          paths[0] = paths[0].replace(/\[([^\]]*)\]/g, '.$1').replace(/^\./, ''); // test[1].whatever -> test.1.whatever
-        }
+        paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[([^\]]+)\]/g, ".$1").replace(/^\./, ''));
+        paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, ''));
+        paths = _.uniq(paths);
       });
 
       // Call all listeners
-      env.notify(context, paths);
+      env.notify(context, paths, type);
 
       // If not at end of path parts, get the next data object
       context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));

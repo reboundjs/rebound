@@ -109,11 +109,8 @@ function compile(prop, name){
 
   console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
 
-  // Save this property's dependancies in its __params attribute
-  prop.__params = finishedPaths;
-
-
-  return prop;
+  // Return the dependancies list
+  return finishedPaths;
 
 }
 

@@ -13,6 +13,7 @@ var utils = require("rebound-runtime/utils")["default"];
 // Load Rebound Data
 var Model = require("rebound-data/rebound-data").Model;
 var Collection = require("rebound-data/rebound-data").Collection;
+var ComputedProperty = require("rebound-data/rebound-data").ComputedProperty;
 
 // Load Rebound Components
 var Component = require("rebound-runtime/component")["default"];
@@ -32,6 +33,7 @@ window.Rebound = {
   registerPartial: env.registerPartial,
   Model: Model,
   Collection: Collection,
+  ComputedProperty: ComputedProperty,
   Component: Component,
   Config: Config
 };

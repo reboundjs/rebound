@@ -1,8 +1,9 @@
 "use strict";
 var COMPILER_REVISION = require("../base").COMPILER_REVISION;
 var REVISION_CHANGES = require("../base").REVISION_CHANGES;
-var log = require("../base").log;
 var Exception = require("../exception")["default"];
+var isArray = require("../utils").isArray;
+var CodeGen = require("./code-gen")["default"];
 
 function Literal(value) {
   this.value = value;
@@ -14,23 +15,14 @@ JavaScriptCompiler.prototype = {
   // PUBLIC API: You can override these methods in a subclass to provide
   // alternative compiled forms for name lookup and buffering semantics
   nameLookup: function(parent, name /* , type*/) {
-    var wrap,
-        ret;
-    if (parent.indexOf('depth') === 0) {
-      wrap = true;
-    }
-
     if (JavaScriptCompiler.isValidJavaScriptVariableName(name)) {
-      ret = parent + "." + name;
+      return [parent, ".", name];
     } else {
-      ret = parent + "['" + name + "']";
+      return [parent, "['", name, "']"];
     }
-
-    if (wrap) {
-      return '(' + parent + ' && ' + ret + ')';
-    } else {
-      return ret;
-    }
+  },
+  depthedLookup: function(name) {
+    return [this.aliasable('this.lookup'), '(depths, "', name, '")'];
   },
 
   compilerInfo: function() {
@@ -39,33 +31,37 @@ JavaScriptCompiler.prototype = {
     return [revision, versions];
   },
 
-  appendToBuffer: function(string) {
+  appendToBuffer: function(source, location, explicit) {
+    // Force a source as this simplifies the merge logic.
+    if (!isArray(source)) {
+      source = [source];
+    }
+    source = this.source.wrap(source, location);
+
     if (this.environment.isSimple) {
-      return "return " + string + ";";
+      return ['return ', source, ';'];
+    } else if (explicit) {
+      // This is a case where the buffer operation occurs as a child of another
+      // construct, generally braces. We have to explicitly output these buffer
+      // operations to ensure that the emitted code goes in the correct location.
+      return ['buffer += ', source, ';'];
     } else {
-      return {
-        appendToBuffer: true,
-        content: string,
-        toString: function() { return "buffer += " + string + ";"; }
-      };
+      source.appendToBuffer = true;
+      return source;
     }
   },
 
   initializeBuffer: function() {
     return this.quotedString("");
   },
-
-  namespace: "Handlebars",
   // END PUBLIC API
 
   compile: function(environment, options, context, asObject) {
     this.environment = environment;
-    this.options = options || {};
+    this.options = options;
     this.stringParams = this.options.stringParams;
     this.trackIds = this.options.trackIds;
     this.precompile = !asObject;
-
-    log('debug', this.environment.disassemble() + "\n\n");
 
     this.name = this.environment.name;
     this.isChild = !!context;
@@ -86,29 +82,27 @@ JavaScriptCompiler.prototype = {
 
     this.compileChildren(environment, options);
 
+    this.useDepths = this.useDepths || environment.depths.list.length || this.options.compat;
+
     var opcodes = environment.opcodes,
         opcode,
+        firstLoc,
         i,
         l;
 
     for (i = 0, l = opcodes.length; i < l; i++) {
       opcode = opcodes[i];
 
-      if(opcode.opcode === 'DECLARE') {
-        this[opcode.name] = opcode.value;
-      } else {
-        this[opcode.opcode].apply(this, opcode.args);
-      }
-
-      // Reset the stripNext flag if it was not set by this operation.
-      if (opcode.opcode !== this.stripNext) {
-        this.stripNext = false;
-      }
+      this.source.currentLocation = opcode.loc;
+      firstLoc = firstLoc || opcode.loc;
+      this[opcode.opcode].apply(this, opcode.args);
     }
 
     // Flush any trailing content that might be pending.
+    this.source.currentLocation = firstLoc;
     this.pushSource('');
 
+    /* istanbul ignore next */
     if (this.stackSlot || this.inlineStack.length || this.compileStack.length) {
       throw new Exception('Compile completed with content left on stack');
     }
@@ -132,10 +126,27 @@ JavaScriptCompiler.prototype = {
       if (this.options.data) {
         ret.useData = true;
       }
+      if (this.useDepths) {
+        ret.useDepths = true;
+      }
+      if (this.options.compat) {
+        ret.compat = true;
+      }
 
       if (!asObject) {
         ret.compiler = JSON.stringify(ret.compiler);
+
+        this.source.currentLocation = {start: {line: 1, column: 0}};
         ret = this.objectLiteral(ret);
+
+        if (options.srcName) {
+          ret = ret.toStringWithSourceMap({file: options.destName});
+          ret.map = ret.map && ret.map.toString();
+        } else {
+          ret = ret.toString();
+        }
+      } else {
+        ret.compilerOptions = this.options;
       }
 
       return ret;
@@ -148,7 +159,7 @@ JavaScriptCompiler.prototype = {
     // track the last context pushed into place to allow skipping the
     // getContext opcode when it would be a noop
     this.lastContext = 0;
-    this.source = [];
+    this.source = new CodeGen(this.options.srcName);
   },
 
   createFunctionContext: function(asObject) {
@@ -160,16 +171,25 @@ JavaScriptCompiler.prototype = {
     }
 
     // Generate minimizer alias mappings
+    //
+    // When using true SourceNodes, this will update all references to the given alias
+    // as the source nodes are reused in situ. For the non-source node compilation mode,
+    // aliases will not be used, but this case is already being run on the client and
+    // we aren't concern about minimizing the template size.
+    var aliasCount = 0;
     for (var alias in this.aliases) {
-      if (this.aliases.hasOwnProperty(alias)) {
-        varDeclarations += ', ' + alias + '=' + this.aliases[alias];
+      var node = this.aliases[alias];
+
+      if (this.aliases.hasOwnProperty(alias) && node.children && node.referenceCount > 1) {
+        varDeclarations += ', alias' + (++aliasCount) + '=' + alias;
+        node.children[0] = 'alias' + aliasCount;
       }
     }
 
     var params = ["depth0", "helpers", "partials", "data"];
 
-    for(var i=0, l=this.environment.depths.list.length; i<l; i++) {
-      params.push("depth" + this.environment.depths.list[i]);
+    if (this.useDepths) {
+      params.push('depths');
     }
 
     // Perform a second pass over the output to merge content when possible
@@ -180,59 +200,67 @@ JavaScriptCompiler.prototype = {
 
       return Function.apply(this, params);
     } else {
-      return 'function(' + params.join(',') + ') {\n  ' + source + '}';
+      return this.source.wrap(['function(', params.join(','), ') {\n  ', source, '}']);
     }
   },
   mergeSource: function(varDeclarations) {
-    var source = '',
-        buffer,
+    var isSimple = this.environment.isSimple,
         appendOnly = !this.forceBuffer,
-        appendFirst;
+        appendFirst,
 
-    for (var i = 0, len = this.source.length; i < len; i++) {
-      var line = this.source[i];
+        sourceSeen,
+        bufferStart,
+        bufferEnd;
+    this.source.each(function(line) {
       if (line.appendToBuffer) {
-        if (buffer) {
-          buffer = buffer + '\n    + ' + line.content;
+        if (bufferStart) {
+          line.prepend('  + ');
         } else {
-          buffer = line.content;
+          bufferStart = line;
         }
+        bufferEnd = line;
       } else {
-        if (buffer) {
-          if (!source) {
+        if (bufferStart) {
+          if (!sourceSeen) {
             appendFirst = true;
-            source = buffer + ';\n  ';
           } else {
-            source += 'buffer += ' + buffer + ';\n  ';
+            bufferStart.prepend('buffer += ');
           }
-          buffer = undefined;
+          bufferEnd.add(';');
+          bufferStart = bufferEnd = undefined;
         }
-        source += line + '\n  ';
 
-        if (!this.environment.isSimple) {
+        sourceSeen = true;
+        if (!isSimple) {
           appendOnly = false;
         }
       }
-    }
+    });
+
 
     if (appendOnly) {
-      if (buffer || !source) {
-        source += 'return ' + (buffer || '""') + ';\n';
+      if (bufferStart) {
+        bufferStart.prepend('return ');
+        bufferEnd.add(';');
+      } else {
+        this.source.push('return "";');
       }
     } else {
       varDeclarations += ", buffer = " + (appendFirst ? '' : this.initializeBuffer());
-      if (buffer) {
-        source += 'return buffer + ' + buffer + ';\n';
+
+      if (bufferStart) {
+        bufferStart.prepend('return buffer + ');
+        bufferEnd.add(';');
       } else {
-        source += 'return buffer;\n';
+        this.source.push('return buffer;');
       }
     }
 
     if (varDeclarations) {
-      source = 'var ' + varDeclarations.substring(2) + (appendFirst ? '' : ';\n  ') + source;
+      this.source.prepend('var ' + varDeclarations.substring(2) + (appendFirst ? '' : ';\n  '));
     }
 
-    return source;
+    return this.source.merge();
   },
 
   // [blockValue]
@@ -245,15 +273,14 @@ JavaScriptCompiler.prototype = {
   // replace it on the stack with the result of properly
   // invoking blockHelperMissing.
   blockValue: function(name) {
-    this.aliases.blockHelperMissing = 'helpers.blockHelperMissing';
+    var blockHelperMissing = this.aliasable('helpers.blockHelperMissing'),
+        params = [this.contextName(0)];
+    this.setupHelperArgs(name, 0, params);
 
-    var params = ["depth0"];
-    this.setupParams(name, 0, params);
+    var blockName = this.popStack();
+    params.splice(1, 0, blockName);
 
-    this.replaceStack(function(current) {
-      params.splice(1, 0, current);
-      return "blockHelperMissing.call(" + params.join(", ") + ")";
-    });
+    this.push(this.source.functionCall(blockHelperMissing, 'call', params));
   },
 
   // [ambiguousBlockValue]
@@ -263,18 +290,20 @@ JavaScriptCompiler.prototype = {
   // On stack, after, if no lastHelper: same as [blockValue]
   // On stack, after, if lastHelper: value
   ambiguousBlockValue: function() {
-    this.aliases.blockHelperMissing = 'helpers.blockHelperMissing';
-
     // We're being a bit cheeky and reusing the options value from the prior exec
-    var params = ["depth0"];
-    this.setupParams('', 0, params, true);
+    var blockHelperMissing = this.aliasable('helpers.blockHelperMissing'),
+        params = [this.contextName(0)];
+    this.setupHelperArgs('', 0, params, true);
 
     this.flushInline();
 
     var current = this.topStack();
     params.splice(1, 0, current);
 
-    this.pushSource("if (!" + this.lastHelper + ") { " + current + " = blockHelperMissing.call(" + params.join(", ") + "); }");
+    this.pushSource([
+        'if (!', this.lastHelper, ') { ',
+          current, ' = ', this.source.functionCall(blockHelperMissing, 'call', params),
+        '}']);
   },
 
   // [appendContent]
@@ -286,26 +315,11 @@ JavaScriptCompiler.prototype = {
   appendContent: function(content) {
     if (this.pendingContent) {
       content = this.pendingContent + content;
-    }
-    if (this.stripNext) {
-      content = content.replace(/^\s+/, '');
+    } else {
+      this.pendingLocation = this.source.currentLocation;
     }
 
     this.pendingContent = content;
-  },
-
-  // [strip]
-  //
-  // On stack, before: ...
-  // On stack, after: ...
-  //
-  // Removes any trailing whitespace from the prior content node and flags
-  // the next operation for stripping if it is a content node.
-  strip: function() {
-    if (this.pendingContent) {
-      this.pendingContent = this.pendingContent.replace(/\s+$/, '');
-    }
-    this.stripNext = 'strip';
   },
 
   // [append]
@@ -318,13 +332,18 @@ JavaScriptCompiler.prototype = {
   // If `value` is truthy, or 0, it is coerced into a string and appended
   // Otherwise, the empty string is appended
   append: function() {
-    // Force anything that is inlined onto the stack so we don't have duplication
-    // when we examine local
-    this.flushInline();
-    var local = this.popStack();
-    this.pushSource("if(" + local + " || " + local + " === 0) { " + this.appendToBuffer(local) + " }");
-    if (this.environment.isSimple) {
-      this.pushSource("else { " + this.appendToBuffer("''") + " }");
+    if (this.isInline()) {
+      this.replaceStack(function(current) {
+        return [' != null ? ', current, ' : ""'];
+      });
+
+      this.pushSource(this.appendToBuffer(this.popStack()));
+    } else {
+      var local = this.popStack();
+      this.pushSource(['if (', local, ' != null) { ', this.appendToBuffer(local, undefined, true), ' }']);
+      if (this.environment.isSimple) {
+        this.pushSource(['else { ', this.appendToBuffer("''", undefined, true), ' }']);
+      }
     }
   },
 
@@ -335,9 +354,8 @@ JavaScriptCompiler.prototype = {
   //
   // Escape `value` and append it to the buffer
   appendEscaped: function() {
-    this.aliases.escapeExpression = 'this.escapeExpression';
-
-    this.pushSource(this.appendToBuffer("escapeExpression(" + this.popStack() + ")"));
+    this.pushSource(this.appendToBuffer(
+        [this.aliasable('this.escapeExpression'), '(', this.popStack(), ')']));
   },
 
   // [getContext]
@@ -348,20 +366,7 @@ JavaScriptCompiler.prototype = {
   //
   // Set the value of the `lastContext` compiler value to the depth
   getContext: function(depth) {
-    if(this.lastContext !== depth) {
-      this.lastContext = depth;
-    }
-  },
-
-  // [lookupOnContext]
-  //
-  // On stack, before: ...
-  // On stack, after: currentContext[name], ...
-  //
-  // Looks up the value of `name` on the current context and pushes
-  // it onto the stack.
-  lookupOnContext: function(name) {
-    this.push(this.nameLookup('depth' + this.lastContext, name, 'context'));
+    this.lastContext = depth;
   },
 
   // [pushContext]
@@ -371,7 +376,63 @@ JavaScriptCompiler.prototype = {
   //
   // Pushes the value of the current context onto the stack.
   pushContext: function() {
-    this.pushStackLiteral('depth' + this.lastContext);
+    this.pushStackLiteral(this.contextName(this.lastContext));
+  },
+
+  // [lookupOnContext]
+  //
+  // On stack, before: ...
+  // On stack, after: currentContext[name], ...
+  //
+  // Looks up the value of `name` on the current context and pushes
+  // it onto the stack.
+  lookupOnContext: function(parts, falsy, scoped) {
+    /*jshint -W083 */
+    var i = 0,
+        len = parts.length;
+
+    if (!scoped && this.options.compat && !this.lastContext) {
+      // The depthed query is expected to handle the undefined logic for the root level that
+      // is implemented below, so we evaluate that directly in compat mode
+      this.push(this.depthedLookup(parts[i++]));
+    } else {
+      this.pushContext();
+    }
+
+    for (; i < len; i++) {
+      this.replaceStack(function(current) {
+        var lookup = this.nameLookup(current, parts[i], 'context');
+        // We want to ensure that zero and false are handled properly if the context (falsy flag)
+        // needs to have the special handling for these values.
+        if (!falsy) {
+          return [' != null ? ', lookup, ' : ', current];
+        } else {
+          // Otherwise we can use generic falsy handling
+          return [' && ', lookup];
+        }
+      });
+    }
+  },
+
+  // [lookupData]
+  //
+  // On stack, before: ...
+  // On stack, after: data, ...
+  //
+  // Push the data lookup operator
+  lookupData: function(depth, parts) {
+    /*jshint -W083 */
+    if (!depth) {
+      this.pushStackLiteral('data');
+    } else {
+      this.pushStackLiteral('this.data(data, ' + depth + ')');
+    }
+
+    for (var i = 0, len = parts.length; i < len; i++) {
+      this.replaceStack(function(current) {
+        return [' && ', this.nameLookup(current, parts[i], 'data')];
+      });
+    }
   },
 
   // [resolvePossibleLambda]
@@ -382,38 +443,7 @@ JavaScriptCompiler.prototype = {
   // If the `value` is a lambda, replace it on the stack by
   // the return value of the lambda
   resolvePossibleLambda: function() {
-    this.aliases.functionType = '"function"';
-
-    this.replaceStack(function(current) {
-      return "typeof " + current + " === functionType ? " + current + ".apply(depth0) : " + current;
-    });
-  },
-
-  // [lookup]
-  //
-  // On stack, before: value, ...
-  // On stack, after: value[name], ...
-  //
-  // Replace the value on the stack with the result of looking
-  // up `name` on `value`
-  lookup: function(name) {
-    this.replaceStack(function(current) {
-      return current + " == null || " + current + " === false ? " + current + " : " + this.nameLookup(current, name, 'context');
-    });
-  },
-
-  // [lookupData]
-  //
-  // On stack, before: ...
-  // On stack, after: data, ...
-  //
-  // Push the data lookup operator
-  lookupData: function(depth) {
-    if (!depth) {
-      this.pushStackLiteral('data');
-    } else {
-      this.pushStackLiteral('this.data(data, ' + depth + ')');
-    }
+    this.push([this.aliasable('this.lambda'), '(', this.popStack(), ', ', this.contextName(0), ')']);
   },
 
   // [pushStringParam]
@@ -425,13 +455,12 @@ JavaScriptCompiler.prototype = {
   // provides the string value of a parameter along with its
   // depth rather than resolving it immediately.
   pushStringParam: function(string, type) {
-    this.pushStackLiteral('depth' + this.lastContext);
-
+    this.pushContext();
     this.pushString(type);
 
     // If it's a subexpression, the string result
     // will be pushed after this opcode.
-    if (type !== 'sexpr') {
+    if (type !== 'SubExpression') {
       if (typeof string === 'string') {
         this.pushString(string);
       } else {
@@ -440,9 +469,7 @@ JavaScriptCompiler.prototype = {
     }
   },
 
-  emptyHash: function() {
-    this.pushStackLiteral('{}');
-
+  emptyHash: function(omitEmpty) {
     if (this.trackIds) {
       this.push('{}'); // hashIds
     }
@@ -450,6 +477,7 @@ JavaScriptCompiler.prototype = {
       this.push('{}'); // hashContexts
       this.push('{}'); // hashTypes
     }
+    this.pushStackLiteral(omitEmpty ? 'undefined' : '{}');
   },
   pushHash: function() {
     if (this.hash) {
@@ -462,14 +490,14 @@ JavaScriptCompiler.prototype = {
     this.hash = this.hashes.pop();
 
     if (this.trackIds) {
-      this.push('{' + hash.ids.join(',') + '}');
+      this.push(this.objectLiteral(hash.ids));
     }
     if (this.stringParams) {
-      this.push('{' + hash.contexts.join(',') + '}');
-      this.push('{' + hash.types.join(',') + '}');
+      this.push(this.objectLiteral(hash.contexts));
+      this.push(this.objectLiteral(hash.types));
     }
 
-    this.push('{\n    ' + hash.values.join(',\n    ') + '\n  }');
+    this.push(this.objectLiteral(hash.values));
   },
 
   // [pushString]
@@ -480,17 +508,6 @@ JavaScriptCompiler.prototype = {
   // Push a quoted version of `string` onto the stack
   pushString: function(string) {
     this.pushStackLiteral(this.quotedString(string));
-  },
-
-  // [push]
-  //
-  // On stack, before: ...
-  // On stack, after: expr, ...
-  //
-  // Push an expression onto the stack
-  push: function(expr) {
-    this.inlineStack.push(expr);
-    return expr;
   },
 
   // [pushLiteral]
@@ -530,26 +547,16 @@ JavaScriptCompiler.prototype = {
   // and pushes the helper's return value onto the stack.
   //
   // If the helper is not found, `helperMissing` is called.
-  invokeHelper: function(paramSize, name, isRoot) {
-    this.aliases.helperMissing = 'helpers.helperMissing';
-    this.useRegister('helper');
-
+  invokeHelper: function(paramSize, name, isSimple) {
     var nonHelper = this.popStack();
     var helper = this.setupHelper(paramSize, name);
+    var simple = isSimple ? [helper.name, ' || '] : '';
 
-    var lookup = 'helper = ' + helper.name + ' || ' + nonHelper + ' || helperMissing';
-    if (helper.paramsInit) {
-      lookup += ',' + helper.paramsInit;
-    }
-
-    this.push('(' + lookup + ',helper.call(' + helper.callParams + '))');
-
-    // Always flush subexpressions. This is both to prevent the compounding size issue that
-    // occurs when the code has to be duplicated for inlining and also to prevent errors
-    // due to the incorrect options object being passed due to the shared register.
-    if (!isRoot) {
-      this.flushInline();
-    }
+    this.push(
+        this.source.functionCall(
+          ['('].concat(simple, nonHelper, ' || ', this.aliasable('helpers.helperMissing'), ')'),
+          'call',
+          helper.callParams));
   },
 
   // [invokeKnownHelper]
@@ -561,7 +568,7 @@ JavaScriptCompiler.prototype = {
   // so a `helperMissing` fallback is not required.
   invokeKnownHelper: function(paramSize, name) {
     var helper = this.setupHelper(paramSize, name);
-    this.push(helper.name + ".call(" + helper.callParams + ")");
+    this.push(this.source.functionCall(helper.name, 'call', helper.callParams));
   },
 
   // [invokeAmbiguous]
@@ -577,19 +584,22 @@ JavaScriptCompiler.prototype = {
   // and can be avoided by passing the `knownHelpers` and
   // `knownHelpersOnly` flags at compile-time.
   invokeAmbiguous: function(name, helperCall) {
-    this.aliases.functionType = '"function"';
     this.useRegister('helper');
+
+    var nonHelper = this.popStack();
 
     this.emptyHash();
     var helper = this.setupHelper(0, name, helperCall);
 
     var helperName = this.lastHelper = this.nameLookup('helpers', name, 'helper');
-    var nonHelper = this.nameLookup('depth' + this.lastContext, name, 'context');
 
-    this.push(
-      '((helper = ' + helperName + ' || ' + nonHelper
-        + (helper.paramsInit ? '),(' + helper.paramsInit : '') + '),'
-      + '(typeof helper === functionType ? helper.call(' + helper.callParams + ') : helper))');
+    this.push([
+      '((helper = (helper = ', helperName, ' || ', nonHelper, ') != null ? helper : ',
+        this.aliasable('helpers.helperMissing'),
+        (helper.paramsInit ? ['),(', helper.paramsInit] : []), '),',
+        '(typeof helper === ', this.aliasable('"function"'), ' ? ',
+        this.source.functionCall('helper','call', helper.callParams), ' : helper))'
+    ]);
   },
 
   // [invokePartial]
@@ -599,14 +609,25 @@ JavaScriptCompiler.prototype = {
   //
   // This operation pops off a context, invokes a partial with that context,
   // and pushes the result of the invocation back.
-  invokePartial: function(name) {
-    var params = [this.nameLookup('partials', name, 'partial'), "'" + name + "'", this.popStack(), this.popStack(), "helpers", "partials"];
+  invokePartial: function(name, indent) {
+    var params = [],
+        options = this.setupParams(name, 1, params, false);
 
-    if (this.options.data) {
-      params.push("data");
+    if (indent) {
+      options.indent = JSON.stringify(indent);
     }
+    options.helpers = 'helpers';
+    options.partials = 'partials';
 
-    this.push("this.invokePartial(" + params.join(", ") + ")");
+    params.unshift(this.nameLookup('partials', name, 'partial'));
+
+    if (this.options.compat) {
+      options.depths = 'depths';
+    }
+    options = this.objectLiteral(options);
+    params.push(options);
+
+    this.push(this.source.functionCall('this.invokePartial', '', params));
   },
 
   // [assignToHash]
@@ -631,21 +652,21 @@ JavaScriptCompiler.prototype = {
 
     var hash = this.hash;
     if (context) {
-      hash.contexts.push("'" + key + "': " + context);
+      hash.contexts[key] = context;
     }
     if (type) {
-      hash.types.push("'" + key + "': " + type);
+      hash.types[key] = type;
     }
     if (id) {
-      hash.ids.push("'" + key + "': " + id);
+      hash.ids[key] = id;
     }
-    hash.values.push("'" + key + "': (" + value + ")");
+    hash.values[key] = value;
   },
 
   pushId: function(type, name) {
-    if (type === 'ID' || type === 'DATA') {
+    if (type === 'PathExpression') {
       this.pushString(name);
-    } else if (type === 'sexpr') {
+    } else if (type === 'SubExpression') {
       this.pushStackLiteral('true');
     } else {
       this.pushStackLiteral('null');
@@ -672,6 +693,8 @@ JavaScriptCompiler.prototype = {
         child.name = 'program' + index;
         this.context.programs[index] = compiler.compile(child, options, this.context, !this.precompile);
         this.context.environments[index] = child;
+
+        this.useDepths = this.useDepths || compiler.useDepths;
       } else {
         child.index = index;
         child.name = 'program' + index;
@@ -688,27 +711,18 @@ JavaScriptCompiler.prototype = {
   },
 
   programExpression: function(guid) {
-    if(guid == null) {
-      return 'this.noop';
-    }
-
     var child = this.environment.children[guid],
-        depths = child.depths.list, depth;
+        depths = child.depths.list,
+        useDepths = this.useDepths,
+        depth;
 
     var programParams = [child.index, 'data'];
 
-    for(var i=0, l = depths.length; i<l; i++) {
-      depth = depths[i];
-
-      programParams.push('depth' + (depth - 1));
+    if (useDepths) {
+      programParams.push('depths');
     }
 
-    return (depths.length === 0 ? 'this.program(' : 'this.programWithDepth(') + programParams.join(', ') + ')';
-  },
-
-  register: function(name, val) {
-    this.useRegister(name);
-    this.pushSource(name + " = " + val + ";");
+    return 'this.program(' + programParams.join(', ') + ')';
   },
 
   useRegister: function(name) {
@@ -718,13 +732,23 @@ JavaScriptCompiler.prototype = {
     }
   },
 
+  push: function(expr) {
+    if (!(expr instanceof Literal)) {
+      expr = this.source.wrap(expr);
+    }
+
+    this.inlineStack.push(expr);
+    return expr;
+  },
+
   pushStackLiteral: function(item) {
-    return this.push(new Literal(item));
+    this.push(new Literal(item));
   },
 
   pushSource: function(source) {
     if (this.pendingContent) {
-      this.source.push(this.appendToBuffer(this.quotedString(this.pendingContent)));
+      this.source.push(
+          this.appendToBuffer(this.source.quotedString(this.pendingContent), this.pendingLocation));
       this.pendingContent = undefined;
     }
 
@@ -733,68 +757,44 @@ JavaScriptCompiler.prototype = {
     }
   },
 
-  pushStack: function(item) {
-    this.flushInline();
-
-    var stack = this.incrStack();
-    if (item) {
-      this.pushSource(stack + " = " + item + ";");
-    }
-    this.compileStack.push(stack);
-    return stack;
-  },
-
   replaceStack: function(callback) {
-    var prefix = '',
+    var prefix = ['('],
         inline = this.isInline(),
         stack,
         createdStack,
         usedLiteral;
 
-    // If we are currently inline then we want to merge the inline statement into the
-    // replacement statement via ','
-    if (inline) {
-      var top = this.popStack(true);
+    /* istanbul ignore next */
+    if (!this.isInline()) {
+      throw new Exception('replaceStack on non-inline');
+    }
 
-      if (top instanceof Literal) {
-        // Literals do not need to be inlined
-        stack = top.value;
-        usedLiteral = true;
-      } else {
-        // Get or create the current stack name for use by the inline
-        createdStack = !this.stackSlot;
-        var name = !createdStack ? this.topStackName() : this.incrStack();
+    // We want to merge the inline statement into the replacement statement via ','
+    var top = this.popStack(true);
 
-        prefix = '(' + this.push(name) + ' = ' + top + '),';
-        stack = this.topStack();
-      }
+    if (top instanceof Literal) {
+      // Literals do not need to be inlined
+      stack = [top.value];
+      prefix = ['(', stack];
+      usedLiteral = true;
     } else {
+      // Get or create the current stack name for use by the inline
+      createdStack = true;
+      var name = this.incrStack();
+
+      prefix = ['((', this.push(name), ' = ', top, ')'];
       stack = this.topStack();
     }
 
     var item = callback.call(this, stack);
 
-    if (inline) {
-      if (!usedLiteral) {
-        this.popStack();
-      }
-      if (createdStack) {
-        this.stackSlot--;
-      }
-      this.push('(' + prefix + item + ')');
-    } else {
-      // Prevent modification of the context depth variable. Through replaceStack
-      if (!/^stack/.test(stack)) {
-        stack = this.nextStack();
-      }
-
-      this.pushSource(stack + " = (" + prefix + item + ");");
+    if (!usedLiteral) {
+      this.popStack();
     }
-    return stack;
-  },
-
-  nextStack: function() {
-    return this.pushStack();
+    if (createdStack) {
+      this.stackSlot--;
+    }
+    this.push(prefix.concat(item, ')'));
   },
 
   incrStack: function() {
@@ -807,15 +807,16 @@ JavaScriptCompiler.prototype = {
   },
   flushInline: function() {
     var inlineStack = this.inlineStack;
-    if (inlineStack.length) {
-      this.inlineStack = [];
-      for (var i = 0, len = inlineStack.length; i < len; i++) {
-        var entry = inlineStack[i];
-        if (entry instanceof Literal) {
-          this.compileStack.push(entry);
-        } else {
-          this.pushStack(entry);
-        }
+    this.inlineStack = [];
+    for (var i = 0, len = inlineStack.length; i < len; i++) {
+      var entry = inlineStack[i];
+      /* istanbul ignore if */
+      if (entry instanceof Literal) {
+        this.compileStack.push(entry);
+      } else {
+        var stack = this.incrStack();
+        this.pushSource([stack, ' = ', entry, ';']);
+        this.compileStack.push(stack);
       }
     }
   },
@@ -831,6 +832,7 @@ JavaScriptCompiler.prototype = {
       return item.value;
     } else {
       if (!inline) {
+        /* istanbul ignore next */
         if (!this.stackSlot) {
           throw new Exception('Invalid stack pop');
         }
@@ -840,54 +842,63 @@ JavaScriptCompiler.prototype = {
     }
   },
 
-  topStack: function(wrapped) {
+  topStack: function() {
     var stack = (this.isInline() ? this.inlineStack : this.compileStack),
         item = stack[stack.length - 1];
 
-    if (!wrapped && (item instanceof Literal)) {
+    /* istanbul ignore if */
+    if (item instanceof Literal) {
       return item.value;
     } else {
       return item;
     }
   },
 
+  contextName: function(context) {
+    if (this.useDepths && context) {
+      return 'depths[' + context + ']';
+    } else {
+      return 'depth' + context;
+    }
+  },
+
   quotedString: function(str) {
-    return '"' + str
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\u2028/g, '\\u2028')   // Per Ecma-262 7.3 + 7.8.4
-      .replace(/\u2029/g, '\\u2029') + '"';
+    return this.source.quotedString(str);
   },
 
   objectLiteral: function(obj) {
-    var pairs = [];
+    return this.source.objectLiteral(obj);
+  },
 
-    for (var key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        pairs.push(this.quotedString(key) + ':' + obj[key]);
-      }
+  aliasable: function(name) {
+    var ret = this.aliases[name];
+    if (ret) {
+      ret.referenceCount++;
+      return ret;
     }
 
-    return '{' + pairs.join(',') + '}';
+    ret = this.aliases[name] = this.source.wrap(name);
+    ret.aliasable = true;
+    ret.referenceCount = 1;
+
+    return ret;
   },
 
   setupHelper: function(paramSize, name, blockHelper) {
     var params = [],
-        paramsInit = this.setupParams(name, paramSize, params, blockHelper);
+        paramsInit = this.setupHelperArgs(name, paramSize, params, blockHelper);
     var foundHelper = this.nameLookup('helpers', name, 'helper');
 
     return {
       params: params,
       paramsInit: paramsInit,
       name: foundHelper,
-      callParams: ["depth0"].concat(params).join(", ")
+      callParams: [this.contextName(0)].concat(params)
     };
   },
 
-  setupOptions: function(helper, paramSize, params) {
-    var options = {}, contexts = [], types = [], ids = [], param, inverse, program;
+  setupParams: function(helper, paramSize, params) {
+    var options = {}, contexts = [], types = [], ids = [], param;
 
     options.name = this.quotedString(helper);
     options.hash = this.popStack();
@@ -900,22 +911,14 @@ JavaScriptCompiler.prototype = {
       options.hashContexts = this.popStack();
     }
 
-    inverse = this.popStack();
-    program = this.popStack();
+    var inverse = this.popStack(),
+        program = this.popStack();
 
     // Avoid setting fn and inverse if neither are set. This allows
     // helpers to do a check for `if (options.fn)`
     if (program || inverse) {
-      if (!program) {
-        program = 'this.noop';
-      }
-
-      if (!inverse) {
-        inverse = 'this.noop';
-      }
-
-      options.fn = program;
-      options.inverse = inverse;
+      options.fn = program || 'this.noop';
+      options.inverse = inverse || 'this.noop';
     }
 
     // The parameters go on to the stack in order (making sure that they are evaluated in order)
@@ -935,35 +938,33 @@ JavaScriptCompiler.prototype = {
     }
 
     if (this.trackIds) {
-      options.ids = "[" + ids.join(",") + "]";
+      options.ids = this.source.generateArray(ids);
     }
     if (this.stringParams) {
-      options.types = "[" + types.join(",") + "]";
-      options.contexts = "[" + contexts.join(",") + "]";
+      options.types = this.source.generateArray(types);
+      options.contexts = this.source.generateArray(contexts);
     }
 
     if (this.options.data) {
       options.data = "data";
     }
-
     return options;
   },
 
-  // the params and contexts arguments are passed in arrays
-  // to fill in
-  setupParams: function(helperName, paramSize, params, useRegister) {
-    var options = this.objectLiteral(this.setupOptions(helperName, paramSize, params));
-
+  setupHelperArgs: function(helper, paramSize, params, useRegister) {
+    var options = this.setupParams(helper, paramSize, params, true);
+    options = this.objectLiteral(options);
     if (useRegister) {
       this.useRegister('options');
       params.push('options');
-      return 'options=' + options;
+      return ['options=', options];
     } else {
       params.push(options);
       return '';
     }
   }
 };
+
 
 var reservedWords = (
   "break else new var" +

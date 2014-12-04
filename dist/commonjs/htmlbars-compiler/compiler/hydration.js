@@ -2,7 +2,6 @@
 var processOpcodes = require("./utils").processOpcodes;
 var prepareHelper = require("./helpers").prepareHelper;
 var string = require("./quoting").string;
-var quotedArray = require("./quoting").quotedArray;
 var hash = require("./quoting").hash;
 var array = require("./quoting").array;
 
@@ -14,6 +13,7 @@ function HydrationCompiler() {
   this.parentCount = 0;
   this.morphs = [];
   this.fragmentProcessing = [];
+  this.hooks = undefined;
 }
 
 var prototype = HydrationCompiler.prototype;
@@ -28,6 +28,7 @@ prototype.compile = function(opcodes, options) {
   this.fragmentProcessing.length = 0;
   this.parentCount = 0;
   this.indent = (options && options.indent) || "";
+  this.hooks = {};
 
   processOpcodes(this, opcodes);
 
@@ -57,9 +58,16 @@ prototype.program = function(programId, inverseId) {
   this.stack.push(programId);
 };
 
+prototype.blockParam = function(name, index) {
+  this.hooks.set = true;
+  this.source.push(this.indent + '  set(context, ' + string(name) +', blockArguments[' + index + ']);\n');
+};
+
 prototype.id = function(parts) {
+  this.hooks.get = true;
+  var path = parts.join('.');
   this.stack.push(string('id'));
-  this.stack.push(string(parts.join('.')));
+  this.stack.push('get(context, ' + string(path) + ', env)');
 };
 
 prototype.literal = function(literal) {
@@ -76,57 +84,60 @@ prototype.stackLiteral = function(literal) {
   this.stack.push(literal);
 };
 
-prototype.helper = function(name, size, escaped, morphNum) {
+prototype.helper = function(size, morphNum, blockParamsLength) {
   var prepared = prepareHelper(this.stack, size);
-  prepared.options.push('escaped:'+escaped);
   prepared.options.push('morph:morph'+morphNum);
-  this.pushMustacheInContent(string(name), prepared.args, prepared.options, morphNum);
+  if (blockParamsLength) {
+    prepared.options.push('blockParams:'+blockParamsLength);
+  }
+  this.pushMustacheInContent(prepared.name, prepared.params, prepared.hash, prepared.options, morphNum);
 };
 
-prototype.component = function(tag, morphNum) {
+prototype.component = function(morphNum, blockParamsLength) {
   var prepared = prepareHelper(this.stack, 0);
   prepared.options.push('morph:morph'+morphNum);
-  this.pushWebComponent(string(tag), prepared.options, morphNum);
+  if (blockParamsLength) {
+    prepared.options.push('blockParams:'+blockParamsLength);
+  }
+  this.pushComponent(prepared.name, prepared.hash, prepared.options, morphNum);
 };
 
-prototype.ambiguous = function(str, escaped, morphNum) {
+prototype.ambiguous = function(morphNum) {
+  var name = this.stack.pop();
+  this.stack.pop();
   var options = [];
-  options.push('context:context');
-  options.push('escaped:'+escaped);
   options.push('morph:morph'+morphNum);
-  this.pushMustacheInContent(string(str), '[]', options, morphNum);
+  this.pushMustacheInContent(name, '[]', '{}', options, morphNum);
 };
 
-prototype.ambiguousAttr = function(str, escaped) {
-  this.stack.push('['+string(str)+', [], {escaped:'+escaped+'}]');
-};
-
-prototype.helperAttr = function(name, size, escaped) {
+prototype.attribute = function(quoted, name, size, elementNum) {
   var prepared = prepareHelper(this.stack, size);
-  prepared.options.push('escaped:'+escaped);
-  this.stack.push('['+string(name)+','+prepared.args+','+ hash(prepared.options)+']');
+  this.hooks.attribute = true;
+  this.source.push(this.indent + '  attribute(element' + elementNum + ', ' + string(name) + ', ' + quoted + ', context, ' + prepared.params + ', ' + hash(prepared.options) + ', env);\n');
 };
 
-prototype.sexpr = function(name, size) {
+prototype.sexpr = function(size) {
+  this.hooks.subexpr = true;
   var prepared = prepareHelper(this.stack, size);
-  this.stack.push('hooks.subexpr(' + string(name) + ', context, ' + prepared.args + ', ' + hash(prepared.options) + ', env)');
+  this.stack.push('subexpr(' + prepared.name + ', context, ' + prepared.params + ', ' + prepared.hash + ', ' + hash(prepared.options) + ', env)');
 };
 
 prototype.string = function(str) {
   this.stack.push(string(str));
 };
 
-prototype.nodeHelper = function(name, size, elementNum) {
+prototype.nodeHelper = function(size, elementNum) {
   var prepared = prepareHelper(this.stack, size);
   prepared.options.push('element:element'+elementNum);
-  this.pushMustacheInNode(string(name), prepared.args, prepared.options, elementNum);
+  this.pushMustacheInNode(prepared.name, prepared.params, prepared.hash, prepared.options, elementNum);
 };
 
-prototype.morph = function(num, parentPath, startIndex, endIndex) {
+prototype.morph = function(num, parentPath, startIndex, endIndex, escaped) {
   var isRoot = parentPath.length === 0;
   var parent = this.getParent();
 
-  var morph = "dom.createMorphAt("+parent+
+  var morphMethod = escaped ? 'createMorphAt' : 'createUnsafeMorphAt';
+  var morph = "dom."+morphMethod+"("+parent+
     ","+(startIndex === null ? "-1" : startIndex)+
     ","+(endIndex === null ? "-1" : endIndex)+
     (isRoot ? ",contextualElement)" : ")");
@@ -141,8 +152,9 @@ prototype.element = function(elementNum){
   this.parents[this.parents.length-1] = elementNodesName;
 };
 
-prototype.pushWebComponent = function(name, pairs, morphNum) {
-  this.source.push(this.indent+'  hooks.webComponent(morph' + morphNum + ', ' + name + ', context, ' + hash(pairs) + ', env);\n');
+prototype.pushComponent = function(name, hashArgs, pairs, morphNum) {
+  this.hooks.component = true;
+  this.source.push(this.indent+'  component(morph' + morphNum + ', ' + name + ', context, ' + hashArgs + ', ' + hash(pairs) + ', env);\n');
 };
 
 prototype.repairClonedNode = function(blankChildTextNodes, isElementChecked) {
@@ -156,17 +168,19 @@ prototype.repairClonedNode = function(blankChildTextNodes, isElementChecked) {
   );
 };
 
-prototype.pushMustacheInContent = function(name, args, pairs, morphNum) {
-  this.source.push(this.indent+'  hooks.content(morph' + morphNum + ', ' + name + ', context, ' + args + ', ' + hash(pairs) + ', env);\n');
+prototype.pushMustacheInContent = function(name, args, hashArgs, pairs, morphNum) {
+  this.hooks.content = true;
+  this.source.push(this.indent+'  content(morph' + morphNum + ', ' + name + ', context, ' + args + ', ' + hashArgs + ', ' + hash(pairs) + ', env);\n');
 };
 
-prototype.pushMustacheInNode = function(name, args, pairs, elementNum) {
-  this.source.push(this.indent+'  hooks.element(element' + elementNum + ', ' + name + ', context, ' + args + ', ' + hash(pairs) + ', env);\n');
+prototype.pushMustacheInNode = function(name, args, hashArgs, optionPairs, elementNum) {
+  this.hooks.element = true;
+  this.source.push(this.indent+'  element(element' + elementNum + ', ' + name + ', context, ' + args + ', ' + hashArgs + ', ' + hash(optionPairs) + ', env);\n');
 };
 
 prototype.shareParent = function(i) {
   var parentNodesName = "parent" + this.parentCount++;
-  this.fragmentProcessing.push('var '+parentNodesName+' = '+this.getParent()+'.childNodes['+i+'];');
+  this.fragmentProcessing.push('var '+parentNodesName+' = '+this.getParent()+'.childNodes['+i+']');
   this.parents.push(parentNodesName);
 };
 

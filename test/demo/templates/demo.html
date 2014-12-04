@@ -6,7 +6,7 @@
 		<section id="todoapp">
 
 			<header id="header">
-				<h1>todos</h1>
+				<h1>{{firstTodo.title}}</h1>
 		    <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" {{on 'keyup' 'createTodo'}}>
 			</header>
 
@@ -105,7 +105,6 @@
 	/************** Computed Properties *****************/
 
 		allAreDone: function(){
-			console.log('allaredone');
 			return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length;
 		},
 		noneAreDone: function(){
@@ -117,8 +116,11 @@
 		completed: function(){
 			return this.get('todos').where({'isCompleted': true}).length;
 		},
+		todosProxy: function(){
+			return this.get('filteredTodos');
+		},
 		firstTodo: function(){
-			return this.get('filteredTodos[0]');
+			return this.get('todosProxy[0]');
 		},
 		secondTodo: function(){
 			return this.get('filteredTodos[1]');
@@ -150,6 +152,7 @@
 		},
 		toggleAll: function(event){
 			var value = event.target.checked;
+			// debugger;
 			this.get('todos').forEach(function(model, index) {
 				model.set('isCompleted', value);
 			});
