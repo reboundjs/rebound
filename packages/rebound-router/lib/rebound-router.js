@@ -50,6 +50,9 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     container.innerHTML = '';
     container.appendChild(pageInstance);
 
+    // Make sure we're back at the top of the page
+    document.body.scrollTop = 0;
+
 
     // Augment ApplicationRouter with new routes from PageApp
     _.each(pageInstance.__component__.routes, function (value, key) {

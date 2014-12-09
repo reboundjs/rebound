@@ -3,8 +3,8 @@ var LazyValue = require("rebound-runtime/lazy-value")["default"];
 var $ = require("rebound-runtime/utils")["default"];
 
 
-var helpers = {},
-    partials = {asdf: 1};
+var helpers  = {},
+    partials = {};
 
 helpers.registerPartial = function(name, func){
   if(func && func.isHTMLBars && typeof name === 'string'){
@@ -60,11 +60,10 @@ helpers.registerHelper = function(name, callback, params){
 ********************************/
 
 helpers.on = function(params, hash, options, env){
-
   var i, callback, delegate, eventName, element,
       root = this,
       len = params.length,
-      data = hash.data && hash.data.isLazyValue && hash.data.value() || hash.data || options.context;
+      data = hash || options.context;
 
   // Find our root component
   root = root.__root__;
@@ -199,10 +198,10 @@ helpers.if = function(params, hash, options, env){
 
   // Render the apropreate block statement
   if(condition && options.template){
-    return options.template.render(options.context, options, options.morph.element);
+    return options.template.render(options.context, options, (options.morph.contextualElement || options.morph.element));
   }
   else if(!condition && options.inverse){
-    return options.inverse.render(options.context, options, options.morph.element);
+    return options.inverse.render(options.context, options, (options.morph.contextualElement || options.morph.element));
   }
 
   return '';
@@ -240,10 +239,10 @@ helpers.unless = function(params, hash, options, env){
 
   // Render the apropreate block statement
   if(!condition &&  options.template){
-    return options.template.render(options.context, options, options.morph.element);
+    return options.template.render(options.context, options, (options.morph.contextualElement || options.morph.element));
   }
   else if(condition && options.inverse){
-    return options.inverse.render(options.context, options, options.morph.element);
+    return options.inverse.render(options.context, options, (options.morph.contextualElement || options.morph.element));
   }
 
   return '';
@@ -303,7 +302,7 @@ helpers.each = function(params, hash, options, env){
 
       // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
       var lazyValue = new LazyValue(function(){
-        return options.template.render(obj, options, options.morph.contextualElement);
+        return options.template.render(obj, options, (options.morph.contextualElement || options.morph.element));
       });
 
       // If this model is rendered somewhere else in the list, destroy it
@@ -341,7 +340,7 @@ helpers.each = function(params, hash, options, env){
 helpers.with = function(params, hash, options, env){
 
   // Render the content inside our block helper with the context of this object. Returns a dom tree.
-  return options.template.render(params[0], options, options.morph.element);
+  return options.template.render(params[0], options, (options.morph.contextualElement || options.morph.element));
 
 };
 

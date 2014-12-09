@@ -2,6 +2,22 @@ require(['rebound-data/rebound-data'], function(reboundData){
     var Model = window.Rebound.Model = reboundData.Model,
         Collection =  window.Rebound.Collection = reboundData.Collection;
 
+        // Notify all of a object's observers of the change, execute the callback
+        function notify(obj, path) {
+          // If path is not an array of keys, wrap it in array
+          path = (_.isString(path)) ? [path] : path;
+
+          // For each path, alert each observer and call its callback
+          _.each(path, function(path){
+            if(obj.__observers && _.isArray(obj.__observers[path])){
+              _.each(obj.__observers[path], function(callback, index) {
+                if(callback){ callback(); }
+                  else{ delete obj.__observers[path][index]; }
+                  });
+                }
+              });
+            }
+
     QUnit.test('Rebound Data - Computed Properties', function() {
       var model, collection, model2, model3;
 
@@ -14,6 +30,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
       equal(2, model.get('prop'), 'Getting a computed property from a model returns its value.');
 
       model.set('b', 2);
+      notify(model, 'b');
       equal(3, model.get('prop'), 'Changing a computed property\'s dependancy effects its resulting value.');
 
 
@@ -46,6 +63,10 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
         firstEven: function(){
           return this.get('even').at(0);
+        },
+
+        arrProxy: function(){
+          return this.get('arr');
         }
 
       });
@@ -57,6 +78,16 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
       model.set('firstEven.id', 8);
       equal(model.get('arr[1].id'), 8, 'Modifying an object returned from a computed property modifies the original');
+
+      model.get('arrProxy').add({id: 7});
+      equal(model.get('arr').length, 7, 'Adding models to a collection returned by a computed property modifies the original');
+
+      model.get('arrProxy').remove(model.get('arrProxy[6]'));
+      equal(model.get('arr').length, 6, 'Removing models from a collection returned by a computed property modifies the original');
+
+      model.get('arrProxy').reset();
+      equal(model.get('arr').length, 0, 'Resetting a collection returned by a computed property reset the original');
+
 
 
 

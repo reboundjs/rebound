@@ -28,26 +28,7 @@ require(['rebound-runtime/component', 'simple-html-tokenizer'], function(Compone
       deepEqual(fragTokens, htmlTokens, message);
     }
 
-    var template = (function() {
-      function build(dom) {
-        var el0 = dom.createElement("input");
-        dom.setAttribute(el0,"class","edit");
-        dom.setAttribute(el0,"type","text");
-        return el0;
-      }
-      var cachedFragment;
-      return function template(context, env, contextualElement) {
-        var dom = env.dom, hooks = env.hooks;
-        if (cachedFragment === undefined) {
-          cachedFragment = build(dom);
-        }
-        var fragment = dom.cloneNode(cachedFragment, true);
-        var element0 = fragment;
-        hooks.element(element0, "attribute", context, ["value",hooks.subexpr("value", context, [], {context:context,types:[],hashTypes:{},hash:{}}, env)], {context:context,types:["string","sexpr"],hashTypes:{},hash:{},element:element0}, env);
-        return fragment;
-      };
-    }());
-
+    var template = (function() { return { isHTMLBars: true, cachedFragment: null, build: function build(dom) { var el0 = dom.createElement("div"); return el0; }, render: function render(context, env, contextualElement) { var dom = env.dom; dom.detectNamespace(contextualElement); if (this.cachedFragment === null) { this.cachedFragment = this.build(dom); } var fragment = dom.cloneNode(this.cachedFragment, true); return fragment; } }; }());
 
     QUnit.test('Rebound Components', function() {
 
@@ -65,9 +46,8 @@ require(['rebound-runtime/component', 'simple-html-tokenizer'], function(Compone
         }
       });
 
-      el.__root__ = new component({template: template, outlet: el});
-
-      equal(1, 1);
+      el.__component__ = new component({template: template, outlet: el});
+      equalTokens(el, '<div><div></div></div>', 'Component places rendered template inside of outlet');
 
     });
 

@@ -41,10 +41,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function
       /*******************************************************************/
 
       var template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name:'test/partial'});
-      var dom = template({foo:'bar', bar:'foo'});
+      var dom = template.render({foo:'bar', bar:'foo'});
       equalTokens(dom, '<div class="foo">bar</div>', 'Compiler accepts plain HTMLBars strings');
 
-      var partial = (compiler.compile('{{partial "test/partial"}}', {name:'test'}))({foo:'bar', bar:'foo'});
+      var partial = (compiler.compile('{{partial "test/partial"}}', {name:'test'})).render({foo:'bar', bar:'foo'});
       equalTokens(dom, '<div class="foo">bar</div>', 'Compiler interperts plain HTMLBars strings as partials');
 
 

@@ -99,15 +99,25 @@ var Component = Model.extend({
   },
 
   _onReset: function(data, options){
-    return console.error('reset triggered idiot', arguments);
-    // return ((data.isCollection) ? this._onCollectionChange : this._onModelChange)(data, options);
+    if(data && data.isModel){
+      return this._onModelChange(data, options);
+    }
+    else if(data.isCollection){
+      return this._onCollectionChange(data, options);
+    }
   },
 
   _onModelChange: function(model, options){
-    this._notifySubtree(model, model.changedAttributes(), 'model');
+    // console.error('Model change');
+    var changed = model.changedAttributes();
+    if(changed){
+      this._notifySubtree(model, model.changedAttributes(), 'model');
+    }
   },
 
   _onCollectionChange: function(model, collection, options){
+    // console.error('Collection change');
+
     var changed = {},
         that = this;
     if(model.isCollection){

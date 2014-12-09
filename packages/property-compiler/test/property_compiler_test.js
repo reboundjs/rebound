@@ -8,8 +8,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return 1;
       };
       res = compiler.compile(func, 'path');
-      equal( res, func, 'Property Compiler returns the given function at its fully formed path' );
-      deepEqual( res.__params, [], 'Property Compiler returns empty array if no data is accessed' );
+      deepEqual( res, [], 'Property Compiler returns empty array if no data is accessed' );
 
 
 
@@ -17,7 +16,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test'], 'Property Compiler returns proper dependancy for single get' );
+      deepEqual( res, ['test'], 'Property Compiler returns proper dependancy for single get' );
 
 
 
@@ -25,7 +24,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more'], 'Property Compiler returns proper dependancy for complex single get' );
+      deepEqual( res, ['test.more'], 'Property Compiler returns proper dependancy for complex single get' );
 
 
 
@@ -33,7 +32,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').get('again.foo').get('bar');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.again.foo.bar'], 'Property Compiler returns proper dependancy for complex chained gets' );
+      deepEqual( res, ['test.more.again.foo.bar'], 'Property Compiler returns proper dependancy for complex chained gets' );
 
 
 
@@ -41,7 +40,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.at(1);
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['@each'], 'Property Compiler returns proper dependancy for root level at()' );
+      deepEqual( res, ['@each'], 'Property Compiler returns proper dependancy for root level at()' );
 
 
 
@@ -49,7 +48,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test[1].more');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.@each.more'], 'Property Compiler returns proper dependancy for get including array referance' );
+      deepEqual( res, ['test.@each.more'], 'Property Compiler returns proper dependancy for get including array referance' );
 
 
 
@@ -57,7 +56,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').at(1).get('again.foo');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each.again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
+      deepEqual( res, ['test.more.@each.again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
 
 
 
@@ -65,7 +64,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').at(1).get('again.foo');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each.again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
+      deepEqual( res, ['test.more.@each.again.foo'], 'Property Compiler returns proper dependancy for chained gets and at()' );
 
 
 
@@ -73,7 +72,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').get('andMore').where({test : 1});
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.andMore.@each.test'], 'Property Compiler returns proper dependancy for chained gets and where() with single argument' );
+      deepEqual( res, ['test.more.andMore.@each.test'], 'Property Compiler returns proper dependancy for chained gets and where() with single argument' );
 
 
 
@@ -81,7 +80,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').get('andMore').where({test : 1, bar: 'foo'});
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.andMore.@each.test', 'test.more.andMore.@each.bar'], 'Property Compiler returns proper dependancy for chained gets and where() with multiple arguments' );
+      deepEqual( res, ['test.more.andMore.@each.test', 'test.more.andMore.@each.bar'], 'Property Compiler returns proper dependancy for chained gets and where() with multiple arguments' );
 
 
 
@@ -89,7 +88,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').findWhere({test : 1});
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each.test'], 'Property Compiler returns proper dependancy for chained gets and findWhere() with single argument' );
+      deepEqual( res, ['test.more.@each.test'], 'Property Compiler returns proper dependancy for chained gets and findWhere() with single argument' );
 
 
 
@@ -98,7 +97,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').findWhere({test : 1, bar: 'foo'});
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each.test', 'test.more.@each.bar'], 'Property Compiler returns proper dependancy for chained gets and findWhere() with multiple arguments' );
+      deepEqual( res, ['test.more.@each.test', 'test.more.@each.bar'], 'Property Compiler returns proper dependancy for chained gets and findWhere() with multiple arguments' );
 
 
 
@@ -107,7 +106,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').pluck('test');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each.test'], 'Property Compiler returns proper dependancy for chained gets and pluck()' );
+      deepEqual( res, ['test.more.@each.test'], 'Property Compiler returns proper dependancy for chained gets and pluck()' );
 
 
 
@@ -115,7 +114,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').slice(0,3);
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each'], 'Property Compiler returns proper dependancy for chained gets and slice()' );
+      deepEqual( res, ['test.more.@each'], 'Property Compiler returns proper dependancy for chained gets and slice()' );
 
 
 
@@ -123,7 +122,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test.more').clone();
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test.more.@each'], 'Property Compiler returns proper dependancy for chained gets and clone()' );
+      deepEqual( res, ['test.more.@each'], 'Property Compiler returns proper dependancy for chained gets and clone()' );
 
 
 
@@ -132,7 +131,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test'], 'Property Compiler ignores single line comments' );
+      deepEqual( res, ['test'], 'Property Compiler ignores single line comments' );
 
 
 
@@ -146,7 +145,7 @@ require(['property-compiler/property-compiler'], function(compiler){
         return this.get('test');
       };
       res = compiler.compile(func, 'path');
-      deepEqual( res.__params, ['test'], 'Property Compiler ignores multiline comments' );
+      deepEqual( res, ['test'], 'Property Compiler ignores multiline comments' );
 
       // TODO: Features to eventually support
       //
@@ -157,7 +156,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       // };
       // compiler.register({cid: 'testId'}, 'key', func, 'path');
       // res = compiler.compile(func, 'path');
-      // deepEqual( res.__params, ['foo.bar'], 'Property Compiler saves state when object is saved to a variable' );
+      // deepEqual( res, ['foo.bar'], 'Property Compiler saves state when object is saved to a variable' );
       //
       //
       //
@@ -166,7 +165,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       // };
       // compiler.register({cid: 'testId'}, 'key', func, 'path');
       // res = compiler.compile(func, 'path');
-      // deepEqual( res.__params, ['foo.@each', 'test'], 'Property Compiler returns proper dependancy for nested gets' );
+      // deepEqual( res, ['foo.@each', 'test'], 'Property Compiler returns proper dependancy for nested gets' );
       //
       //
       //
@@ -175,7 +174,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       // };
       // compiler.register({cid: 'testId'}, 'key', func, 'path');
       // res = compiler.compile(func, 'path');
-      // deepEqual( res.__params, ['foo.@each', 'test'], 'Property Compiler returns proper dependancy for nested at' );
+      // deepEqual( res, ['foo.@each', 'test'], 'Property Compiler returns proper dependancy for nested at' );
       //
       //
       //
@@ -185,7 +184,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       // };
       // compiler.register({cid: 'testId'}, 'key', func, 'path');
       // res = compiler.compile(func, 'path');
-      // deepEqual( res.__params, ['foo.bar'], 'Property Compiler can handle ailiased `this` varialbe' );
+      // deepEqual( res, ['foo.bar'], 'Property Compiler can handle ailiased `this` varialbe' );
       //
       //
 

@@ -5944,8 +5944,8 @@ define("rebound-runtime/helpers",
     var $ = __dependency2__["default"];
 
 
-    var helpers = {},
-        partials = {asdf: 1};
+    var helpers  = {},
+        partials = {};
 
     helpers.registerPartial = function(name, func){
       if(func && func.isHTMLBars && typeof name === 'string'){
@@ -6001,11 +6001,10 @@ define("rebound-runtime/helpers",
     ********************************/
 
     helpers.on = function(params, hash, options, env){
-
       var i, callback, delegate, eventName, element,
           root = this,
           len = params.length,
-          data = hash.data && hash.data.isLazyValue && hash.data.value() || hash.data || options.context;
+          data = hash || options.context;
 
       // Find our root component
       root = root.__root__;
@@ -6140,10 +6139,10 @@ define("rebound-runtime/helpers",
 
       // Render the apropreate block statement
       if(condition && options.template){
-        return options.template.render(options.context, options, options.morph.element);
+        return options.template.render(options.context, options, (options.morph.contextualElement || options.morph.element));
       }
       else if(!condition && options.inverse){
-        return options.inverse.render(options.context, options, options.morph.element);
+        return options.inverse.render(options.context, options, (options.morph.contextualElement || options.morph.element));
       }
 
       return '';
@@ -6181,10 +6180,10 @@ define("rebound-runtime/helpers",
 
       // Render the apropreate block statement
       if(!condition &&  options.template){
-        return options.template.render(options.context, options, options.morph.element);
+        return options.template.render(options.context, options, (options.morph.contextualElement || options.morph.element));
       }
       else if(condition && options.inverse){
-        return options.inverse.render(options.context, options, options.morph.element);
+        return options.inverse.render(options.context, options, (options.morph.contextualElement || options.morph.element));
       }
 
       return '';
@@ -6244,7 +6243,7 @@ define("rebound-runtime/helpers",
 
           // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
           var lazyValue = new LazyValue(function(){
-            return options.template.render(obj, options, options.morph.contextualElement);
+            return options.template.render(obj, options, (options.morph.contextualElement || options.morph.element));
           });
 
           // If this model is rendered somewhere else in the list, destroy it
@@ -6282,7 +6281,7 @@ define("rebound-runtime/helpers",
     helpers.with = function(params, hash, options, env){
 
       // Render the content inside our block helper with the context of this object. Returns a dom tree.
-      return options.template.render(params[0], options, options.morph.element);
+      return options.template.render(params[0], options, (options.morph.contextualElement || options.morph.element));
 
     };
 
@@ -7955,8 +7954,10 @@ define("rebound-data/computed-property",
       // Assign unique id
       this.cid = _.uniqueId('computedPropety');
       this.name = options.name;
+      this.returnType = null;
       this.__observers = {};
       this.helpers = {};
+      this.changing = false;
 
       options.parent = this.setParent( options.parent || this );
       options.root = this.setRoot( options.root || options.parent || this );
@@ -7968,6 +7969,30 @@ define("rebound-data/computed-property",
 
       // Compute the property function's dependancies
       this.deps = prop.__params = prop.__params || propertyCompiler.compile(prop, this.name);
+
+      _.each(this.deps, function(path, index, deps){
+
+        var context = this.__parent__,
+            computedProperty = this,
+            paths = $.splitPath(path);
+        // Get actual context if any @parent calls
+        while(paths[0] === '@parent'){
+          context = context.__parent__;
+          paths.shift();
+        }
+        path = paths.join('.');
+
+        // Ensure _observers exists and is an object
+        context.__observers = context.__observers || {};
+        // Ensure __obxervers[path] exists and is an array
+        context.__observers[path] = context.__observers[path] || [];
+        context.__observers[path].push(function(){
+          computedProperty.call();
+        });
+        context.__observers[path][context.__observers[path].length-1].type = 'model';
+
+      }, this);
+
 
       // Save referance original function
       this.func = prop;
@@ -7987,17 +8012,13 @@ define("rebound-data/computed-property",
         value: undefined // TODO: On set value, trigger change event on parent? Maybe?
       };
 
-      // Propagate cache's changes to parent
-      // this.cache.model.on('all', this.__parent__.trigger, this.__parent__);
-      // this.cache.collection.on('all', this.__parent__.trigger, this.__parent__);
-
     };
 
     _.extend(ComputedProperty.prototype, Backbone.Events, {
 
       isComputedProperty: true,
       isData: true,
-      returnType: 'value',
+      returnType: null,
 
       __path: function(){ return ''; },
 
@@ -8024,27 +8045,50 @@ define("rebound-data/computed-property",
         // Get result from computed property function
         var result = this.func.apply(context || this.__parent__, params);
 
-        // Get raw data from result
-        result = (result && (result.attributes || result.models)) || result;
+        // Un-bind events from the old data source
+        if(this.cache[this.returnType] && this.cache[this.returnType].isData){
+          this.cache[this.returnType].off('change add remove reset');
+        }
 
-            // Set result and return type
-        if(_.isArray(result)){
+        // If you're already resetting its cache, I'ma let you finish
+        if(this.changing) return this;
+        this.changing = true;
+
+        // Set result and return type
+        if(result && (result.isCollection || _.isArray(result))){
           this.returnType = 'collection';
           this.isCollection = true;
           this.isModel = false;
-          this.cache.collection.set(result);
+          this.cache.collection.reset(result);
         }
-        else if(result && _.isObject(result)){
+        else if(result && (result.isModel || _.isObject(result))){
           this.returnType = 'model';
           this.isCollection = false;
           this.isModel = true;
-          this.cache.model.set(result);
+          this.cache.model.reset(result);
         }
         else{
           this.returnType = 'value';
           this.isCollection = this.isModel = false;
           this.cache.value = result;
         }
+
+        // Pass all changes to this model back to the model used to set it
+        if(result && result.isModel){
+          this.cache[this.returnType].on('change', function(model){
+            result.set(model.changedAttributes());
+          });
+        }
+        if(result && result.isCollection){
+          this.cache[this.returnType].on('add reset', function(model, collection, options){
+            result.set(model, options);
+          });
+          this.cache[this.returnType].on('remove', function(model, collection, options){
+            result.remove(model, options);
+          });
+        }
+
+        this.changing = false;
 
         return this.cache[this.returnType];
       },
@@ -8056,7 +8100,7 @@ define("rebound-data/computed-property",
           return undefined;
         }
 
-        return this.cache[this.returnType].get(key, options);
+        return (this.value()).get(key, options);
 
       },
 
@@ -8074,16 +8118,28 @@ define("rebound-data/computed-property",
           return undefined;
         }
 
-        return this.cache[this.returnType].set(key, val, options);
+        return (this.value()).set(key, val, options);
 
+      },
+
+      value: function(){
+        if(_.isNull(this.returnType)){
+          this.apply(this.__parent__);
+        }
+        return this.cache[this.returnType];
+      },
+
+      reset: function(obj, options){
+        this.cache[this.returnType].reset(obj, options);
       },
 
       toJSON: function() {
         if (this._isSerializing) {
             return this.cid;
         }
+        var val = this.value();
         this._isSerializing = true;
-        var json = (this.returnType === 'value') ? this.cache.value : this.cache[this.returnType].toJSON();
+        var json = (val && _.isFunction(val.toJSON)) ? val.toJSON() : val;
         this._isSerializing = false;
         return json;
       }
@@ -8126,30 +8182,67 @@ define("rebound-data/model",
         this.__observers = {};
         this.defaults = this.defaults || {};
 
-        Backbone.Model.apply( this, arguments );
-
         this.setParent( options.parent || this );
         this.setRoot( options.root || this );
         this.__path = options.path || this.__path;
 
+        Backbone.Model.apply( this, arguments );
+
+      },
+
+      toggle: function(attr, options) {
+        options = options ? _.clone(options) : {};
+        var val = this.get(attr);
+        if(!_.isBoolean(val)){ console.error('Tried to toggle non-boolean value ' + attr +'!', this); }
+        return this.set(attr, !val, options);
       },
 
       reset: function(obj, options){
+        var changed = {},
+            dest = this.attributes;
 
         options || (options = {});
+        obj = (obj && obj.isModel && obj.attributes) || obj || {};
 
         _.each(this.attributes, function(value, key, model){
-          if (_.isUndefined(this.attributes[key])    ||
-              key === this.idAttribute               ||
-              this.attributes[key].isComputedProperty ) return;
-          if (this.attributes[key].isCollection) return this.attributes[key].reset((obj[key]||[]));
-          if (this.attributes[key].isModel) return this.attributes[key].reset((obj[key]||{}));
-          if (obj.hasOwnProperty(key)) return;
-          if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])) return obj[key] = this.defaults[key];
-          return this.unset(key, {silent: true});
+          if(_.isUndefined(value)){
+            if(obj[key]){
+              changed[key] = obj[key];
+            }
+          }
+          else if (key === this.idAttribute ||  (this.attributes[key] && value.isComputedProperty) ){
+            return;
+          }
+          else if (value.isCollection || value.isModel){
+            value.reset((obj[key]||[]));
+            if(!_.isEmpty(value.changed)){
+              changed[key] = value.changed;
+            }
+          }
+          else if (obj.hasOwnProperty(key)){
+            if(value !== obj[key]){
+              changed[key] = obj[key];
+            }
+          }
+          else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
+            obj[key] = this.defaults[key];
+            if(value !== obj[key]){
+              changed[key] = obj[key];
+            }
+          }
+          else{
+            changed[key] = undefined;
+            this.unset(key, {silent: true});
+          }
         }, this);
 
-        obj = this.set(obj, _.extend({silent: true}, options));
+        _.each(obj, function(value, key, obj){
+          changed[key] = changed[key] || obj[key];
+        });
+
+        obj = this.set(obj, _.extend({}, options, {silent: true, reset: false}));
+
+        this.changed = changed;
 
         if (!options.silent) this.trigger('reset', this, options);
         return obj;
@@ -8174,7 +8267,7 @@ define("rebound-data/model",
             if( result && result.isComputedProperty ){
               // If returning raw, always return the first computed property in a chian.
               if(options.raw){ return result; }
-              result = result.call();
+              result = result.value();
             }
 
             if(_.isUndefined(result) || _.isNull(result)){
@@ -8197,7 +8290,7 @@ define("rebound-data/model",
         }
 
         if( result && result.isComputedProperty && !options.raw){
-          result = result.call();
+          result = result.value();
         }
 
         return result;
@@ -8217,10 +8310,10 @@ define("rebound-data/model",
         }
         options || (options = {});
 
-        // TODO: Give models a reset option
-        // if(options.reset === true){
-        //   return this.reset(attrs);
-        // }
+        // If reset is passed, do a reset instead
+        if(options.reset === true){
+          return this.reset(attrs, options);
+        }
 
         if(_.isEmpty(attrs)){ return; }
 
@@ -8229,21 +8322,28 @@ define("rebound-data/model",
 
           attr  = $.splitPath(key).pop();                 // The key        ex: foo[0].bar --> bar
           target = this.get(key, {parent: 1});            // The element    ex: foo.bar.baz --> foo.bar
+
           destination = target.get(attr, {raw: true}) || {};           // The current value of attr
           lineage = {
             name: key,
             parent: this,
             root: this.__root__,
-            path: pathGenerator(this, key)
+            path: pathGenerator(this, key),
+            silent: true
           };
 
           // If val is null, set to undefined
           if(val === null || val === undefined){
-            val = undefined;
+            val = this.defaults[key];
           }
           // If this value is a Function, turn it into a Computed Property
           else if(_.isFunction(val)){
             val = new ComputedProperty(val, lineage);
+          }
+
+          // If this is going to be a cyclical dependancy, use the original object, don't make a copy
+          else if(val.isData && target.hasParent(val)){
+            val = val;
           }
 
           // If updating an existing object with its respective data type, let Backbone handle the merge
@@ -8272,12 +8372,15 @@ define("rebound-data/model",
 
 
           // If val is a data object, let this object know it is now a parent
-            this._hasAncestry = (val && val.isData || false);
+          this._hasAncestry = (val && val.isData || false);
 
           // Replace the existing value
           return Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
 
         }, this);
+
+        return this;
+
       },
 
       toJSON: function() {
@@ -8321,7 +8424,7 @@ define("rebound-data/collection",
     }
 
     function linkedModels(original){
-      return function(model){
+      return function(model, options){
         if(model.collection === undefined){
           return model.deinitialize();
         }
@@ -8334,7 +8437,7 @@ define("rebound-data/collection",
 
         if(!original.synced[model._cid]){
           model.synced[original._cid] = true;
-          original.set(model.changedAttributes());
+          original.set(model.changedAttributes(), options);
           model.synced[original._cid] = false;
         }
       };
@@ -8354,11 +8457,11 @@ define("rebound-data/collection",
         this.__observers = {};
         this.helpers = {};
 
-        Backbone.Collection.apply( this, arguments );
-
         this.setParent( options.parent || this );
         this.setRoot( options.root || this );
         this.__path = options.path || this.__path;
+
+        Backbone.Collection.apply( this, arguments );
 
         this.on('remove', function(model, collection, options){
           model.deinitialize();
@@ -8393,7 +8496,7 @@ define("rebound-data/collection",
             if( result && result.isComputedProperty ){
               // If returning raw, always return the first computed property in a chian.
               if(options.raw){ return result; }
-              result = result.call();
+                result = result.value();
             }
 
             if(_.isUndefined(result) || _.isNull(result)){
@@ -8416,7 +8519,7 @@ define("rebound-data/collection",
         }
 
         if( result && result.isComputedProperty && !options.raw){
-          result = result.call();
+          result = result.value();
         }
 
         return result;
@@ -8425,6 +8528,9 @@ define("rebound-data/collection",
       set: function(models, options){
         var newModels = [];
             options = options || {};
+
+        // If no models passed, implies an empty array
+        models || (models = []);
 
         if(!_.isObject(models)){
           return console.error('Collection.set must be passed a Model, Object, array or Models and Objects, or another Collection');
@@ -8742,15 +8848,25 @@ define("rebound-runtime/component",
       },
 
       _onReset: function(data, options){
-        return console.error('reset triggered idiot', arguments);
-        // return ((data.isCollection) ? this._onCollectionChange : this._onModelChange)(data, options);
+        if(data && data.isModel){
+          return this._onModelChange(data, options);
+        }
+        else if(data.isCollection){
+          return this._onCollectionChange(data, options);
+        }
       },
 
       _onModelChange: function(model, options){
-        this._notifySubtree(model, model.changedAttributes(), 'model');
+        // console.error('Model change');
+        var changed = model.changedAttributes();
+        if(changed){
+          this._notifySubtree(model, model.changedAttributes(), 'model');
+        }
       },
 
       _onCollectionChange: function(model, collection, options){
+        // console.error('Collection change');
+
         var changed = {},
             that = this;
         if(model.isCollection){
@@ -8913,6 +9029,9 @@ define("rebound-router/rebound-router",
         container = (isGlobal) ? document.querySelector(isGlobal) : document.getElementsByTagName('content')[0];
         container.innerHTML = '';
         container.appendChild(pageInstance);
+
+        // Make sure we're back at the top of the page
+        document.body.scrollTop = 0;
 
 
         // Augment ApplicationRouter with new routes from PageApp

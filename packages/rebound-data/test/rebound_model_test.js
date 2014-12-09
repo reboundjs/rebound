@@ -11,22 +11,34 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.set('bool', false);
       deepEqual( model.attributes, {str: 'test', int: 1, bool: false}, 'Model.set works with primitive values at top level' );
 
+      model.toggle('bool');
+      deepEqual( model.attributes, {str: 'test', int: 1, bool: true}, 'Model.toggle works with boolean values at top level' );
+
+
 
 
       model = new Model();
       model.set('obj', {a:1});
       equal(model.attributes.obj.isModel, true, 'Model.set promotes vanilla objects to Models');
-      model.set('obj', {b:2});
-      deepEqual(model.attributes.obj.attributes, {a:1, b:2}, 'Model.set adds to existing models when passed vanilla objects');
+      model.set('obj', {bool:false});
+      deepEqual(model.attributes.obj.attributes, {a:1, bool:false}, 'Model.set adds to existing models when passed vanilla objects');
+
+      model.toggle('obj.bool');
+      deepEqual(model.attributes.obj.attributes, {a:1, bool:true}, 'Model.toggle works with nested boolean values');
+
+
 
 
       model = new Model();
       model2 = new Model({b:2});
       model.set('obj', model2);
-      equal(model.attributes.obj.cid, model2.cid, 'Model.set, when passed another model, adds that exact model.');
+      equal('c' + ((parseInt(model2.cid.replace('c', ''))) + 1), model.attributes.obj.cid, 'Model.set, when passed another model, clones that model.');
       model3 = new Model({c:3});
+      var cid = model.attributes.obj.cid;
       model.set('obj', model3);
-      equal(model.attributes.obj.cid, model3.cid, 'Model.set, when passed another model, replaces the existing model.');
+      equal(model.attributes.obj.cid, cid, 'Model.set, when passed another model, merges with the existing model.');
+      deepEqual(model.attributes.obj.attributes, {b: 2, c: 3}, 'Model.set, when passed another model, merges their attributes.');
+
 
 
 
@@ -72,8 +84,6 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.set('test.test2.[0].test3', 'foo');
 
 
-
-      model = new Model();
       collection = Collection.extend({
         model: Model.extend({
           defaults: {
@@ -81,9 +91,24 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
           }
         })
       });
-      model.set('test', new collection());
-      model.set('test', [{foo: 'bar'}, {biz: 'baz'}, {test: false}]);
-      deepEqual(model.toJSON(), {'test': [{foo: 'bar', test: true}, {biz: 'baz', test: true}, {test: false}]}, 'Defaults set in a component are retained');
+      model = new Model({
+        prop: true,
+        arr: (new collection()),
+        obj: { foo: {bar: 'bar'} },
+        func: function(){
+          return this.get('obj');
+        }
+      });
+      model.set('arr', [{foo: 'bar'}, {biz: 'baz'}, {test: false}]);
+      deepEqual(model.toJSON(), {prop: true, 'arr': [{foo: 'bar', test: true}, {biz: 'baz', test: true}, {test: false}], obj: {foo: {bar: 'bar'}}, func: {foo: {bar: 'bar'}}}, 'Defaults set in a component are retained');
+
+      model.reset();
+      deepEqual(model.toJSON(), {arr: [], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() on a model resets all of its properties and children');
+
+      model.reset({prop: false, arr: [{id: 1}]});
+      deepEqual(model.toJSON(), {prop: false, arr: [{id: 1, test: true}], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() with new values on a model resets it with these new values');
+
+
 
     });
 });

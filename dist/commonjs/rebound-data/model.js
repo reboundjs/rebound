@@ -29,30 +29,67 @@ var Model = Backbone.Model.extend({
     this.__observers = {};
     this.defaults = this.defaults || {};
 
-    Backbone.Model.apply( this, arguments );
-
     this.setParent( options.parent || this );
     this.setRoot( options.root || this );
     this.__path = options.path || this.__path;
 
+    Backbone.Model.apply( this, arguments );
+
+  },
+
+  toggle: function(attr, options) {
+    options = options ? _.clone(options) : {};
+    var val = this.get(attr);
+    if(!_.isBoolean(val)){ console.error('Tried to toggle non-boolean value ' + attr +'!', this); }
+    return this.set(attr, !val, options);
   },
 
   reset: function(obj, options){
+    var changed = {},
+        dest = this.attributes;
 
     options || (options = {});
+    obj = (obj && obj.isModel && obj.attributes) || obj || {};
 
     _.each(this.attributes, function(value, key, model){
-      if (_.isUndefined(this.attributes[key])    ||
-          key === this.idAttribute               ||
-          this.attributes[key].isComputedProperty ) return;
-      if (this.attributes[key].isCollection) return this.attributes[key].reset((obj[key]||[]));
-      if (this.attributes[key].isModel) return this.attributes[key].reset((obj[key]||{}));
-      if (obj.hasOwnProperty(key)) return;
-      if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])) return obj[key] = this.defaults[key];
-      return this.unset(key, {silent: true});
+      if(_.isUndefined(value)){
+        if(obj[key]){
+          changed[key] = obj[key];
+        }
+      }
+      else if (key === this.idAttribute ||  (this.attributes[key] && value.isComputedProperty) ){
+        return;
+      }
+      else if (value.isCollection || value.isModel){
+        value.reset((obj[key]||[]));
+        if(!_.isEmpty(value.changed)){
+          changed[key] = value.changed;
+        }
+      }
+      else if (obj.hasOwnProperty(key)){
+        if(value !== obj[key]){
+          changed[key] = obj[key];
+        }
+      }
+      else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
+        obj[key] = this.defaults[key];
+        if(value !== obj[key]){
+          changed[key] = obj[key];
+        }
+      }
+      else{
+        changed[key] = undefined;
+        this.unset(key, {silent: true});
+      }
     }, this);
 
-    obj = this.set(obj, _.extend({silent: true}, options));
+    _.each(obj, function(value, key, obj){
+      changed[key] = changed[key] || obj[key];
+    });
+
+    obj = this.set(obj, _.extend({}, options, {silent: true, reset: false}));
+
+    this.changed = changed;
 
     if (!options.silent) this.trigger('reset', this, options);
     return obj;
@@ -77,7 +114,7 @@ var Model = Backbone.Model.extend({
         if( result && result.isComputedProperty ){
           // If returning raw, always return the first computed property in a chian.
           if(options.raw){ return result; }
-          result = result.call();
+          result = result.value();
         }
 
         if(_.isUndefined(result) || _.isNull(result)){
@@ -100,7 +137,7 @@ var Model = Backbone.Model.extend({
     }
 
     if( result && result.isComputedProperty && !options.raw){
-      result = result.call();
+      result = result.value();
     }
 
     return result;
@@ -120,10 +157,10 @@ var Model = Backbone.Model.extend({
     }
     options || (options = {});
 
-    // TODO: Give models a reset option
-    // if(options.reset === true){
-    //   return this.reset(attrs);
-    // }
+    // If reset is passed, do a reset instead
+    if(options.reset === true){
+      return this.reset(attrs, options);
+    }
 
     if(_.isEmpty(attrs)){ return; }
 
@@ -132,21 +169,28 @@ var Model = Backbone.Model.extend({
 
       attr  = $.splitPath(key).pop();                 // The key        ex: foo[0].bar --> bar
       target = this.get(key, {parent: 1});            // The element    ex: foo.bar.baz --> foo.bar
+
       destination = target.get(attr, {raw: true}) || {};           // The current value of attr
       lineage = {
         name: key,
         parent: this,
         root: this.__root__,
-        path: pathGenerator(this, key)
+        path: pathGenerator(this, key),
+        silent: true
       };
 
       // If val is null, set to undefined
       if(val === null || val === undefined){
-        val = undefined;
+        val = this.defaults[key];
       }
       // If this value is a Function, turn it into a Computed Property
       else if(_.isFunction(val)){
         val = new ComputedProperty(val, lineage);
+      }
+
+      // If this is going to be a cyclical dependancy, use the original object, don't make a copy
+      else if(val.isData && target.hasParent(val)){
+        val = val;
       }
 
       // If updating an existing object with its respective data type, let Backbone handle the merge
@@ -175,12 +219,15 @@ var Model = Backbone.Model.extend({
 
 
       // If val is a data object, let this object know it is now a parent
-        this._hasAncestry = (val && val.isData || false);
+      this._hasAncestry = (val && val.isData || false);
 
       // Replace the existing value
       return Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
 
     }, this);
+
+    return this;
+
   },
 
   toJSON: function() {

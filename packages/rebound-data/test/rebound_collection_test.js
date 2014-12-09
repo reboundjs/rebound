@@ -7,13 +7,13 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
 
 
       collection = new Collection();
-      collection.set({a:1});
+      collection.set({a:true});
       equal(collection.models[0].isModel, true, 'Collection.set promotes vanilla objects to Models');
 
 
 
       collection = new Collection();
-      collection.set({obj2:{a:1}});
+      collection.set({obj2:{a:true}});
       equal(collection.models[0].attributes.obj2.isModel, true, 'Collection.set promotes nested vanilla objects to Models');
 
 

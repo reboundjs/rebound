@@ -18,7 +18,7 @@ function pathGenerator(collection){
 }
 
 function linkedModels(original){
-  return function(model){
+  return function(model, options){
     if(model.collection === undefined){
       return model.deinitialize();
     }
@@ -31,7 +31,7 @@ function linkedModels(original){
 
     if(!original.synced[model._cid]){
       model.synced[original._cid] = true;
-      original.set(model.changedAttributes());
+      original.set(model.changedAttributes(), options);
       model.synced[original._cid] = false;
     }
   };
@@ -51,11 +51,11 @@ var Collection = Backbone.Collection.extend({
     this.__observers = {};
     this.helpers = {};
 
-    Backbone.Collection.apply( this, arguments );
-
     this.setParent( options.parent || this );
     this.setRoot( options.root || this );
     this.__path = options.path || this.__path;
+
+    Backbone.Collection.apply( this, arguments );
 
     this.on('remove', function(model, collection, options){
       model.deinitialize();
@@ -90,7 +90,7 @@ var Collection = Backbone.Collection.extend({
         if( result && result.isComputedProperty ){
           // If returning raw, always return the first computed property in a chian.
           if(options.raw){ return result; }
-          result = result.call();
+            result = result.value();
         }
 
         if(_.isUndefined(result) || _.isNull(result)){
@@ -113,7 +113,7 @@ var Collection = Backbone.Collection.extend({
     }
 
     if( result && result.isComputedProperty && !options.raw){
-      result = result.call();
+      result = result.value();
     }
 
     return result;
@@ -122,6 +122,9 @@ var Collection = Backbone.Collection.extend({
   set: function(models, options){
     var newModels = [];
         options = options || {};
+
+    // If no models passed, implies an empty array
+    models || (models = []);
 
     if(!_.isObject(models)){
       return console.error('Collection.set must be passed a Model, Object, array or Models and Objects, or another Collection');
