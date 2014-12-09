@@ -62,7 +62,7 @@ helpers.on = function(params, hash, options, env){
   var i, callback, delegate, eventName, element,
       root = this,
       len = params.length,
-      data = hash || options.context;
+      data = (hash.length) ? hash : options.context;
 
   // Find our root component
   root = root.__root__;

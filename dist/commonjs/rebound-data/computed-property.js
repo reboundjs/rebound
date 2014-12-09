@@ -119,7 +119,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       this.returnType = 'collection';
       this.isCollection = true;
       this.isModel = false;
-      this.cache.collection.reset(result);
+      this.cache.collection.set(result, {remove: true, merge: true});
     }
     else if(result && (result.isModel || _.isObject(result))){
       this.returnType = 'model';

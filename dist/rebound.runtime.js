@@ -6004,7 +6004,7 @@ define("rebound-runtime/helpers",
       var i, callback, delegate, eventName, element,
           root = this,
           len = params.length,
-          data = hash || options.context;
+          data = (hash.length) ? hash : options.context;
 
       // Find our root component
       root = root.__root__;
@@ -8059,7 +8059,7 @@ define("rebound-data/computed-property",
           this.returnType = 'collection';
           this.isCollection = true;
           this.isModel = false;
-          this.cache.collection.reset(result);
+          this.cache.collection.set(result, {remove: true, merge: true});
         }
         else if(result && (result.isModel || _.isObject(result))){
           this.returnType = 'model';
@@ -8857,7 +8857,7 @@ define("rebound-runtime/component",
       },
 
       _onModelChange: function(model, options){
-        // console.error('Model change');
+        // console.error('Model change', model.changedAttributes(), model );
         var changed = model.changedAttributes();
         if(changed){
           this._notifySubtree(model, model.changedAttributes(), 'model');
@@ -8865,7 +8865,7 @@ define("rebound-runtime/component",
       },
 
       _onCollectionChange: function(model, collection, options){
-        // console.error('Collection change');
+        // console.error('Collection change', model, collection);
 
         var changed = {},
             that = this;

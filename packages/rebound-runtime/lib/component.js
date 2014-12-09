@@ -108,7 +108,7 @@ var Component = Model.extend({
   },
 
   _onModelChange: function(model, options){
-    // console.error('Model change');
+    // console.error('Model change', model.changedAttributes(), model );
     var changed = model.changedAttributes();
     if(changed){
       this._notifySubtree(model, model.changedAttributes(), 'model');
@@ -116,7 +116,7 @@ var Component = Model.extend({
   },
 
   _onCollectionChange: function(model, collection, options){
-    // console.error('Collection change');
+    // console.error('Collection change', model, collection);
 
     var changed = {},
         that = this;
