@@ -2,6 +2,22 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
     var Model = window.Rebound.Model = reboundData.Model,
         Collection =  window.Rebound.Collection = reboundData.Collection;
 
+        // Notify all of a object's observers of the change, execute the callback
+        function notify(obj, path) {
+          // If path is not an array of keys, wrap it in array
+          path = (_.isString(path)) ? [path] : path;
+
+          // For each path, alert each observer and call its callback
+          _.each(path, function(path){
+            if(obj.__observers && _.isArray(obj.__observers[path])){
+              _.each(obj.__observers[path], function(callback, index) {
+                if(callback){ callback(); }
+                else{ delete obj.__observers[path][index]; }
+              });
+            }
+          });
+        }
+
     QUnit.test('Rebound Data - Model', function() {
       var model, collection, model2, model3;
 
@@ -103,9 +119,11 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       deepEqual(model.toJSON(), {prop: true, 'arr': [{foo: 'bar', test: true}, {biz: 'baz', test: true}, {test: false}], obj: {foo: {bar: 'bar'}}, func: {foo: {bar: 'bar'}}}, 'Defaults set in a component are retained');
 
       model.reset();
+      notify(model, 'obj');
       deepEqual(model.toJSON(), {arr: [], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() on a model resets all of its properties and children');
 
       model.reset({prop: false, arr: [{id: 1}]});
+      notify(model, 'obj');
       deepEqual(model.toJSON(), {prop: false, arr: [{id: 1, test: true}], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() with new values on a model resets it with these new values');
 
 
