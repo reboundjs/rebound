@@ -61,20 +61,16 @@ helpers.registerHelper = function(name, callback, params){
 
 helpers.on = function(params, hash, options, env){
   var i, callback, delegate, eventName, element,
-      root = this,
       len = params.length,
-      data = (hash.length) ? hash : options.context;
-
-  // Find our root component
-  root = root.__root__;
+      data = hash;
 
   eventName = params[0];
 
-  // By default everything is delegated on parent component
+  // By default everything is delegated on the parent component
   if(len === 2){
     callback = params[1];
     delegate = options.element;
-    element = root.el;
+    element = (this.el || options.element);
   }
   // If a selector is provided, delegate on the helper's element
   else if(len === 3){
@@ -85,6 +81,7 @@ helpers.on = function(params, hash, options, env){
 
   // Attach event
   $(element).on(eventName, delegate, data, function(event){
+    event.context = options.context;
     return options.helpers.__callOnComponent(callback, event);
   });
 };

@@ -22,10 +22,6 @@ var ComputedProperty = function(prop, options){
   options.root = this.setRoot( options.root || options.parent || this );
   options.path = this.__path = options.path || this.__path;
 
-  // All comptued properties' dependancies are calculated and added to their __params attribute. Save these in the context's helper cache.
-  options.root.helpers[options.parent.cid] = options.root.helpers[options.parent.cid] || {};
-  options.root.helpers[options.parent.cid][options.name] = this;
-
   // Compute the property function's dependancies
   this.deps = prop.__params = prop.__params || propertyCompiler.compile(prop, this.name);
 
@@ -104,14 +100,14 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // Get result from computed property function
     var result = this.func.apply(context || this.__parent__, params);
 
+    // If you're already resetting its cache, I'ma let you finish
+    if(this.changing) return this.cache[this.returnType];
+    this.changing = true;
+
     // Un-bind events from the old data source
     if(this.cache[this.returnType] && this.cache[this.returnType].isData){
       this.cache[this.returnType].off('change add remove reset');
     }
-
-    // If you're already resetting its cache, I'ma let you finish
-    if(this.changing) return this;
-    this.changing = true;
 
     // Set result and return type
     if(result && (result.isCollection || _.isArray(result))){
@@ -127,9 +123,19 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       this.cache.model.reset(result);
     }
     else{
+      var oldValue = this.cache.value;
       this.returnType = 'value';
       this.isCollection = this.isModel = false;
       this.cache.value = result;
+
+      // Manually trigger events on the parent model for this attribute
+      if(oldValue !== result){
+        this.__parent__.changed[this.name] = result;
+        // debugger;
+        this.trigger('change', this.__parent__);
+        this.trigger('change:'+this.name, this.__parent__, result);
+        delete this.__parent__.changed[this.name];
+      }
     }
 
     // Pass all changes to this model back to the model used to set it

@@ -51,8 +51,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer'], function
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
-          Object.prototype.get = undefined;
-          Object.prototype.set = undefined;
+          delete Object.prototype.get;
+          delete Object.prototype.set;
 
       /*******************************************************************/
 

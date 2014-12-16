@@ -114,7 +114,7 @@ var Component = Model.extend({
     // console.error('Model change', model.changedAttributes(), model );
     var changed = model.changedAttributes();
     if(changed){
-      this._notifySubtree(model, model.changedAttributes(), 'model');
+      this._notifySubtree(model, changed, 'model');
     }
   },
 

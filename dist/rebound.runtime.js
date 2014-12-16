@@ -6002,20 +6002,16 @@ define("rebound-runtime/helpers",
 
     helpers.on = function(params, hash, options, env){
       var i, callback, delegate, eventName, element,
-          root = this,
           len = params.length,
-          data = (hash.length) ? hash : options.context;
-
-      // Find our root component
-      root = root.__root__;
+          data = hash;
 
       eventName = params[0];
 
-      // By default everything is delegated on parent component
+      // By default everything is delegated on the parent component
       if(len === 2){
         callback = params[1];
         delegate = options.element;
-        element = root.el;
+        element = (this.el || options.element);
       }
       // If a selector is provided, delegate on the helper's element
       else if(len === 3){
@@ -6026,6 +6022,7 @@ define("rebound-runtime/helpers",
 
       // Attach event
       $(element).on(eventName, delegate, data, function(event){
+        event.context = options.context;
         return options.helpers.__callOnComponent(callback, event);
       });
     };
@@ -6387,45 +6384,18 @@ define("rebound-runtime/hooks",
     // Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
     function streamProperty(context, path) {
 
-      // Our raw value at this path
-      var value = context.get(path, {raw: true}),
       // Lazy value that returns the value of context.path
-      lazyValue = new LazyValue(function() {
+      var lazyValue = new LazyValue(function() {
         return context.get(path);
       });
 
       // Save our path so parent lazyvalues can know the data var or helper they are getting info from
       lazyValue.path = path;
 
-      // If we have custom defined observers, bind to those vars.
-      streamComputedPropertyArgs(lazyValue, value, context);
-
       // Save the observer at this path
       lazyValue.saveObserver(addObserver(context, path, lazyValue));
 
       return lazyValue;
-    }
-
-    function streamComputedPropertyArgs(lazyValue, computedProperty, context){
-      if(computedProperty && _.isArray(computedProperty.deps)){
-
-        var params = [];
-
-        for (var i = 0, l = computedProperty.deps.length; i < l; i++) {
-          if(!computedProperty.deps[i].isLazyValue) {
-            params[i] = streamProperty(context, computedProperty.deps[i]);
-          }
-          // Re-evaluate this expression when our condition changes
-          params[i].onNotify(function(){
-            lazyValue.value();
-          });
-
-          lazyValue.addDependentValue(params[i]);
-
-          // Whenever context.path changes, have LazyValue notify its listeners.
-          lazyValue.saveObserver(addObserver(context, params[i].path, lazyValue));
-        }
-      }
     }
 
     function constructHelper(el, path, context, params, hash, options, env, helper) {
@@ -6447,7 +6417,7 @@ define("rebound-runtime/hooks",
       // Create a lazy value that returns the value of our evaluated helper.
       options.lazyValue = new LazyValue(function() {
         var plainParams = [],
-            plainHash = [],
+            plainHash = {},
             result,
             relpath = $.splitPath(path),
             first, rest;
@@ -6467,7 +6437,7 @@ define("rebound-runtime/hooks",
         });
 
         // Call our helper functions with our assembled args.
-        result = helper.apply(context, [plainParams, plainHash, options, env]);
+        result = helper.apply((context.__root__ || context), [plainParams, plainHash, options, env]);
 
         if(result && relpath){
           return result.get(relpath);
@@ -6475,14 +6445,6 @@ define("rebound-runtime/hooks",
 
         return result;
       });
-
-      if(helper.deps){
-        var computedPropLazyVal = streamProperty(context, path);
-        computedPropLazyVal.onNotify(function(){
-          options.lazyValue.value();
-        });
-        options.lazyValue.addDependentValue(computedPropLazyVal);
-      }
 
       options.lazyValue.path = path;
 
@@ -6499,9 +6461,6 @@ define("rebound-runtime/hooks",
           options.lazyValue.addDependentValue(node);
         }
       });
-
-      // If we have custom defined observers, bind to those vars.
-      streamComputedPropertyArgs(options.lazyValue, helper, context);
 
       return options.lazyValue;
     }
@@ -7963,10 +7922,6 @@ define("rebound-data/computed-property",
       options.root = this.setRoot( options.root || options.parent || this );
       options.path = this.__path = options.path || this.__path;
 
-      // All comptued properties' dependancies are calculated and added to their __params attribute. Save these in the context's helper cache.
-      options.root.helpers[options.parent.cid] = options.root.helpers[options.parent.cid] || {};
-      options.root.helpers[options.parent.cid][options.name] = this;
-
       // Compute the property function's dependancies
       this.deps = prop.__params = prop.__params || propertyCompiler.compile(prop, this.name);
 
@@ -8045,14 +8000,14 @@ define("rebound-data/computed-property",
         // Get result from computed property function
         var result = this.func.apply(context || this.__parent__, params);
 
+        // If you're already resetting its cache, I'ma let you finish
+        if(this.changing) return this.cache[this.returnType];
+        this.changing = true;
+
         // Un-bind events from the old data source
         if(this.cache[this.returnType] && this.cache[this.returnType].isData){
           this.cache[this.returnType].off('change add remove reset');
         }
-
-        // If you're already resetting its cache, I'ma let you finish
-        if(this.changing) return this;
-        this.changing = true;
 
         // Set result and return type
         if(result && (result.isCollection || _.isArray(result))){
@@ -8068,9 +8023,19 @@ define("rebound-data/computed-property",
           this.cache.model.reset(result);
         }
         else{
+          var oldValue = this.cache.value;
           this.returnType = 'value';
           this.isCollection = this.isModel = false;
           this.cache.value = result;
+
+          // Manually trigger events on the parent model for this attribute
+          if(oldValue !== result){
+            this.__parent__.changed[this.name] = result;
+            // debugger;
+            this.trigger('change', this.__parent__);
+            this.trigger('change:'+this.name, this.__parent__, result);
+            delete this.__parent__.changed[this.name];
+          }
         }
 
         // Pass all changes to this model back to the model used to set it
@@ -8860,7 +8825,7 @@ define("rebound-runtime/component",
         // console.error('Model change', model.changedAttributes(), model );
         var changed = model.changedAttributes();
         if(changed){
-          this._notifySubtree(model, model.changedAttributes(), 'model');
+          this._notifySubtree(model, changed, 'model');
         }
       },
 
@@ -9262,7 +9227,7 @@ define("rebound-runtime/rebound-runtime",
     var Router = __dependency5__["default"];
 
     // Fetch Rebound Config Object
-    var Config = JSON.parse(document.getElementById('Rebound').innerText);
+    var Config = JSON.parse(document.getElementById('Rebound').innerHTML);
 
     // If Backbone doesn't have an ajax method from an external DOM library, use ours
     window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Backbone.ajax || utils.ajax;

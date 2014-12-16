@@ -74,8 +74,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
-          Object.prototype.get = undefined;
-          Object.prototype.set = undefined;
+          delete Object.prototype.get;
+          delete Object.prototype.set;
 
       /*******************************************************************/
     });
@@ -220,8 +220,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
-          Object.prototype.get = undefined;
-          Object.prototype.set = undefined;
+          delete Object.prototype.get;
+          delete Object.prototype.set;
 
       /*******************************************************************/
 
@@ -270,8 +270,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
-          Object.prototype.get = undefined;
-          Object.prototype.set = undefined;
+          delete Object.prototype.get;
+          delete Object.prototype.set;
 
       /*******************************************************************/
 
@@ -389,8 +389,8 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
-          Object.prototype.get = undefined;
-          Object.prototype.set = undefined;
+          delete Object.prototype.get;
+          delete Object.prototype.set;
 
       /*******************************************************************/
 
@@ -509,11 +509,46 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
-          Object.prototype.get = undefined;
-          Object.prototype.set = undefined;
+      delete Object.prototype.get;
+      delete Object.prototype.set;
 
       /*******************************************************************/
 
+    });
+
+    QUnit.test('Rebound Helpers - On', function() {
+
+      /*******************************************************************/
+      /** The only interface these helpers should need is get and set.  **/
+      /**      Augment the object prototype to provide this api         **/
+
+      Object.prototype.get = function(key){ return this[key]; };
+      Object.prototype.set = function(key, val){ this[key] = val; };
+
+      /*******************************************************************/
+
+
+      var template, data, dom;
+
+
+      template = compiler.compile('<div {{on "click" "callback"}}>Test</div>', {name: 'test/partial'});
+      data = {el: dom, __root__: this, callback: function(){
+        equal(1, 1, 'Events are triggered on the element');
+
+      }};
+      dom = template.render(data, {helpers: {__callOnComponent: function(name, event){
+        return data[name].call(data, event);
+      }}});
+      $(dom).trigger('click');
+
+
+      /*******************************************************************/
+      /**                Clean up our object prototype hack             **/
+
+      delete Object.prototype.get;
+      delete Object.prototype.set;
+
+      /*******************************************************************/
     });
 
 

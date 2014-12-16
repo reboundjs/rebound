@@ -19,7 +19,7 @@ import Component from "rebound-runtime/component";
 import Router from "rebound-router/rebound-router";
 
 // Fetch Rebound Config Object
-var Config = JSON.parse(document.getElementById('Rebound').innerText);
+var Config = JSON.parse(document.getElementById('Rebound').innerHTML);
 
 // If Backbone doesn't have an ajax method from an external DOM library, use ours
 window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Backbone.ajax || utils.ajax;

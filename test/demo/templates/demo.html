@@ -19,7 +19,7 @@
 		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}}></edit-todo>
 								{{else}}
 									<input type="checkbox" class="toggle" checked="{{isCompleted}}">
-									<label {{on "dblclick" "editTodo" }}>{{title}}</label>
+									<label {{on "dblclick" "editTodo"}}>{{title}}</label>
 									<button {{on "click" "removeTodo"}} class="destroy"></button>
 								{{/if}}
 							</li>
@@ -163,10 +163,10 @@
 			);
 		},
 		removeTodo: function(event){
-			this.get('todos').remove(event.data);
+			this.get('todos').remove(event.context);
 		},
 		editTodo: function(event){
-			event.data.set('editing', true); // Event.data by default is the context the element was rendered in
+			event.context.set('editing', true); // event.context by default is the context the element was rendered in
 		},
 		filterList: function(filter){
 			this.set('filter', filter)

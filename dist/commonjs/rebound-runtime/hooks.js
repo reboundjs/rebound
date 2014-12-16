@@ -87,45 +87,18 @@ function addObserver(context, path, lazyValue, morph) {
 // Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
 function streamProperty(context, path) {
 
-  // Our raw value at this path
-  var value = context.get(path, {raw: true}),
   // Lazy value that returns the value of context.path
-  lazyValue = new LazyValue(function() {
+  var lazyValue = new LazyValue(function() {
     return context.get(path);
   });
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
   lazyValue.path = path;
 
-  // If we have custom defined observers, bind to those vars.
-  streamComputedPropertyArgs(lazyValue, value, context);
-
   // Save the observer at this path
   lazyValue.saveObserver(addObserver(context, path, lazyValue));
 
   return lazyValue;
-}
-
-function streamComputedPropertyArgs(lazyValue, computedProperty, context){
-  if(computedProperty && _.isArray(computedProperty.deps)){
-
-    var params = [];
-
-    for (var i = 0, l = computedProperty.deps.length; i < l; i++) {
-      if(!computedProperty.deps[i].isLazyValue) {
-        params[i] = streamProperty(context, computedProperty.deps[i]);
-      }
-      // Re-evaluate this expression when our condition changes
-      params[i].onNotify(function(){
-        lazyValue.value();
-      });
-
-      lazyValue.addDependentValue(params[i]);
-
-      // Whenever context.path changes, have LazyValue notify its listeners.
-      lazyValue.saveObserver(addObserver(context, params[i].path, lazyValue));
-    }
-  }
 }
 
 function constructHelper(el, path, context, params, hash, options, env, helper) {
@@ -147,7 +120,7 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
   // Create a lazy value that returns the value of our evaluated helper.
   options.lazyValue = new LazyValue(function() {
     var plainParams = [],
-        plainHash = [],
+        plainHash = {},
         result,
         relpath = $.splitPath(path),
         first, rest;
@@ -167,7 +140,7 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
     });
 
     // Call our helper functions with our assembled args.
-    result = helper.apply(context, [plainParams, plainHash, options, env]);
+    result = helper.apply((context.__root__ || context), [plainParams, plainHash, options, env]);
 
     if(result && relpath){
       return result.get(relpath);
@@ -175,14 +148,6 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
 
     return result;
   });
-
-  if(helper.deps){
-    var computedPropLazyVal = streamProperty(context, path);
-    computedPropLazyVal.onNotify(function(){
-      options.lazyValue.value();
-    });
-    options.lazyValue.addDependentValue(computedPropLazyVal);
-  }
 
   options.lazyValue.path = path;
 
@@ -199,9 +164,6 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
       options.lazyValue.addDependentValue(node);
     }
   });
-
-  // If we have custom defined observers, bind to those vars.
-  streamComputedPropertyArgs(options.lazyValue, helper, context);
 
   return options.lazyValue;
 }
