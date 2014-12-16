@@ -6083,8 +6083,6 @@ define("rebound-runtime/helpers",
         }
 
         // Set the attribute on our element for visual referance
-        console.log('param', params[0], params[1]);
-
         (!params[1]) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
 
         return options.element.checked = (params[1]) ? true : undefined;
@@ -8068,12 +8066,7 @@ define("rebound-data/computed-property",
 
       // TODO: Moving the head of a data tree should preserve ancestry
       set: function(key, val, options){
-        if (typeof key === 'object') {
-          attrs = (key.isModel) ? key.attributes : key;
-          options = val;
-        } else {
-          (attrs = {})[key] = val;
-        }
+
         options || (options = {});
 
         if(this.returnType === 'value' && this.cache.value !== key){

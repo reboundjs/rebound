@@ -167,12 +167,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
 
   // TODO: Moving the head of a data tree should preserve ancestry
   set: function(key, val, options){
-    if (typeof key === 'object') {
-      attrs = (key.isModel) ? key.attributes : key;
-      options = val;
-    } else {
-      (attrs = {})[key] = val;
-    }
+
     options || (options = {});
 
     if(this.returnType === 'value' && this.cache.value !== key){
