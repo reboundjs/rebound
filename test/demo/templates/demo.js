@@ -336,11 +336,8 @@ return (function(){
     this.__component__.deinitialize();
     };
   proto.attributeChangedCallback = function(attrName, oldVal, newVal){
-    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
-    attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
-    if(newVal === null){ this.__component__.unset(attrName); }
-    else{ this.__component__.set(attrName, newVal, {quiet: true}); }
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__);
+    this.__component__._onAttributeChange(attrName, oldVal, newVal);
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__, attrName, oldVal, newVal);
   }
   return document.registerElement("rebound-demo", {prototype: proto} );
 })();
