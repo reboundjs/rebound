@@ -6224,6 +6224,8 @@ define("rebound-runtime/helpers",
 
       _.each(value, function(obj, key, list){
 
+        if(!_.isFunction(obj.set)){ return console.error('Model ', obj, 'has no method .set()!'); }
+
         position = findIndex(options.placeholder.morphs, currentModel, obj.cid);
 
         // Even if rendered already, update each element's index, key, first and last in case of order changes or element removals
@@ -7997,23 +7999,23 @@ define("rebound-data/computed-property",
 
       apply: function(context, params){
 
-        var value, result;
+        var value = this.cache[this.returnType], result;
 
         // If you're already resetting its cache, I'ma let you finish.
-        if(this._changing) return this.cache[this.returnType]; // Cannot be this.value() because on first run will loop
+        if(this._changing) return value; // Cannot be this.value() because on first run will loop
         this._changing = true;
 
         // Get result from computed property function
         result = this.func.apply(context || this.__parent__, params);
 
-        value = this.value();
-
         // Un-bind events from the old data source
-        if(value && value.isData){
+        if(!_.isUndefined(value) && value.isData){
           value.off('change add remove reset sort');
         }
 
+        // If result is undefined, reset our cache item
         if(_.isUndefined(result) || _.isNull(result)){
+          this.returnType || (this.returnType = 'value');
           this.reset();
         }
 
@@ -8058,19 +8060,20 @@ define("rebound-data/computed-property",
       },
 
       get: function(key, options){
+        var value = this.value();
         options || (options = {});
         if(this.returnType === 'value'){
           if(!options.quiet){ console.error('Called get on the `'+ this.name +'` computed property which returns a primitive value.'); }
           return undefined;
         }
 
-        return this.value().get(key, options);
+        return value.get(key, options);
 
       },
 
       // TODO: Moving the head of a data tree should preserve ancestry
       set: function(key, val, options){
-
+        var value = this.value();
         options || (options = {});
 
         if(this.returnType === 'value' && this.cache.value !== key){
@@ -8084,7 +8087,7 @@ define("rebound-data/computed-property",
           }
         }
 
-        return (this.returnType === 'value') ? key : this.value().set(key, val, options);
+        return (this.returnType === 'value') ? key : value.set(key, val, options);
 
       },
 
@@ -8299,10 +8302,18 @@ define("rebound-data/model",
             silent: true
           };
 
-          // If val is null, set to undefined
-          if(val === null || val === undefined){
+
+          // If val is null or undefined, set to defaults
+          if(_.isNull(val) || _.isUndefined(val)){
             val = this.defaults[key];
           }
+
+
+          // If val is null, set to undefined
+          if(_.isNull(val) || _.isUndefined(val)){
+            val = undefined;
+          }
+
           // If this value is a Function, turn it into a Computed Property
           else if(_.isFunction(val)){
             val = new ComputedProperty(val, lineage);
@@ -8321,6 +8332,10 @@ define("rebound-data/model",
           }
           else if(destination.isComputedProperty){
             return destination.set(key, val, options);
+          }
+
+          else if(val.isComputedProperty){
+            val = new ComputedProperty(val.func, lineage);
           }
           // If this value is a Model or Collection, create a new instance of it using its constructor
           // This will keep the defaults from the original, but make a new copy so memory isnt shared between data objects
@@ -8742,6 +8757,7 @@ define("rebound-runtime/component",
         this.helpers = {};
         this.__parent__ = this.__root__ = this;
 
+
         // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
         // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
         // Functions are compiled to find their dependancies and registerd as compiled properties
@@ -8752,8 +8768,10 @@ define("rebound-runtime/component",
           }
         }, this);
 
+
         // Set our component's context with the passed data merged with the component's defaults
-        this.set($.deepDefaults({}, (options.data || {}), (this.defaults || {})));
+        this.set((this.defaults || {}));
+        this.set((options.data || {}));
 
 
         // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
@@ -8825,7 +8843,7 @@ define("rebound-runtime/component",
         if(newVal === null){ this.unset(attrName); }
 
         // If oldVal is a number, and newVal is only numerical, preserve type
-        if(_.isNumber(oldVal) && !newVal.match(/[a-z]/i)){
+        if(_.isNumber(oldVal) && _.isString(newVal) && newVal.match(/^[0-9]*$/i)){
           newVal = parseInt(newVal);
         }
 
@@ -8915,6 +8933,8 @@ define("rebound-runtime/component",
           configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
 
       protoProps.defaults = {};
+
+      console.log(protoProps, staticProps);
 
       // For each property passed into our component base class
       _.each(protoProps, function(value, key, protoProps){

@@ -282,6 +282,8 @@ helpers.each = function(params, hash, options, env){
 
   _.each(value, function(obj, key, list){
 
+    if(!_.isFunction(obj.set)){ return console.error('Model ', obj, 'has no method .set()!'); }
+
     position = findIndex(options.placeholder.morphs, currentModel, obj.cid);
 
     // Even if rendered already, update each element's index, key, first and last in case of order changes or element removals

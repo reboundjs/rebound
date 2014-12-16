@@ -98,23 +98,23 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
 
   apply: function(context, params){
 
-    var value, result;
+    var value = this.cache[this.returnType], result;
 
     // If you're already resetting its cache, I'ma let you finish.
-    if(this._changing) return this.cache[this.returnType]; // Cannot be this.value() because on first run will loop
+    if(this._changing) return value; // Cannot be this.value() because on first run will loop
     this._changing = true;
 
     // Get result from computed property function
     result = this.func.apply(context || this.__parent__, params);
 
-    value = this.value();
-
     // Un-bind events from the old data source
-    if(value && value.isData){
+    if(!_.isUndefined(value) && value.isData){
       value.off('change add remove reset sort');
     }
 
+    // If result is undefined, reset our cache item
     if(_.isUndefined(result) || _.isNull(result)){
+      this.returnType || (this.returnType = 'value');
       this.reset();
     }
 
@@ -159,19 +159,20 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   },
 
   get: function(key, options){
+    var value = this.value();
     options || (options = {});
     if(this.returnType === 'value'){
       if(!options.quiet){ console.error('Called get on the `'+ this.name +'` computed property which returns a primitive value.'); }
       return undefined;
     }
 
-    return this.value().get(key, options);
+    return value.get(key, options);
 
   },
 
   // TODO: Moving the head of a data tree should preserve ancestry
   set: function(key, val, options){
-
+    var value = this.value();
     options || (options = {});
 
     if(this.returnType === 'value' && this.cache.value !== key){
@@ -185,7 +186,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       }
     }
 
-    return (this.returnType === 'value') ? key : this.value().set(key, val, options);
+    return (this.returnType === 'value') ? key : value.set(key, val, options);
 
   },
 

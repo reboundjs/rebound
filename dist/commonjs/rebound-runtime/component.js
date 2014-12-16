@@ -29,6 +29,7 @@ var Component = Model.extend({
     this.helpers = {};
     this.__parent__ = this.__root__ = this;
 
+
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and registerd as compiled properties
@@ -39,8 +40,10 @@ var Component = Model.extend({
       }
     }, this);
 
+
     // Set our component's context with the passed data merged with the component's defaults
-    this.set($.deepDefaults({}, (options.data || {}), (this.defaults || {})));
+    this.set((this.defaults || {}));
+    this.set((options.data || {}));
 
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
@@ -112,7 +115,7 @@ var Component = Model.extend({
     if(newVal === null){ this.unset(attrName); }
 
     // If oldVal is a number, and newVal is only numerical, preserve type
-    if(_.isNumber(oldVal) && !newVal.match(/[a-z]/i)){
+    if(_.isNumber(oldVal) && _.isString(newVal) && newVal.match(/^[0-9]*$/i)){
       newVal = parseInt(newVal);
     }
 
@@ -202,6 +205,8 @@ Component.extend= function(protoProps, staticProps) {
       configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
 
   protoProps.defaults = {};
+
+  console.log(protoProps, staticProps);
 
   // For each property passed into our component base class
   _.each(protoProps, function(value, key, protoProps){

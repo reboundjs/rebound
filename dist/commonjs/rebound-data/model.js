@@ -179,10 +179,18 @@ var Model = Backbone.Model.extend({
         silent: true
       };
 
-      // If val is null, set to undefined
-      if(val === null || val === undefined){
+
+      // If val is null or undefined, set to defaults
+      if(_.isNull(val) || _.isUndefined(val)){
         val = this.defaults[key];
       }
+
+
+      // If val is null, set to undefined
+      if(_.isNull(val) || _.isUndefined(val)){
+        val = undefined;
+      }
+
       // If this value is a Function, turn it into a Computed Property
       else if(_.isFunction(val)){
         val = new ComputedProperty(val, lineage);
@@ -201,6 +209,10 @@ var Model = Backbone.Model.extend({
       }
       else if(destination.isComputedProperty){
         return destination.set(key, val, options);
+      }
+
+      else if(val.isComputedProperty){
+        val = new ComputedProperty(val.func, lineage);
       }
       // If this value is a Model or Collection, create a new instance of it using its constructor
       // This will keep the defaults from the original, but make a new copy so memory isnt shared between data objects
