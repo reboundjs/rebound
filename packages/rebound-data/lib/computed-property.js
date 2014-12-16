@@ -100,13 +100,18 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // Get result from computed property function
     var result = this.func.apply(context || this.__parent__, params);
 
-    // If you're already resetting its cache, I'ma let you finish
+    if(_.isUndefined(result)){
+      return this.reset();
+    }
+
+    // If you're already resetting its cache, I'ma let you finish.
+    // Cannot be this.value() because on first run will enter loop
     if(this.changing) return this.cache[this.returnType];
     this.changing = true;
 
     // Un-bind events from the old data source
-    if(this.cache[this.returnType] && this.cache[this.returnType].isData){
-      this.cache[this.returnType].off('change add remove reset');
+    if(this.value() && this.value().isData){
+      this.value().off('change add remove reset sort');
     }
 
     // Set result and return type
@@ -114,48 +119,38 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       this.returnType = 'collection';
       this.isCollection = true;
       this.isModel = false;
-      this.cache.collection.set(result, {remove: true, merge: true});
+      this.set(result, {remove: true, merge: true});
     }
     else if(result && (result.isModel || _.isObject(result))){
       this.returnType = 'model';
       this.isCollection = false;
       this.isModel = true;
-      this.cache.model.reset(result);
+      this.reset(result);
     }
     else{
-      var oldValue = this.cache.value;
       this.returnType = 'value';
       this.isCollection = this.isModel = false;
-      this.cache.value = result;
-
-      // Manually trigger events on the parent model for this attribute
-      if(oldValue !== result){
-        this.__parent__.changed[this.name] = result;
-        // debugger;
-        this.trigger('change', this.__parent__);
-        this.trigger('change:'+this.name, this.__parent__, result);
-        delete this.__parent__.changed[this.name];
-      }
+      this.set(result);
     }
 
     // Pass all changes to this model back to the model used to set it
     if(result && result.isModel){
-      this.cache[this.returnType].on('change', function(model){
+      this.value().on('change', function(model){
         result.set(model.changedAttributes());
       });
     }
     if(result && result.isCollection){
-      this.cache[this.returnType].on('add reset', function(model, collection, options){
+      this.value().on('add reset', function(model, collection, options){
         result.set(model, options);
       });
-      this.cache[this.returnType].on('remove', function(model, collection, options){
+      this.value().on('remove', function(model, collection, options){
         result.remove(model, options);
       });
     }
 
     this.changing = false;
 
-    return this.cache[this.returnType];
+    return this.value();
   },
 
   get: function(key, options){
@@ -178,12 +173,19 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       (attrs = {})[key] = val;
     }
     options || (options = {});
-    if(this.returnType === 'value'){
-      if(!options.quiet){ console.error('Called set on the `'+ this.name +'` computed property which returns a primitive value.'); }
-      return undefined;
+
+    if(this.returnType === 'value' && this.cache.value !== key){
+      this.cache.value = key;
+      // Manually trigger events on the parent model for this attribute
+      if(!options.quiet){
+        this.__parent__.changed[this.name] = key;
+        this.trigger('change', this.__parent__);
+        this.trigger('change:'+this.name, this.__parent__, key);
+        delete this.__parent__.changed[this.name];
+      }
     }
 
-    return (this.value()).set(key, val, options);
+    return (this.returnType === 'value') ? key : this.value().set(key, val, options);
 
   },
 
@@ -195,7 +197,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   },
 
   reset: function(obj, options){
-    this.cache[this.returnType].reset(obj, options);
+    (this.returnType === 'value') ? this.set(undefined) : this.value().reset(obj, options);
   },
 
   toJSON: function() {

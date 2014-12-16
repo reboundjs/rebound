@@ -152,10 +152,11 @@
 		},
 		toggleAll: function(event){
 			var value = event.target.checked;
-			// debugger;
+
 			this.get('todos').forEach(function(model, index) {
 				model.set('isCompleted', value);
 			});
+
 		},
 		clearCompleted: function(event){
 			this.get('todos').remove(
