@@ -98,17 +98,18 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
 
   apply: function(context, params){
 
-    // Get result from computed property function
-    var result = this.func.apply(context || this.__parent__, params);
-
-    if(_.isUndefined(result)){
-      return this.reset();
-    }
-
     // If you're already resetting its cache, I'ma let you finish.
     // Cannot be this.value() because on first run will enter loop
     if(this.changing) return this.cache[this.returnType];
     this.changing = true;
+    
+    // Get result from computed property function
+    var result = this.func.apply(context || this.__parent__, params);
+
+    if(_.isUndefined(result) || _.isNull(result)){
+      this.returnType || (this.returnType = 'value');
+      return this.reset();
+    }
 
     // Un-bind events from the old data source
     if(this.value() && this.value().isData){
@@ -116,13 +117,13 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     }
 
     // Set result and return type
-    if(result && (result.isCollection || _.isArray(result))){
+    if(result.isCollection || _.isArray(result)){
       this.returnType = 'collection';
       this.isCollection = true;
       this.isModel = false;
       this.set(result, {remove: true, merge: true});
     }
-    else if(result && (result.isModel || _.isObject(result))){
+    else if(result.isModel || _.isObject(result)){
       this.returnType = 'model';
       this.isCollection = false;
       this.isModel = true;
@@ -161,7 +162,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       return undefined;
     }
 
-    return (this.value()).get(key, options);
+    return this.value().get(key, options);
 
   },
 
@@ -193,7 +194,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   },
 
   reset: function(obj, options){
-    (this.returnType === 'value') ? this.set(undefined) : this.value().reset(obj, options);
+    return (this.returnType === 'value') ? this.set(undefined) : this.value().reset(obj, options);
   },
 
   toJSON: function() {
