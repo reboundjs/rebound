@@ -7916,7 +7916,7 @@ define("rebound-data/computed-property",
       this.returnType = null;
       this.__observers = {};
       this.helpers = {};
-      this.changing = false;
+      this._changing = false;
 
       options.parent = this.setParent( options.parent || this );
       options.root = this.setRoot( options.root || options.parent || this );
@@ -7997,36 +7997,54 @@ define("rebound-data/computed-property",
 
       apply: function(context, params){
 
-        // If you're already resetting its cache, I'ma let you finish.
-        // Cannot be this.value() because on first run will enter loop
-        if(this.changing) return this.cache[this.returnType];
-        this.changing = true;
-        
-        // Get result from computed property function
-        var result = this.func.apply(context || this.__parent__, params);
+        var value, result;
 
-        if(_.isUndefined(result) || _.isNull(result)){
-          this.returnType || (this.returnType = 'value');
-          return this.reset();
-        }
+        // If you're already resetting its cache, I'ma let you finish.
+        if(this._changing) return this.cache[this.returnType]; // Cannot be this.value() because on first run will loop
+        this._changing = true;
+
+        // Get result from computed property function
+        result = this.func.apply(context || this.__parent__, params);
+
+        value = this.value();
 
         // Un-bind events from the old data source
-        if(this.value() && this.value().isData){
-          this.value().off('change add remove reset sort');
+        if(value && value.isData){
+          value.off('change add remove reset sort');
+        }
+
+        if(_.isUndefined(result) || _.isNull(result)){
+          this.reset();
         }
 
         // Set result and return type
-        if(result.isCollection || _.isArray(result)){
+        else if(result.isCollection || _.isArray(result)){
           this.returnType = 'collection';
           this.isCollection = true;
           this.isModel = false;
           this.set(result, {remove: true, merge: true});
+          value = this.value(); // Get our new value
+          if(result.isCollection){
+            value.on('add reset', function(model, collection, options){
+              result.set(model, options);
+            });
+            value.on('remove', function(model, collection, options){
+              result.remove(model, options);
+            });
+          }
         }
         else if(result.isModel || _.isObject(result)){
           this.returnType = 'model';
           this.isCollection = false;
           this.isModel = true;
           this.reset(result);
+          value = this.value(); // Get our new value
+          // Pass all changes to this model back to the model used to set it
+          if(result.isModel){
+            value.on('change', function(model){
+              result.set(model.changedAttributes());
+            });
+          }
         }
         else{
           this.returnType = 'value';
@@ -8034,24 +8052,9 @@ define("rebound-data/computed-property",
           this.set(result);
         }
 
-        // Pass all changes to this model back to the model used to set it
-        if(result && result.isModel){
-          this.value().on('change', function(model){
-            result.set(model.changedAttributes());
-          });
-        }
-        if(result && result.isCollection){
-          this.value().on('add reset', function(model, collection, options){
-            result.set(model, options);
-          });
-          this.value().on('remove', function(model, collection, options){
-            result.remove(model, options);
-          });
-        }
+        this._changing = false;
 
-        this.changing = false;
-
-        return this.value();
+        return value;
       },
 
       get: function(key, options){
@@ -8093,6 +8096,7 @@ define("rebound-data/computed-property",
       },
 
       reset: function(obj, options){
+        if(_.isNull(this.returnType)) return;
         return (this.returnType === 'value') ? this.set(undefined) : this.value().reset(obj, options);
       },
 
@@ -8808,6 +8812,24 @@ define("rebound-runtime/component",
       __callOnComponent: function(name, event){
         if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
         return this[name].call(this, event);
+      },
+
+      _onAttributeChange: function(attrName, oldVal, newVal){
+        try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
+
+        // data attributes should be referanced by their camel case name
+        attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+
+        oldVal = this.get(attrName);
+
+        if(newVal === null){ this.unset(attrName); }
+
+        // If oldVal is a number, and newVal is only numerical, preserve type
+        if(_.isNumber(oldVal) && !newVal.match(/[a-z]/i)){
+          newVal = parseInt(newVal);
+        }
+
+        else{ this.set(attrName, newVal, {quiet: true}); }
       },
 
       _onReset: function(data, options){

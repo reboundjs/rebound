@@ -115,12 +115,9 @@ function precompile(str, options){
                '    this.__component__.deinitialize();\n' +
                '    };\n' +
                '  proto.attributeChangedCallback = function(attrName, oldVal, newVal){\n' +
-               '    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }\n' +
-                    // data attributes should be referanced by their camel case name
-               '    attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });\n' +
-               '    if(newVal === null){ this.__component__.unset(attrName); }\n' +
-               '    else{ this.__component__.set(attrName, newVal, {quiet: true}); }\n' +
-               '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__);\n' +
+                    // When an element's attributes are changed, update the component to reflect it
+               '    this.__component__._onAttributeChange(attrName, oldVal, newVal);\n' +
+               '    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__, attrName, oldVal, newVal);\n' +
                '  }\n' +
                '  return document.registerElement("' + name + '", {prototype: proto} );\n' +
                '})();\n';

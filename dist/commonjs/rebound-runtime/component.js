@@ -101,6 +101,24 @@ var Component = Model.extend({
     return this[name].call(this, event);
   },
 
+  _onAttributeChange: function(attrName, oldVal, newVal){
+    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
+
+    // data attributes should be referanced by their camel case name
+    attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+
+    oldVal = this.get(attrName);
+
+    if(newVal === null){ this.unset(attrName); }
+
+    // If oldVal is a number, and newVal is only numerical, preserve type
+    if(_.isNumber(oldVal) && !newVal.match(/[a-z]/i)){
+      newVal = parseInt(newVal);
+    }
+
+    else{ this.set(attrName, newVal, {quiet: true}); }
+  },
+
   _onReset: function(data, options){
     if(data && data.isModel){
       return this._onModelChange(data, options);
