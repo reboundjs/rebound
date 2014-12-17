@@ -7999,14 +7999,29 @@ define("rebound-data/computed-property",
 
       apply: function(context, params){
 
-        var value = this.cache[this.returnType], result;
+        var value = this.cache[this.returnType],
+            depsLen = this.deps.length,
+            dependancy,
+            result,
+            i;
+
+        context || (context = this.__parent__);
+
+        // If any of this computed properties' dependancies are changing, let them finish before evaluating.
+        // TODO: There can be a check here looking for cyclic dependancies.
+        for(i=0;i<depsLen;i++){
+          dependancy = context.get(this.deps[i], {raw: true});
+          if(dependancy && dependancy._changing){
+            return value;
+          }
+        }
 
         // If you're already resetting its cache, I'ma let you finish.
         if(this._changing) return value; // Cannot be this.value() because on first run will loop
         this._changing = true;
 
         // Get result from computed property function
-        result = this.func.apply(context || this.__parent__, params);
+        result = this.func.apply(context, params);
 
         // Un-bind events from the old data source
         if(!_.isUndefined(value) && value.isData){
@@ -8093,13 +8108,14 @@ define("rebound-data/computed-property",
 
       value: function(){
         if(_.isNull(this.returnType)){
-          this.apply(this.__parent__);
+          this.apply();
         }
         return this.cache[this.returnType];
       },
 
       reset: function(obj, options){
         if(_.isNull(this.returnType)) return;
+        this._changing = false;
         return (this.returnType === 'value') ? this.set(undefined) : this.value().reset(obj, options);
       },
 
