@@ -12,6 +12,8 @@
 
 #### Backbone and HTMLBars are a match made in heaven :heart:
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/epicmiller/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Now I know what you're thinking:
 
 >"But Adam! The mind-numbingly repetative process of manually wiring all of my events in Backbone is my favorite part of application development!"
