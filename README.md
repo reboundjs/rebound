@@ -27,11 +27,11 @@ But just trust me on this, this is going to be good.
 
 #### Wait, what is this again?
 
-**tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. And, like Ember, we can use these features to allow for live data-binding with our Backbone models - change a value in your model or collection, and your views update automagically. Throw in the brilliant Polymer Custom-Elements polyfill and *bam* – Rebound.
+**tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. And, like Ember, we can use these features to allow for live data-binding with our Backbone models - change a value in your model or collection, and your views update automagically. Throw in a brilliant Custom-Elements polyfill and *bam* – Rebound.
 
 **The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details. But long story short is this new library makes data binding very fast and very powerful.
 
-The [Polymer](https://github.com/Polymer) people over at Google have created a polyfill for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
+Powerful polyfills for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
 
 [Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its evented Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
 
