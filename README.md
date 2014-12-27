@@ -4,15 +4,20 @@
   <a href="https://travis-ci.org/epicmiller/rebound">
     <img src="https://travis-ci.org/epicmiller/rebound.svg?branch=master" alt="Build Status" />
     <br>
-    <a href="http://zenhub.io" target="_blank"><img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png" height="18px" alt="Powered by ZenHub"/></a>
   </a>
+  <a href="https://gitter.im/epicmiller/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+    <img src="https://badges.gitter.im/Join%20Chat.svg" alt="Gitter" />
+    <br>
+  </a>
+  <a href="http://zenhub.io" target="_blank">
+    <img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png" height="18px" alt="Powered by ZenHub"/>
+  </a>
+
   <h3 align="center">Automatic data binding for Backbone using HTMLBars.</h3>
 </p>
 - - -
 
 #### Backbone and HTMLBars are a match made in heaven :heart:
-
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/epicmiller/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Now I know what you're thinking:
 
