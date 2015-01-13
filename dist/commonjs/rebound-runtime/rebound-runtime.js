@@ -10,6 +10,9 @@ var env = require("rebound-runtime/env")["default"];
 // Load our utils
 var utils = require("rebound-runtime/utils")["default"];
 
+// Load our utils
+var registerComponent = require("rebound-runtime/register")["default"];
+
 // Load Rebound Data
 var Model = require("rebound-data/rebound-data").Model;
 var Collection = require("rebound-data/rebound-data").Collection;
@@ -31,6 +34,7 @@ window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Bac
 window.Rebound = {
   registerHelper: env.registerHelper,
   registerPartial: env.registerPartial,
+  registerComponent: registerComponent,
   Model: Model,
   Collection: Collection,
   ComputedProperty: ComputedProperty,

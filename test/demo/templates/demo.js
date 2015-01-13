@@ -1,6 +1,9 @@
 define( ["test/demo/templates/components/editing"], function(){
-return (function(){
-  var template = (function() {
+
+  return (function() {
+    return window.Rebound.registerComponent("rebound-demo", {
+      prototype: (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, todosProxy: function(){ return this.get('filteredTodos'); }, firstTodo: function(){ return this.get('todosProxy[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.context); }, editTodo: function(event){ event.context.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })(),
+      template: (function() {
   var child0 = (function() {
     var child0 = (function() {
       var child0 = (function() {
@@ -322,23 +325,8 @@ return (function(){
       return fragment;
     }
   };
-}())
-  var script = (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, todosProxy: function(){ return this.get('filteredTodos'); }, firstTodo: function(){ return this.get('todosProxy[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.context); }, editTodo: function(event){ event.context.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })();
-  var style = "";
-  var component = Rebound.Component.extend(script, { __name: "rebound-demo" });
-  var proto = Object.create(HTMLElement.prototype, {});
-  proto.createdCallback = function(){
-    this.__component__ = new component({template: template, outlet: this, data: Rebound.seedData});
-  }
-  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};
-  proto.detachedCallback = function(){
-    script.detachedCallback && script.detachedCallback.call(this.__component__);
-    this.__component__.deinitialize();
-    };
-  proto.attributeChangedCallback = function(attrName, oldVal, newVal){
-    this.__component__._onAttributeChange(attrName, oldVal, newVal);
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__, attrName, oldVal, newVal);
-  }
-  return document.registerElement("rebound-demo", {prototype: proto} );
-})();
+}()),
+      style: ""
+    });
+  })();
 });

@@ -5,9 +5,7 @@ var nodeHandlers = require("./html-parser/node-handlers")["default"];
 var tokenHandlers = require("./html-parser/token-handlers")["default"];
 
 function preprocess(html, options) {
-
   var ast = parse(html);
-
   var combined = new HTMLProcessor(html, options).acceptNode(ast);
 
   if (options && options.plugins && options.plugins.ast) {

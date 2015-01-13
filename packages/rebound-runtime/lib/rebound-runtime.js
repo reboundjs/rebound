@@ -9,6 +9,9 @@ import env  from "rebound-runtime/env";
 // Load our utils
 import utils from "rebound-runtime/utils";
 
+// Load our utils
+import registerComponent from "rebound-runtime/register";
+
 // Load Rebound Data
 import { Model, Collection, ComputedProperty } from "rebound-data/rebound-data";
 
@@ -28,6 +31,7 @@ window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Bac
 window.Rebound = {
   registerHelper: env.registerHelper,
   registerPartial: env.registerPartial,
+  registerComponent: registerComponent,
   Model: Model,
   Collection: Collection,
   ComputedProperty: ComputedProperty,
