@@ -19,7 +19,7 @@ var Component = Model.extend({
 
   constructor: function(options){
     options = options || (options = {});
-    _.bindAll(this, '_onModelChange', '_onCollectionChange', '__callOnComponent', '_notifySubtree');
+    _.bindAll(this, '__callOnComponent');
     this.cid = _.uniqueId('component');
     this.attributes = {};
     this.changed = {};
