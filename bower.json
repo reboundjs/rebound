@@ -36,9 +36,9 @@
     "requirejs": "https://github.com/jrburke/requirejs.git#19a98167858db65342a269ba76f06e3be152210e",
     "almond": "0.2.9",
     "document-register-element": "https://github.com/WebReflection/document-register-element.git#aed65eb178eff6dc287b2fd529e10db09dfddbee",
-    "htmlbars": "git://github.com/tildeio/htmlbars.git#717ddc917004584328e6d7e6f408c6dd6469b2c3",
+    "htmlbars": "git://github.com/tildeio/htmlbars.git#4a31478d30b21b39d6fa46e453cedbc231578aff",
     "handlebars": "mmun/handlebars.js#new-ast-3238645f",
-    "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#1a48c72e56200ae6c326d0821376ae95fbaa721b",
+    "simple-html-tokenizer": "git://github.com/tildeio/simple-html-tokenizer#721e12dbeb5c699594b71e04c5cfd8f5f2bfe585",
     "acorn": "~0.6.0",
     "qunit": "~1.14.0",
     "todomvc-common": "0.1.9"

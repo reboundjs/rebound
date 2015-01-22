@@ -1,23 +1,25 @@
 "use strict";
-var FragmentOpcodeCompiler = require("./fragment_opcode").FragmentOpcodeCompiler;
-var FragmentCompiler = require("./fragment").FragmentCompiler;
-var HydrationOpcodeCompiler = require("./hydration_opcode").HydrationOpcodeCompiler;
-var HydrationCompiler = require("./hydration").HydrationCompiler;
-var TemplateVisitor = require("./template_visitor")["default"];
+var FragmentOpcodeCompiler = require("./fragment-opcode-compiler")["default"];
+var FragmentJavaScriptCompiler = require("./fragment-javascript-compiler")["default"];
+var HydrationOpcodeCompiler = require("./hydration-opcode-compiler")["default"];
+var HydrationJavaScriptCompiler = require("./hydration-javascript-compiler")["default"];
+var TemplateVisitor = require("./template-visitor")["default"];
 var processOpcodes = require("./utils").processOpcodes;
-var repeat = require("./quoting").repeat;
+var repeat = require("../htmlbars-util/quoting").repeat;
 
 function TemplateCompiler(options) {
   this.options = options || {};
   this.fragmentOpcodeCompiler = new FragmentOpcodeCompiler();
-  this.fragmentCompiler = new FragmentCompiler();
+  this.fragmentCompiler = new FragmentJavaScriptCompiler();
   this.hydrationOpcodeCompiler = new HydrationOpcodeCompiler();
-  this.hydrationCompiler = new HydrationCompiler();
+  this.hydrationCompiler = new HydrationJavaScriptCompiler();
   this.templates = [];
   this.childTemplates = [];
 }
 
-exports.TemplateCompiler = TemplateCompiler;TemplateCompiler.prototype.compile = function(ast) {
+exports["default"] = TemplateCompiler;
+
+TemplateCompiler.prototype.compile = function(ast) {
   var templateVisitor = new TemplateVisitor();
   templateVisitor.visit(ast);
 
@@ -92,16 +94,26 @@ TemplateCompiler.prototype.endProgram = function(program, programDepth) {
     this.getChildTemplateVars(indent + '  ') +
     indent+'  return {\n' +
     indent+'    isHTMLBars: true,\n' +
+    indent+'    blockParams: ' + blockParams.length + ',\n' +
     indent+'    cachedFragment: null,\n' +
+    indent+'    hasRendered: false,\n' +
     indent+'    build: ' + fragmentProgram + ',\n' +
     indent+'    render: function render(' + templateSignature + ') {\n' +
     indent+'      var dom = env.dom;\n' +
     this.getHydrationHooks(indent + '      ', this.hydrationCompiler.hooks) +
     indent+'      dom.detectNamespace(contextualElement);\n' +
+    indent+'      var fragment;\n' +
     indent+'      if (this.cachedFragment === null) {\n' +
-    indent+'        this.cachedFragment = this.build(dom);\n' +
+    indent+'        fragment = this.build(dom);\n' +
+    indent+'        if (this.hasRendered) {\n' +
+    indent+'          this.cachedFragment = fragment;\n' +
+    indent+'        } else {\n' +
+    indent+'          this.hasRendered = true;\n' +
+    indent+'        }\n' +
     indent+'      }\n' +
-    indent+'      var fragment = dom.cloneNode(this.cachedFragment, true);\n' +
+    indent+'      if (this.cachedFragment) {\n' +
+    indent+'        fragment = dom.cloneNode(this.cachedFragment, true);\n' +
+    indent+'      }\n' +
     hydrationProgram +
     indent+'      return fragment;\n' +
     indent+'    }\n' +

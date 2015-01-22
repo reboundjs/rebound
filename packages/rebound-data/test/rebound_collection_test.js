@@ -39,6 +39,11 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
         deepEqual(model.changedAttributes(), {test2: 'foo'}, 'Events are propagated up to parent');
       });
       collection.at(0).set('test2', 'foo');
+      collection.off();
+
+      collection.set('[0].test2', 'bar');
+      deepEqual(collection.toJSON(), [{test2: 'bar'}], 'Collection.set can accept a path to call the .set at');
+
 
     });
 });

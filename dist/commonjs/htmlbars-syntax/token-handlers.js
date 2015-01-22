@@ -1,14 +1,13 @@
 "use strict";
-var buildProgram = require("../builders").buildProgram;
-var buildComponent = require("../builders").buildComponent;
-var buildElement = require("../builders").buildElement;
-var buildComment = require("../builders").buildComment;
-var buildText = require("../builders").buildText;
-var appendChild = require("../ast").appendChild;
-var isHelper = require("../ast").isHelper;
-var parseComponentBlockParams = require("./helpers").parseComponentBlockParams;
-var postprocessProgram = require("./helpers").postprocessProgram;
-var forEach = require("../utils").forEach;
+var forEach = require("../htmlbars-util/array-utils").forEach;
+var buildProgram = require("./builders").buildProgram;
+var buildComponent = require("./builders").buildComponent;
+var buildElement = require("./builders").buildElement;
+var buildComment = require("./builders").buildComment;
+var buildText = require("./builders").buildText;
+var appendChild = require("./utils").appendChild;
+var parseComponentBlockParams = require("./utils").parseComponentBlockParams;
+var postprocessProgram = require("./utils").postprocessProgram;
 
 // The HTML elements in this list are speced by
 // http://www.w3.org/TR/html-markup/syntax.html#syntax-elements,
@@ -43,21 +42,12 @@ function applyHTMLIntegrationPoint(tag, element){
   }
 }
 
-function unwrapMustache(mustache) {
-  if (isHelper(mustache.sexpr)) {
-    return mustache.sexpr;
-  } else {
-    return mustache.sexpr.path;
-  }
-}
-
 // Except for `mustache`, all tokens are only allowed outside of
 // a start or end tag.
 var tokenHandlers = {
-  CommentToken: function(token) {
+  Comment: function(token) {
     var current = this.currentElement();
     var comment = buildComment(token.chars);
-
     appendChild(current, comment);
   },
 
@@ -69,6 +59,11 @@ var tokenHandlers = {
 
   StartTag: function(tag) {
     var element = buildElement(tag.tagName, tag.attributes, tag.helpers || [], []);
+    element.loc = {
+      start: { line: tag.firstLine, column: tag.firstColumn},
+      end: { line: null, column: null}
+    };
+
     applyNamespace(tag, element, this.currentElement());
     applyHTMLIntegrationPoint(tag, element);
     this.elementStack.push(element);
@@ -86,28 +81,42 @@ var tokenHandlers = {
   },
 
   MustacheStatement: function(mustache) {
-    var state = this.tokenizer.state;
-    var token = this.tokenizer.token;
+    var tokenizer = this.tokenizer;
 
-    switch(state) {
+    switch(tokenizer.state) {
+      // Tag helpers
+      case "tagName":
+        tokenizer.addTagHelper(mustache.sexpr);
+        tokenizer.state = "beforeAttributeName";
+        return;
+      case "beforeAttributeName":
+        tokenizer.addTagHelper(mustache.sexpr);
+        return;
+      case "attributeName":
+      case "afterAttributeName":
+        tokenizer.finalizeAttributeValue();
+        tokenizer.addTagHelper(mustache.sexpr);
+        tokenizer.state = "beforeAttributeName";
+        return;
+      case "afterAttributeValueQuoted":
+        tokenizer.addTagHelper(mustache.sexpr);
+        tokenizer.state = "beforeAttributeName";
+        return;
+
+      // Attribute values
       case "beforeAttributeValue":
-        this.tokenizer.state = 'attributeValueUnquoted';
-        token.markAttributeQuoted(false);
-        token.addToAttributeValue(unwrapMustache(mustache));
-        token.finalizeAttributeValue();
+        tokenizer.markAttributeQuoted(false);
+        tokenizer.addToAttributeValue(mustache);
+        tokenizer.state = 'attributeValueUnquoted';
         return;
       case "attributeValueDoubleQuoted":
       case "attributeValueSingleQuoted":
-        token.markAttributeQuoted(true);
-        token.addToAttributeValue(unwrapMustache(mustache));
-        return;
       case "attributeValueUnquoted":
-        token.markAttributeQuoted(false);
-        token.addToAttributeValue(unwrapMustache(mustache));
+        tokenizer.addToAttributeValue(mustache);
         return;
-      case "beforeAttributeName":
-        token.addTagHelper(mustache.sexpr);
-        return;
+
+      // TODO: Only append child when the tokenizer state makes
+      // sense to do so, otherwise throw an error.
       default:
         appendChild(this.currentElement(), mustache);
     }
@@ -121,7 +130,7 @@ var tokenHandlers = {
     if (element.tag !== tag.tagName) {
       throw new Error(
         "Closing tag `" + tag.tagName + "` (on line " + tag.lastLine + ") " +
-        "did not match last open tag `" + element.tag + "`."
+        "did not match last open tag `" + element.tag + "` (on line " + element.loc.start.line + ")."
       );
     }
 

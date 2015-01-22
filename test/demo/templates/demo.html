@@ -16,7 +16,7 @@
 						{{#each filteredTodos}}
 							<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
 								{{#if editing}}
-		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}}></edit-todo>
+		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}} test={{name}}></edit-todo>
 								{{else}}
 									<input type="checkbox" class="toggle" checked="{{isCompleted}}">
 									<label {{on "dblclick" "editTodo"}}>{{title}}</label>
@@ -59,7 +59,15 @@
 	</template>
 </element>
 <script>
+
 	return ({
+
+		name: 'woo',
+		val: {
+			test: function(){
+				return this.get('@parent.name');
+			}
+		},
 
 	/**************** Component Configs *******************/
 
@@ -103,6 +111,7 @@
 		],
 
 	/************** Computed Properties *****************/
+
 
 		allAreDone: function(){
 			return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length;

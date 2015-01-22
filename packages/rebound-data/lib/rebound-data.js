@@ -5,19 +5,33 @@ import $ from "rebound-runtime/utils";
 
 
 var sharedMethods = {
+
+  propagateEvent: function(type, model){
+    if(this.__parent__ === this) return;
+    if(type.indexOf('change:') === 0 && model.isModel){
+      var key,
+          path = model.__path().replace(this.__parent__.__path(), '').replace(/^\./, ''),
+          changed = model.changedAttributes();
+      for(key in changed){
+        arguments[0] = ('change:' + path + (path && '.') + key); // jshint ignore:line
+        this.__parent__.trigger.apply(this.__parent__, arguments);
+      }
+      return;
+    }
+    this.__parent__.trigger.apply(this.__parent__, arguments);
+  },
+
   setParent: function(parent){
 
     if(this.__parent__){
-      this.off('all', this.__parent__.trigger);
+      this.off('all', this.propagate);
     }
 
     this.__parent__ = parent;
     this._hasAncestry = true;
 
     // If parent is not self, propagate all events up
-    if(parent !== this && !parent.isCollection){
-      this.on('all', parent.trigger, parent);
-    }
+    if(parent !== this) this.on('all', parent.propagateEvent);
 
     return parent;
 

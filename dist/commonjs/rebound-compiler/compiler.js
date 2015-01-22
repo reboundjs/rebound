@@ -1,7 +1,7 @@
 "use strict";
 var htmlbarsCompile = require("htmlbars-compiler/compiler").compile;
 var htmlbarsCompileSpec = require("htmlbars-compiler/compiler").compileSpec;
-var merge = require("htmlbars-runtime/utils").merge;
+var merge = require("htmlbars-util/object-utils").merge;
 var DOMHelper = require("morph/dom-helper")["default"];
 var helpers = require("rebound-runtime/helpers")["default"];
 var hooks = require("rebound-runtime/hooks")["default"];

@@ -1,5 +1,5 @@
 import { compile as htmlbarsCompile, compileSpec as htmlbarsCompileSpec } from "htmlbars-compiler/compiler";
-import { merge } from "htmlbars-runtime/utils";
+import { merge } from "htmlbars-util/object-utils";
 import DOMHelper from "morph/dom-helper";
 import helpers from "rebound-runtime/helpers";
 import hooks from "rebound-runtime/hooks";

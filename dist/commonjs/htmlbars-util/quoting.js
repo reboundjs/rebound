@@ -1,6 +1,9 @@
 "use strict";
 function escapeString(str) {
-  return str.replace(/"/g, '\\"').replace(/\n/g, "\\n");
+  str = str.replace(/\\/g, "\\\\");
+  str = str.replace(/"/g, '\\"');
+  str = str.replace(/\n/g, "\\n");
+  return str;
 }
 
 exports.escapeString = escapeString;
@@ -17,12 +20,8 @@ function array(a) {
 
 exports.array = array;
 
-function quotedArray(list) {
-  return array(list.map(string).join(", "));
-}
-
-exports.quotedArray = quotedArray;function hash(pairs) {
-  return "{" + pairs.join(",") + "}";
+function hash(pairs) {
+  return "{" + pairs.join(", ") + "}";
 }
 
 exports.hash = hash;function repeat(chars, times) {

@@ -1,11 +1,10 @@
 "use strict";
-var buildProgram = require("../builders").buildProgram;
-var buildBlock = require("../builders").buildBlock;
-var buildHash = require("../builders").buildHash;
-var appendChild = require("../ast").appendChild;
-var postprocessProgram = require("../html-parser/helpers").postprocessProgram;
-var Chars = require("../html-parser/tokens").Chars;
-var forEach = require("../utils").forEach;
+var buildProgram = require("./builders").buildProgram;
+var buildBlock = require("./builders").buildBlock;
+var buildHash = require("./builders").buildHash;
+var forEach = require("../htmlbars-util/array-utils").forEach;
+var appendChild = require("./utils").appendChild;
+var postprocessProgram = require("./utils").postprocessProgram;
 
 var nodeHandlers = {
 
@@ -41,7 +40,7 @@ var nodeHandlers = {
     delete block.closeStrip;
 
     if (this.tokenizer.state === 'comment') {
-      this.tokenizer.token.addChar('{{' + this.sourceForMustache(block) + '}}');
+      this.tokenizer.addChar('{{' + this.sourceForMustache(block) + '}}');
       return;
     }
 
@@ -61,7 +60,7 @@ var nodeHandlers = {
     delete mustache.strip;
 
     if (this.tokenizer.state === 'comment') {
-      this.tokenizer.token.addChar('{{' + this.sourceForMustache(mustache) + '}}');
+      this.tokenizer.addChar('{{' + this.sourceForMustache(mustache) + '}}');
       return;
     }
 
@@ -73,6 +72,13 @@ var nodeHandlers = {
   },
 
   ContentStatement: function(content) {
+    var changeLines = 0;
+    if (content.rightStripped) {
+      changeLines = leadingNewlineDifference(content.original, content.value);
+    }
+
+    this.tokenizer.line = this.tokenizer.line + changeLines;
+
     var tokens = this.tokenizer.tokenizePart(content.value);
 
     return forEach(tokens, this.acceptToken, this);
@@ -132,11 +138,25 @@ var nodeHandlers = {
 function switchToHandlebars(processor) {
   var token = processor.tokenizer.token;
 
-  // TODO: Monkey patch Chars.addChar like attributes
-  if (token instanceof Chars) {
+  if (token && token.type === 'Chars') {
     processor.acceptToken(token);
     processor.tokenizer.token = null;
   }
+}
+
+function leadingNewlineDifference(original, value) {
+  if (value === '') {
+    // if it is empty, just return the count of newlines
+    // in original
+    return original.split("\n").length - 1;
+  }
+
+  // otherwise, return the number of newlines prior to
+  // `value`
+  var difference = original.split(value)[0];
+  var lines = difference.split(/\n/);
+
+  return lines.length - 1;
 }
 
 exports["default"] = nodeHandlers;

@@ -1,5 +1,5 @@
 "use strict";
-var namedCodepoints = {
+exports["default"] = {
   AElig: [198],
   AMP: [38],
   Aacute: [193],
@@ -2126,4 +2126,3 @@ var namedCodepoints = {
   zwj: [8205],
   zwnj: [8204]
 };
-exports.namedCodepoints = namedCodepoints;

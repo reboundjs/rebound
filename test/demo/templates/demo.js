@@ -2,7 +2,7 @@ define( ["test/demo/templates/components/editing"], function(){
 
   return (function() {
     return window.Rebound.registerComponent("rebound-demo", {
-      prototype: (function(){ return ({ initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, todosProxy: function(){ return this.get('filteredTodos'); }, firstTodo: function(){ return this.get('todosProxy[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.context); }, editTodo: function(event){ event.context.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })(),
+      prototype: (function(){ return ({ name: 'woo', val: { test: function(){ return this.get('@parent.name'); } }, initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, todosProxy: function(){ return this.get('filteredTodos'); }, firstTodo: function(){ return this.get('todosProxy[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.context); }, editTodo: function(event){ event.context.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })(),
       template: (function() {
   var child0 = (function() {
     var child0 = (function() {
@@ -10,7 +10,9 @@ define( ["test/demo/templates/components/editing"], function(){
         var child0 = (function() {
           return {
             isHTMLBars: true,
+            blockParams: 0,
             cachedFragment: null,
+            hasRendered: false,
             build: function build(dom) {
               var el0 = dom.createDocumentFragment();
               return el0;
@@ -18,17 +20,27 @@ define( ["test/demo/templates/components/editing"], function(){
             render: function render(context, env, contextualElement) {
               var dom = env.dom;
               dom.detectNamespace(contextualElement);
+              var fragment;
               if (this.cachedFragment === null) {
-                this.cachedFragment = this.build(dom);
+                fragment = this.build(dom);
+                if (this.hasRendered) {
+                  this.cachedFragment = fragment;
+                } else {
+                  this.hasRendered = true;
+                }
               }
-              var fragment = dom.cloneNode(this.cachedFragment, true);
+              if (this.cachedFragment) {
+                fragment = dom.cloneNode(this.cachedFragment, true);
+              }
               return fragment;
             }
           };
         }());
         return {
           isHTMLBars: true,
+          blockParams: 0,
           cachedFragment: null,
+          hasRendered: false,
           build: function build(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode(" ");
@@ -39,14 +51,22 @@ define( ["test/demo/templates/components/editing"], function(){
           },
           render: function render(context, env, contextualElement) {
             var dom = env.dom;
-            var hooks = env.hooks, get = hooks.get, subexpr = hooks.subexpr, component = hooks.component;
+            var hooks = env.hooks, get = hooks.get, component = hooks.component;
             dom.detectNamespace(contextualElement);
+            var fragment;
             if (this.cachedFragment === null) {
-              this.cachedFragment = this.build(dom);
+              fragment = this.build(dom);
+              if (this.hasRendered) {
+                this.cachedFragment = fragment;
+              } else {
+                this.hasRendered = true;
+              }
             }
-            var fragment = dom.cloneNode(this.cachedFragment, true);
-            var morph0 = dom.createUnsafeMorphAt(fragment,0,1,contextualElement);
-            component(morph0, "edit-todo", context, {"value":subexpr("concat", context, [get(context, "title", env)], {}, {}, env),"editing":subexpr("concat", context, [get(context, "editing", env)], {}, {}, env),"arr":subexpr("concat", context, [get(context, "arr", env)], {}, {}, env),"obj":subexpr("concat", context, [get(context, "obj", env)], {}, {}, env)}, {template:child0,morph:morph0}, env);
+            if (this.cachedFragment) {
+              fragment = dom.cloneNode(this.cachedFragment, true);
+            }
+            var morph0 = dom.createMorphAt(fragment,0,1,contextualElement);
+            component(env, morph0, context, "edit-todo", {"value": get(env, context, "title"), "editing": get(env, context, "editing"), "arr": get(env, context, "arr"), "obj": get(env, context, "obj"), "test": get(env, context, "name")}, child0);
             return fragment;
           }
         };
@@ -54,7 +74,9 @@ define( ["test/demo/templates/components/editing"], function(){
       var child1 = (function() {
         return {
           isHTMLBars: true,
+          blockParams: 0,
           cachedFragment: null,
+          hasRendered: false,
           build: function build(dom) {
             var el0 = dom.createDocumentFragment();
             var el1 = dom.createTextNode(" ");
@@ -74,28 +96,38 @@ define( ["test/demo/templates/components/editing"], function(){
           },
           render: function render(context, env, contextualElement) {
             var dom = env.dom;
-            var hooks = env.hooks, get = hooks.get, attribute = hooks.attribute, element = hooks.element, content = hooks.content;
+            var hooks = env.hooks, get = hooks.get, concat = hooks.concat, attribute = hooks.attribute, element = hooks.element, content = hooks.content;
             dom.detectNamespace(contextualElement);
+            var fragment;
             if (this.cachedFragment === null) {
-              this.cachedFragment = this.build(dom);
+              fragment = this.build(dom);
+              if (this.hasRendered) {
+                this.cachedFragment = fragment;
+              } else {
+                this.hasRendered = true;
+              }
             }
-            var fragment = dom.cloneNode(this.cachedFragment, true);
+            if (this.cachedFragment) {
+              fragment = dom.cloneNode(this.cachedFragment, true);
+            }
             dom.repairClonedNode(fragment.childNodes[1],[],true);
             var element1 = fragment.childNodes[1];
             var element2 = fragment.childNodes[2];
             var element3 = fragment.childNodes[3];
             var morph0 = dom.createMorphAt(element2,-1,-1);
-            attribute(element1, "checked", true, context, [get(context, "isCompleted", env)], {}, env);
-            element(element2, "on", context, ["dblclick","editTodo"], {}, {element:element2}, env);
-            content(morph0, "title", context, [], {}, {morph:morph0}, env);
-            element(element3, "on", context, ["click","removeTodo"], {}, {element:element3}, env);
+            attribute(env, element1, "checked", concat(env, [get(env, context, "isCompleted")]));
+            element(env, element2, context, "on", ["dblclick", "editTodo"], {});
+            content(env, morph0, context, "title");
+            element(env, element3, context, "on", ["click", "removeTodo"], {});
             return fragment;
           }
         };
       }());
       return {
         isHTMLBars: true,
+        blockParams: 0,
         cachedFragment: null,
+        hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode(" ");
@@ -112,16 +144,24 @@ define( ["test/demo/templates/components/editing"], function(){
         },
         render: function render(context, env, contextualElement) {
           var dom = env.dom;
-          var hooks = env.hooks, get = hooks.get, subexpr = hooks.subexpr, attribute = hooks.attribute, content = hooks.content;
+          var hooks = env.hooks, get = hooks.get, subexpr = hooks.subexpr, concat = hooks.concat, attribute = hooks.attribute, block = hooks.block;
           dom.detectNamespace(contextualElement);
+          var fragment;
           if (this.cachedFragment === null) {
-            this.cachedFragment = this.build(dom);
+            fragment = this.build(dom);
+            if (this.hasRendered) {
+              this.cachedFragment = fragment;
+            } else {
+              this.hasRendered = true;
+            }
           }
-          var fragment = dom.cloneNode(this.cachedFragment, true);
+          if (this.cachedFragment) {
+            fragment = dom.cloneNode(this.cachedFragment, true);
+          }
           var element4 = fragment.childNodes[1];
           var morph0 = dom.createMorphAt(element4,0,1);
-          attribute(element4, "class", true, context, [subexpr("if", context, [get(context, "isCompleted", env),"completed"], {}, {}, env)," ",subexpr("if", context, [get(context, "editing", env),"editing"], {}, {}, env)], {}, env);
-          content(morph0, "if", context, [get(context, "editing", env)], {}, {template:child0,inverse:child1,morph:morph0}, env);
+          attribute(env, element4, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isCompleted"), "completed"], {}), " ", subexpr(env, context, "if", [get(env, context, "editing"), "editing"], {})]));
+          block(env, morph0, context, "if", [get(env, context, "editing")], {}, child0, child1);
           return fragment;
         }
       };
@@ -129,7 +169,9 @@ define( ["test/demo/templates/components/editing"], function(){
     var child1 = (function() {
       return {
         isHTMLBars: true,
+        blockParams: 0,
         cachedFragment: null,
+        hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
           var el1 = dom.createTextNode(" ");
@@ -149,21 +191,31 @@ define( ["test/demo/templates/components/editing"], function(){
           var dom = env.dom;
           var hooks = env.hooks, element = hooks.element, content = hooks.content;
           dom.detectNamespace(contextualElement);
+          var fragment;
           if (this.cachedFragment === null) {
-            this.cachedFragment = this.build(dom);
+            fragment = this.build(dom);
+            if (this.hasRendered) {
+              this.cachedFragment = fragment;
+            } else {
+              this.hasRendered = true;
+            }
           }
-          var fragment = dom.cloneNode(this.cachedFragment, true);
+          if (this.cachedFragment) {
+            fragment = dom.cloneNode(this.cachedFragment, true);
+          }
           var element0 = fragment.childNodes[1];
           var morph0 = dom.createMorphAt(element0,0,1);
-          element(element0, "on", context, ["click","clearCompleted"], {}, {element:element0}, env);
-          content(morph0, "completed", context, [], {}, {morph:morph0}, env);
+          element(env, element0, context, "on", ["click", "clearCompleted"], {});
+          content(env, morph0, context, "completed");
           return fragment;
         }
       };
     }());
     return {
       isHTMLBars: true,
+      blockParams: 0,
       cachedFragment: null,
+      hasRendered: false,
       build: function build(dom) {
         var el0 = dom.createDocumentFragment();
         var el1 = dom.createTextNode(" ");
@@ -226,37 +278,48 @@ define( ["test/demo/templates/components/editing"], function(){
       },
       render: function render(context, env, contextualElement) {
         var dom = env.dom;
-        var hooks = env.hooks, get = hooks.get, content = hooks.content, attribute = hooks.attribute, element = hooks.element, subexpr = hooks.subexpr;
+        var hooks = env.hooks, get = hooks.get, block = hooks.block, attribute = hooks.attribute, element = hooks.element, content = hooks.content, subexpr = hooks.subexpr, concat = hooks.concat;
         dom.detectNamespace(contextualElement);
+        var fragment;
         if (this.cachedFragment === null) {
-          this.cachedFragment = this.build(dom);
+          fragment = this.build(dom);
+          if (this.hasRendered) {
+            this.cachedFragment = fragment;
+          } else {
+            this.hasRendered = true;
+          }
         }
-        var fragment = dom.cloneNode(this.cachedFragment, true);
+        if (this.cachedFragment) {
+          fragment = dom.cloneNode(this.cachedFragment, true);
+        }
         var element5 = fragment.childNodes[1];
-        dom.repairClonedNode(element5.childNodes[1],[],true);
         var element6 = element5.childNodes[1];
+        dom.repairClonedNode(element6,[],true);
         var element7 = fragment.childNodes[2];
-        var element8 = element7.childNodes[1].childNodes[0].childNodes[0];
-        var element9 = element7.childNodes[1].childNodes[1].childNodes[0];
-        var element10 = element7.childNodes[1].childNodes[2].childNodes[0];
+        var element8 = element7.childNodes[1];
+        var element9 = element8.childNodes[0].childNodes[0];
+        var element10 = element8.childNodes[1].childNodes[0];
+        var element11 = element8.childNodes[2].childNodes[0];
         var morph0 = dom.createMorphAt(element5.childNodes[0],0,1);
         var morph1 = dom.createMorphAt(element7.childNodes[0].childNodes[0],-1,-1);
         var morph2 = dom.createMorphAt(element7,2,3);
-        content(morph0, "each", context, [get(context, "filteredTodos", env)], {}, {template:child0,morph:morph0}, env);
-        attribute(element6, "checked", false, context, [get(context, "allAreDone", env)], {}, env);
-        element(element6, "on", context, ["click","toggleAll"], {}, {element:element6}, env);
-        content(morph1, "remaining", context, [], {}, {morph:morph1}, env);
-        attribute(element8, "class", true, context, [subexpr("if", context, [get(context, "isAll", env),"selected"], {}, {}, env)], {}, env);
-        attribute(element9, "class", true, context, [subexpr("if", context, [get(context, "isActive", env),"selected"], {}, {}, env)], {}, env);
-        attribute(element10, "class", true, context, [subexpr("if", context, [get(context, "isCompleted", env),"selected"], {}, {}, env)], {}, env);
-        content(morph2, "unless", context, [get(context, "noneAreDone", env)], {}, {template:child1,morph:morph2}, env);
+        block(env, morph0, context, "each", [get(env, context, "filteredTodos")], {}, child0, null);
+        attribute(env, element6, "checked", get(env, context, "allAreDone"));
+        element(env, element6, context, "on", ["click", "toggleAll"], {});
+        content(env, morph1, context, "remaining");
+        attribute(env, element9, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isAll"), "selected"], {})]));
+        attribute(env, element10, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isActive"), "selected"], {})]));
+        attribute(env, element11, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isCompleted"), "selected"], {})]));
+        block(env, morph2, context, "unless", [get(env, context, "noneAreDone")], {}, child1, null);
         return fragment;
       }
     };
   }());
   return {
     isHTMLBars: true,
+    blockParams: 0,
     cachedFragment: null,
+    hasRendered: false,
     build: function build(dom) {
       var el0 = dom.createDocumentFragment();
       var el1 = dom.createElement("section");
@@ -307,21 +370,29 @@ define( ["test/demo/templates/components/editing"], function(){
     },
     render: function render(context, env, contextualElement) {
       var dom = env.dom;
-      var hooks = env.hooks, content = hooks.content, get = hooks.get, attribute = hooks.attribute, element = hooks.element;
+      var hooks = env.hooks, content = hooks.content, get = hooks.get, concat = hooks.concat, attribute = hooks.attribute, element = hooks.element, block = hooks.block;
       dom.detectNamespace(contextualElement);
+      var fragment;
       if (this.cachedFragment === null) {
-        this.cachedFragment = this.build(dom);
+        fragment = this.build(dom);
+        if (this.hasRendered) {
+          this.cachedFragment = fragment;
+        } else {
+          this.hasRendered = true;
+        }
       }
-      var fragment = dom.cloneNode(this.cachedFragment, true);
-      var element11 = fragment.childNodes[0];
-      var element12 = element11.childNodes[0];
-      var element13 = element12.childNodes[1];
-      var morph0 = dom.createMorphAt(element12.childNodes[0],-1,-1);
-      var morph1 = dom.createMorphAt(element11,1,2);
-      content(morph0, "firstTodo.title", context, [], {}, {morph:morph0}, env);
-      attribute(element13, "value", true, context, [get(context, "newTitle", env)], {}, env);
-      element(element13, "on", context, ["keyup","createTodo"], {}, {element:element13}, env);
-      content(morph1, "if", context, [get(context, "todos", env)], {}, {template:child0,morph:morph1}, env);
+      if (this.cachedFragment) {
+        fragment = dom.cloneNode(this.cachedFragment, true);
+      }
+      var element12 = fragment.childNodes[0];
+      var element13 = element12.childNodes[0];
+      var element14 = element13.childNodes[1];
+      var morph0 = dom.createMorphAt(element13.childNodes[0],-1,-1);
+      var morph1 = dom.createMorphAt(element12,1,2);
+      content(env, morph0, context, "firstTodo.title");
+      attribute(env, element14, "value", concat(env, [get(env, context, "newTitle")]));
+      element(env, element14, context, "on", ["keyup", "createTodo"], {});
+      block(env, morph1, context, "if", [get(env, context, "todos")], {}, child0, null);
       return fragment;
     }
   };

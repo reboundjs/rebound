@@ -1,11 +1,13 @@
 "use strict";
-var TemplateVisitor = require("./template_visitor")["default"];
+var TemplateVisitor = require("./template-visitor")["default"];
 var processOpcodes = require("./utils").processOpcodes;
-var forEach = require("../utils").forEach;
+var forEach = require("../htmlbars-util/array-utils").forEach;
 
 function FragmentOpcodeCompiler() {
   this.opcodes = [];
 }
+
+exports["default"] = FragmentOpcodeCompiler;
 
 FragmentOpcodeCompiler.prototype.compile = function(ast) {
   var templateVisitor = new TemplateVisitor();
@@ -57,14 +59,11 @@ FragmentOpcodeCompiler.prototype.component = function () {};
 FragmentOpcodeCompiler.prototype.block = function () {};
 
 FragmentOpcodeCompiler.prototype.attribute = function(attr) {
-  var parts = attr.value;
-  if (parts.length === 1 && parts[0].type === 'TextNode') {
-    this.opcode('setAttribute', [attr.name, parts[0].chars]);
+  if (attr.value.type === 'TextNode') {
+    this.opcode('setAttribute', [attr.name, attr.value.chars]);
   }
 };
 
 FragmentOpcodeCompiler.prototype.setNamespace = function(namespace) {
   this.opcode('setNamespace', [namespace]);
 };
-
-exports.FragmentOpcodeCompiler = FragmentOpcodeCompiler;

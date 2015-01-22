@@ -34,7 +34,7 @@ require(['rebound-precompiler/rebound-precompiler'], function(compiler){
       var out, exp;
 
       out = compiler.precompile('<div></div>', {name: 'test/filepath'}).replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," ");
-      exp = 'define( [], function(){ (function(){var template = (function() { return { isHTMLBars: true, cachedFragment: null, build: function build(dom) { var el0 = dom.createElement("div"); return el0; }, render: function render(context, env, contextualElement) { var dom = env.dom; dom.detectNamespace(contextualElement); if (this.cachedFragment === null) { this.cachedFragment = this.build(dom); } var fragment = dom.cloneNode(this.cachedFragment, true); return fragment; } }; }()) window.Rebound.registerPartial( "test/filepath", template);})(); });';
+      exp = 'define( [], function(){ (function(){var template = (function() { return { isHTMLBars: true, blockParams: 0, cachedFragment: null, hasRendered: false, build: function build(dom) { var el0 = dom.createElement(\"div\"); return el0; }, render: function render(context, env, contextualElement) { var dom = env.dom; dom.detectNamespace(contextualElement); var fragment; if (this.cachedFragment === null) { fragment = this.build(dom); if (this.hasRendered) { this.cachedFragment = fragment; } else { this.hasRendered = true; } } if (this.cachedFragment) { fragment = dom.cloneNode(this.cachedFragment, true); } return fragment; } }; }()) window.Rebound.registerPartial( \"test/filepath\", template);})(); });';
 
       equal(out, exp, 'Pre-compiler can handle partials');
 

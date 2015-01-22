@@ -8,6 +8,8 @@ var computedProperties = [];
 function compile(prop, name){
   var output = {};
 
+  if(prop.__params) return prop.__params;
+
   var str = prop.toString(), //.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
       nextToken = tokenizer.tokenize(str),
       tokens = [],
@@ -25,7 +27,7 @@ function compile(prop, name){
       tmpPath,
       attrs = [],
       workingpath = [],
-      terminators = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '===', '&&', '||'];
+      terminators = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '===', '&&', '||', '+', '-', '/', '*'];
   do{
 
     token = nextToken();
@@ -55,9 +57,9 @@ function compile(prop, name){
       workingpath.push('@each.' + path.value);
     }
 
-    if(token.value === 'slice' || token.value === 'clone'){
+    if(token.value === 'slice' || token.value === 'clone' || token.value === 'filter'){
       path = nextToken();
-      workingpath.push('@each');
+      if(path.type.type === '(') workingpath.push('@each');
     }
 
     if(token.value === 'at'){
@@ -110,7 +112,7 @@ function compile(prop, name){
   console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
 
   // Return the dependancies list
-  return finishedPaths;
+  return prop.__params = finishedPaths;
 
 }
 

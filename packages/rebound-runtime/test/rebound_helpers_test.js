@@ -368,7 +368,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div class={{if bool foo}}>test</div>', {name: 'test/partial'});
       dom = template.render({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div class="">test</div>', 'Inline If helper in element without else term - false');
+      equalTokens(dom, '<div>test</div>', 'Inline If helper in element without else term - false');
 
 
 
@@ -476,7 +476,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
       dom = template.render({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div class="">test</div>', 'Inline Unless helper in element without else term - true');
+      equalTokens(dom, '<div>test</div>', 'Inline Unless helper in element without else term - true');
 
 
 
@@ -494,7 +494,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
       dom = template.render({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div class="bar">test</div>', 'Inline Unless helper in element without else term - true');
+      equalTokens(dom, '<div class="bar">test</div>', 'Inline Unless helper in element with else term - true');
 
 
 

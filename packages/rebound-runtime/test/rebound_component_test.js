@@ -1,4 +1,4 @@
-require(['rebound-runtime/component', 'simple-html-tokenizer'], function(Component, tokenizer){
+require(['rebound-runtime/component', 'simple-html-tokenizer', 'rebound-compiler/rebound-compiler'], function(Component, tokenizer, compiler){
     Component = Component.default;
     function equalTokens(fragment, html, message) {
       var div = document.createElement("div");
@@ -48,6 +48,8 @@ require(['rebound-runtime/component', 'simple-html-tokenizer'], function(Compone
 
       el.__component__ = new component({template: template, outlet: el});
       equalTokens(el, '<div><div></div></div>', 'Component places rendered template inside of outlet');
+
+      // template = compiler.compile("<element name='rebound-demo'><template>asdf</template></element><script>return ({test: 'woo'});</script>");
 
     });
 

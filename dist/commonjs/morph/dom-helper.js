@@ -1,5 +1,4 @@
 "use strict";
-/* global window:false */
 var Morph = require("../morph/morph")["default"];
 var buildHTMLDOM = require("./dom-helper/build-html-dom").buildHTMLDOM;
 var svgNamespace = require("./dom-helper/build-html-dom").svgNamespace;
@@ -105,12 +104,20 @@ function buildSVGDOM(html, dom){
  * @param {HTMLDocument} _document The document DOM methods are proxied to
  */
 function DOMHelper(_document){
-  this.document = _document || window.document;
+  this.document = _document || document;
+  if (!this.document) {
+    throw new Error("A document object must be passed to the DOMHelper, or available on the global scope");
+  }
   this.namespace = null;
 }
 
 var prototype = DOMHelper.prototype;
 prototype.constructor = DOMHelper;
+
+prototype.getElementById = function(id, rootNode) {
+  rootNode = rootNode || this.document;
+  return rootNode.getElementById(id);
+};
 
 prototype.insertBefore = function(element, childElement, referenceChild) {
   return element.insertBefore(childElement, referenceChild);

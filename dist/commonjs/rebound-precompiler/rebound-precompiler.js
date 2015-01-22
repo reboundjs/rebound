@@ -1,7 +1,6 @@
 "use strict";
 var htmlbarsCompile = require("../htmlbars-compiler/compiler").compile;
 var htmlbarsCompileSpec = require("../htmlbars-compiler/compiler").compileSpec;
-var merge = require("../htmlbars-runtime/utils").merge;
 
 function getScript(str){
   return (str.indexOf('<script>') > -1 && str.indexOf('</script>') > -1) ? '(function(){' + str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2') + '})()' : '{}';

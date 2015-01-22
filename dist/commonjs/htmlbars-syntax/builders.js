@@ -22,7 +22,7 @@ exports.buildBlock = buildBlock;function buildPartial(sexpr, indent) {
   return {
     type: "PartialStatement",
     sexpr: sexpr,
-    indent: indent || ""
+    indent: indent
   };
 }
 
@@ -33,7 +33,15 @@ exports.buildPartial = buildPartial;function buildComment(value) {
   };
 }
 
-exports.buildComment = buildComment;// Nodes
+exports.buildComment = buildComment;
+function buildConcat(parts) {
+  return {
+    type: "ConcatStatement",
+    parts: parts || []
+  };
+}
+
+exports.buildConcat = buildConcat;// Nodes
 
 function buildElement(tag, attributes, helpers, children) {
   return {
@@ -54,12 +62,11 @@ exports.buildElement = buildElement;function buildComponent(tag, attributes, pro
   };
 }
 
-exports.buildComponent = buildComponent;function buildAttr(name, value, quoted) {
+exports.buildComponent = buildComponent;function buildAttr(name, value) {
   return {
     type: "AttrNode",
     name: name,
-    value: value,
-    quoted: quoted
+    value: value
   };
 }
 
@@ -152,6 +159,7 @@ exports.buildProgram = buildProgram;exports["default"] = {
   string: buildString,
   boolean: buildBoolean,
   number: buildNumber,
+  concat: buildConcat,
   hash: buildHash,
   pair: buildPair,
   program: buildProgram
