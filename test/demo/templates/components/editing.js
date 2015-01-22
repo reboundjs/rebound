@@ -1,6 +1,9 @@
 define( [], function(){
-return (function(){
-  var template = (function() {
+
+  return (function() {
+    return window.Rebound.registerComponent("edit-todo", {
+      prototype: (function(){ return ({ value: 'Default Value', arr: [{f:1}, {g:2}], obj: {a:1, b:2}, createdCallback: function(event){ this.oldValue = this.get('value'); }, attachedCallback: function(event){ this.el.querySelector('input.edit').focus(); }, detachedCallback: function(){ }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })(),
+      template: (function() {
   return {
     isHTMLBars: true,
     cachedFragment: null,
@@ -29,23 +32,8 @@ return (function(){
       return fragment;
     }
   };
-}())
-  var script = (function(){ return ({ value: 'Default Value', arr: [{f:1}, {g:2}], obj: {a:1, b:2}, createdCallback: function(event){ this.oldValue = this.get('value'); }, attachedCallback: function(event){ this.el.querySelector('input.edit').focus(); }, detachedCallback: function(){ }, doneEditing: function(event){ this.set('editing', false); }, inputModified: function(event){ if(event.keyCode == 13) this.doneEditing(event); if(event.keyCode == 27){ this.set('value', this.oldValue); this.doneEditing(event); } } }) })();
-  var style = "";
-  var component = Rebound.Component.extend(script, { __name: "edit-todo" });
-  var proto = Object.create(HTMLElement.prototype, {});
-  proto.createdCallback = function(){
-    this.__component__ = new component({template: template, outlet: this, data: Rebound.seedData});
-  }
-  proto.attachedCallback = function(){script.attachedCallback && script.attachedCallback.call(this.__component__)};
-  proto.detachedCallback = function(){
-    script.detachedCallback && script.detachedCallback.call(this.__component__);
-    this.__component__.deinitialize();
-    };
-  proto.attributeChangedCallback = function(attrName, oldVal, newVal){
-    this.__component__._onAttributeChange(attrName, oldVal, newVal);
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__, attrName, oldVal, newVal);
-  }
-  return document.registerElement("edit-todo", {prototype: proto} );
-})();
+}()),
+      style: ""
+    });
+  })();
 });

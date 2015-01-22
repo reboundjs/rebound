@@ -56,11 +56,8 @@ exports.compile = compile;/*
  */
 function compileSpec(string, options) {
   var ast = preprocess(string, options);
-
   var compiler = new TemplateCompiler(options);
-
   var program = compiler.compile(ast);
-
   return program;
 }
 

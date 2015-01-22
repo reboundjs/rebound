@@ -8995,6 +8995,45 @@ define("rebound-runtime/component",
 
     __exports__["default"] = Component;
   });
+define("rebound-runtime/register", 
+  ["rebound-runtime/component","exports"],
+  function(__dependency1__, __exports__) {
+    
+    var Component = __dependency1__["default"];
+
+    __exports__["default"] = function registerComponent(name, options) {
+      var script = options.prototype;
+      var template = options.template;
+      var style = options.style;
+
+      var component = Component.extend(script, { __name: name });
+      var proto = Object.create(HTMLElement.prototype, {});
+
+      proto.createdCallback = function() {
+        this.__component__ = new component({
+          template: template,
+          outlet: this,
+          data: Rebound.seedData
+        });
+      };
+
+      proto.attachedCallback = function() {
+        script.attachedCallback && script.attachedCallback.call(this.__component__);
+      };
+
+      proto.detachedCallback = function() {
+        script.detachedCallback && script.detachedCallback.call(this.__component__);
+        this.__component__.deinitialize();
+      };
+
+      proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
+        this.__component__._onAttributeChange(attrName, oldVal, newVal);
+        script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__, attrName, oldVal, newVal);
+      };
+
+      return document.registerElement(name, { prototype: proto });
+    }
+  });
 define("rebound-router/rebound-router", 
   ["rebound-runtime/utils","exports"],
   function(__dependency1__, __exports__) {
@@ -9257,8 +9296,8 @@ define("rebound-router/rebound-router",
     __exports__["default"] = ReboundRouter;
   });
 define("rebound-runtime/rebound-runtime", 
-  ["rebound-runtime/env","rebound-runtime/utils","rebound-data/rebound-data","rebound-runtime/component","rebound-router/rebound-router","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __exports__) {
+  ["rebound-runtime/env","rebound-runtime/utils","rebound-runtime/register","rebound-data/rebound-data","rebound-runtime/component","rebound-router/rebound-router","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __dependency6__, __exports__) {
     
     // If Backbone hasn't been started yet, throw error
     if(!window.Backbone){
@@ -9271,16 +9310,19 @@ define("rebound-runtime/rebound-runtime",
     // Load our utils
     var utils = __dependency2__["default"];
 
+    // Load our utils
+    var registerComponent = __dependency3__["default"];
+
     // Load Rebound Data
-    var Model = __dependency3__.Model;
-    var Collection = __dependency3__.Collection;
-    var ComputedProperty = __dependency3__.ComputedProperty;
+    var Model = __dependency4__.Model;
+    var Collection = __dependency4__.Collection;
+    var ComputedProperty = __dependency4__.ComputedProperty;
 
     // Load Rebound Components
-    var Component = __dependency4__["default"];
+    var Component = __dependency5__["default"];
 
     // Load The Rebound Router
-    var Router = __dependency5__["default"];
+    var Router = __dependency6__["default"];
 
     // Fetch Rebound Config Object
     var Config = JSON.parse(document.getElementById('Rebound').innerHTML);
@@ -9292,6 +9334,7 @@ define("rebound-runtime/rebound-runtime",
     window.Rebound = {
       registerHelper: env.registerHelper,
       registerPartial: env.registerPartial,
+      registerComponent: registerComponent,
       Model: Model,
       Collection: Collection,
       ComputedProperty: ComputedProperty,
