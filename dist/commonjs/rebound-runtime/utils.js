@@ -124,6 +124,63 @@ utils.prototype = {
     }
   },
 
+  /*  Copyright (C) 2012-2014  Kurt Milam - http://xioup.com | Source: https://gist.github.com/1868955
+   *
+   *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+   *  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+   *
+   *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  **/
+
+  // Rolled my own deep extend in leu of having a hard dependancy on lodash.
+  deepDefaults: function(dest) {
+      var slice = Array.prototype.slice,
+          hasOwnProperty = Object.prototype.hasOwnProperty;
+
+      _.each(slice.call(arguments, 1), function(src){
+
+        // For each property in this object
+        for (var prop in src) {
+          if (hasOwnProperty.call(src, prop)) {
+
+            // If destination
+            if(_.isUndefined(dest[prop])){
+                dest[prop] = src[prop];
+            }
+            else if(_.isObject(dest[prop])){
+              if(dest[prop].isCollection){
+                // Collection -> Collection
+                if(src[prop].isCollection){
+                  // Preserve object defaults from the dest with the models from the data src
+                  dest[prop] = $.deepDefaults([], dest[prop].models, src[prop].models);
+                }
+                // Array -> Collection
+                else if(_.isArray(src[prop])){
+                  dest[prop].set(src[prop], {remove: false, add: false});
+                  continue;
+                }
+                //
+                else{
+                  dest[prop] = $.deepDefaults([], dest[prop].models, src[prop]);
+                }
+              }
+              else if(_.isArray(dest[prop])){
+                dest[prop] = $.deepDefaults([], dest[prop], src[prop]);
+              }
+              else if((dest[prop].isModel)){
+                dest[prop] = $.deepDefaults({}, dest[prop].attributes, src[prop]);
+              }
+              else{
+                dest[prop] = $.deepDefaults({}, dest[prop], src[prop]);
+              }
+            }
+          }
+        }
+      });
+
+      return dest;
+    },
+
   // Events registry. An object containing all events bound through this util shared among all instances.
   _events: {},
 
@@ -273,30 +330,6 @@ utils.prototype = {
       }, this);
     }
   },
-
-  flatten: function(data) {
-    var result = {};
-    function recurse (cur, prop) {
-      if (Object(cur) !== cur) {
-        result[prop] = cur;
-      } else if (Array.isArray(cur)) {
-        for(var i=0, l=cur.length; i<l; i++)
-          recurse(cur[i], prop + "[" + i + "]");
-          if (l === 0)
-            result[prop] = [];
-          } else {
-            var isEmpty = true;
-            for (var p in cur) {
-              isEmpty = false;
-              recurse(cur[p], prop ? prop+"."+p : p);
-            }
-            if (isEmpty && prop)
-              result[prop] = {};
-            }
-          }
-          recurse(data, "");
-          return result;
-        },
 
   // http://krasimirtsonev.com/blog/article/Cross-browser-handling-of-Ajax-requests-in-absurdjs
   ajax: function(ops) {

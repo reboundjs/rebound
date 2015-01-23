@@ -1,7 +1,7 @@
 "use strict";
 /*jshint evil:true*/
-var preprocess = require("../htmlbars-syntax/parser").preprocess;
-var TemplateCompiler = require("./template-compiler")["default"];
+var preprocess = require("./parser").preprocess;
+var TemplateCompiler = require("./compiler/template").TemplateCompiler;
 
 /*
  * Compile a string into a template rendering function

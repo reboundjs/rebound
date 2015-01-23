@@ -1,14 +1,9 @@
 "use strict";
-var Model = require("rebound-data/rebound-data").Model;
-
 var NIL = function NIL(){},
     EMPTY_ARRAY = [];
 
-function LazyValue(fn, context) {
+function LazyValue(fn) {
   this.valueFn = fn;
-  this.context = context || null;
-  _.bindAll(this, 'value', 'set', 'addDependentValue', 'addObserver', 'notify', 'onNotify', 'destroy');
-
 }
 
 LazyValue.prototype = {
@@ -41,13 +36,6 @@ LazyValue.prototype = {
     }
   },
 
-  set: function(key, value, options){
-    if(this.context){
-      return this.context.set(key, value, options);
-    }
-    return null;
-  },
-
   addDependentValue: function(value) {
     var children = this.children;
     if (!children) {
@@ -61,59 +49,42 @@ LazyValue.prototype = {
     return this;
   },
 
-  addObserver: function(path, context) {
-    var observers = this.observers || (this.observers = []),
-        position, res;
-
-    if(!_.isObject(context) || !_.isString(path)){
-      return console.error('Error adding observer for', context, path);
+  saveObserver: function(value) {
+    var observers = this.observers;
+    if (!observers) {
+      observers = this.observers = [value];
+    } else {
+      observers.push(value);
     }
-
-    // Ensure _observers exists and is an object
-    context.__observers = context.__observers || {};
-    // Ensure __observers[path] exists and is an array
-    context.__observers[path] = context.__observers[path] || [];
-
-    // Add our callback, save the position it is being inserted so we can garbage collect later.
-    position = context.__observers[path].push(this.notify) - 1;
-
-    // Save the type of object events this observer is for
-    res = context.get(this.path);
-    context.__observers[path][position].type = (res && res.isCollection) ? 'collection' : 'model';
-
-    // Lazyvalue needs referance to its observers to remove listeners on destroy
-    observers.push({context: context, path: path, index: position});
 
     return this;
   },
 
   notify: function(sender) {
-    try{
-      var cache = this.cache,
-          parent,
-          subscribers;
+    var cache = this.cache,
+        parent,
+        subscribers;
 
-      if (cache !== NIL) {
-        parent = this.parent;
-        subscribers = this.subscribers;
-        cache = this.cache = NIL;
+    if (cache !== NIL) {
+      parent = this.parent;
+      subscribers = this.subscribers;
+      cache = this.cache = NIL;
 
-        if (parent) { parent.notify(this); }
-        if (!subscribers) { return; }
-        for (var i = 0, l = subscribers.length; i < l; i++) {
-          subscribers[i](this);
-        }
+      if (parent) { parent.notify(this); }
+      if (!subscribers) { return; }
+      for (var i = 0, l = subscribers.length; i < l; i++) {
+        subscribers[i](this); // TODO: should we worry about exception handling?
       }
-    } catch(err){
-      console.log('KILLING OBSERVER', sender);
-      console.log(err.stack);
-      this.destroy();
     }
   },
 
   onNotify: function(callback) {
-    var subscribers = this.subscribers || (this.subscribers = []);
-    subscribers.push(callback);
+    var subscribers = this.subscribers;
+    if (!subscribers) {
+      subscribers = this.subscribers = [callback];
+    } else {
+      subscribers.push(callback);
+    }
     return this;
   },
 
