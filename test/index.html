@@ -9,32 +9,29 @@
   <div id="qunit"></div>
   <div id="qunit-fixture"></div>
 
-  <script src="/bower_components/WeakMap/weakmap.js"></script>
-  <script src="/bower_components/MutationObservers/MutationObserver.js"></script>
-  <script src="/bower_components/custom-elements/src/scope.js"></script>
-  <script src="/bower_components/custom-elements/src/Observer.js"></script>
-  <script src="/bower_components/custom-elements/src/CustomElements.js"></script>
-  <script src="/bower_components/underscore/underscore.js"></script>
-  <script src="/bower_components/jquery/dist/jquery.js"></script>
-  <script src="/bower_components/backbone/backbone.js"></script>
-  <script src="/bower_components/requirejs/require.js"></script>
-  <script src="/bower_components/qunit/qunit/qunit.js"></script>
+  <script src="../bower_components/underscore/underscore.js"></script>
+  <script src="../bower_components/jquery/dist/jquery.js"></script>
+  <script src="../bower_components/backbone/backbone.js"></script>
+  <script src="../bower_components/requirejs/require.js"></script>
+  <script src="../node_modules/htmlbars/dist/amd/htmlbars-util.amd.js"></script>
+  <script src="../node_modules/htmlbars/dist/amd/htmlbars.amd.js"></script>
+  <script src="../bower_components/qunit/qunit/qunit.js"></script>
   <script type="text/javascript">
     QUnit.config.autostart = false;
     require.config({
-        baseUrl: "/dist/amd"
+        baseUrl: "../dist/amd"
     })
     window.Rebound = {};
   </script>
 
-  <script src="/packages/property-compiler/test/property_compiler_test.js"></script>
-  <script src="/packages/rebound-compiler/test/rebound_compiler_test.js"></script>
-  <script src="/packages/rebound-precompiler/test/rebound_precompiler_test.js"></script>
-  <script src="/packages/rebound-data/test/rebound_model_test.js"></script>
-  <script src="/packages/rebound-data/test/rebound_collection_test.js"></script>
-  <script src="/packages/rebound-data/test/rebound_computed_property_test.js"></script>
-  <script src="/packages/rebound-runtime/test/rebound_helpers_test.js"></script>
-  <script src="/packages/rebound-runtime/test/rebound_component_test.js"></script>
+  <script src="../packages/property-compiler/test/property_compiler_test.js"></script>
+  <script src="../packages/rebound-compiler/test/rebound_compiler_test.js"></script>
+  <script src="../packages/rebound-precompiler/test/rebound_precompiler_test.js"></script>
+  <script src="../packages/rebound-data/test/rebound_model_test.js"></script>
+  <script src="../packages/rebound-data/test/rebound_collection_test.js"></script>
+  <script src="../packages/rebound-data/test/rebound_computed_property_test.js"></script>
+  <script src="../packages/rebound-runtime/test/rebound_helpers_test.js"></script>
+  <script src="../packages/rebound-runtime/test/rebound_component_test.js"></script>
 
   <script>QUnit.start()</script>
 

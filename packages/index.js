@@ -1,28 +1,25 @@
-"use strict";
 // If Backbone hasn't been started yet, throw error
 if(!window.Backbone){
   throw "Backbone must be on the page for Rebound to load.";
 }
 
 // Load our client environment
-var env = require("rebound-runtime/env")["default"];
+import env  from "rebound-runtime/env";
 
 // Load our utils
-var utils = require("rebound-runtime/utils")["default"];
+import utils from "rebound-runtime/utils";
 
 // Load our utils
-var registerComponent = require("rebound-runtime/register")["default"];
+import registerComponent from "rebound-runtime/register";
 
 // Load Rebound Data
-var Model = require("rebound-data/rebound-data").Model;
-var Collection = require("rebound-data/rebound-data").Collection;
-var ComputedProperty = require("rebound-data/rebound-data").ComputedProperty;
+import { Model, Collection, ComputedProperty } from "rebound-data/rebound-data";
 
 // Load Rebound Components
-var Component = require("rebound-runtime/component")["default"];
+import Component from "rebound-runtime/component";
 
 // Load The Rebound Router
-var Router = require("rebound-router/rebound-router")["default"];
+import Router from "rebound-router/rebound-router";
 
 // Fetch Rebound Config Object
 var Config = JSON.parse(document.getElementById('Rebound').innerHTML);
@@ -44,4 +41,4 @@ window.Rebound = {
 
 window.Rebound.router = new Router({config: Config});
 
-exports["default"] = Rebound;
+export default Rebound;

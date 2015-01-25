@@ -44,8 +44,6 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       });
     }
 
-    helpers = helpers.default;
-
 
     /************************************************************
 

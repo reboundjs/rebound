@@ -117,8 +117,8 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         cssLoaded = true;
       }
 
-      // If require library is almond, load script manualy. It better contain all its dependancies.
-      if(require._defined || _.isUndefined(require)){
+      // If if requirejs is not on the page, load the file manually. It better contain all its dependancies.
+      if(window.require._defined || _.isUndefined(window.require)){
           jsElement = document.createElement('script');
           jsElement.setAttribute('type', 'text/javascript');
           jsElement.setAttribute('src', '/'+jsUrl+'.js');
@@ -149,7 +149,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       }
       else{
         // AMD Will Manage Dependancies For Us. Load The App.
-        require([jsUrl], function(PageClass){
+        window.require([jsUrl], function(PageClass){
 
           if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
