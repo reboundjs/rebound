@@ -6,6 +6,10 @@ import $ from "rebound-runtime/utils";
 
 var sharedMethods = {
 
+  // When a change event propagates up the tree it modifies the path part of
+  // change:<path> to reflect the fully qualified path relative to that object.
+  // Ex: Would trigger change:val, change:[0].val, change:arr[0].val and obj.arr[0].val
+  // on each parent as it is propagated up the tree.
   propagateEvent: function(type, model){
     if(this.__parent__ === this) return;
     if(type.indexOf('change:') === 0 && model.isModel){
