@@ -372,44 +372,53 @@ hooks.element = function element(env, domElement, context, path, params, hash) {
 
   value = lazyValue.value();
 };
-
 hooks.attribute = function attribute(env, attrMorph, domElement, name, value) {
   var lazyValue = new LazyValue(function () {
     var val = value.value(),
         checkboxChange,
         type = domElement.getAttribute("type"),
-        inputTypes = { "null": 1, text: 1, email: 1, password: 1, search: 1, url: 1, tel: 1, hidden: 1 };
+        inputTypes = { "null": true, text: true, email: true, password: true, search: true, url: true, tel: true, hidden: true },
+        attr;
 
     // If is a text input element's value prop with only one variable, wire default events
     if (domElement.tagName === "INPUT" && inputTypes[type] && name === "value") {
       // If our special input events have not been bound yet, bind them and set flag
-      if (!lazyValue.eventsBound) {
+      if (!lazyValue.inputObserver) {
         $(domElement).on("change input propertychange", function (event) {
           value.set(value.path, this.value);
         });
-        lazyValue.eventsBound = true;
+
+        lazyValue.inputObserver = true;
       }
 
-      attrMorph.setContent(val);
-      return domElement.value = val ? val : "";
+      // Set the attribute on our element for visual referance
+      _.isUndefined(val) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
+
+      attr = val;
+
+      return domElement.value = attr ? attr : "";
     } else if (domElement.tagName === "INPUT" && (type === "checkbox" || type === "radio") && name === "checked") {
       // If our special input events have not been bound yet, bind them and set flag
       if (!lazyValue.eventsBound) {
         $(domElement).on("change propertychange", function (event) {
           value.set(value.path, this.checked ? true : false, { quiet: true });
         });
+
         lazyValue.eventsBound = true;
       }
 
       // Set the attribute on our element for visual referance
-      !val && (val = undefined);
-      attrMorph.setContent(val);
+      !val ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
 
       return domElement.checked = val ? true : undefined;
     } else {
       _.isString(val) && (val = val.trim());
       val || (val = undefined);
-      attrMorph.setContent(val);
+      if (_.isUndefined(val)) {
+        domElement.removeAttribute(name);
+      } else {
+        domElement.setAttribute(name, val);
+      }
     }
 
     return val;
@@ -477,7 +486,6 @@ hooks.component = function (env, morph, context, tagName, contextData, template)
       // Notify the component's lazyvalue when our model updates
       contextData[key].addObserver(contextData[key].path, context);
       componentDataValue.addObserver(key, component);
-      console.log(component.__name, component.cid, component);
     });
 
     // // For each change on our component, update the states of the original context and the element's proeprties.
