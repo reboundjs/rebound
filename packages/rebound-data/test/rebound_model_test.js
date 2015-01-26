@@ -20,28 +20,41 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
 
     QUnit.test('Rebound Data - Model', function() {
       var model, collection, model2, model3;
-
+    
+    // Shallow Set - Primitive Values
       model = new Model();
       model.set('str', 'test');
       model.set('int', 1);
       model.set('bool', false);
       deepEqual( model.attributes, {str: 'test', int: 1, bool: false}, 'Model.set works with primitive values at top level' );
 
+    // Shallow Toggle Boolean Values
       model.toggle('bool');
       deepEqual( model.attributes, {str: 'test', int: 1, bool: true}, 'Model.toggle works with boolean values at top level' );
 
-
-
-
+    // Shallow Set - Complex Objects
       model = new Model();
       model.set('obj', {a:1});
       equal(model.attributes.obj.isModel, true, 'Model.set promotes vanilla objects to Models');
       model.set('obj', {bool:false});
       deepEqual(model.attributes.obj.attributes, {a:1, bool:false}, 'Model.set adds to existing models when passed vanilla objects');
 
-      model.toggle('obj.bool');
-      deepEqual(model.attributes.obj.attributes, {a:1, bool:true}, 'Model.toggle works with nested boolean values');
+    // Deep Set - Primitive Values
+      model.set('obj.a', 2);
+      deepEqual(model.attributes.obj.attributes.a, 2, 'Model.set automatically creates extra models where needed');
 
+    // Deep Set - Complex Objects
+      model.set('obj', {b: 3});
+      deepEqual(model.attributes.obj.attributes.b, 3, 'Model.set automatically creates extra models where needed');
+      deepEqual(model.attributes.obj.attributes.a, 2, 'Model.set does not destroy existing values');
+
+    // Deep Set - Auto Object Creation
+      model.set('depth.test', 1);
+      deepEqual(model.attributes.depth.attributes.test, 1, 'Model.set automatically creates extra models where needed');
+
+    // Deep Toggle
+      model.toggle('obj.bool');
+      deepEqual(model.attributes.obj.attributes, {a:2, b:3, bool:true}, 'Model.toggle works with nested boolean values');
 
 
 
@@ -54,7 +67,6 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.set('obj', model3);
       equal(model.attributes.obj.cid, cid, 'Model.set, when passed another model, merges with the existing model.');
       deepEqual(model.attributes.obj.attributes, {b: 2, c: 3}, 'Model.set, when passed another model, merges their attributes.');
-
 
 
 
@@ -118,13 +130,54 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.set('arr', [{foo: 'bar'}, {biz: 'baz'}, {test: false}]);
       deepEqual(model.toJSON(), {prop: true, 'arr': [{foo: 'bar', test: true}, {biz: 'baz', test: true}, {test: false}], obj: {foo: {bar: 'bar'}}, func: {foo: {bar: 'bar'}}}, 'Defaults set in a component are retained');
 
+      model.reset({prop: false, arr: [{id: 1}], obj: {foo: {test: true}}});
+      notify(model, 'obj');
+      deepEqual(model.toJSON(), {prop: false, arr: [{id: 1, test: true}], obj: {foo: {test: true}}, func: {foo: {test: true}}}, 'Calling reset() with new values on a model resets it with these new values');
+
+
       model.reset();
       notify(model, 'obj');
       deepEqual(model.toJSON(), {arr: [], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() on a model resets all of its properties and children');
 
-      model.reset({prop: false, arr: [{id: 1}]});
-      notify(model, 'obj');
-      deepEqual(model.toJSON(), {prop: false, arr: [{id: 1, test: true}], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() with new values on a model resets it with these new values');
+
+
+      model = new Model({foo: {bar: 1}});
+      model.set('foo.bar', {a:1});
+      deepEqual(model.toJSON(), {foo: {bar: {a: 1}}}, 'Setting a deep existing value to a complex object with .set results in the correct object.');
+      deepEqual(model.get('foo.bar').__parent__.cid, model.get('foo').cid, 'Setting a deep existing value to a complex object with .set results in the correct object.');
+
+
+      model = new Model();
+      model.set('a.b.c', {d: 1});
+      deepEqual(model.toJSON(), {a: {b: {c: {d: 1}}}}, 'Calling set on a deep object that does not exist creates it.');
+      equal(model.get('a.b.c').__parent__.cid, model.get('a.b').cid, 'Deep Models\' ancestery is set when automatically generating objects.');
+      equal(model.get('a.b').__parent__.cid, model.get('a').cid, 'Deep Models\' ancestery is set when automatically generating objects.');
+      equal(model.get('a').__parent__.cid, model.cid, 'Deep Models\' ancestery is set when automatically generating objects.');
+
+
+      model = new Model({
+        a: {
+          b: {
+            c: {
+              d: 0
+            }
+          }
+        }
+      });
+
+      model.get('a.b.c').on('change:d', function(model, value, options){
+        equal(model.get('d'), value, 'Change events propagated with proper name on the object that changed');
+      });
+      model.get('a.b').on('change:c.d', function(model, value, options){
+        equal(model.get('d'), value, 'Change events propagated with proper name 1 layer up');
+      });
+      model.get('a').on('change:b.c.d', function(model, value, options){
+        equal(model.get('d'), value, 'Change events propagated with proper name 2 layers up');
+      });
+      model.on('change:a.b.c.d', function(model, value, options){
+        equal(model.get('d'), value, 'Change events propagated with proper name on root');
+      });
+      model.set('a.b.c.d', 1);
 
 
 

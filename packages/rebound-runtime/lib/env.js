@@ -1,4 +1,3 @@
-import { merge } from "htmlbars-runtime/utils";
 import DOMHelper from "morph/dom-helper";
 import hooks from "rebound-runtime/hooks";
 import helpers from "rebound-runtime/helpers";
@@ -10,7 +9,7 @@ var env = {
   hooks: hooks
 };
 
-env.hydrate = function(spec, options){
+env.hydrate = function hydrate(spec, options){
   // Return a wrapper function that will merge user provided helpers and hooks with our defaults
   return function(data, options){
     // Ensure we have a well-formed object as var options
@@ -21,33 +20,12 @@ env.hydrate = function(spec, options){
     env.dom = env.dom || new DOMHelper();
 
     // Merge our default helpers and hooks with user provided helpers
-    env.helpers = merge(env.helpers, helpers.helpers);
-    env.hooks = merge(env.hooks, hooks);
+    env.helpers = _.defaults(env.helpers, helpers.helpers);
+    env.hooks = _.defaults(env.hooks, hooks);
 
     // Call our func with merged helpers and hooks
     return spec.render(data, env, contextElement);
   };
-};
-
-// Notify all of a object's observers of the change, execute the callback
-env.notify = function(obj, paths, type) {
-
-    // If path is not an array of keys, wrap it in array
-  paths = (!_.isArray(paths)) ? [paths] : paths;
-
-  // For each path, alert each observer and call its callback
-  _.each(paths, function(path){
-    _.each(obj.__observers, function(observers, obsPath){
-      // Trigger all partial or exact observer matches
-      if(obsPath === path || obsPath.indexOf(path + '.') === 0 || path.indexOf(obsPath + '.') === 0){
-        _.each(observers, function(callback, index) {
-          // If this is a collection change (add, sort, remove) trigger everything, otherwise only trigger property change callbacks
-          if(_.isFunction(callback) && (callback.type === 'model' || type === 'collection')){ callback(); }
-        });
-      }
-    });
-  });
-
-};
+}; 
 
 export default env;

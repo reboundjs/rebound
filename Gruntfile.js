@@ -69,6 +69,16 @@ module.exports = function(grunt) {
           dest: 'tmp/htmlbars-runtime',
         },{
           expand: true,
+          cwd: 'bower_components/htmlbars/packages/htmlbars-syntax/lib',
+          src: ['**/*'],
+          dest: 'tmp/htmlbars-syntax',
+        },{
+          expand: true,
+          cwd: 'bower_components/htmlbars/packages/htmlbars-util/lib',
+          src: ['**/*'],
+          dest: 'tmp/htmlbars-util',
+        },{
+          expand: true,
           cwd: 'bower_components/htmlbars/packages/morph/lib',
           src: ['**/*'],
           dest: 'tmp/morph',
@@ -76,7 +86,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'bower_components/handlebars/lib',
           src: ['handlebars.js', 'handlebars.runtime.js', 'handlebars/**/*'],
-          dest: 'tmp/htmlbars-compiler',
+          dest: 'tmp/htmlbars-syntax',
         },{
           expand: true,
           cwd: 'bower_components/simple-html-tokenizer/lib',
@@ -160,6 +170,8 @@ module.exports = function(grunt) {
           'dist/commonjs/handlebars/': 'dist/commonjs/handlebars/*.js',
           'dist/commonjs/htmlbars-compiler/': 'dist/commonjs/htmlbars-compiler/*.js',
           'dist/commonjs/htmlbars-runtime/': 'dist/commonjs/htmlbars-runtime/*.js',
+          'dist/commonjs/htmlbars-syntax/': 'dist/commonjs/htmlbars-syntax/*.js',
+          'dist/commonjs/htmlbars-util/': 'dist/commonjs/htmlbars-util/*.js',
           'dist/commonjs/simple-html-tokenizer/': 'dist/commonjs/simple-html-tokenizer/*.js'
         },
         options: {
@@ -420,7 +432,7 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('test', 'Run the test suite', function() {
-    grunt.task.run(['build', 'connect:test', 'qunit']);
+    grunt.task.run(['connect:test', 'qunit']);
   });
 
   grunt.registerTask('start', 'Run the test server', function() {

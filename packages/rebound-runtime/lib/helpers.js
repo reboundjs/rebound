@@ -27,7 +27,6 @@ helpers.lookupHelper = function(name, env, context) {
   if(name === 'partial') { return this.partial; }
   if(name === 'length') { return this.length; }
   if(name === 'on') { return this.on; }
-  if(name === 'concat') { return this.concat; }
 
   // If not a reserved helper, check env, then global helpers, else return false
   return (env.helpers && _.isObject(context) && _.isObject(env.helpers[context.cid]) && env.helpers[context.cid][name]) || helpers[name] || false;
@@ -59,11 +58,10 @@ helpers.registerHelper = function(name, callback, params){
 ********************************/
 
 helpers.on = function(params, hash, options, env){
-  var i, callback, delegate, eventName, element,
+  var i, callback, delegate, element,
+      eventName = params[0],
       len = params.length,
       data = hash;
-
-  eventName = params[0];
 
   // By default everything is delegated on the parent component
   if(len === 2){
@@ -85,79 +83,8 @@ helpers.on = function(params, hash, options, env){
   });
 };
 
-helpers.concat = function(params, hash, options, env) {
-  var value = "";
-  // TODO: HTMLBars has a bug where hashes containing a single expression are still placed in a concat()
-  if(params.length === 1){ return params[0]; }
-  for (var i = 0, l = params.length; i < l; i++) {
-    value += params[i];
-  }
-  return value;
-};
-
 helpers.length = function(params, hash, options, env){
     return params[0] && params[0].length || 0;
-};
-
-// Attribute helper handles binding data to dom attributes
-helpers.attribute = function(params, hash, options, env) {
-  var checkboxChange,
-      type = options.element.getAttribute("type"),
-      inputTypes = {'null': true, 'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true},
-      attr;
-
-  // If is a text input element's value prop with only one variable, wire default events
-  if(options.element.tagName === 'INPUT' && inputTypes[type] && params[0] === 'value' ){
-
-    // If our special input events have not been bound yet, bind them and set flag
-    if(!options.lazyValue.inputObserver){
-
-      $(options.element).on('change input propertychange', function(event){
-        options.context.set(options.params[1].path, this.value, {quiet: true});
-      });
-
-      options.lazyValue.inputObserver = true;
-
-    }
-
-    // Set the attribute on our element for visual referance
-    (_.isUndefined(params[1])) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
-
-    attr = options.context.get(options.params[1].path);
-
-    return options.element.value = (attr) ? attr : '';
-  }
-
-  else if(options.element.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && params[0] === 'checked' ){
-
-    // If our special input events have not been bound yet, bind them and set flag
-    if(!options.lazyValue.eventsBound){
-
-      $(options.element).on('change propertychange', function(event){
-        options.context.set(options.params[1].path, ((this.checked) ? true : false), {quiet: true});
-      });
-
-      options.lazyValue.eventsBound = true;
-    }
-
-    // Set the attribute on our element for visual referance
-    (!params[1]) ? options.element.removeAttribute(params[0]) : options.element.setAttribute(params[0], params[1]);
-
-    return options.element.checked = (params[1]) ? true : undefined;
-  }
-
-  else {
-    // attr = (params[1]) ? params[1] : undefined;
-    if(_.isUndefined(params[1])){
-      return options.element.removeAttribute(params[0]);
-    }
-    else{
-      return options.element.setAttribute(params.shift(), params.join(''));
-    }
-  }
-
-  // If param is falsey, return undefined so we don't render the attr
-  return attr;
 };
 
 helpers.if = function(params, hash, options, env){
@@ -286,21 +213,22 @@ helpers.each = function(params, hash, options, env){
 
     position = findIndex(options.placeholder.morphs, currentModel, obj.cid);
 
+    // TODO: These need to be re-added in as data attributes
     // Even if rendered already, update each element's index, key, first and last in case of order changes or element removals
-    if(_.isArray(value)){
-      obj.set({'@index': key, '@first': (key === 0), '@last': (key === value.length-1)}, {silent: true});
-    }
-
-    if(!_.isArray(value) && _.isObject(value)){
-      obj.set({'@key' : key}, {silent: true});
-    }
+    // if(_.isArray(value)){
+    //   obj.set({'@index': key, '@first': (key === 0), '@last': (key === value.length-1)}, {silent: true});
+    // }
+    //
+    // if(!_.isArray(value) && _.isObject(value)){
+    //   obj.set({'@key' : key}, {silent: true});
+    // }
 
     // If this model is not the morph element at this index
     if(position !== key){
 
       // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
       var lazyValue = new LazyValue(function(){
-        return options.template.render(obj, options, (options.morph.contextualElement || options.morph.element));
+        return options.template.render(((options.template.blockParams === 0)?obj:options.context), options, (options.morph.contextualElement || options.morph.element), [obj]);
       });
 
       // If this model is rendered somewhere else in the list, destroy it

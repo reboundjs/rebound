@@ -1,9 +1,10 @@
 import LazyValue from "rebound-runtime/lazy-value";
 import $ from "rebound-runtime/utils";
 import helpers from "rebound-runtime/helpers";
+import Context from "rebound-runtime/context";
 
 var hooks = {},
-    attributes = {  abbr: 1,       "accept-charset": 1,  accept: 1,      accesskey: 1,     action: 1,
+    attributes = {  abbr: 1,      "accept-charset": 1,   accept: 1,      accesskey: 1,     action: 1,
                     align: 1,      alink: 1,             alt: 1,         archive: 1,       axis: 1,
                     background: 1, bgcolor: 1,           border: 1,      cellpadding: 1,   cellspacing: 1,
                     char: 1,       charoff: 1,           charset: 1,     checked: 1,       cite: 1,
@@ -12,7 +13,7 @@ var hooks = {},
                     content: 1,    coords: 1,            data: 1,        datetime: 1,      declare: 1,
                     defer: 1,      dir: 1,               disabled: 1,    enctype: 1,       face: 1,
                     for: 1,        frame: 1,             frameborder: 1, headers: 1,       height: 1,
-                    href: 1,       hreflang: 1,          hspace: 1,      "http-equiv": 1,  id: 1,
+                    href: 1,       hreflang: 1,          hspace: 1,     "http-equiv": 1,   id: 1,
                     ismap: 1,      label: 1,             lang: 1,        language: 1,      link: 1,
                     longdesc: 1,   marginheight: 1,      marginwidth: 1, maxlength: 1,     media: 1,
                     method: 1,     multiple: 1,          name: 1,        nohref: 1,        noresize: 1,
@@ -38,64 +39,19 @@ function isComputedProperty(model, path){
   return _.isFunction(model.get(path, {raw: true}));
 }
 
-// Add a callback to a given context to trigger when its value at 'path' changes.
-function addObserver(context, path, lazyValue, morph) {
-  var length, res,
-      paths = $.splitPath(path);
-
-  if(!_.isObject(context) || !_.isString(path) || !_.isObject(lazyValue)){
-    console.error('Error adding observer for', context, path, lazyValue);
-    return;
-  }
-
-  // Get actual context if any @parent calls
-  while(paths[0] === '@parent'){
-    context = context.__parent__;
-    paths.shift();
-  }
-  path = paths.join('.');
-
-  // Ensure _observers exists and is an object
-  context.__observers = context.__observers || {};
-  // Ensure __obxervers[path] exists and is an array
-  context.__observers[path] = context.__observers[path] || [];
-
-  // Save the position this is being inserted into the observers array so we can garbage collect later
-  length = context.__observers[path].length;
-
-  // Add our callback
-  context.__observers[path].push(function() {
-    try{
-      return lazyValue.notify();
-    } catch(err) {
-      // If we run into an error running notify, that means we have a dead dependancy chain. Kill it.
-      console.log('KILLING OBSERVER', context.__observers, path, length);
-      console.log(err.stack);
-      lazyValue.destroy();
-      delete context.__observers[path][length];
-    }
-  });
-
-  res = context.get(lazyValue.path);
-
-  context.__observers[path][length].type = (res && res.isCollection) ? 'collection' : 'model';
-
-  return {context: context, path: path, index: length};
-}
-
 // Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
 function streamProperty(context, path) {
 
   // Lazy value that returns the value of context.path
   var lazyValue = new LazyValue(function() {
     return context.get(path);
-  });
+  }, context);
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
   lazyValue.path = path;
 
   // Save the observer at this path
-  lazyValue.saveObserver(addObserver(context, path, lazyValue));
+  lazyValue.addObserver(path, context);
 
   return lazyValue;
 }
@@ -104,7 +60,7 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
   var lazyValue;
 
   // Extend options with the helper's containeing Morph element. Used by streamify to track data observers
-  options.placeholder = el && !el.tagName && el || false; // FIXME: this kinda sucks
+  options.morph = options.placeholder = el && !el.tagName && el || false; // FIXME: this kinda sucks
   options.element = el && el.tagName && el || false;      // FIXME: this kinda sucks
 
   // Extend options with hooks and helpers for any subsequent calls from a lazyvalue
@@ -159,7 +115,7 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
       });
     }
 
-    if (node && typeof node === 'string' || node && node.isLazyValue) {
+    if (node && node.isLazyValue) {
       options.lazyValue.addDependentValue(node);
     }
   });
@@ -181,7 +137,6 @@ function cleanSubtree(mutations, observer){
       });
     }
   });
-
 }
 
 var subtreeObserver = new MutationObserver(cleanSubtree);
@@ -190,49 +145,198 @@ var subtreeObserver = new MutationObserver(cleanSubtree);
         Default Hooks
 ********************************/
 
-hooks.get = function(context, path){
+hooks.get = function get(env, context, path){
+  context.blockParams || (context.blockParams = new Context());
+  if(path === 'this'){ path = ''; }
+  // context = (context.blockParams.has(path)) ? context.blockParams : context;
   return streamProperty(context, path);
 };
 
-hooks.content = function(placeholder, path, context, params, hash, options, env) {
+hooks.set = function set(env, context, name, value){
+  context.blockParams || (context.blockParams = new Context());
+  // context.blockParams.set(name, value);
+};
+
+
+hooks.concat = function concat(env, params) {
+
+  if(params.length === 1){
+    return params[0];
+  }
+
+  var lazyValue = new LazyValue(function() {
+    var value = "";
+
+    for (var i = 0, l = params.length; i < l; i++) {
+      value += (params[i].isLazyValue) ? params[i].value() : params[i];
+    }
+
+    return value;
+  }, params[0].context);
+
+  for (var i = 0, l = params.length; i < l; i++) {
+    if(params[i].isLazyValue) {
+      params[i].onNotify(function(){
+        lazyValue.notify();
+      });
+      lazyValue.addDependentValue(params[i]);
+    }
+  }
+
+  return lazyValue;
+
+};
+
+hooks.subexpr = function subexpr(env, context, helperName, params, hash) {
+
+  var helper = helpers.lookupHelper(helperName, env, context),
+  lazyValue;
+
+  if (helper) {
+    // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
+    lazyValue = constructHelper(true, helperName, context, params, hash, {}, env, helper);
+  } else {
+    lazyValue = streamProperty(context, helperName);
+  }
+
+  for (var i = 0, l = params.length; i < l; i++) {
+    if(params[i].isLazyValue) {
+      params[i].onNotify(function(){
+        lazyValue.notify();
+      });
+      lazyValue.addDependentValue(params[i]);
+    }
+  }
+
+  return lazyValue;
+};
+
+hooks.block = function block(env, morph, context, path, params, hash, template, inverse){
+  var options = {
+    morph: morph,
+    template: template,
+    inverse: inverse
+  };
+
+  var lazyValue,
+  value,
+  observer = subtreeObserver,
+  helper = helpers.lookupHelper(path, env, context);
+
+  if(!_.isFunction(helper)){
+    return console.error(path + ' is not a valid helper!');
+  }
+
+  // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
+  lazyValue = constructHelper(morph, path, context, params, hash, options, env, helper);
+
+  // If we have our lazy value, update our dom.
+  // morph is a morph element representing our dom node
+  if (lazyValue) {
+    lazyValue.onNotify(function(lazyValue) {
+      var val = lazyValue.value();
+      val = (_.isUndefined(val)) ? '' : val;
+      if(!_.isNull(val)){
+        morph.update(val);
+      }
+    });
+
+    value = lazyValue.value();
+    value = (_.isUndefined(value)) ? '' : value;
+    if(!_.isNull(value)){ morph.append(value); }
+
+      // Observe this content morph's parent's children.
+      // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
+      // Timeout delay hack to give out dom a change to get their parent
+      if(morph._parent){
+        morph._parent.__lazyValue = lazyValue;
+        setTimeout(function(){
+          if(morph.contextualElement){
+            observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
+          }
+        }, 0);
+      }
+
+    }
+
+};
+
+hooks.inline = function inline(env, morph, context, path, params, hash) {
+
+  var lazyValue,
+  value,
+  observer = subtreeObserver,
+  helper = helpers.lookupHelper(path, env, context);
+
+  if(!_.isFunction(helper)){
+    return console.error(path + ' is not a valid helper!');
+  }
+
+  // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
+  lazyValue = constructHelper(morph, path, context, params, hash, {}, env, helper);
+
+  // If we have our lazy value, update our dom.
+  // morph is a morph element representing our dom node
+  if (lazyValue) {
+    lazyValue.onNotify(function(lazyValue) {
+      var val = lazyValue.value();
+      val = (_.isUndefined(val)) ? '' : val;
+      if(!_.isNull(val)){
+        morph.update(val);
+      }
+    });
+
+    value = lazyValue.value();
+    value = (_.isUndefined(value)) ? '' : value;
+    if(!_.isNull(value)){ morph.append(value); }
+
+      // Observe this content morph's parent's children.
+      // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
+      // Timeout delay hack to give out dom a change to get their parent
+      if(morph._parent){
+        morph._parent.__lazyValue = lazyValue;
+        setTimeout(function(){
+          if(morph.contextualElement){
+            observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
+          }
+        }, 0);
+      }
+
+    }
+  };
+
+hooks.content = function content(env, morph, context, path) {
 
   var lazyValue,
       value,
       observer = subtreeObserver,
       helper = helpers.lookupHelper(path, env, context);
 
-  // If we were passed a helper, and it was found in our registered helpers
-  if (helper) {
-    // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-    lazyValue = constructHelper(placeholder, path, context, params, hash, options, env, helper);
-  } else {
-    // If not a helper, just subscribe to the value
-    lazyValue = streamProperty(context, path);
-  }
+  lazyValue = streamProperty(context, path);
 
   // If we have our lazy value, update our dom.
-  // Placeholder is a morph element representing our dom node
+  // morph is a morph element representing our dom node
   if (lazyValue) {
     lazyValue.onNotify(function(lazyValue) {
       var val = lazyValue.value();
       val = (_.isUndefined(val)) ? '' : val;
       if(!_.isNull(val)){
-        placeholder.update(val);
+        morph.update(val);
       }
     });
 
     value = lazyValue.value();
     value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ placeholder.append(value); }
+    if(!_.isNull(value)){ morph.append(value); }
 
     // Observe this content morph's parent's children.
-    // When the morph element's containing element (placeholder) is removed, clean up the lazyvalue.
+    // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
     // Timeout delay hack to give out dom a change to get their parent
-    if(placeholder._parent){
-      placeholder._parent.__lazyValue = lazyValue;
+    if(morph._parent){
+      morph._parent.__lazyValue = lazyValue;
       setTimeout(function(){
-        if(placeholder.contextualElement){
-          observer.observe(placeholder.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
+        if(morph.contextualElement){
+          observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
         }
       }, 0);
     }
@@ -240,20 +344,16 @@ hooks.content = function(placeholder, path, context, params, hash, options, env)
   }
 };
 
-hooks.attribute = function(domElement, attributeName, quoted, context, parts, options, env){
-  parts.unshift(attributeName);
-  hooks.element(domElement, 'attribute', context, parts, [], options, env);
-};
+// Handle morphs in element tags
+hooks.element = function element(env, domElement, context, path, params, hash) {
 
-// Handle placeholders in element tags
-hooks.element = function(element, path, context, params, hash, options, env) {
   var helper = helpers.lookupHelper(path, env, context),
       lazyValue,
       value;
 
   if (helper) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-    lazyValue = constructHelper(element, path, context, params, hash, options, env, helper);
+    lazyValue = constructHelper(domElement, path, context, params, hash, {}, env, helper);
   } else {
     lazyValue = streamProperty(context, path);
   }
@@ -267,149 +367,157 @@ hooks.element = function(element, path, context, params, hash, options, env) {
 
 };
 
-hooks.component = function(placeholder, path, context, hash, options, env) {
+hooks.attribute = function attribute(env, domElement, name, value){
+
+  var lazyValue = new LazyValue(function() {
+        var val = value.value(),
+            checkboxChange,
+            type = domElement.getAttribute("type"),
+            inputTypes = {'null': true, 'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true, 'hidden':true},
+            attr;
+
+        // If is a text input element's value prop with only one variable, wire default events
+        if( domElement.tagName === 'INPUT' && inputTypes[type] && name === 'value' ){
+
+          // If our special input events have not been bound yet, bind them and set flag
+          if(!lazyValue.inputObserver){
+
+            $(domElement).on('change input propertychange', function(event){
+              value.set(value.path, this.value);
+            });
+
+            lazyValue.inputObserver = true;
+
+          }
+
+          // Set the attribute on our element for visual referance
+          (_.isUndefined(val)) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
+
+          attr = val;
+
+          return domElement.value = (attr) ? attr : '';
+        }
+
+        else if( domElement.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && name === 'checked' ){
+
+          // If our special input events have not been bound yet, bind them and set flag
+          if(!lazyValue.eventsBound){
+
+            $(domElement).on('change propertychange', function(event){
+              value.set(value.path, ((this.checked) ? true : false), {quiet: true});
+            });
+
+            lazyValue.eventsBound = true;
+          }
+
+          // Set the attribute on our element for visual referance
+          (!val) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
+
+          return domElement.checked = (val) ? true : undefined;
+        }
+
+        else {
+          _.isString(val) && (val = val.trim());
+          val || (val = undefined);
+          if(_.isUndefined(val)){
+            domElement.removeAttribute(name);
+          }
+          else{
+            domElement.setAttribute(name, val);
+          }
+        }
+
+        return val;
+
+      });
+
+  value.onNotify(function(){
+    lazyValue.value();
+  });
+  lazyValue.addDependentValue(value);
+
+
+  return lazyValue.value();
+
+};
+
+hooks.component = function(env, morph, context, tagName, contextData, template) {
+
   var component,
       element,
       outlet,
-      data = {},
-      lazyData = {},
+      plainData = {},
+      componentData = {},
       lazyValue;
-
-  // Create a plain data object from the lazyvalues/values passed to our component
-  _.each(hash, function(value, key) {
-    data[key] = (value.isLazyValue) ? value.value() : value;
-  });
 
   // Create a lazy value that returns the value of our evaluated component.
   lazyValue = new LazyValue(function() {
 
+    // Create a plain data object from the lazyvalues/values passed to our component
+    _.each(contextData, function(value, key) {
+      plainData[key] = (value.isLazyValue) ? value.value() : value;
+    });
+
     // For each param passed to our shared component, add it to our custom element
     // TODO: there has to be a better way to get seed data to element instances
     // Global seed data is consumed by element as its created. This is not scoped and very dumb.
-    Rebound.seedData = data;
-    element = document.createElement(path);
+    Rebound.seedData = plainData;
+    element = document.createElement(tagName);
     Rebound.seedData = {};
     component = element.__component__;
 
-    // For each param passed to our shared component, create a new lazyValue
-    _.each(data, function(value, key) {
-      lazyData[key] = streamProperty(component, key);
+    // For each lazy param passed to our component, create its lazyValue
+    _.each(plainData, function(value, key) {
+      if(contextData[key] && contextData[key].isLazyValue){
+        componentData[key] = streamProperty(component, key);
+      }
     });
 
-    // For each param passed to our helper, have it update the original context when changed.
-    // For each new lazyValue, bind it to its original context's value and to its scoped context
-    _.each( lazyData, function(value, key){
+    // Set up two way binding between component and original context for non-data attributes
+    // Syncing between models and collections passed are handled in model and collection
+    _.each( componentData, function(componentDataValue, key){
 
-      // If this value was passed in from outside, set up our two way data binding
-      // TODO: Make this sync work with complex arguments with more than one part
-      if(hash[key] && hash[key].children && hash[key].children.length === 1){
-        value.onNotify(function(){
-          // Update the context where we inherited this value from.
-          context.set(hash[key].children[0].path, value.value());
+      // TODO: Make this sync work with complex arguments with more than one child
+      if(contextData[key].children === null){
+        // For each lazy param passed to our component, have it update the original context when changed.
+        componentDataValue.onNotify(function(){
+          contextData[key].set(contextData[key].path, componentDataValue.value());
         });
-
-        // For each param passed to our component, if it exists, add it to our component's dependant list. Value will re-evaluate when its original changes.
-        if(hash[key] && hash[key].isLazyValue){
-          hash[key].onNotify(function(){
-            component.set(key, hash[key].value());
-            value.notify();
-          });
-        }
       }
+
+      // For each lazy param passed to our component, have it update the component when changed.
+      contextData[key].onNotify(function(){
+        componentDataValue.set(key, contextData[key].value());
+      });
 
       // Seed the cache
-      value.value();
+      componentDataValue.value();
 
       // Notify the component's lazyvalue when our model updates
-      value.saveObserver(addObserver(component, key, value, placeholder));
+      contextData[key].addObserver(contextData[key].path, context);
+      componentDataValue.addObserver(key, component);
+      console.log(component.__name, component.cid, component);
+
     });
 
-  /*******************************************************
+    // // For each change on our component, update the states of the original context and the element's proeprties.
+    component.listenTo(component, 'change', function(model){
+      var json = component.toJSON();
 
-    Set up our data dependancy chains.
-
-      Players:
-
-        Context: The original context of the data passed into our component
-
-        Component: The data stricture of our component that handles all syncronization and binding
-
-        Element: The actual dom element associated with our component
-
-      Chain structure:
-
-        Context <---> Component <---> Element
-
-  *******************************************************/
-
-    // For each change on our component, update the states of the original context and the element's proeprties.
-    context.listenTo(component, 'change ', function(model){
-
-      var componentPath = (model.__path()),
-          componentAttrs = model.changedAttributes(),
-          contextPath = '',
-          contextAttrs = {},
-          json = model.toJSON();
-
-
-      // If changed model is our top level component object, then the value changed is a primitive
-      // Only update the values that were passed in to our component
-      // Variable names may change when passed into components (ex: user={{person}}).
-      // When user changes on the component, be sure to update the person variable
-      if(componentPath === ""){
-        // For each attribute modified on our component, update the context's corrosponding key
-        _.each(componentAttrs, function(value, componentKey){
-          // TODO: Make this sync work with complex arguments with more than one part
-          if(hash[componentKey] && hash[componentKey].children &&  hash[componentKey].children.length === 1){
-            contextAttrs[hash[componentKey].children[0].path] = value;
-          }
-        });
-        context.get(contextPath).set(contextAttrs);
-      }
-      // If changed model is a sub object of the component, only update the values that were passed in to our component
-      else{
-        // If base model was renamed, create the actual path on the context we're updating
-        contextPath = $.splitPath(componentPath);
-        if(hash.hasOwnProperty(contextPath[0])){
-          // TODO: Make this sync work with complex arguments with more than one part
-          contextPath[0] = hash[contextPath[0]].children[0].path;
-          contextPath = contextPath.join('.');
-          // All values were passed in as is, use all of them
-          contextAttrs = componentAttrs;
-          context.get(contextPath).set(contextAttrs);
-        }
-      }
-
+      if(_.isString(json)) return; // If is a string, this model is seralizing already
 
       // Set the properties on our element for visual referance if we are on a top level attribute
-      if(componentPath === ""){
-        _.each(json, function(value, key){
-          // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
-          if((_.isObject(value))){ return; }
-          value = (_.isObject(value)) ? JSON.stringify(value) : value;
-          if(!_.isUndefined(value)){
-            try{ (attributes[key]) ? element.setAttribute(key, value) : element.dataset[key] = value; }
-            catch(e){
-              console.error(e.message);
-            }
+      _.each(json, function(value, key){
+        // TODO: Currently, showing objects as properties on the custom element causes problems.
+        // Linked models between the context and component become the same exact model and all hell breaks loose.
+        // Find a way to remedy this. Until then, don't show objects.
+        if((_.isObject(value))){ return; }
+        value = (_.isObject(value)) ? JSON.stringify(value) : value;
+          try{ (attributes[key]) ? element.setAttribute(key, value) : element.dataset[key] = value; }
+          catch(e){
+            console.error(e.message);
           }
-        });
-      }
-    });
-
-    // For each change to the original context, update our component
-    component.listenTo(context, 'change', function(model){
-
-      var path = model.__path(),
-          split = path.split('.');
-
-      if(!hash[split[0]]){
-        return;
-      }
-
-      if(component.get(path)){
-        component.get(path).set(model.changedAttributes());
-      }
+      });
     });
 
     /** The attributeChangedCallback on our custom element updates the component's data. **/
@@ -438,10 +546,10 @@ hooks.component = function(placeholder, path, context, hash, options, env) {
     });
 
 
-    // If an outlet marker is present in component's template, and options.render is a function, render it into <content>
+    // If an outlet marker is present in component's template, and a template is provided, render it into <content>
     outlet = element.getElementsByTagName('content')[0];
-    if(options.template && _.isElement(outlet)){
-      outlet.appendChild(options.template.render(context, env, outlet));
+    if(template && _.isElement(outlet)){
+      outlet.appendChild(template.render(context, env, outlet));
     }
 
     // Return the new element.
@@ -451,32 +559,16 @@ hooks.component = function(placeholder, path, context, hash, options, env) {
 
 
   // If we have our lazy value, update our dom.
-  // Placeholder is a morph element representing our dom node
+  // morph is a morph element representing our dom node
   if (lazyValue) {
     lazyValue.onNotify(function(lazyValue) {
       var val = lazyValue.value();
-      if(val !== undefined){ placeholder.update(val); }
+      if(val !== undefined){ morph.update(val); }
     });
 
     value = lazyValue.value();
-    if(value !== undefined){ placeholder.append(value); }
+    if(value !== undefined){ morph.append(value); }
   }
-};
-
-
-hooks.subexpr = function(path, context, params, hash, options, env) {
-
-  var helper = helpers.lookupHelper(path, env, context),
-      lazyValue;
-
-  if (helper) {
-    // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-    lazyValue = constructHelper((options || true), path, context, params, hash, options, env, helper);
-  } else {
-    lazyValue = streamProperty(context, path);
-  }
-
-  return lazyValue;
 };
 
 // registerHelper is a publically available function to register a helper with HTMLBars

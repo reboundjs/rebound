@@ -1,7 +1,6 @@
 import $ from "rebound-runtime/utils";
 import env from "rebound-runtime/env";
-import { Model, Collection, ComputedProperty } from "rebound-data/rebound-data";
-
+import Context from "rebound-runtime/context";
 
 // If Rebound Runtime has already been run, throw error
 if(Rebound.Component){
@@ -13,7 +12,7 @@ if(!window.Backbone){
 }
 
 // New Backbone Component
-var Component = Model.extend({
+var Component = Context.extend({
 
   isComponent: true,
 
@@ -25,23 +24,14 @@ var Component = Model.extend({
     this.changed = {};
     this.helpers = {};
     this.__parent__ = this.__root__ = this;
-
+    this.listen();
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
-    // Functions are compiled to find their dependancies and registerd as compiled properties
-    _.each(this.defaults, function(val){
-      if(val && (val.isModel || val.isCollection)){
-        val.__parent__ = this;
-        val.__root__ = this;
-      }
-    }, this);
-
-
+    // Functions are compiled to find their dependancies and added as computed properties
     // Set our component's context with the passed data merged with the component's defaults
     this.set((this.defaults || {}));
     this.set((options.data || {}));
-
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
     this.helpers.__callOnComponent = this.__callOnComponent;
@@ -70,14 +60,10 @@ var Component = Model.extend({
     this.template = (typeof options.template === 'string') ? Rebound.templates[this.template] : env.hydrate(this.template);
 
 
-    // Listen to relevent data change events
-    this.listenTo(this, 'change', this._onModelChange);
-    this.listenTo(this, 'add remove', this._onCollectionChange);
-    this.listenTo(this, 'reset', this._onReset);
-
-
     // Render our dom and place the dom in our custom element
     this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
+
+    this.initialize();
 
   },
 
@@ -102,97 +88,25 @@ var Component = Model.extend({
   },
 
   _onAttributeChange: function(attrName, oldVal, newVal){
-    try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
-
-    // data attributes should be referanced by their camel case name
-    attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
-
-    oldVal = this.get(attrName);
-
-    if(newVal === null){ this.unset(attrName); }
-
-    // If oldVal is a number, and newVal is only numerical, preserve type
-    if(_.isNumber(oldVal) && _.isString(newVal) && newVal.match(/^[0-9]*$/i)){
-      newVal = parseInt(newVal);
-    }
-
-    else{ this.set(attrName, newVal, {quiet: true}); }
+    // Commented out because tracking attribute changes and making sure they dont infinite loop is hard.
+    // TODO: Make work.
+    // try{ newVal = JSON.parse(newVal); } catch (e){ newVal = newVal; }
+    //
+    // // data attributes should be referanced by their camel case name
+    // attrName = attrName.replace(/^data-/g, "").replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+    //
+    // oldVal = this.get(attrName);
+    //
+    // if(newVal === null){ this.unset(attrName); }
+    //
+    // // If oldVal is a number, and newVal is only numerical, preserve type
+    // if(_.isNumber(oldVal) && _.isString(newVal) && newVal.match(/^[0-9]*$/i)){
+    //   newVal = parseInt(newVal);
+    // }
+    //
+    // else{ this.set(attrName, newVal, {quiet: true}); }
   },
 
-  _onReset: function(data, options){
-    if(data && data.isModel){
-      return this._onModelChange(data, options);
-    }
-    else if(data.isCollection){
-      return this._onCollectionChange(data, options);
-    }
-  },
-
-  _onModelChange: function(model, options){
-    // console.error('Model change', model.changedAttributes(), model );
-    var changed = model.changedAttributes();
-    if(changed){
-      this._notifySubtree(model, changed, 'model');
-    }
-  },
-
-  _onCollectionChange: function(model, collection, options){
-    // console.error('Collection change', model, collection);
-
-    var changed = {},
-        that = this;
-    if(model.isCollection){
-      options = collection;
-      collection = model;
-    }
-
-    changed[collection.__path()] = collection;
-    if(collection._timeout){
-      clearTimeout(collection._timeout);
-      collection._timeout = undefined;
-    }
-    collection._timeout = setTimeout(function(){
-      that._notifySubtree(that, changed, 'collection');
-    }, 20);
-  },
-
-  _notifySubtree: function(obj, changed, type){
-
-    var context = this, // This root context
-        path = obj.__path(), // The path of the modified object relative to the root context
-        parts = $.splitPath(path), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
-        keys = _.keys(changed), // Array of all changed keys
-        i = 0,
-        len = parts.length,
-        paths,
-        triggers;
-
-    // Call notify on every object down the data tree starting at the root and all the way down element that triggered the change
-    for(i;i<=len;i++){
-
-      // Reset paths for each data layer
-      paths = [];
-      triggers = [];
-
-      // For every key changed
-      _.each(keys, function(attr){
-
-        // Constructs paths variable relative to current data element
-        paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[([^\]]+)\]/g, ".$1").replace(/^\./, ''));
-        paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, ''));
-        paths = _.uniq(paths);
-      });
-
-      // Call all listeners
-      env.notify(context, paths, type);
-
-      // If not at end of path parts, get the next data object
-      context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));
-      if(context === undefined){
-        break;
-      }
-    }
-  }
 });
 
 Component.extend= function(protoProps, staticProps) {
@@ -202,8 +116,6 @@ Component.extend= function(protoProps, staticProps) {
       configProperties = {'routes':1, 'template':1, 'defaults':1, 'outlet':1, 'url':1, 'urlRoot':1, 'idAttribute':1, 'id':1, 'createdCallback':1, 'attachedCallback':1, 'detachedCallback':1};
 
   protoProps.defaults = {};
-
-  console.log(protoProps, staticProps);
 
   // For each property passed into our component base class
   _.each(protoProps, function(value, key, protoProps){

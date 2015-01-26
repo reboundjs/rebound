@@ -59,6 +59,7 @@
 	</template>
 </element>
 <script>
+
 	return ({
 
 	/**************** Component Configs *******************/
@@ -103,6 +104,7 @@
 		],
 
 	/************** Computed Properties *****************/
+
 
 		allAreDone: function(){
 			return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length;
