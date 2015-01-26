@@ -23,6 +23,7 @@ build/Release
 tmp
 amd
 dist
+test/demo/templates
 
 # Dependency directory
 # Deployed apps should consider commenting this line out:

@@ -99,7 +99,7 @@ gulp.task('recompile-demo', ['cjs', 'runtime'],  function(){
   var fs   = require('fs');
   var precompile = require('./dist/cjs/rebound-precompiler/rebound-precompiler').precompile;
   var finished = false;
-  fs.readFile('./test/demo/templates/demo.html', 'utf8', function (err,data) {
+  fs.readFile('./test/demo/demo.html', 'utf8', function (err,data) {
     if (err) return console.log(err);
     var template = precompile(data);
     fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
@@ -110,10 +110,10 @@ gulp.task('recompile-demo', ['cjs', 'runtime'],  function(){
       }
     });
   });
-  fs.readFile('./test/demo/templates/components/editing.html', 'utf8', function (err,data) {
+  fs.readFile('./test/demo/editing.html', 'utf8', function (err,data) {
     if (err) return console.log(err);
     var template = precompile(data);
-    fs.writeFile('./test/demo/templates/components/editing.js', template, function(err) {
+    fs.writeFile('./test/demo/templates/editing.js', template, function(err) {
       if(err) console.log(err);
       else{
         console.log("Edit component compiled successfully!");
