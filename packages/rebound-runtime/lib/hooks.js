@@ -237,7 +237,7 @@ hooks.block = function block(env, morph, context, path, params, hash, template, 
       var val = lazyValue.value();
       val = (_.isUndefined(val)) ? '' : val;
       if(!_.isNull(val)){
-        morph.update(val);
+        morph.setContent(val);
       }
     });
 
@@ -282,7 +282,7 @@ hooks.inline = function inline(env, morph, context, path, params, hash) {
       var val = lazyValue.value();
       val = (_.isUndefined(val)) ? '' : val;
       if(!_.isNull(val)){
-        morph.update(val);
+        morph.setContent(val);
       }
     });
 
@@ -321,7 +321,7 @@ hooks.content = function content(env, morph, context, path) {
       var val = lazyValue.value();
       val = (_.isUndefined(val)) ? '' : val;
       if(!_.isNull(val)){
-        morph.update(val);
+        morph.setContent(val);
       }
     });
 
@@ -366,70 +366,69 @@ hooks.element = function element(env, domElement, context, path, params, hash) {
   value = lazyValue.value();
 
 };
-
-hooks.attribute = function attribute(env, domElement, name, value){
+hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
 
   var lazyValue = new LazyValue(function() {
-        var val = value.value(),
-            checkboxChange,
-            type = domElement.getAttribute("type"),
-            inputTypes = {'null': true, 'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true, 'hidden':true},
-            attr;
+    var val = value.value(),
+    checkboxChange,
+    type = domElement.getAttribute("type"),
+    inputTypes = {'null': true, 'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true, 'hidden':true},
+    attr;
 
-        // If is a text input element's value prop with only one variable, wire default events
-        if( domElement.tagName === 'INPUT' && inputTypes[type] && name === 'value' ){
+    // If is a text input element's value prop with only one variable, wire default events
+    if( domElement.tagName === 'INPUT' && inputTypes[type] && name === 'value' ){
 
-          // If our special input events have not been bound yet, bind them and set flag
-          if(!lazyValue.inputObserver){
+      // If our special input events have not been bound yet, bind them and set flag
+      if(!lazyValue.inputObserver){
 
-            $(domElement).on('change input propertychange', function(event){
-              value.set(value.path, this.value);
-            });
+        $(domElement).on('change input propertychange', function(event){
+          value.set(value.path, this.value);
+        });
 
-            lazyValue.inputObserver = true;
+        lazyValue.inputObserver = true;
 
-          }
+      }
 
-          // Set the attribute on our element for visual referance
-          (_.isUndefined(val)) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
+      // Set the attribute on our element for visual referance
+      (_.isUndefined(val)) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
 
-          attr = val;
+      attr = val;
 
-          return domElement.value = (attr) ? attr : '';
-        }
+      return domElement.value = (attr) ? attr : '';
+    }
 
-        else if( domElement.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && name === 'checked' ){
+    else if( domElement.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && name === 'checked' ){
 
-          // If our special input events have not been bound yet, bind them and set flag
-          if(!lazyValue.eventsBound){
+      // If our special input events have not been bound yet, bind them and set flag
+      if(!lazyValue.eventsBound){
 
-            $(domElement).on('change propertychange', function(event){
-              value.set(value.path, ((this.checked) ? true : false), {quiet: true});
-            });
+        $(domElement).on('change propertychange', function(event){
+          value.set(value.path, ((this.checked) ? true : false), {quiet: true});
+        });
 
-            lazyValue.eventsBound = true;
-          }
+        lazyValue.eventsBound = true;
+      }
 
-          // Set the attribute on our element for visual referance
-          (!val) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
+      // Set the attribute on our element for visual referance
+      (!val) ? domElement.removeAttribute(name) : domElement.setAttribute(name, val);
 
-          return domElement.checked = (val) ? true : undefined;
-        }
+      return domElement.checked = (val) ? true : undefined;
+    }
 
-        else {
-          _.isString(val) && (val = val.trim());
-          val || (val = undefined);
-          if(_.isUndefined(val)){
-            domElement.removeAttribute(name);
-          }
-          else{
-            domElement.setAttribute(name, val);
-          }
-        }
+    else {
+      _.isString(val) && (val = val.trim());
+      val || (val = undefined);
+      if(_.isUndefined(val)){
+        domElement.removeAttribute(name);
+      }
+      else{
+        domElement.setAttribute(name, val);
+      }
+    }
 
-        return val;
+    return val;
 
-      });
+  });
 
   value.onNotify(function(){
     lazyValue.value();
@@ -448,7 +447,8 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
       outlet,
       plainData = {},
       componentData = {},
-      lazyValue;
+      lazyValue,
+      value;
 
   // Create a lazy value that returns the value of our evaluated component.
   lazyValue = new LazyValue(function() {
@@ -496,7 +496,6 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
       // Notify the component's lazyvalue when our model updates
       contextData[key].addObserver(contextData[key].path, context);
       componentDataValue.addObserver(key, component);
-      console.log(component.__name, component.cid, component);
 
     });
 
@@ -563,7 +562,7 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
   if (lazyValue) {
     lazyValue.onNotify(function(lazyValue) {
       var val = lazyValue.value();
-      if(val !== undefined){ morph.update(val); }
+      if(val !== undefined){ morph.setContent(val); }
     });
 
     value = lazyValue.value();

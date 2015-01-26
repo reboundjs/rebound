@@ -39,9 +39,11 @@ var Collection = Backbone.Collection.extend({
 
     Backbone.Collection.apply( this, arguments );
 
-    // When a model is removed, destroy it
+    // When a model is removed from its original collection, destroy it
+    // TODO: Fix this. Computed properties now somehow allow collection to share a model. They may be removed from one but not the other. That is bad.
+    // The clone = false options is the culprit. Find a better way to copy all of the collections custom attributes over to the clone.
     this.on('remove', function(model, collection, options){
-      model.deinitialize();
+      // model.deinitialize();
     });
 
   },
@@ -106,11 +108,10 @@ var Collection = Backbone.Collection.extend({
     // Ensure models is an array
     models = (!_.isArray(models)) ? [models] : models;
 
-    // For each model, construct a copy of it using this collection's model class
+    // If the model already exists in this collection, or we are told not to clone it, let Backbone handle the merge
+    // Otherwise, create our copy of this model, give them the same cid so our helpers treat them as the same object
     _.each(models, function(data, index){
-      // If the model already exists in this collection, or we are told not to clone it, let Backbone handle the merge
       if(data.isModel && options.clone === false || this._byId[data.cid]) return newModels[index] = data;
-      // Create our copy of this model, give them the same cid so our helpers treat them as the same object
       newModels[index] = new this.model(data, _.defaults(lineage, options));
       data.isModel && (newModels[index].cid = data.cid);
     }, this);

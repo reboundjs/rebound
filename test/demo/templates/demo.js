@@ -1,6 +1,6 @@
 define( ["test/demo/templates/components/editing"], function(){
 
-  return (function() {
+  return (function () {
     return window.Rebound.registerComponent("rebound-demo", {
       prototype: (function(){ return ({ name: 'woo', val: { test: function(){ return this.get('@parent.name'); } }, initialize: function(options){ }, createdCallback: function(){ }, attachedCallback: function(){ }, detachedCallback: function(){ }, routes: { ":filter" : "filterList" }, newTitle: '', filter: 'all', todos: [ { title: "Tie Bowtie", editing: false, isCompleted: true },{ title: "Look Dapper", editing: false, isCompleted: false },{ title: "Profit", editing: false, isCompleted: false } ], allAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length; }, noneAreDone: function(){ return this.get('todos').where({'isCompleted': true}).length == 0; }, remaining: function(){ return this.get('todos').where({'isCompleted': false}).length; }, completed: function(){ return this.get('todos').where({'isCompleted': true}).length; }, todosProxy: function(){ return this.get('filteredTodos'); }, firstTodo: function(){ return this.get('todosProxy[0]'); }, secondTodo: function(){ return this.get('filteredTodos[1]'); }, filteredTodos: function(){ if(this.get('filter') == 'all') return this.get('todos'); if(this.get('filter') == 'active') return this.get('todos').where({'isCompleted': false}); if(this.get('filter') == 'completed') return this.get('todos').where({'isCompleted': true}); }, isAll: function(){ return this.get('filter') === 'all'; }, isActive: function(){ return this.get('filter') === 'active'; }, isCompleted: function(){ return this.get('filter') === 'completed'; }, createTodo: function(event){ if(event.keyCode !== 13){ return; } if(this.get('newTitle') == '') return; this.get('todos').add({ title: this.get('newTitle'), editing: false, isCompleted: false }); this.set('newTitle', ''); }, toggleAll: function(event){ var value = event.target.checked; this.get('todos').forEach(function(model, index) { model.set('isCompleted', value); }); }, clearCompleted: function(event){ this.get('todos').remove( this.get('todos').where({'isCompleted': true}) ); }, removeTodo: function(event){ this.get('todos').remove(event.context); }, editTodo: function(event){ event.context.set('editing', true); }, filterList: function(filter){ this.set('filter', filter) } }); })(),
       template: (function() {
@@ -110,12 +110,13 @@ define( ["test/demo/templates/components/editing"], function(){
             if (this.cachedFragment) {
               fragment = dom.cloneNode(this.cachedFragment, true);
             }
-            dom.repairClonedNode(fragment.childNodes[1],[],true);
-            var element1 = fragment.childNodes[1];
-            var element2 = fragment.childNodes[2];
-            var element3 = fragment.childNodes[3];
+            if (this.cachedFragment) { dom.repairClonedNode(dom.childAt(fragment, [1]),[],true); }
+            var element1 = dom.childAt(fragment, [1]);
+            var element2 = dom.childAt(fragment, [2]);
+            var element3 = dom.childAt(fragment, [3]);
+            var attrMorph0 = dom.createAttrMorph(element1, 'checked');
             var morph0 = dom.createMorphAt(element2,-1,-1);
-            attribute(env, element1, "checked", concat(env, [get(env, context, "isCompleted")]));
+            attribute(env, attrMorph0, element1, "checked", concat(env, [get(env, context, "isCompleted")]));
             element(env, element2, context, "on", ["dblclick", "editTodo"], {});
             content(env, morph0, context, "title");
             element(env, element3, context, "on", ["click", "removeTodo"], {});
@@ -158,9 +159,10 @@ define( ["test/demo/templates/components/editing"], function(){
           if (this.cachedFragment) {
             fragment = dom.cloneNode(this.cachedFragment, true);
           }
-          var element4 = fragment.childNodes[1];
+          var element4 = dom.childAt(fragment, [1]);
           var morph0 = dom.createMorphAt(element4,0,1);
-          attribute(env, element4, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isCompleted"), "completed"], {}), " ", subexpr(env, context, "if", [get(env, context, "editing"), "editing"], {})]));
+          var attrMorph0 = dom.createAttrMorph(element4, 'class');
+          attribute(env, attrMorph0, element4, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isCompleted"), "completed"], {}), " ", subexpr(env, context, "if", [get(env, context, "editing"), "editing"], {})]));
           block(env, morph0, context, "if", [get(env, context, "editing")], {}, child0, child1);
           return fragment;
         }
@@ -203,7 +205,7 @@ define( ["test/demo/templates/components/editing"], function(){
           if (this.cachedFragment) {
             fragment = dom.cloneNode(this.cachedFragment, true);
           }
-          var element0 = fragment.childNodes[1];
+          var element0 = dom.childAt(fragment, [1]);
           var morph0 = dom.createMorphAt(element0,0,1);
           element(env, element0, context, "on", ["click", "clearCompleted"], {});
           content(env, morph0, context, "completed");
@@ -292,24 +294,28 @@ define( ["test/demo/templates/components/editing"], function(){
         if (this.cachedFragment) {
           fragment = dom.cloneNode(this.cachedFragment, true);
         }
-        var element5 = fragment.childNodes[1];
-        var element6 = element5.childNodes[1];
-        dom.repairClonedNode(element6,[],true);
-        var element7 = fragment.childNodes[2];
-        var element8 = element7.childNodes[1];
-        var element9 = element8.childNodes[0].childNodes[0];
-        var element10 = element8.childNodes[1].childNodes[0];
-        var element11 = element8.childNodes[2].childNodes[0];
-        var morph0 = dom.createMorphAt(element5.childNodes[0],0,1);
-        var morph1 = dom.createMorphAt(element7.childNodes[0].childNodes[0],-1,-1);
+        var element5 = dom.childAt(fragment, [1]);
+        var element6 = dom.childAt(element5, [1]);
+        if (this.cachedFragment) { dom.repairClonedNode(element6,[],true); }
+        var element7 = dom.childAt(fragment, [2]);
+        var element8 = dom.childAt(element7, [1]);
+        var element9 = dom.childAt(element8, [0, 0]);
+        var element10 = dom.childAt(element8, [1, 0]);
+        var element11 = dom.childAt(element8, [2, 0]);
+        var morph0 = dom.createMorphAt(dom.childAt(element5, [0]),0,1);
+        var attrMorph0 = dom.createAttrMorph(element6, 'checked');
+        var morph1 = dom.createMorphAt(dom.childAt(element7, [0, 0]),-1,-1);
+        var attrMorph1 = dom.createAttrMorph(element9, 'class');
+        var attrMorph2 = dom.createAttrMorph(element10, 'class');
+        var attrMorph3 = dom.createAttrMorph(element11, 'class');
         var morph2 = dom.createMorphAt(element7,2,3);
         block(env, morph0, context, "each", [get(env, context, "filteredTodos")], {}, child0, null);
-        attribute(env, element6, "checked", get(env, context, "allAreDone"));
+        attribute(env, attrMorph0, element6, "checked", get(env, context, "allAreDone"));
         element(env, element6, context, "on", ["click", "toggleAll"], {});
         content(env, morph1, context, "remaining");
-        attribute(env, element9, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isAll"), "selected"], {})]));
-        attribute(env, element10, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isActive"), "selected"], {})]));
-        attribute(env, element11, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isCompleted"), "selected"], {})]));
+        attribute(env, attrMorph1, element9, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isAll"), "selected"], {})]));
+        attribute(env, attrMorph2, element10, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isActive"), "selected"], {})]));
+        attribute(env, attrMorph3, element11, "class", concat(env, [subexpr(env, context, "if", [get(env, context, "isCompleted"), "selected"], {})]));
         block(env, morph2, context, "unless", [get(env, context, "noneAreDone")], {}, child1, null);
         return fragment;
       }
@@ -384,13 +390,14 @@ define( ["test/demo/templates/components/editing"], function(){
       if (this.cachedFragment) {
         fragment = dom.cloneNode(this.cachedFragment, true);
       }
-      var element12 = fragment.childNodes[0];
-      var element13 = element12.childNodes[0];
-      var element14 = element13.childNodes[1];
-      var morph0 = dom.createMorphAt(element13.childNodes[0],-1,-1);
+      var element12 = dom.childAt(fragment, [0]);
+      var element13 = dom.childAt(element12, [0]);
+      var element14 = dom.childAt(element13, [1]);
+      var morph0 = dom.createMorphAt(dom.childAt(element13, [0]),-1,-1);
+      var attrMorph0 = dom.createAttrMorph(element14, 'value');
       var morph1 = dom.createMorphAt(element12,1,2);
       content(env, morph0, context, "firstTodo.title");
-      attribute(env, element14, "value", concat(env, [get(env, context, "newTitle")]));
+      attribute(env, attrMorph0, element14, "value", concat(env, [get(env, context, "newTitle")]));
       element(env, element14, context, "on", ["keyup", "createTodo"], {});
       block(env, morph1, context, "if", [get(env, context, "todos")], {}, child0, null);
       return fragment;

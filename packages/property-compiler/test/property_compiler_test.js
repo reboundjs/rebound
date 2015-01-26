@@ -1,5 +1,5 @@
 require(['property-compiler/property-compiler'], function(compiler){
-    compiler = compiler.default;
+
     QUnit.test('Rebound Property Compiler', function() {
 
       var func, res;

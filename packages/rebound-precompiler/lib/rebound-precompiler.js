@@ -1,4 +1,4 @@
-import { compile as htmlbarsCompile, compileSpec as htmlbarsCompileSpec } from "htmlbars-compiler/compiler";
+import { compile as htmlbarsCompile, compileSpec as htmlbarsCompileSpec } from "htmlbars";
 
 function getScript(str){
   return (str.indexOf('<script>') > -1 && str.indexOf('</script>') > -1) ? '(function(){' + str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2') + '})()' : '{}';

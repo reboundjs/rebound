@@ -1,5 +1,5 @@
 require(['rebound-runtime/component', 'simple-html-tokenizer', 'rebound-compiler/rebound-compiler'], function(Component, tokenizer, compiler){
-    Component = Component.default;
+
     function equalTokens(fragment, html, message) {
       var div = document.createElement("div");
 
