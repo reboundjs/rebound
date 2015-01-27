@@ -13,7 +13,7 @@ var qunit = require('node-qunit-phantomjs');
 
 
 var paths = {
-    all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/**/*.html'],
+    all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/demo/*.html'],
     propertyCompiler:   'packages/property-compiler/lib/**/*.js',
     reboundCompiler:    'packages/rebound-compiler/lib/**/*.js',
     reboundData:        'packages/rebound-data/lib/**/*.js',
@@ -24,7 +24,7 @@ var paths = {
 
 gulp.task('clean', function(cb) {
   // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist'], cb);
+  return del(['dist', 'test/demo/templates'], cb);
 });
 
 // JS hint task
@@ -97,8 +97,10 @@ gulp.task('runtime', ['amd'], function() {
 gulp.task('recompile-demo', ['cjs', 'runtime'],  function(){
   // When everything is finished, re-compile the demo
   var fs   = require('fs');
+  var mkdirp = require('mkdirp');
   var precompile = require('./dist/cjs/rebound-precompiler/rebound-precompiler').precompile;
   var finished = false;
+  mkdirp.sync('./test/demo/templates');
   fs.readFile('./test/demo/demo.html', 'utf8', function (err,data) {
     if (err) return console.log(err);
     var template = precompile(data);
@@ -132,14 +134,14 @@ gulp.task('connect', function() {
 });
 
 // Rerun the tasks when a file changes
-gulp.task('watch', ['connect'], function() {
-  gulp.watch(paths.all, ['cjs', 'runtime', 'recompile-demo']);
+gulp.task('watch', ['recompile-demo', 'connect'], function() {
+  gulp.watch(paths.all, ['cjs', 'runtime']);
 });
 
 // The default task (called when you run `gulp` from cli)
-gulp.task('default', [ 'watch', 'recompile-demo', 'connect']);
+gulp.task('default', [ 'watch' ]);
 
-gulp.task('build', [ 'runtime', 'cjs' ]);
+gulp.task('build', [ 'recompile-demo' ]);
 
 gulp.task('test', function() {
   qunit('test/index.html', {
