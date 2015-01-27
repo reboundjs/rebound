@@ -1,4 +1,4 @@
-require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-runtime/helpers'], function(compiler, tokenizer, helpers){
+require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-component/helpers'], function(compiler, tokenizer, helpers){
 
     function equalTokens(fragment, html, message) {
       var div = document.createElement("div");

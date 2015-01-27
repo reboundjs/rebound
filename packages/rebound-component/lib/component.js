@@ -1,9 +1,9 @@
-import $ from "rebound-runtime/utils";
-import env from "rebound-runtime/env";
-import Context from "rebound-runtime/context";
+import $ from "rebound-component/utils";
+import env from "rebound-component/env";
+import Context from "rebound-component/context";
 
 // If Rebound Runtime has already been run, throw error
-if(Rebound.Component){
+if(window.Rebound && window.Rebound.Component){
   throw 'Rebound is already loaded on the page!';
 }
 // If Backbone hasn't been started yet, throw error

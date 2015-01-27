@@ -1,4 +1,4 @@
-import $ from "rebound-runtime/utils";
+import $ from "rebound-component/utils";
 import { Model } from "rebound-data/rebound-data";
 
 // New Rebound Context
