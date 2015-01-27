@@ -48,25 +48,29 @@ gulp.task('jshint', function() {
 
 gulp.task('cjs', ['clean'], function() {
   return es.merge(
-    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})).pipe(to5()).pipe(gulp.dest('dist/cjs')),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})).pipe(to5()).pipe(gulp.dest('dist/cjs')),
-    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})).pipe(to5()).pipe(gulp.dest('dist/cjs')),
-    gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})).pipe(to5()).pipe(gulp.dest('dist/cjs')),
-    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})).pipe(to5()).pipe(gulp.dest('dist/cjs')),
-    gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"})).pipe(to5()).pipe(gulp.dest('dist/cjs'))
+    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
+    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
+    gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
+    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
+    gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"}))
   )
+  .pipe(to5()).pipe(gulp.dest('dist/cjs'))
   .pipe(connect.reload());
 });
 
 gulp.task('amd', ['clean'], function() {
   return es.merge(
-    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})).pipe(sourcemaps.init()).pipe(to5({modules: "amd", moduleIds: true})).pipe(gulp.dest('dist/amd')),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})).pipe(sourcemaps.init()).pipe(to5({modules: "amd", moduleIds: true})).pipe(gulp.dest('dist/amd')),
-    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})).pipe(sourcemaps.init()).pipe(to5({modules: "amd", moduleIds: true})).pipe(gulp.dest('dist/amd')),
-    gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})).pipe(sourcemaps.init()).pipe(to5({modules: "amd", moduleIds: true})).pipe(gulp.dest('dist/amd')),
-    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})).pipe(sourcemaps.init()).pipe(to5({modules: "amd", moduleIds: true})).pipe(gulp.dest('dist/amd')),
-    gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"})).pipe(sourcemaps.init()).pipe(to5({modules: "amd", moduleIds: true})).pipe(gulp.dest('dist/amd'))
+    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
+    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
+    gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
+    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
+    gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"}))
   )
+  .pipe(sourcemaps.init())
+  .pipe(to5({modules: "amd", moduleIds: true}))
+  .pipe(gulp.dest('dist/amd'))
   .pipe(concat('rebound.runtime.js'))
   .pipe(sourcemaps.write())
   .pipe(gulp.dest('dist'))
