@@ -97,9 +97,10 @@ gulp.task('runtime', ['amd'], function() {
 gulp.task('recompile-demo', ['cjs', 'runtime'],  function(){
   // When everything is finished, re-compile the demo
   var fs   = require('fs');
+  var mkdirp = require('mkdirp');
   var precompile = require('./dist/cjs/rebound-precompiler/rebound-precompiler').precompile;
   var finished = false;
-  fs.mkdirSync('./test/demo/templates');
+  mkdirp.sync('./test/demo/templates');
   fs.readFile('./test/demo/demo.html', 'utf8', function (err,data) {
     if (err) return console.log(err);
     var template = precompile(data);
