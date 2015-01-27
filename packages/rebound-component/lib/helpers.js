@@ -1,5 +1,5 @@
-import LazyValue from "rebound-runtime/lazy-value";
-import $ from "rebound-runtime/utils";
+import LazyValue from "rebound-component/lazy-value";
+import $ from "rebound-component/utils";
 
 
 var helpers  = {},

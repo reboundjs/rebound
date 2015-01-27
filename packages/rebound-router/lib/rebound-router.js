@@ -1,7 +1,7 @@
-import $ from "rebound-runtime/utils";
+import $ from "rebound-component/utils";
 
 // If Rebound Runtime has already been run, throw error
-if(Rebound.Router){ throw 'Rebound is already loaded on the page!'; }
+if(window.Rebound && window.Rebound.Router){ throw 'Rebound is already loaded on the page!'; }
 // If Rebound global object isn't instantiated, create it
 if(!_.isObject(window.Rebound)){ window.Rebound = {}; }
 // If Backbone hasn't been started yet, throw error

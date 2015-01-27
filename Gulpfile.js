@@ -16,6 +16,7 @@ var paths = {
     all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/demo/*.html'],
     propertyCompiler:   'packages/property-compiler/lib/**/*.js',
     reboundCompiler:    'packages/rebound-compiler/lib/**/*.js',
+    reboundComponent:   'packages/rebound-component/lib/**/*.js',
     reboundData:        'packages/rebound-data/lib/**/*.js',
     reboundPrecompiler: 'packages/rebound-precompiler/lib/**/*.js',
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
@@ -50,6 +51,7 @@ gulp.task('cjs', ['clean'], function() {
   return es.merge(
     gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
     gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
+    gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
     gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
     gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
@@ -64,6 +66,7 @@ gulp.task('amd', ['clean'], function() {
   return es.merge(
     gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
     gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
+    gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
     gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
     gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
@@ -85,7 +88,27 @@ gulp.task('amd', ['clean'], function() {
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('runtime', ['amd'], function() {
+gulp.task('component', ['amd'], function() {
+  return gulp.src([
+    'shims/classList.js',
+    'shims/matchesSelector.js',
+    'shims/mutationObserver.js',
+    'node_modules/gulp-6to5/node_modules/6to5-core/runtime.js',
+    'bower_components/document-register-element/build/document-register-element.js',
+    'bower_components/backbone/backbone.js',
+    'bower_components/requirejs/require.js',
+    'wrap/start.frag',
+    'bower_components/almond/almond.js',
+    'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
+    'node_modules/htmlbars/dist/amd/morph.amd.js',
+    'dist/rebound.runtime.js',
+    'wrap/end.component.frag'
+    ])
+  .pipe(concat('rebound.component.js'))
+  .pipe(gulp.dest('dist'));
+});
+
+gulp.task('runtime', ['component'], function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',

@@ -1,8 +1,8 @@
 import Model from "rebound-data/model";
-import $ from "rebound-runtime/utils";
+import $ from "rebound-component/utils";
 
 // If Rebound Runtime has already been run, throw error
-if(Rebound.Collection){
+if(window.Rebound && window.Rebound.Collection){
   throw 'Rebound Collection is already loaded on the page!';
 }
 // If Backbone hasn't been started yet, throw error

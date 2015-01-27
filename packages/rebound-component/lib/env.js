@@ -1,6 +1,6 @@
 import DOMHelper from "morph/dom-helper";
-import hooks from "rebound-runtime/hooks";
-import helpers from "rebound-runtime/helpers";
+import hooks from "rebound-component/hooks";
+import helpers from "rebound-component/helpers";
 
 var env = {
   registerPartial: helpers.registerPartial,
