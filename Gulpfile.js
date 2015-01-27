@@ -55,7 +55,8 @@ gulp.task('cjs', ['clean'], function() {
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
     gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"}))
   )
-  .pipe(to5()).pipe(gulp.dest('dist/cjs'))
+  .pipe(to5({blacklist: ['forOf','generators','spread','destructuring']}))
+  .pipe(gulp.dest('dist/cjs'))
   .pipe(connect.reload());
 });
 
@@ -69,7 +70,12 @@ gulp.task('amd', ['clean'], function() {
     gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"}))
   )
   .pipe(sourcemaps.init())
-  .pipe(to5({modules: "amd", moduleIds: true}))
+  .pipe(to5({
+    modules: "amd",
+    moduleIds: true,
+    runtime: true,
+    blacklist: ['forOf','generators','spread','destructuring']
+  }))
   .pipe(gulp.dest('dist/amd'))
   .pipe(concat('rebound.runtime.js'))
   .pipe(sourcemaps.write())
@@ -84,6 +90,7 @@ gulp.task('runtime', ['amd'], function() {
     'shims/classList.js',
     'shims/matchesSelector.js',
     'shims/mutationObserver.js',
+    'node_modules/gulp-6to5/node_modules/6to5-core/runtime.js',
     'bower_components/document-register-element/build/document-register-element.js',
     'bower_components/backbone/backbone.js',
     'bower_components/requirejs/require.js',
