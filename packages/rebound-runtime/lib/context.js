@@ -70,6 +70,8 @@ var Context = Model.extend({
       }
     } while(context !== data && (context = context.get(parts.shift())))
 
+    this._toRender = _.uniq(this._toRender);
+
     // Queue our render callback to be called after the current call stack has been exhausted
     window.clearTimeout(this._renderTimeout);
     this._renderTimeout = window.setTimeout(_.bind(renderCallback, this), 0);
