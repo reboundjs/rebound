@@ -71,14 +71,14 @@ LazyValue.prototype = {
     // Ensure _observers exists and is an object
     context.__observers = context.__observers || {};
     // Ensure __observers[path] exists and is an array
-    context.__observers[path] = context.__observers[path] || [];
-
-    // Add our callback, save the position it is being inserted so we can garbage collect later.
-    position = context.__observers[path].push(this.notify) - 1;
+    context.__observers[path] = context.__observers[path] || {collection: [], model: []};
 
     // Save the type of object events this observer is for
     res = context.get(this.path);
-    context.__observers[path][position].type = (res && res.isCollection) ? 'collection' : 'model';
+    res = (res && res.isCollection) ? 'collection' : 'model';
+
+    // Add our callback, save the position it is being inserted so we can garbage collect later.
+    position = context.__observers[path][res].push(this.notify) - 1;
 
     // Lazyvalue needs referance to its observers to remove listeners on destroy
     observers.push({context: context, path: path, index: position});

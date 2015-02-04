@@ -35,8 +35,12 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       // For each path, alert each observer and call its callback
       _.each(path, function(path){
-        if(obj.__observers && _.isArray(obj.__observers[path])){
-          _.each(obj.__observers[path], function(callback, index) {
+        if(obj.__observers && _.isObject(obj.__observers[path])){
+          _.each(obj.__observers[path].collection, function(callback, index) {
+            if(callback){ callback(); }
+            else{ delete obj.__observers[path][index]; }
+          });
+          _.each(obj.__observers[path].model, function(callback, index) {
             if(callback){ callback(); }
             else{ delete obj.__observers[path][index]; }
           });
