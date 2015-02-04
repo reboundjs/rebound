@@ -107,16 +107,14 @@ var Model = Backbone.Model.extend({
 
     if(key === '' || parts.length === 0) return result;
 
-    if (parts.length > 0) {
-      for ( i = 0; i < l; i++) {
-        if(result && result.isComputedProperty && options.raw) return result;
-        if(result && result && result.isComputedProperty) result = result.value();
-        if(_.isUndefined(result) || _.isNull(result)) return result;
-        if(parts[i] === '@parent') result = result.__parent__;
-        else if(result.isCollection) result = result.models[parts[i]];
-        else if(result.isModel) result = result.attributes[parts[i]];
-        else if(result && result.hasOwnProperty(parts[i])) result = result[parts[i]];
-      }
+    for ( i = 0; i < l; i++) {
+      if(result && result.isComputedProperty && options.raw) return result;
+      if(result && result.isComputedProperty) result = result.value();
+      if(_.isUndefined(result) || _.isNull(result)) return result;
+      if(parts[i] === '@parent') result = result.__parent__;
+      else if(result.isCollection) result = result.models[parts[i]];
+      else if(result.isModel) result = result.attributes[parts[i]];
+      else if(result && result.hasOwnProperty(parts[i])) result = result[parts[i]];
     }
 
     if(result && result.isComputedProperty && !options.raw) result = result.value();
@@ -139,23 +137,20 @@ var Model = Backbone.Model.extend({
     options || (options = {});
 
     // If reset is passed, do a reset instead
-    if(options.reset === true){
-      return this.reset(attrs, options);
-    }
-
-    if(_.isEmpty(attrs)){ return; }
+    if(options.reset === true) return this.reset(attrs, options);
+    if(_.isEmpty(attrs)) return;
 
     // For each key and value
-    _.each(attrs, function(val, key){
-
-      var paths = $.splitPath(key),
+    for(key in attrs){
+      var val = attrs[key],
+          paths = $.splitPath(key),
           attr  = paths.pop() || '';           // The key        ex: foo[0].bar --> bar
           target = this.get(paths.join('.')),  // The element    ex: foo.bar.baz --> foo.bar
           lineage = {
             name: key,
             parent: target,
             root: this.__root__,
-            path: pathGenerator(this, key),
+            path: pathGenerator(target, key),
             silent: true,
             clone: options.clone
           };
@@ -171,56 +166,49 @@ var Model = Backbone.Model.extend({
           }
           target = tmp;
         }, this);
-        return target.set(attr, val);
+        target.set(attr, val);
+        continue;
       }
 
       var destination = target.get(attr, {raw: true}) || {};  // The current value of attr
 
       // If val is null or undefined, set to defaults
       if(_.isNull(val) || _.isUndefined(val)) val = this.defaults[key];
+
       if(val && val.isComputedProperty) val = val.value();
-
-      // If val is null, set to undefined
+    // If val is null, set to undefined
       else if(_.isNull(val) || _.isUndefined(val)) val = undefined;
-
-      // If this function is the same as the current computed property, continue
-      else if(destination.isComputedProperty && destination.func === val) return;
-
-      // If this value is a Function, turn it into a Computed Property
+    // If this function is the same as the current computed property, continue
+      else if(destination.isComputedProperty && destination.func === val) continue;
+    // If this value is a Function, turn it into a Computed Property
       else if(_.isFunction(val)) val = new ComputedProperty(val, lineage);
-
-      // If this is going to be a cyclical dependancy, use the original object, don't make a copy
+    // If this is going to be a cyclical dependancy, use the original object, don't make a copy
       else if(val && val.isData && target.hasParent(val)) val = val;
-
-      // If updating an existing object with its respective data type, let Backbone handle the merge
+    // If updating an existing object with its respective data type, let Backbone handle the merge
       else if( destination.isComputedProperty ||
               ( destination.isCollection && ( _.isArray(val) || val.isCollection )) ||
               ( destination.isModel && ( _.isObject(val) || val.isModel ))){
-        return destination.set(val, options);
+        destination.set(val, options);
+        continue;
       }
-
-
-      // If this value is a Model or Collection, create a new instance of it using its constructor
-      // This will keep the defaults from the original, but make a new copy so memory isnt shared between data objects
-      // This will also keep this instance of the object in sync with its original
-      // TODO: This will override defaults set by this model in favor of the passed in model. Do deep defaults here.
+    // If this value is a Model or Collection, create a new instance of it using its constructor
+    // This will keep the defaults from the original, but make a new copy so memory isnt shared between data objects
+    // This will also keep this instance of the object in sync with its original
+    // TODO: This will override defaults set by this model in favor of the passed in model. Do deep defaults here.
       else if(val.isData && options.clone !== false) val = new val.constructor(val.attributes || val.models, lineage);
-
-      // If this value is an Array, turn it into a collection
+    // If this value is an Array, turn it into a collection
       else if(_.isArray(val)) val = new Rebound.Collection(val, lineage); // TODO: Remove global referance
-
-      // If this value is a Object, turn it into a model
+    // If this value is a Object, turn it into a model
       else if(_.isObject(val)) val = new Model(val, lineage);
-
-      // Else val is a primitive value, set it accordingly
+    // Else val is a primitive value, set it accordingly
 
       // If val is a data object, let this object know it is now a parent
       this._hasAncestry = (val && val.isData || false);
 
       // Replace the existing value
-      return Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
+      Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
 
-    }, this);
+    };
 
     return this;
 

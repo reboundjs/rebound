@@ -6,78 +6,90 @@ var Context = Model.extend({
 
   listen: function(){
     // Listen to relevent data change events
-    this.listenTo(this, 'change', this._onModelChange);
-    this.listenTo(this, 'add remove', this._onCollectionChange);
-    this.listenTo(this, 'reset', this._onReset);
+    _.bindAll(this, '_onChange', '_notifySubtree')
+    this._toRender = {};
+    this.listenTo(this, 'all', this._onChange);
   },
 
-  _onReset: function(data, options){
-    if(data && data.isModel){
-      return this._onModelChange(data, options);
+  _onChange: function(type, model, collection, options){
+    var shortcircuit = { change: 1, sort: 1, request: 1, destroy: 1, sync: 1, error: 1, invalid: 1, route: 1, dirty: 1 };
+    if( shortcircuit[type] ) return;
+
+    var data, index, changed;
+    model || (model = {});
+    collection || (collection = {});
+    options || (options = {});
+    !collection.isData && (options = collection) && (collection = model);
+
+    if( (type === 'reset' && options.previousAttributes) || type.indexOf('change:') !== -1){
+      data = model;
+      changed = model.changedAttributes();
     }
-    else if(data.isCollection){
-      return this._onCollectionChange(data, options);
+    else if(type === 'add' || type === 'remove' || (type === 'reset' && options.previousModels)){
+      data = collection;
+      changed = {};
+      changed[data.__path()] = data;
+    }
+
+    if(!data) return;
+
+    index = data.__path();
+
+    if(changed){
+      this._toRender[index] || (this._toRender[index] = {});
+      changed = _.defaults(changed, this._toRender[index].changed);
+      this._toRender[index] = {data: data, changed: changed};
+      if(!this._renderTimeout) this._renderTimeout = window.setTimeout(this._notifySubtree, 0);
     }
   },
 
-  _onModelChange: function(model, options){
-    var changed = model.changedAttributes();
-    if(changed) this._notifySubtree(model, changed, 'model');
-  },
 
-  _onCollectionChange: function(model, collection, options){
-    var changed = {},
-    that = this;
-    if(model.isCollection){
-      options = collection;
-      collection = model;
-    }
-    changed[collection.__path()] = collection;
-    if(collection._timeout){
-      clearTimeout(collection._timeout);
-      collection._timeout = undefined;
-    }
-    collection._timeout = setTimeout(function(){
-      that._notifySubtree(that, changed, 'collection');
-    }, 20);
-  },
+  _notifySubtree: function _notifySubtree(){
+    delete this._renderTimeout;
 
-  _notifySubtree: function _notifySubtree(obj, changed, type){
+    _.each(this._toRender, function(actor, path){
+      var context = this, // This root context
+          obj = actor.data,
+          changed = actor.changed,
+          type = actor.data.isCollection ? 'collection' : 'model';
+      var path = obj.__path(), // The path of the modified object relative to the root context
+      parts = $.splitPath(path), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
+      keys = _.keys(changed), // Array of all changed keys
+      key,
+      i = 0,
+      len = parts.length,
+      paths,
+      triggers;
 
-    var context = this, // This root context
-    path = obj.__path(), // The path of the modified object relative to the root context
-    parts = $.splitPath(path), // Array of parts of the modified object's path: test[1].whatever -> ['test', '1', 'whatever']
-    keys = _.keys(changed), // Array of all changed keys
-    i = 0,
-    len = parts.length,
-    paths,
-    triggers;
 
-    // Call notify on every object down the data tree starting at the root and all the way down element that triggered the change
-    for(i;i<=len;i++){
+      // Call notify on every object down the data tree starting at the root and all the way down element that triggered the change
+      for(i;i<=len;i++){
 
-      // Reset paths for each data layer
-      paths = [];
-      triggers = [];
+        // Reset paths for each data layer
+        paths = [];
+        triggers = [];
 
-      // For every key changed
-      _.each(keys, function(attr){
-
+        // For every key changed
         // Constructs paths variable relative to current data element
-        paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[([^\]]+)\]/g, ".$1").replace(/^\./, ''));
-        paths.push(((path && path + '.' || '') + attr).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, ''));
+        for(key in keys){
+          paths.push(((path && path + '.' || '') + keys[key]).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, ''));
+        }
+
         paths = _.uniq(paths);
-      });
 
-      // Call all listeners
-      this.notify(context, paths, type);
+        // Call all listeners
+        this.notify(context, paths, type);
 
-      // If not at end of path parts, get the next data object
-      context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));
-      if(context === undefined){
-        break;
+        // If not at end of path parts, get the next data object
+        context = (i === len) || (context.isModel && context.get(parts[i])) || (context.isCollection && context.at(parts[i]));
+        if(context === undefined){
+          break;
+        }
       }
-    }
+
+      delete this._toRender[path];
+
+    }, this);
   },
   notify: function notify(obj, paths, type) {
 

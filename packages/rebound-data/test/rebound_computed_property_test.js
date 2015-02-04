@@ -58,6 +58,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
           return this.get('arr');
         }
       });
+
       deepEqual(model.get('objProp').toJSON(), model.get('obj').toJSON(), 'Returning a Model gives you the same Rebound Model on get.');
       deepEqual(model.get('arrProp').toJSON(), model.get('arr').toJSON(), 'Returning a Collection gives you the same Rebound Collection on get.');
 
@@ -263,7 +264,6 @@ require(['rebound-data/rebound-data'], function(reboundData){
       });
       model.get('arr').custom = true;
       model.get('arr[0]').custom = true;
-
       deepEqual(model.get('even').length, 2, 'Computed properties that return a modified Collection return the correctly modified Collection on first run');
       deepEqual(model.get('firstEven.val'), 2, 'Computed properties depending on other computed properties that depend on a collection evaluate correctly on first run.');
       model.get('arr').unshift({val: 6});
@@ -272,10 +272,12 @@ require(['rebound-data/rebound-data'], function(reboundData){
       model.get('arr[0]').custom = true;
       deepEqual(model.get('even').length, 3, 'Computed properties that return a modified Collection re-evaluate on dependancy add.');
       deepEqual(model.get('firstEven.val'), 6, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy add.');
+      debugger;
       model.set('arr[0].val', 8);
       equal(model.get('arr').custom, true, 'Custom attributes set on Computed Collections are retained after Model change.');
       equal(model.get('arr[0]').custom, true, 'Custom attributes set on Models in Computed Collections are retained after Model change.');
       deepEqual(model.get('firstEven.val'), 8, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy change.');
+      debugger;
       model.get('arr').shift();
       deepEqual(model.get('even').length, 2, 'Computed properties that return a modified Collection re-evaluate on dependancy remove.');
       deepEqual(model.get('firstEven.val'), 2, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy remove.');
@@ -392,7 +394,26 @@ require(['rebound-data/rebound-data'], function(reboundData){
       model.set('arr[0].arr[0].val', 2);
       equal(model.get('proxy'), 2, 'Computed properties with dependancies in two collections deep re-evaluates on dependancy change.');
 
+        window.count = 0;
+      // Dependancies Deep Inside Multiple Collection
+        model = new Model({
 
+          arr: [
+            {val: 1},{val: 2},{val: 3},{val: 4},{val: 5}
+          ],
+
+          callback: function(){
+            window.count++;
+            return this.get('arr[4].val');
+          }
+
+        });
+
+        model.get('arr').each(function(obj){
+          obj.set('val', 6);
+        });
+
+        equal(window.count, 1, 'Repetitive changes to a Collection recompute a Computed Property that depends on it only once after all changes are made.');
 
 
 
