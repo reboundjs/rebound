@@ -2,7 +2,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
     var Model = window.Rebound.Model = reboundData.Model,
         Collection =  window.Rebound.Collection = reboundData.Collection;
 
-    QUnit.test('Rebound Data - Computed Properties', function() {
+    QUnit.test('Rebound Data - Computed Properties', function( assert ) {
       var model, collection, model2, model3;
 
     // Basic get and recompute
@@ -272,12 +272,10 @@ require(['rebound-data/rebound-data'], function(reboundData){
       model.get('arr[0]').custom = true;
       deepEqual(model.get('even').length, 3, 'Computed properties that return a modified Collection re-evaluate on dependancy add.');
       deepEqual(model.get('firstEven.val'), 6, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy add.');
-      debugger;
       model.set('arr[0].val', 8);
       equal(model.get('arr').custom, true, 'Custom attributes set on Computed Collections are retained after Model change.');
       equal(model.get('arr[0]').custom, true, 'Custom attributes set on Models in Computed Collections are retained after Model change.');
       deepEqual(model.get('firstEven.val'), 8, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy change.');
-      debugger;
       model.get('arr').shift();
       deepEqual(model.get('even').length, 2, 'Computed properties that return a modified Collection re-evaluate on dependancy remove.');
       deepEqual(model.get('firstEven.val'), 2, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy remove.');
@@ -413,11 +411,11 @@ require(['rebound-data/rebound-data'], function(reboundData){
           obj.set('val', 6);
         });
 
-        equal(window.count, 1, 'Repetitive changes to a Collection recompute a Computed Property that depends on it only once after all changes are made.');
-
-
-
-
+        stop();
+        setTimeout(function(){
+          start();
+          equal(window.count, 1, 'Repetitive changes to a Collection recompute a Computed Property that depends on it only once after all changes are made.');
+        }, 0);
 
     });
 });
