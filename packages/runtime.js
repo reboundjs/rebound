@@ -13,7 +13,7 @@
 if(!window.Backbone) throw "Backbone must be on the page for Rebound to load.";
 if(!window.Rebound) throw "Global Rebound namespace already taken.";
 
-// Load our **Utils**, helper environment, component register, **Rebound Data**,
+// Load our **Utils**, helper environment, **Rebound Data**,
 // **Rebound Components** and the **Rebound Router**
 import utils from "rebound-component/utils";
 import helpers from "rebound-component/helpers";
