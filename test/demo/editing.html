@@ -14,7 +14,9 @@
         this.oldValue = this.get('value');
       },
       attachedCallback: function(event){
-        this.el.querySelector('input.edit').focus();
+        $input = this.el.querySelector('input.edit');
+        $input.focus();
+        $input.selectionStart = $input.selectionEnd = $input.value.length;
       },
       detachedCallback: function(){
 

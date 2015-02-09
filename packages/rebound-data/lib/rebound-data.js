@@ -11,34 +11,29 @@ var sharedMethods = {
   // Ex: Would trigger change:val, change:[0].val, change:arr[0].val and obj.arr[0].val
   // on each parent as it is propagated up the tree.
   propagateEvent: function(type, model){
-    if(this.__parent__ === this) return;
+    if(this.__parent__ === this || type === 'dirty') return;
     if(type.indexOf('change:') === 0 && model.isModel){
+      if(this.isCollection && ~type.indexOf('change:[')) return;
       var key,
           path = model.__path().replace(this.__parent__.__path(), '').replace(/^\./, ''),
           changed = model.changedAttributes();
+
       for(key in changed){
         arguments[0] = ('change:' + path + (path && '.') + key); // jshint ignore:line
         this.__parent__.trigger.apply(this.__parent__, arguments);
       }
       return;
     }
-    this.__parent__.trigger.apply(this.__parent__, arguments);
+    return this.__parent__.trigger.apply(this.__parent__, arguments);
   },
 
+  // If parent is not self, propagate all events up the data tree
   setParent: function(parent){
-
-    if(this.__parent__){
-      this.off('all', this.propagate);
-    }
-
+    if(this.__parent__) this.off('all', this.propagateEvent);
     this.__parent__ = parent;
     this._hasAncestry = true;
-
-    // If parent is not self, propagate all events up
-    if(parent !== this) this.on('all', parent.propagateEvent);
-
+    if(parent !== this) this.on('all', this.__parent__.propagateEvent);
     return parent;
-
   },
 
   // TODO: I dont like this recursively setting elements root when one element's root changes. Fix this.
@@ -65,24 +60,14 @@ var sharedMethods = {
     return true;
   },
 
+  // Tear Downn Everything
   deinitialize: function () {
 
-    // deinitialize current class
 
-    // undelegate events..(events specified as part of event:{})
-    if (this.undelegateEvents) {
-      this.undelegateEvents();
-    }
-
-    // stop listening model events
-    if (this.stopListening) {
-      this.stopListening();
-    }
-
-    // unbind events
-    if (this.off) {
-      this.off();
-    }
+  // Undelegate Backbone Events
+    if (this.undelegateEvents) this.undelegateEvents();
+    if (this.stopListening) this.stopListening();
+    if (this.off) this.off();
 
     delete this.__parent__;
     delete this.__root__;
