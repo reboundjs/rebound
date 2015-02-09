@@ -1,7 +1,7 @@
 import Model from "rebound-data/model";
 import Collection from "rebound-data/collection";
 import ComputedProperty from "rebound-data/computed-property";
-import $ from "rebound-runtime/utils";
+import $ from "rebound-component/utils";
 
 
 var sharedMethods = {

@@ -1,4 +1,4 @@
-import Component from "rebound-runtime/component";
+import Component from "rebound-component/component";
 
 export default function registerComponent(name, options) {
   var script = options.prototype;

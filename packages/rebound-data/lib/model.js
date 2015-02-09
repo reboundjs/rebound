@@ -1,8 +1,8 @@
 import ComputedProperty from "rebound-data/computed-property";
-import $ from "rebound-runtime/utils";
+import $ from "rebound-component/utils";
 
 // If Rebound Runtime has already been run, throw error
-if(Rebound.Model){ throw 'Rebound Model is already loaded on the page!'; }
+if(window.Rebound && window.Rebound.Model){ throw 'Rebound Model is already loaded on the page!'; }
 // If Backbone hasn't been started yet, throw error
 if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
 

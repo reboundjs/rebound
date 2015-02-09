@@ -1,7 +1,7 @@
-import LazyValue from "rebound-runtime/lazy-value";
-import $ from "rebound-runtime/utils";
-import helpers from "rebound-runtime/helpers";
-import Context from "rebound-runtime/context";
+import LazyValue from "rebound-component/lazy-value";
+import $ from "rebound-component/utils";
+import helpers from "rebound-component/helpers";
+import Context from "rebound-component/context";
 
 var hooks = {},
     attributes = {  abbr: 1,      "accept-charset": 1,   accept: 1,      accesskey: 1,     action: 1,
