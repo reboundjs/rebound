@@ -372,7 +372,13 @@ hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
     var val = value.value(),
     checkboxChange,
     type = domElement.getAttribute("type"),
-    inputTypes = {'null': true, 'text':true, 'email':true, 'password':true, 'search':true, 'url':true, 'tel':true, 'hidden':true},
+
+    inputTypes = {  'null': true,  'text':true,   'email':true,  'password':true,
+                    'search':true, 'url':true,    'tel':true,    'hidden':true,
+                    'number':true, 'color': true, 'date': true,  'datetime': true,
+                    'datetime-local:': true,      'month': true, 'range': true,
+                    'time': true,   'week': true
+                  },
     attr;
 
     // If is a text input element's value prop with only one variable, wire default events
@@ -394,7 +400,7 @@ hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
 
       attr = val;
 
-      return domElement.value = (attr) ? attr : '';
+      return (domElement.value !== String(attr)) ? domElement.value = (attr || '') : attr;
     }
 
     else if( domElement.tagName === 'INPUT' && (type === 'checkbox' || type === 'radio') && name === 'checked' ){
