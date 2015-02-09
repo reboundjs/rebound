@@ -1,10 +1,8 @@
+// Rebound Computed Property
+// ----------------
+
 import propertyCompiler from "property-compiler/property-compiler";
 import $ from "rebound-component/utils";
-
-// If Rebound Runtime has already been run, throw error
-if(window.Rebound && window.Rebound.ComputedProperty){ throw 'Rebound ComputedProperty is already loaded on the page!'; }
-// If Backbone hasn't been started yet, throw error
-if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
 
 // Returns true if str starts with test
 function startsWith(str, test){

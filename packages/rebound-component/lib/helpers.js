@@ -1,3 +1,6 @@
+// Rebound Helpers
+// ----------------
+
 import LazyValue from "rebound-component/lazy-value";
 import $ from "rebound-component/utils";
 

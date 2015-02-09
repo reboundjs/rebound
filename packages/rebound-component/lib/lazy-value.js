@@ -1,4 +1,5 @@
-import { Model } from "rebound-data/rebound-data";
+// Rebound Lazy Value
+// ----------------
 
 var NIL = function NIL(){},
     EMPTY_ARRAY = [];

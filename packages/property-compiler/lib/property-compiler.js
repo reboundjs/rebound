@@ -1,3 +1,6 @@
+// Property Compiler
+// ----------------
+
 import tokenizer from "property-compiler/tokenizer";
 
 var computedProperties = [];

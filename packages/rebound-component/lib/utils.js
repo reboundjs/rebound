@@ -1,3 +1,6 @@
+// Rebound Utils
+// ----------------
+
 var $ = function(query){
   return new utils(query);
 };

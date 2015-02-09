@@ -1,9 +1,8 @@
+// Rebound Router
+// ----------------
+
 import $ from "rebound-component/utils";
 
-// If Rebound Runtime has already been run, throw error
-if(window.Rebound && window.Rebound.Router){ throw 'Rebound is already loaded on the page!'; }
-// If Rebound global object isn't instantiated, create it
-if(!_.isObject(window.Rebound)){ window.Rebound = {}; }
 // If Backbone hasn't been started yet, throw error
 if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
 
@@ -44,7 +43,6 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     pageInstance = new PageApp();
     pageInstance.__name = primaryRoute;
 
-
     // Add to our page
     container = (isGlobal) ? document.querySelector(isGlobal) : document.getElementsByTagName('content')[0];
     container.innerHTML = '';
@@ -52,7 +50,6 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
     // Make sure we're back at the top of the page
     document.body.scrollTop = 0;
-
 
     // Augment ApplicationRouter with new routes from PageApp
     _.each(pageInstance.__component__.routes, function (value, key) {
@@ -239,7 +236,6 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         fetchResources.call(router, route, route, selector);
       });
 
-
       // Let all of our components always have referance to our router
       Rebound.Component.prototype.router = this;
 
@@ -251,6 +247,5 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
     }
   });
-
 
 export default ReboundRouter;
