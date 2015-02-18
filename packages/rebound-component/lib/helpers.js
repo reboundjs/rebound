@@ -232,7 +232,7 @@ helpers.each = function(params, hash, options, env){
       // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
       var lazyValue = new LazyValue(function(){
         return options.template.render(((options.template.blockParams === 0)?obj:options.context), options, (options.morph.contextualElement || options.morph.element), [obj]);
-      });
+      }, {morph: options.placeholder});
 
       // If this model is rendered somewhere else in the list, destroy it
       if(position > -1){

@@ -57,7 +57,7 @@ var Collection = Backbone.Collection.extend({
         result = this,
         l=parts.length,
         i=0;
-        options = _.defaults((options || {}), { raw: false });
+        options || (options = {});
 
     if(_.isUndefined(key) || _.isNull(key)) return key;
     if(key === '' || parts.length === 0) return result;

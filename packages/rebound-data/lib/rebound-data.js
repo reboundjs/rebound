@@ -60,9 +60,9 @@ var sharedMethods = {
     var tmp = this;
     while(tmp !== obj){
       tmp = tmp.__parent__;
-      if(_.isUndefined(tmp)){ return false; }
-      if(tmp === obj){ return true; }
-      if(tmp.__parent__ === tmp){ return false; }
+      if(_.isUndefined(tmp)) return false;
+      if(tmp === obj) return true;
+      if(tmp.__parent__ === tmp) return false;
     }
     return true;
   },

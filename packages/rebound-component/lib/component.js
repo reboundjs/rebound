@@ -20,8 +20,9 @@ function renderCallback(){
   var i = 0, len = this._toRender.length;
   delete this._renderTimeout;
   for(i=0;i<len;i++){
-    this._toRender.shift().call();
+    this._toRender.shift().notify();
   }
+  this._toRender.added = {};
 }
 
 var env = {
@@ -169,7 +170,15 @@ var Component = Model.extend({
 
     if(!data || !changed) return;
 
-    var push = Array.prototype.push;
+    var push = function(arr){
+      var i, len = arr.length;
+      this.added || (this.added = {});
+      for(i=0;i<len;i++){
+        if(this.added[arr[i].cid]) continue;
+        this.added[arr[i].cid] = 1;
+        this.push(arr[i]);
+      }
+    };
     var context = this;
     var basePath = data.__path();
     var parts = $.splitPath(basePath);
@@ -185,14 +194,12 @@ var Component = Model.extend({
           observers = context.__observers[obsPath];
           if(startsWith(obsPath, path) || startsWith(path, obsPath)){
             // If this is a collection event, trigger everything, otherwise only trigger property change callbacks
-            if(data.isCollection) push.apply(this._toRender, observers.collection);
-            push.apply(this._toRender, observers.model);
+            if(data.isCollection) push.call(this._toRender, observers.collection);
+            push.call(this._toRender, observers.model);
           }
         }
       }
     } while(context !== data && (context = context.get(parts.shift())))
-
-    this._toRender = _.uniq(this._toRender);
 
     // Queue our render callback to be called after the current call stack has been exhausted
     window.clearTimeout(this._renderTimeout);

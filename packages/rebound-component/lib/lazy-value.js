@@ -4,11 +4,14 @@
 var NIL = function NIL(){},
     EMPTY_ARRAY = [];
 
-function LazyValue(fn, context) {
+function LazyValue(fn, options) {
+  options || (options = {})
+  this.cid = _.uniqueId('lazyValue');
   this.valueFn = fn;
-  this.context = context || null;
+  this.context = options.context || null;
+  this.morph = options.morph || null;
+  this.attrMorph = options.attrMorph || null;
   _.bindAll(this, 'value', 'set', 'addDependentValue', 'addObserver', 'notify', 'onNotify', 'destroy');
-
 }
 
 LazyValue.prototype = {
@@ -65,9 +68,7 @@ LazyValue.prototype = {
     var observers = this.observers || (this.observers = []),
         position, res;
 
-    if(!_.isObject(context) || !_.isString(path)){
-      return console.error('Error adding observer for', context, path);
-    }
+    if(!_.isObject(context) || !_.isString(path)) return console.error('Error adding observer for', context, path);
 
     // Ensure _observers exists and is an object
     context.__observers = context.__observers || {};
@@ -79,7 +80,7 @@ LazyValue.prototype = {
     res = (res && res.isCollection) ? 'collection' : 'model';
 
     // Add our callback, save the position it is being inserted so we can garbage collect later.
-    position = context.__observers[path][res].push(this.notify) - 1;
+    position = context.__observers[path][res].push(this) - 1;
 
     // Lazyvalue needs referance to its observers to remove listeners on destroy
     observers.push({context: context, path: path, index: position});
@@ -88,26 +89,21 @@ LazyValue.prototype = {
   },
 
   notify: function(sender) {
-    try{
-      var cache = this.cache,
-          parent,
-          subscribers;
+    // If this lazyValue's morph does not have an immediate parentNode, it has been removed from the dom tree. Destroy it.
+    if(this.morph && this.morph.start && !this.morph.start.parentNode) return this.destroy();
+    var cache = this.cache,
+        parent,
+        subscribers;
 
-      if (cache !== NIL) {
-        parent = this.parent;
-        subscribers = this.subscribers;
-        cache = this.cache = NIL;
-
-        if (parent) { parent.notify(this); }
-        if (!subscribers) { return; }
-        for (var i = 0, l = subscribers.length; i < l; i++) {
-          subscribers[i](this);
-        }
+    if (cache !== NIL) {
+      parent = this.parent;
+      subscribers = this.subscribers;
+      cache = this.cache = NIL;
+      if (parent) { parent.notify(this); }
+      if (!subscribers) { return; }
+      for (var i = 0, l = subscribers.length; i < l; i++) {
+        subscribers[i](this);
       }
-    } catch(err){
-      console.log('KILLING OBSERVER', sender);
-      console.log(err.stack);
-      this.destroy();
     }
   },
 
