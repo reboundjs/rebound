@@ -27,6 +27,11 @@
     "test",
     "tests"
   ],
+  "files": [
+    "dist",
+    "README.md",
+    "bower.json"
+  ],
   "devDependencies": {
     "jquery": "2.1.1",
     "underscore": "1.6.0",
