@@ -11,6 +11,10 @@ var sourcemaps = require('gulp-sourcemaps');
 var del = require('del');
 var qunit = require('node-qunit-phantomjs');
 var docco = require("gulp-docco");
+var git = require('gulp-git');
+var pjson = require('./package.json');
+var mkdirp = require('mkdirp');
+var replace = require('gulp-replace');
 
 
 var paths = {
@@ -134,7 +138,6 @@ gulp.task('runtime', ['amd'], function() {
 gulp.task('recompile-demo', ['cjs', 'docco', 'runtime'],  function(){
   // When everything is finished, re-compile the demo
   var fs   = require('fs');
-  var mkdirp = require('mkdirp');
   var precompile = require('./dist/cjs/rebound-precompiler/rebound-precompiler').precompile;
   var finished = false;
   mkdirp.sync('./test/demo/templates');
@@ -185,4 +188,65 @@ gulp.task('test', function() {
     verbose: true,
     timeout: 15
   });
+});
+
+
+/*******************************************************************************
+
+Release Tasks:
+
+gulp release is run on postpublish and automatically pushes the contents of /dist
+to https://github.com/epicmiller/reboundjs-dist for consumption by bower.
+
+*******************************************************************************/
+gulp.task('cleanrelease', function(cb){
+  return del(['tmp'], cb);
+});
+
+// Clone a remote repo
+gulp.task('clone', ['cleanrelease'],  function(cb){
+  console.log('Cloning reboundjs-dist to /tmp');
+  mkdirp.sync('./tmp');
+  git.clone('https://github.com/epicmiller/reboundjs-dist.git', {cwd: './tmp'}, cb);
+});
+
+gulp.task('release-copy', ['clone'], function(cb){
+  return gulp.src('dist/**/*')
+      .pipe(gulp.dest('tmp/reboundjs-dist'));
+});
+
+gulp.task('bump-version', ['release-copy'], function(cb){
+  return gulp.src(['tmp/reboundjs-dist/bower.json'])
+    .pipe(replace(/(.\s"version": ")[^"]*(")/g, '$1'+pjson.version+'$2'))
+    .pipe(gulp.dest('tmp/reboundjs-dist'));
+});
+
+gulp.task('add', ['bump-version'], function(){
+  console.log('Adding Rebound /dist to reboundjs-dist');
+  process.chdir('tmp/reboundjs-dist');
+  return gulp.src('./*')
+      .pipe(git.add({args: '-A'}));
+});
+
+gulp.task('commit', ['add'], function(cb){
+  console.log('Committing Rebound v' + pjson.version);
+  return gulp.src('./*')
+      .pipe(git.commit('Rebound version v'+pjson.version));
+});
+
+// Tag the repo with a version
+gulp.task('tag', ['commit'], function(cb){
+  console.log('Tagging Rebound as version ' + pjson.version);
+  git.tag(''+pjson.version, "Rebound version v"+pjson.version, cb);
+});
+
+gulp.task('push', ['tag'], function(cb){
+  console.log('Pushing Rebound v' + pjson.version);
+  git.push('origin', 'master', {args: '--tags'}, cb);
+});
+
+gulp.task('release', ['push'], function(cb){
+  git.status();
+  console.log('Rebound v'+pjson.version+' successfully released!');
+  return del(['tmp'], cb);
 });
