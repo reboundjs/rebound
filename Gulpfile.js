@@ -108,27 +108,7 @@ gulp.task('amd', ['clean'], function() {
   .pipe(gulp.dest('dist'))
 });
 
-gulp.task('component', ['amd'], function() {
-  return gulp.src([
-    'shims/classList.js',
-    'shims/matchesSelector.js',
-    'shims/mutationObserver.js',
-    'node_modules/gulp-6to5/node_modules/6to5-core/runtime.js',
-    'bower_components/document-register-element/build/document-register-element.js',
-    'bower_components/backbone/backbone.js',
-    'bower_components/requirejs/require.js',
-    'wrap/start.frag',
-    'bower_components/almond/almond.js',
-    'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
-    'node_modules/htmlbars/dist/amd/morph.amd.js',
-    'dist/rebound.runtime.js',
-    'wrap/end.component.frag'
-    ])
-  .pipe(concat('rebound.component.js'))
-  .pipe(gulp.dest('dist'));
-});
-
-gulp.task('runtime', ['component'], function() {
+gulp.task('runtime', ['amd'], function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
