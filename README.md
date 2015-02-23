@@ -81,7 +81,7 @@ You can include Rebound on your page like this:
 }
 </script>
 ```
-Because the Rebound script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's config options right where you include the Rebound library itself. Convenient!
+Because the Rebound script tag contains a src, nothing inside it gets executed, but is still accessable to the page as $('#Rebound').html(). We take advantage of this to load Rebound's router config options right where you include the Rebound library itself. Convenient! ***If the router isn't your thing – if no config is passed to rebound inside of its script tag then Rebound's router will not start,  leaving you with a data bound component library to integrate with as you see fit.***
 
 ##### Config Options
 
