@@ -181,7 +181,7 @@ hooks.subexpr = function subexpr(env, context, helperName, params, hash) {
 
   if (helper) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-    lazyValue = constructHelper(true, helperName, context, params, hash, {}, env, helper);
+    lazyValue = constructHelper(false, helperName, context, params, hash, {}, env, helper);
   } else {
     lazyValue = streamProperty(context, helperName);
   }

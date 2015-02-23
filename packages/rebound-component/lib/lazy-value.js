@@ -89,7 +89,9 @@ LazyValue.prototype = {
   },
 
   notify: function(sender) {
+    // TODO: This check won't be necessary once removed DOM has been cleaned of any bindings. 
     // If this lazyValue's morph does not have an immediate parentNode, it has been removed from the dom tree. Destroy it.
+    // Right now, DOM that contains morphs throw an error if it is removed by another lazyvalue before those morphs re-evaluate.
     if(this.morph && this.morph.start && !this.morph.start.parentNode) return this.destroy();
     var cache = this.cache,
         parent,

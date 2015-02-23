@@ -25,7 +25,7 @@ import Router from "rebound-router/rebound-router";
 window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Backbone.ajax || utils.ajax;
 
 // Fetch Rebound's Config Object from Rebound's `script` tag
-var Config = JSON.parse(document.getElementById('Rebound').innerHTML);
+var Config = document.getElementById('Rebound').innerHTML;
 
 // Create Global Rebound Object
 window.Rebound = {
@@ -35,11 +35,10 @@ window.Rebound = {
   Model: Model,
   Collection: Collection,
   ComputedProperty: ComputedProperty,
-  Component: Component,
-  Config: Config
+  Component: Component
 };
 
-// Start the router
-window.Rebound.router = new Router({config: Config});
+// Start the router if a config object is preset
+if(Config) window.Rebound.router = new Router({config: JSON.parse(Config)});
 
 export default Rebound;
