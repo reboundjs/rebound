@@ -1,14 +1,8 @@
+// Rebound Collection
+// ----------------
+
 import Model from "rebound-data/model";
 import $ from "rebound-component/utils";
-
-// If Rebound Runtime has already been run, throw error
-if(window.Rebound && window.Rebound.Collection){
-  throw 'Rebound Collection is already loaded on the page!';
-}
-// If Backbone hasn't been started yet, throw error
-if(!window.Backbone){
-  throw "Backbone must be on the page for Rebound to load.";
-}
 
 function pathGenerator(collection){
   return function(){
@@ -63,7 +57,7 @@ var Collection = Backbone.Collection.extend({
         result = this,
         l=parts.length,
         i=0;
-        options = _.defaults((options || {}), { raw: false });
+        options || (options = {});
 
     if(_.isUndefined(key) || _.isNull(key)) return key;
     if(key === '' || parts.length === 0) return result;

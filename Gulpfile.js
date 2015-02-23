@@ -10,6 +10,7 @@ var connect = require('gulp-connect');
 var sourcemaps = require('gulp-sourcemaps');
 var del = require('del');
 var qunit = require('node-qunit-phantomjs');
+var docco = require("gulp-docco");
 
 
 var paths = {
@@ -20,12 +21,12 @@ var paths = {
     reboundData:        'packages/rebound-data/lib/**/*.js',
     reboundPrecompiler: 'packages/rebound-precompiler/lib/**/*.js',
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
-    reboundRuntime:     'packages/rebound-runtime/lib/**/*.js'
+    reboundRuntime:     'packages/runtime.js'
   };
 
 gulp.task('clean', function(cb) {
   // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist', 'test/demo/templates'], cb);
+  return del(['dist', 'test/demo/templates', 'docs'], cb);
 });
 
 // JS hint task
@@ -55,11 +56,33 @@ gulp.task('cjs', ['clean'], function() {
     gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
     gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
-    gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"}))
+    gulp.src(paths.reboundRuntime)
   )
   .pipe(to5({blacklist: ['forOf','generators','spread','destructuring']}))
   .pipe(gulp.dest('dist/cjs'))
   .pipe(connect.reload());
+});
+
+gulp.task('docco', ['clean'], function() {
+  return gulp.src([
+    'packages/runtime.js',
+    'packages/rebound-data/lib/rebound-data.js',
+    'packages/rebound-data/lib/model.js',
+    'packages/rebound-data/lib/collection.js',
+    'packages/rebound-data/lib/computed-property.js',
+    'packages/rebound-component/lib/component.js',
+    'packages/rebound-component/lib/helpers.js',
+    'packages/rebound-component/lib/hooks.js',
+    'packages/rebound-component/lib/lazy-value.js',
+    'packages/rebound-router/lib/rebound-router.js',
+    'packages/rebound-component/lib/utils.js',
+    'packages/property-compiler/lib/property-compiler.js',
+    'packages/rebound-compiler/lib/rebound-compiler.js',
+    'packages/rebound-precompiler/lib/rebound-precompiler.js',
+  ])
+  .pipe(concat('rebound.js'))
+  .pipe(docco())
+  .pipe(gulp.dest('docs'));
 });
 
 gulp.task('amd', ['clean'], function() {
@@ -70,7 +93,7 @@ gulp.task('amd', ['clean'], function() {
     gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
     gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
-    gulp.src(paths.reboundRuntime).pipe(rename({prefix: "rebound-runtime/"}))
+    gulp.src(paths.reboundRuntime)
   )
   .pipe(sourcemaps.init())
   .pipe(to5({
@@ -83,9 +106,6 @@ gulp.task('amd', ['clean'], function() {
   .pipe(concat('rebound.runtime.js'))
   .pipe(sourcemaps.write())
   .pipe(gulp.dest('dist'))
-  .pipe(uglify())
-  .pipe(rename({basename: "rebound.runtime.min"}))
-  .pipe(gulp.dest('dist'));
 });
 
 gulp.task('component', ['amd'], function() {
@@ -125,10 +145,13 @@ gulp.task('runtime', ['component'], function() {
     'wrap/end.runtime.frag'
     ])
   .pipe(concat('rebound.runtime.js'))
+  .pipe(gulp.dest('dist'))
+  .pipe(uglify())
+  .pipe(rename({basename: "rebound.runtime.min"}))
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('recompile-demo', ['cjs', 'runtime'],  function(){
+gulp.task('recompile-demo', ['cjs', 'docco', 'runtime'],  function(){
   // When everything is finished, re-compile the demo
   var fs   = require('fs');
   var mkdirp = require('mkdirp');
@@ -161,15 +184,15 @@ gulp.task('recompile-demo', ['cjs', 'runtime'],  function(){
 })
 
 // Start the test server
-gulp.task('connect', function() {
+gulp.task('connect', ['recompile-demo'], function() {
   return connect.server({
     livereload: true
   });
 });
 
 // Rerun the tasks when a file changes
-gulp.task('watch', ['recompile-demo', 'connect'], function() {
-  gulp.watch(paths.all, ['cjs', 'runtime']);
+gulp.task('watch', ['connect'], function() {
+  gulp.watch(paths.all, ['recompile-demo']);
 });
 
 // The default task (called when you run `gulp` from cli)

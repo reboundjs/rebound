@@ -1,25 +1,34 @@
+// Rebound Precompiler
+// ----------------
+
 import { compile as htmlbarsCompile, compileSpec as htmlbarsCompileSpec } from "htmlbars";
 
+// Remove the contents of the component's `script` tag.
 function getScript(str){
   return (str.indexOf('<script>') > -1 && str.indexOf('</script>') > -1) ? '(function(){' + str.replace(/(.*<script>)(.*)(<\/script>.*)/ig, '$2') + '})()' : '{}';
 }
 
+// Remove the contents of the component's `style` tag.
 function getStyle(str){
   return (str.indexOf('<style>') > -1 && str.indexOf('</style>') > -1) ? str.replace(/(.*<style>)(.*)(<\/style>.*)/ig, '$2').replace(/"/g, '\\"') : '';
 }
 
+// Remove the contents of the component's `template` tag.
 function getTemplate(str){
   return str.replace(/.*<template>(.*)<\/template>.*/gi, '$1').replace(/(.*)<style>.*<\/style>(.*)/ig, '$1$2');
 }
 
+// Get the component's name from its `name` attribute.
 function getName(str){
   return str.replace(/.*<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>.*/ig, '$2');
 }
 
+// Minify the string passed in by replacing all whitespace.
 function minify(str){
   return str.replace(/\s+/g, ' ').replace(/\n|(>) (<)/g, '$1$2');
 }
 
+// Strip javascript comments
 function removeComments(str){
   return str.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s])+\/\/(?:.*)$)/gm, '$1');
 }
@@ -96,7 +105,6 @@ function precompile(str, options){
 
   // Remove link tags from template
   template = template.replace(/<link .*href=(['"]?)(.*).html\1[^>]*>/gi, '');
-
 
   // Assemble our partial dependancies
   partials = template.match(/\{\{>\s*?['"]?([^'"}\s]*)['"]?\s*?\}\}/gi);

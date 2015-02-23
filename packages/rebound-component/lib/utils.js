@@ -1,3 +1,6 @@
+// Rebound Utils
+// ----------------
+
 var $ = function(query){
   return new utils(query);
 };
@@ -106,7 +109,10 @@ utils.prototype = {
   // Given a valid data path, split it into an array of its parts.
   // ex: foo.bar[0].baz --> ['foo', 'var', '0', 'baz']
   splitPath: function(path){
-    return _.compact(path.split(/(?:\.|\[|\])+/));
+    path = ('.'+path+'.').split(/(?:\.|\[|\])+/);
+    path.pop();
+    path.shift();
+    return path;
   },
 
   // Applies function `func` depth first to every node in the subtree starting from `root`

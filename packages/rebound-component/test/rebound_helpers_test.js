@@ -1,4 +1,4 @@
-require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-component/helpers'], function(compiler, tokenizer, helpers){
+require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-component/helpers', 'rebound-data/model'], function(compiler, tokenizer, helpers, Model){
 
     function equalTokens(fragment, html, message) {
       var div = document.createElement("div");
@@ -37,11 +37,11 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       _.each(path, function(path){
         if(obj.__observers && _.isObject(obj.__observers[path])){
           _.each(obj.__observers[path].collection, function(callback, index) {
-            if(callback){ callback(); }
+            if(callback){ callback.notify(); }
             else{ delete obj.__observers[path][index]; }
           });
           _.each(obj.__observers[path].model, function(callback, index) {
-            if(callback){ callback(); }
+            if(callback){ callback.notify(); }
             else{ delete obj.__observers[path][index]; }
           });
         }
@@ -388,6 +388,17 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       equalTokens(dom, '<div>bar</div>', 'Inline If helper is data bound');
 
 
+      // Nexted Block IFs
+      template = compiler.compile('<div>{{#if bool}}{{#if bool}}{{val}}{{else}}{{val2}}{{/if}}{{else}}{{val2}}{{/if}}</div>', {name: 'test/partial'});
+      data = new Model({bool: true, val: 'true', val2: 'false'});
+      dom = template.render(data);
+      equal(dom.innerHTML, 'true', 'If helpers that are the immediate children of if helpers render on first run.');
+      data.set('bool', false);
+      notify(data, 'bool');
+      equal(dom.innerHTML, 'false', 'If helpers that are the immediate children of if helpers re-render successfully on change.');
+
+
+
       /*******************************************************************/
       /**                Clean up our object prototype hack             **/
 
@@ -553,8 +564,22 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       /*******************************************************************/
     });
 
-
     // TODO: Add each helper tests
+
+    QUnit.test('Rebound Helpers - Each', function() {
+
+      var template, data, dom;
+
+
+      template = compiler.compile('<div>{{#each arr}}{{val}}{{/each}}</div>', {name: 'test/partial'});
+      data = new Model({arr: [{val: 1}, {val: 2}, {val: 3}]});
+      dom = template.render(data);
+      equal(dom.innerHTML, '123', 'Each helper will render a list of values.');
+      data.get('arr').add({val: 4});
+      notify(data, 'arr');
+      equal(dom.innerHTML, '1234', 'Each helper will re-render on add.');
+
+    });
 
     // TODO: Add with helper tests
 

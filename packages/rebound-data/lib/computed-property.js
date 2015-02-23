@@ -1,10 +1,8 @@
+// Rebound Computed Property
+// ----------------
+
 import propertyCompiler from "property-compiler/property-compiler";
 import $ from "rebound-component/utils";
-
-// If Rebound Runtime has already been run, throw error
-if(window.Rebound && window.Rebound.ComputedProperty){ throw 'Rebound ComputedProperty is already loaded on the page!'; }
-// If Backbone hasn't been started yet, throw error
-if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load."; }
 
 // Returns true if str starts with test
 function startsWith(str, test){
@@ -21,6 +19,7 @@ function recomputeCallback(){
   for(i=0;i<len;i++){
     this._toCall.shift().call();
   }
+  this._toCall.added = {};
 }
 
 var ComputedProperty = function(prop, options){
@@ -83,8 +82,17 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     collection || (collection = {});
     options || (options = {});
     this._toCall || (this._toCall = []);
+    this._toCall.added || (this._toCall.added = {});
     !collection.isData && (options = collection) && (collection = model);
-    var push = Array.prototype.push, path, vector;
+    var push = function(arr){
+      var i, len = arr.length;
+      this.added || (this.added = {});
+      for(i=0;i<len;i++){
+        if(this.added[arr[i].cid]) continue;
+        this.added[arr[i].cid] = 1;
+        this.push(arr[i]);
+      }
+    }, path, vector;
     vector = path = collection.__path().replace(/\.?\[.*\]/ig, '.@each');
 
     // If a reset event on a Model, check for computed properties that depend
@@ -93,7 +101,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
       _.each(options.previousAttributes, function(value, key){
         vector = path + (path && '.') + key;
         _.each(this.__computedDeps, function(dependants, dependancy){
-          startsWith(vector, dependancy) && push.apply(this._toCall, dependants);
+          startsWith(vector, dependancy) && push.call(this._toCall, dependants);
         }, this);
       }, this);
     }
@@ -102,7 +110,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // on anything inside that collection.
     else if(type === 'reset' && options.previousModels){
       _.each(this.__computedDeps, function(dependants, dependancy){
-        startsWith(dependancy, vector) && push.apply(this._toCall, dependants);
+        startsWith(dependancy, vector) && push.call(this._toCall, dependants);
       }, this);
     }
 
@@ -110,7 +118,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // anything inside that collection or that contains that collection.
     else if(type === 'add' || type === 'remove'){
       _.each(this.__computedDeps, function(dependants, dependancy){
-        if( startsWith(dependancy, vector) || startsWith(vector, dependancy) ) push.apply(this._toCall, dependants);;
+        if( startsWith(dependancy, vector) || startsWith(vector, dependancy) ) push.call(this._toCall, dependants);;
       }, this);
     }
 
@@ -118,13 +126,14 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     else if(type.indexOf('change:') === 0){
       vector = type.replace('change:', '').replace(/\.?\[.*\]/ig, '.@each');
       _.each(this.__computedDeps, function(dependants, dependancy){
-        startsWith(vector, dependancy) && push.apply(this._toCall, dependants);
+        startsWith(vector, dependancy) && push.call(this._toCall, dependants);
       }, this);
     }
 
-    this._toCall = _.uniq(this._toCall);
-
-    _.each(this._toCall, function(prop){ prop.markDirty(); });
+    var i, len = this._toCall.length;
+    for(i=0;i<len;i++){
+      this._toCall[i].markDirty();
+    }
 
     // Notifies all computed properties in the dependants array to recompute.
     // Marks everyone as dirty and then calls them.

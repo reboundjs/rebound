@@ -1,6 +1,6 @@
 {
   "name": "reboundjs",
-  "version": "0.0.47",
+  "version": "0.0.48",
   "description": "Automatic data binding for Backbone using HTMLBars.",
   "main": "dist/cjs/rebound-precompiler/rebound-precompiler.js",
   "scripts": {
@@ -32,6 +32,7 @@
     "gulp-6to5": "2.0.2",
     "gulp-concat": "2.4.3",
     "gulp-connect": "^2.2.0",
+    "gulp-docco": "0.0.4",
     "gulp-jshint": "^1.9.0",
     "gulp-qunit": "^1.2.1",
     "gulp-rename": "^1.2.0",

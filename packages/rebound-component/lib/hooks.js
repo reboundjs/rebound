@@ -1,7 +1,9 @@
+// Rebound Hooks
+// ----------------
+
 import LazyValue from "rebound-component/lazy-value";
 import $ from "rebound-component/utils";
 import helpers from "rebound-component/helpers";
-import Context from "rebound-component/context";
 
 var hooks = {},
     attributes = {  abbr: 1,      "accept-charset": 1,   accept: 1,      accesskey: 1,     action: 1,
@@ -34,18 +36,13 @@ var hooks = {},
         Hook Utils
 ********************************/
 
-// Returns the computed property's function if true, else false
-function isComputedProperty(model, path){
-  return _.isFunction(model.get(path, {raw: true}));
-}
-
 // Given an object (context) and a path, create a LazyValue object that returns the value of object at context and add it as an observer of the context.
 function streamProperty(context, path) {
 
   // Lazy value that returns the value of context.path
   var lazyValue = new LazyValue(function() {
     return context.get(path);
-  }, context);
+  }, {context: context});
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
   lazyValue.path = path;
@@ -102,19 +99,12 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
     }
 
     return result;
-  });
+  }, {morph: options.morph});
 
   options.lazyValue.path = path;
 
   // For each param passed to our helper, add it to our helper's dependant list. Helper will re-evaluate when one changes.
   params.forEach(function(node) {
-    if(node.isLazyValue){
-      // Re-evaluate this expression when our condition changes
-      node.onNotify(function(){
-        options.lazyValue.value();
-      });
-    }
-
     if (node && node.isLazyValue) {
       options.lazyValue.addDependentValue(node);
     }
@@ -146,14 +136,14 @@ var subtreeObserver = new MutationObserver(cleanSubtree);
 ********************************/
 
 hooks.get = function get(env, context, path){
-  context.blockParams || (context.blockParams = new Context());
+  context.blockParams || (context.blockParams = {});
   if(path === 'this'){ path = ''; }
   // context = (context.blockParams.has(path)) ? context.blockParams : context;
   return streamProperty(context, path);
 };
 
 hooks.set = function set(env, context, name, value){
-  context.blockParams || (context.blockParams = new Context());
+  context.blockParams || (context.blockParams = {});
   // context.blockParams.set(name, value);
 };
 
@@ -172,13 +162,10 @@ hooks.concat = function concat(env, params) {
     }
 
     return value;
-  }, params[0].context);
+  }, {context: params[0].context});
 
   for (var i = 0, l = params.length; i < l; i++) {
     if(params[i].isLazyValue) {
-      params[i].onNotify(function(){
-        lazyValue.notify();
-      });
       lazyValue.addDependentValue(params[i]);
     }
   }
@@ -194,16 +181,13 @@ hooks.subexpr = function subexpr(env, context, helperName, params, hash) {
 
   if (helper) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
-    lazyValue = constructHelper(true, helperName, context, params, hash, {}, env, helper);
+    lazyValue = constructHelper(false, helperName, context, params, hash, {}, env, helper);
   } else {
     lazyValue = streamProperty(context, helperName);
   }
 
   for (var i = 0, l = params.length; i < l; i++) {
     if(params[i].isLazyValue) {
-      params[i].onNotify(function(){
-        lazyValue.notify();
-      });
       lazyValue.addDependentValue(params[i]);
     }
   }
@@ -345,8 +329,8 @@ hooks.content = function content(env, morph, context, path) {
 };
 
 // Handle morphs in element tags
+// TODO: handle dynamic attribute names?
 hooks.element = function element(env, domElement, context, path, params, hash) {
-
   var helper = helpers.lookupHelper(path, env, context),
       lazyValue,
       value;
@@ -377,7 +361,7 @@ hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
                     'search':true, 'url':true,    'tel':true,    'hidden':true,
                     'number':true, 'color': true, 'date': true,  'datetime': true,
                     'datetime-local:': true,      'month': true, 'range': true,
-                    'time': true,   'week': true
+                    'time': true,  'week': true
                   },
     attr;
 
@@ -434,13 +418,12 @@ hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
 
     return val;
 
-  });
+  }, {attrMorph: attrMorph});
 
   value.onNotify(function(){
     lazyValue.value();
   });
   lazyValue.addDependentValue(value);
-
 
   return lazyValue.value();
 
@@ -559,7 +542,7 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
 
     // Return the new element.
     return element;
-  });
+  }, {morph: morph});
 
 
 
