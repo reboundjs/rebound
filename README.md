@@ -59,7 +59,7 @@ The project is still in flux, so everything below is subject to change! Use at y
 Rebound is available via bower if you so please:
 ```bower install reboundjs```
 
-There are two packaged files called ```rebound.runtime.js``` and ```rebound.compiler.js```. Both of these files contain [JQuery](http://www.jquery.com), [Underscore](http://www.underscorejs.org), [RequireJS](requirejs.org), [Backbone](backbonejs.org), [CustomElements](https://github.com/Polymer/CustomElements), [HTMLBars](https://github.com/tildeio/htmlbars) and of course, the main Rebound library. The compiler package contains the extra code needed to compile HTMLBars templates client side and should rarely be needed on any user facing site. All templates should be precompiled on the server by the [Grunt-Rebound](https://github.com/epicmiller/grunt-rebound) plugin, or a similar pre-compiler.
+There are two packaged files called ```rebound.runtime.js``` and ```rebound.compiler.js```. Both of these files contain [RequireJS](requirejs.org), [Backbone](backbonejs.org), various shims for compatability back to IE9, [HTMLBars](https://github.com/tildeio/htmlbars) and of course, the main Rebound library. The compiler package contains the extra code needed to compile HTMLBars templates client side and should rarely be needed on any user facing site. At the moment, all templates should be precompiled on the server by a pre-compiler, like [Grunt-Rebound](https://github.com/epicmiller/grunt-rebound), or a similar plugin.
 
 ### How do I get Rebound on my page?
 
