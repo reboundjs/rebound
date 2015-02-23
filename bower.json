@@ -1,6 +1,6 @@
 {
-  "name": "Rebound",
-  "version": "0.0.3",
+  "name": "reboundjs",
+  "version": "0.0.4",
   "homepage": "https://github.com/epicmiller/rebound",
   "authors": [
     "Adam Miller <adam@pages.me>"
@@ -21,16 +21,16 @@
   ],
   "license": "MIT",
   "ignore": [
-    "**/.*",
+    "bin",
     "node_modules",
     "bower_components",
+    "packages",
+    "shims",
     "test",
-    "tests"
+    "wrap"
   ],
-  "files": [
-    "dist",
-    "README.md",
-    "bower.json"
+  "main": [
+    "dist/rebound.runtime.js"
   ],
   "devDependencies": {
     "jquery": "2.1.1",
