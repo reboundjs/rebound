@@ -106,9 +106,6 @@ gulp.task('amd', ['clean'], function() {
   .pipe(concat('rebound.runtime.js'))
   .pipe(sourcemaps.write())
   .pipe(gulp.dest('dist'))
-  .pipe(uglify())
-  .pipe(rename({basename: "rebound.runtime.min"}))
-  .pipe(gulp.dest('dist'));
 });
 
 gulp.task('component', ['amd'], function() {
@@ -148,6 +145,9 @@ gulp.task('runtime', ['component'], function() {
     'wrap/end.runtime.frag'
     ])
   .pipe(concat('rebound.runtime.js'))
+  .pipe(gulp.dest('dist'))
+  .pipe(uglify())
+  .pipe(rename({basename: "rebound.runtime.min"}))
   .pipe(gulp.dest('dist'));
 });
 
