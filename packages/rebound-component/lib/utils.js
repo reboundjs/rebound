@@ -261,12 +261,10 @@ utils.prototype = {
             };
 
         // If this is the first event of its type, add the event handler
+        // AddEventListener supports IE9+
         if(!events[delegateGroup][eventName]){
-          if (el.addEventListener) {
-            el.addEventListener(eventName, callback);
-          } else {
-            el.attachEvent('on' + eventName, callback);
-          }
+          // If event is focus or blur, use capture to allow for event delegation.
+          el.addEventListener(eventName, callback, (eventName === 'focus' || eventName === 'blur'));
         }
 
 
