@@ -68,7 +68,6 @@ var Component = Model.extend({
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and added as computed properties
     // Set our component's context with the passed data merged with the component's defaults
-    if(this.__name === 'collegia-nav') debugger;
     this.set((this.defaults || {}), {defaults: true});
     this.set((options.data || {}));
 
