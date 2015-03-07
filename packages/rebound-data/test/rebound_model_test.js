@@ -20,7 +20,7 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
 
     QUnit.test('Rebound Data - Model', function() {
       var model, collection, model2, model3;
-    
+
     // Shallow Set - Primitive Values
       model = new Model();
       model.set('str', 'test');
@@ -138,7 +138,6 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
       model.reset();
       notify(model, 'obj');
       deepEqual(model.toJSON(), {arr: [], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() on a model resets all of its properties and children');
-
 
 
       model = new Model({foo: {bar: 1}});

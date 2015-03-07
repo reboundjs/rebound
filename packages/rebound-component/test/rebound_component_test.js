@@ -55,3 +55,6 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
 
 
 });
+
+
+// Components pass default settings to child models and are reset propery on reset()

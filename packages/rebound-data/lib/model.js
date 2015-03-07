@@ -63,23 +63,26 @@ var Model = Backbone.Model.extend({
     options.previousAttributes = _.clone(this.attributes);
 
     // Iterate over the Model's attributes:
-    // - If the property is the `idAttribute`, or a `Computed Property`, skip.
-    // - If the property is a `Model` or `Collection`, reset it.
+    // - If the property is the `idAttribute`, skip.
+    // - If the property is a `Model`, `Collection`, or `ComputedProperty`, reset it.
     // - If the passed object has the property, set it to the new value.
     // - If the Model has a default value for this property, set it back to default.
     // - Otherwise, unset the attribute.
     for(key in this.attributes){
       value = this.attributes[key];
-      if(_.isUndefined(value)) obj[key] && (changed[key] = obj[key]);
-      else if (key === this.idAttribute || (value && value.isComputedProperty)) continue;
-      else if (value.isCollection || value.isModel){
+      if(value === obj[key]) continue;
+      else if(_.isUndefined(value)) obj[key] && (changed[key] = obj[key]);
+      else if (key === this.idAttribute) continue;
+      else if (value.isCollection || value.isModel || value.isComputedProperty){
         value.reset((obj[key]||[]), {silent: true});
-        !_.isEmpty(value.changed) && (changed[key] = value.changed);
+        if(value.isCollection) changed[key] = [];
+        else if(value.isModel && value.isComputedProperty) changed[key] = value.cache.model.changed;
+        else if(value.isModel) changed[key] = value.changed
       }
-      else if (obj.hasOwnProperty(key)){ if(value !== obj[key]) changed[key] = obj[key]; }
+      else if (obj.hasOwnProperty(key)){ changed[key] = obj[key]; }
       else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
-        obj[key] = this.defaults[key];
-        if(value !== obj[key]) changed[key] = obj[key];
+        console.log(this.defaults, this);
+        changed[key] = obj[key] = this.defaults[key];
       }
       else{
         changed[key] = undefined;
@@ -156,6 +159,7 @@ var Model = Backbone.Model.extend({
 
     // If reset option passed, do a reset. If nothing passed, return.
     if(options.reset === true) return this.reset(attrs, options);
+    if(options.defaults === true) this.defaults = attrs;
     if(_.isEmpty(attrs)) return;
 
     // For each attribute passed:
@@ -185,7 +189,8 @@ var Model = Backbone.Model.extend({
         parent: target,
         root: this.__root__,
         path: pathGenerator(target, key),
-        silent: true
+        silent: true,
+        defaults: options.defaults
       }
       // - If val is `null` or `undefined`, set to default value.
       // - If val is a `Computed Property`, get its current cache object.
