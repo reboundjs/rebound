@@ -182,3 +182,5 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
 
     });
 });
+
+// When set is called with option: {defaults: true}, it sets the defaults object to the property passed.
