@@ -30,7 +30,7 @@ var paths = {
 
 gulp.task('clean', function(cb) {
   // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist', 'test/demo/templates', 'docs'], cb);
+  return del(['dist', 'test/demo/templates'], cb);
 });
 
 // JS hint task
@@ -86,7 +86,7 @@ gulp.task('docco', ['clean'], function() {
   ])
   .pipe(concat('rebound.js'))
   .pipe(docco())
-  .pipe(gulp.dest('docs'));
+  .pipe(gulp.dest('dist/docs'));
 });
 
 gulp.task('amd', ['clean'], function() {
