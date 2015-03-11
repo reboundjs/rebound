@@ -81,7 +81,6 @@ var Model = Backbone.Model.extend({
       }
       else if (obj.hasOwnProperty(key)){ changed[key] = obj[key]; }
       else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
-        console.log(this.defaults, this);
         changed[key] = obj[key] = this.defaults[key];
       }
       else{
