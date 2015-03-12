@@ -157,6 +157,18 @@ require(['property-compiler/property-compiler'], function(compiler){
       deepEqual( res, ['one', 'two'], 'Property Compiler works with complex if statement (multiple terminators between `this`)' );
 
 
+      func = function(){
+        if(this.get('page') === 'login' && this.get('user.uid')){
+          this.set('page', 'checkout');
+          return 1;
+        }
+        return 0;
+      };
+
+      res = compiler.compile(func, 'path');
+      deepEqual( res, ['page', 'user.uid'], 'Property Compiler works with complex if statement (multiple terminators between `this`)' );
+
+
       // TODO: Features to eventually support
       //
       //
@@ -167,7 +179,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       // compiler.register({cid: 'testId'}, 'key', func, 'path');
       // res = compiler.compile(func, 'path');
       // deepEqual( res, ['foo.bar'], 'Property Compiler saves state when object is saved to a variable' );
-      // 
+      //
       //
       //
       // func = function(){
