@@ -33,6 +33,7 @@ function compile(prop, name){
   do{
 
     token = nextToken();
+    console.log(token.value, token.type.type);
 
     if(token.value === 'this'){
       listening++;
@@ -93,7 +94,7 @@ function compile(prop, name){
       workingpath.push(attrs);
     }
 
-    if(listening && _.indexOf(terminators, token.type.type) > -1 || _.indexOf(terminators, token.value) > -1){
+    if(listening && (_.indexOf(terminators, token.type.type) > -1 || _.indexOf(terminators, token.value) > -1)){
       workingpath = _.reduce(workingpath, function(memo, paths){
         var newMemo = [];
         paths = (!_.isArray(paths)) ? [paths] : paths;

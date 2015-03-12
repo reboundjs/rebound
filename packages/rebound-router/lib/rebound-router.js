@@ -210,7 +210,8 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       this.config = options.config;
       this.config.handlers = [];
 
-      var absoluteUrl = new RegExp('^(?:[a-z]+:)?//', 'i'),
+      var remoteUrl = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/,
+
       router = this;
 
       // Convert our routeMappings to regexps and push to our handlers
@@ -224,8 +225,8 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
         var path = e.target.getAttribute('href');
 
-        // If path is not an absolute url, or blank, try and navigate to that route.
-        if(path !== '#' && path !== '' && !absoluteUrl.test(path)){
+        // If path is not an remote url, ends in .[a-z], or blank, try and navigate to that route.
+        if( path && path !== '#' && !remoteUrl.test(path) ){
           e.preventDefault();
           router.navigate(path, {trigger: true});
         }

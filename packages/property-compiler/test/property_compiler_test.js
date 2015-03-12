@@ -147,6 +147,16 @@ require(['property-compiler/property-compiler'], function(compiler){
       res = compiler.compile(func, 'path');
       deepEqual( res, ['test'], 'Property Compiler ignores multiline comments' );
 
+      func = function(){
+        if(this.get('one') === 'login' && this.get('two')){
+          return 1;
+        }
+        return 0;
+      };
+      res = compiler.compile(func, 'path');
+      deepEqual( res, ['one', 'two'], 'Property Compiler works with complex if statement (multiple terminators between `this`)' );
+
+
       // TODO: Features to eventually support
       //
       //
@@ -157,7 +167,7 @@ require(['property-compiler/property-compiler'], function(compiler){
       // compiler.register({cid: 'testId'}, 'key', func, 'path');
       // res = compiler.compile(func, 'path');
       // deepEqual( res, ['foo.bar'], 'Property Compiler saves state when object is saved to a variable' );
-      //
+      // 
       //
       //
       // func = function(){
