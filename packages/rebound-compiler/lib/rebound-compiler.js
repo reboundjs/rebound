@@ -3,7 +3,7 @@
 
 import { compile as htmlbarsCompile, compileSpec as htmlbarsCompileSpec } from "htmlbars-compiler/compiler";
 import { merge } from "htmlbars-util/object-utils";
-import DOMHelper from "morph/dom-helper";
+import DOMHelper from "dom-helper";
 import helpers from "rebound-component/helpers";
 import hooks from "rebound-component/hooks";
 

@@ -1,7 +1,7 @@
 // Rebound Component
 // ----------------
 
-import DOMHelper from "morph/dom-helper";
+import DOMHelper from "dom-helper";
 import hooks from "rebound-component/hooks";
 import helpers from "rebound-component/helpers";
 import $ from "rebound-component/utils";

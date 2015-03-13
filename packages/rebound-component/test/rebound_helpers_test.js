@@ -132,10 +132,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equal(dom.value, 'bar', 'Value of text input is two way data bound data -> element');
+      equal(dom.firstChild.value, 'bar', 'Value of text input is two way data bound data -> element');
       equalTokens(dom, '<input value="bar">', 'Value Attribute on text input is two way data bound element -> data');
-      dom.value = 'Hello World';
-      dom.dispatchEvent(evt);
+      dom.firstChild.value = 'Hello World';
+      dom.firstChild.dispatchEvent(evt);
       notify(data, ['bar']);
       equal(data.bar, 'Hello World', 'Value on text input is two way data bound element -> data');
 
@@ -146,10 +146,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equal(dom.value, 'bar', 'Value of email input is two way data bound data -> element');
+      equal(dom.firstChild.value, 'bar', 'Value of email input is two way data bound data -> element');
       equalTokens(dom, '<input type="email" value="bar">', 'Value Attribute on email input is two way data bound element -> data');
-      dom.value = 'Hello World';
-      dom.dispatchEvent(evt);
+      dom.firstChild.value = 'Hello World';
+      dom.firstChild.dispatchEvent(evt);
       notify(data, ['bar']);
       equal(data.bar, 'Hello World', 'Value on email input is two way data bound element -> data');
 
@@ -160,10 +160,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equal(dom.value, 'bar', 'Value of password input is two way data bound data -> element');
+      equal(dom.firstChild.value, 'bar', 'Value of password input is two way data bound data -> element');
       equalTokens(dom, '<input type="password" value="bar">', 'Value Attribute on password input is two way data bound element -> data');
-      dom.value = 'Hello World';
-      dom.dispatchEvent(evt);
+      dom.firstChild.value = 'Hello World';
+      dom.firstChild.dispatchEvent(evt);
       notify(data, ['bar']);
       equal(data.bar, 'Hello World', 'Value on password input is two way data bound element -> data');
 
@@ -174,10 +174,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equal(dom.value, 'bar', 'Value of search input is two way data bound data -> element');
+      equal(dom.firstChild.value, 'bar', 'Value of search input is two way data bound data -> element');
       equalTokens(dom, '<input type="search" value="bar">', 'Value Attribute on search input is two way data bound element -> data');
-      dom.value = 'Hello World';
-      dom.dispatchEvent(evt);
+      dom.firstChild.value = 'Hello World';
+      dom.firstChild.dispatchEvent(evt);
       notify(data, ['bar']);
       equal(data.bar, 'Hello World', 'Value on search input is two way data bound element -> data');
 
@@ -188,10 +188,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equal(dom.value, 'bar', 'Value of url input is two way data bound data -> element');
+      equal(dom.firstChild.value, 'bar', 'Value of url input is two way data bound data -> element');
       equalTokens(dom, '<input type="url" value="bar">', 'Value Attribute on url input is two way data bound element -> data');
-      dom.value = 'Hello World';
-      dom.dispatchEvent(evt);
+      dom.firstChild.value = 'Hello World';
+      dom.firstChild.dispatchEvent(evt);
       notify(data, ['bar']);
       equal(data.bar, 'Hello World', 'Value on url input is two way data bound element -> data');
 
@@ -202,10 +202,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data);
       data.bar = 'bar';
       notify(data, ['bar']);
-      equal(dom.value, 'bar', 'Value of tel input is two way data bound data -> element');
+      equal(dom.firstChild.value, 'bar', 'Value of tel input is two way data bound data -> element');
       equalTokens(dom, '<input type="tel" value="bar">', 'Value Attribute on tel input is two way data bound element -> data');
-      dom.value = 'Hello World';
-      dom.dispatchEvent(evt);
+      dom.firstChild.value = 'Hello World';
+      dom.firstChild.dispatchEvent(evt);
       notify(data, ['bar']);
       equal(data.bar, 'Hello World', 'Value on tel input is two way data bound element -> data');
 
@@ -301,7 +301,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
       dom = template.render({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div></div>', 'Block If helper without else block - false');
+      equalTokens(dom, '<div><!----></div>', 'Block If helper without else block - false');
 
 
 
@@ -346,7 +346,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div>{{if bool foo}}</div>', {name: 'test/partial'});
       dom = template.render({foo:'bar', bar:'foo', bool: false});
-      equalTokens(dom, '<div></div>', 'Inline If helper in content without else term - false');
+      equalTokens(dom, '<div><!----></div>', 'Inline If helper in content without else term - false');
 
 
 
@@ -392,10 +392,10 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       template = compiler.compile('<div>{{#if bool}}{{#if bool}}{{val}}{{else}}{{val2}}{{/if}}{{else}}{{val2}}{{/if}}</div>', {name: 'test/partial'});
       data = new Model({bool: true, val: 'true', val2: 'false'});
       dom = template.render(data);
-      equal(dom.innerHTML, 'true', 'If helpers that are the immediate children of if helpers render on first run.');
+      equal(dom.firstChild.innerHTML, 'true', 'If helpers that are the immediate children of if helpers render on first run.');
       data.set('bool', false);
       notify(data, 'bool');
-      equal(dom.innerHTML, 'false', 'If helpers that are the immediate children of if helpers re-render successfully on change.');
+      equal(dom.firstChild.innerHTML, 'false', 'If helpers that are the immediate children of if helpers re-render successfully on change.');
 
 
 
@@ -465,7 +465,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
       dom = template.render({foo:'bar', bar:'foo', bool: true});
-      equalTokens(dom, '<div></div>', 'Inline Unless helper in content without else term - true');
+      equalTokens(dom, '<div><!----></div>', 'Inline Unless helper in content without else term - true');
 
 
 
@@ -552,7 +552,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       dom = template.render(data, {helpers: {__callOnComponent: function(name, event){
         return data[name].call(data, event);
       }}});
-      $(dom).trigger('click');
+      $(dom.firstChild).trigger('click');
 
 
       /*******************************************************************/
@@ -570,23 +570,101 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
 
       var template, data, dom;
 
+      // End Modifications
 
       template = compiler.compile('<div>{{#each arr}}{{val}}{{/each}}</div>', {name: 'test/partial'});
       data = new Model({arr: [{val: 1}, {val: 2}, {val: 3}]});
       dom = template.render(data);
-      equal(dom.innerHTML, '123', 'Each helper will render a list of values.');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will render a list of values.');
+
       data.get('arr').add({val: 4});
       notify(data, 'arr');
-      equal(dom.innerHTML, '1234', 'Each helper will re-render on add.');
+      equal(dom.firstChild.innerHTML, '1234', 'Each helper will re-render on add to end.');
+
+      data.get('arr').pop();
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render on remove from end.');
+
+
+      data.get('arr').add([{val: 4}, {val: 5}]);
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '12345', 'Each helper will re-render on multiple add to end.');
+
+      var removeArr = [];
+      removeArr.push(data.get('arr[3]'));
+      removeArr.push(data.get('arr[4]'))
+
+      data.get('arr').remove(removeArr);
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render on multiple remove from end.');
+
+      // Begining Modification
+
+      data.get('arr').unshift({val: 4});
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '4123', 'Each helper will re-render on add to begining.');
+
+      data.get('arr').shift();
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render on remove from begining.');
+
+
+      data.get('arr').unshift([{val: 4}, {val: 5}]);
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '45123', 'Each helper will re-render on multiple add to begining.');
+
+      removeArr = [];
+      removeArr.push(data.get('arr[0]'));
+      removeArr.push(data.get('arr[1]'))
+
+      data.get('arr').remove(removeArr);
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render on multiple remove from begining.');
+
+      // Middle Modifications
+
+      data.get('arr').add({val: 4}, {at: 2});
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '1243', 'Each helper will re-render on add to middle.');
+
+      data.get('arr').remove(data.get('arr[2]'));
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render on remove from middle.');
+
+
+      data.get('arr').add([{val: 4}, {val: 5}], {at: 2});
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '12453', 'Each helper will re-render on multiple add to middle.');
+
+      removeArr = [];
+      removeArr.push(data.get('arr[2]'));
+      removeArr.push(data.get('arr[3]'))
+
+      data.get('arr').remove(removeArr);
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render on multiple remove from middle.');
+
+      // Multiple Modifications
+
+      data.get('arr').add({val: 'a'}, {at: 0});
+      data.get('arr').add({val: 'b'}, {at: 3});
+      data.get('arr').add({val: 'c'}, {at: 5});
+
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, 'a12b3c', 'Each helper will re-render after multiple adds.');
+
+      data.get('arr').remove(data.get('arr[0]'));
+      data.get('arr').remove(data.get('arr[2]'));
+      data.get('arr').remove(data.get('arr[3]'));
+
+      notify(data, 'arr');
+      equal(dom.firstChild.innerHTML, '123', 'Each helper will re-render after multiple removes.');
+
 
     });
 
     // TODO: Add with helper tests
 
     // TODO: Add length helper tests
-
-    // TODO: Add on helper tests
-
-    // TODO: Computed properties passed to helpers evaluate properly (specifically they break lazyvalue caches when their dependancies re evaluate)
 
 });

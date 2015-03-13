@@ -124,7 +124,8 @@ gulp.task('runtime', ['amd'], function() {
     'wrap/start.frag',
     'bower_components/almond/almond.js',
     'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
-    'node_modules/htmlbars/dist/amd/morph.amd.js',
+    'node_modules/htmlbars/dist/amd/morph-attr.amd.js',
+    'node_modules/htmlbars/dist/amd/dom-helper.amd.js',
     'dist/rebound.runtime.js',
     'wrap/end.runtime.frag'
     ])

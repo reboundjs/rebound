@@ -201,64 +201,43 @@ helpers.each = function(params, hash, options, env){
   if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', options.context); return null; }
 
   var value = (params[0].isCollection) ? params[0].models : params[0], // Accepts collections or arrays
-      start, end, // used below to remove trailing junk morphs from the dom
+      morph = options.placeholder.firstChildMorph, obj, next, lazyValue, nmorph, i,  // used below to remove trailing junk morphs from the dom
       position, // Stores the iterated element's integer position in the dom list
       currentModel = function(element, index, array, cid){
         return element.cid === cid; // Returns true if currently observed element is the current model.
       };
 
-  // Create our morph array if it doesnt exist
-  options.placeholder.morphs = options.placeholder.morphs || [];
+  // For each item in this collection
+  for(i=0;i < value.length;i++){
+    obj = value[i];
+    next = (morph) ? morph.nextMorph : null;
 
-  _.each(value, function(obj, key, list){
+    // If this morph is the rendered version of this model, continue to the next one.
+    if(morph && morph.cid == obj.cid){ morph = next; continue; }
 
-    if(!_.isFunction(obj.set)){ return console.error('Model ', obj, 'has no method .set()!'); }
+    // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list item.
+    lazyValue = new LazyValue(function(){
+      return options.template.render(obj, options, options.placeholder.contextualElement, [obj]);
+    }, {morph: options.placeholder});
 
-    position = findIndex(options.placeholder.morphs, currentModel, obj.cid);
+    // Insert our newly rendered value (a document tree) into our placeholder (the containing element) at its requested position (where we currently are in the object list)
+    nmorph = options.placeholder.insertContentBeforeMorph(lazyValue.value(), morph);
 
-    // TODO: These need to be re-added in as data attributes
-    // Even if rendered already, update each element's index, key, first and last in case of order changes or element removals
-    // if(_.isArray(value)){
-    //   obj.set({'@index': key, '@first': (key === 0), '@last': (key === value.length-1)}, {silent: true});
-    // }
-    //
-    // if(!_.isArray(value) && _.isObject(value)){
-    //   obj.set({'@key' : key}, {silent: true});
-    // }
+    // Label the inserted morph element with this model's cid
+    nmorph.cid = obj.cid;
 
-    // If this model is not the morph element at this index
-    if(position !== key){
+    // Destroy the old morph that was here
+    morph && morph.destroy();
 
-      // Create a lazyvalue whos value is the content inside our block helper rendered in the context of this current list object. Returns the rendered dom for this list element.
-      var lazyValue = new LazyValue(function(){
-        return options.template.render(((options.template.blockParams === 0)?obj:options.context), options, (options.morph.contextualElement || options.morph.element), [obj]);
-      }, {morph: options.placeholder});
+    // Move on to the next morph
+    morph = next;
+  }
 
-      // If this model is rendered somewhere else in the list, destroy it
-      if(position > -1){
-        options.placeholder.morphs[position].destroy();
-      }
-
-      // Destroy the morph we're replacing
-      if(options.placeholder.morphs[key]){
-        options.placeholder.morphs[key].destroy();
-      }
-
-      // Insert our newly rendered value (a document tree) into our placeholder (the containing element) at its requested position (where we currently are in the object list)
-      options.placeholder.insert(key, lazyValue.value());
-
-      // Label the inserted morph element with this model's cid
-      options.placeholder.morphs[key].cid = obj.cid;
-
-    }
-
-  }, this);
-
-  // If any more morphs are left over, remove them. We've already gone through all the models.
-  start = value.length;
-  end = options.placeholder.morphs.length - 1;
-  for(end; start <= end; end--){
-    options.placeholder.morphs[end].destroy();
+  // // If any more morphs are left over, remove them. We've already gone through all the models.
+  while(morph){
+    next = morph.nextMorph;
+    morph.destroy();
+    morph = next;
   }
 
   // Return null prevent's re-rending of our placeholder. Our placeholder (containing element) now has all the dom we need.

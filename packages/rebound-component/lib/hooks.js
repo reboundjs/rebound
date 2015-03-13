@@ -227,7 +227,7 @@ hooks.block = function block(env, morph, context, path, params, hash, template, 
 
     value = lazyValue.value();
     value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ morph.append(value); }
+    if(!_.isNull(value)){ morph.appendContent(value); }
 
       // Observe this content morph's parent's children.
       // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
@@ -272,7 +272,7 @@ hooks.inline = function inline(env, morph, context, path, params, hash) {
 
     value = lazyValue.value();
     value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ morph.append(value); }
+    if(!_.isNull(value)){ morph.appendContent(value); }
 
       // Observe this content morph's parent's children.
       // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
@@ -311,7 +311,7 @@ hooks.content = function content(env, morph, context, path) {
 
     value = lazyValue.value();
     value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ morph.append(value); }
+    if(!_.isNull(value)){ morph.appendContent(value); }
 
     // Observe this content morph's parent's children.
     // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
@@ -555,7 +555,7 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
     });
 
     value = lazyValue.value();
-    if(value !== undefined){ morph.append(value); }
+    if(value !== undefined){ morph.appendContent(value); }
   }
 };
 
