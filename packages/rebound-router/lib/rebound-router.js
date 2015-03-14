@@ -84,7 +84,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         PageApp;
 
       // Only Load CSS If Not Loaded Before
-      if(!cssElement){
+      if(cssElement === null){
         cssElement = document.createElement('link');
         cssElement.setAttribute('type', 'text/css');
         cssElement.setAttribute('rel', 'stylesheet');
@@ -110,7 +110,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       }
       // If it has been loaded bevore, enable it
       else {
-        cssElement.removeAttribute('disabled');
+        cssElement && cssElement.removeAttribute('disabled');
         cssLoaded = true;
       }
 

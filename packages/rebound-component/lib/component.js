@@ -13,7 +13,14 @@ if(!window.Backbone) throw "Backbone must be on the page for Rebound to load.";
 // Returns true if `str` starts with `test`
 function startsWith(str, test){
   if(str === test) return true;
-  return str.substring(0, test.length+1) === test+'.';
+  str = $.splitPath(str);
+  test = $.splitPath(test);
+  while(test[0] && str[0]){
+    if(str[0] !== test[0] && str[0] !== '@each' && test[0] !== '@each') return false;
+    test.shift();
+    str.shift();
+  }
+  return true;
 }
 
 function renderCallback(){
@@ -164,8 +171,9 @@ var Component = Model.extend({
     }
     else if(type === 'add' || type === 'remove' || (type === 'reset' && options.previousModels)){
       data = collection;
-      changed = {};
-      changed[data.__path()] = data;
+      changed = {
+        '@each': data
+      };
     }
 
     if(!data || !changed) return;
@@ -189,10 +197,10 @@ var Component = Model.extend({
     // object's _toRender queue.
     do{
       for(key in changed){
-        path = (basePath + (basePath && '.') + key).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, '');
+        path = (basePath + (basePath && key && '.') + key).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, '');
         for(obsPath in context.__observers){
           observers = context.__observers[obsPath];
-          if(startsWith(obsPath, path) || startsWith(path, obsPath)){
+          if(startsWith(obsPath, path)){
             // If this is a collection event, trigger everything, otherwise only trigger property change callbacks
             if(data.isCollection) push.call(this._toRender, observers.collection);
             push.call(this._toRender, observers.model);
