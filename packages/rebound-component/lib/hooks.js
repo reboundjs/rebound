@@ -405,6 +405,17 @@ hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
       return domElement.checked = (val) ? true : undefined;
     }
 
+    // Special case for link elements with dynamic classes.
+    // If the router has assigned it a truthy 'active' property, ensure that the extra class is present on re-render.
+    else if( domElement.tagName === 'A' && name === 'class' ){
+      if(_.isUndefined(val)){
+        domElement.active ? domElement.setAttribute('class', 'active') : domElement.classList.remove('class');
+      }
+      else{
+        domElement.setAttribute(name, val + (domElement.active ? ' active' : ''));
+      }
+    }
+
     else {
       _.isString(val) && (val = val.trim());
       val || (val = undefined);

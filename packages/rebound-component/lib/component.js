@@ -109,6 +109,13 @@ var Component = Model.extend({
     // Render our dom and place the dom in our custom element
     this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
 
+    // Add active class to this newly rendered template's link elements that require it
+    var links = this.el.querySelectorAll('a[href="/'+Backbone.history.fragment+'"]');
+    for(var i=0;i<links.length;i++){
+      links.item(i).classList.add('active');
+      links.item(i).active = true;
+    }
+
     this.initialize();
 
   },
