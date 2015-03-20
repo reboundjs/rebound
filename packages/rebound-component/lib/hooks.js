@@ -53,35 +53,22 @@ function streamProperty(context, path) {
   return lazyValue;
 }
 
-function constructHelper(el, path, context, params, hash, options, env, helper) {
-  var lazyValue;
-
+function constructHelper(morph, path, context, params, hash, options, env, helper) {
+  var key;
   // Extend options with the helper's containeing Morph element. Used by streamify to track data observers
-  options.morph = options.placeholder = el && !el.tagName && el || false; // FIXME: this kinda sucks
-  options.element = el && el.tagName && el || false;      // FIXME: this kinda sucks
+  options.morph = morph;
+  options.element = morph;
+  options.path = path;
+  options.context = context;
 
-  // Extend options with hooks and helpers for any subsequent calls from a lazyvalue
-  options.params = params;                                 // FIXME: this kinda sucks
-  options.hooks = env.hooks;                               // FIXME: this kinda sucks
-  options.helpers = env.helpers;                           // FIXME: this kinda sucks
-  options.context = context;                               // FIXME: this kinda sucks
-  options.dom = env.dom;                                   // FIXME: this kinda sucks
-  options.path = path;                                     // FIXME: this kinda sucks
-  options.hash = hash || [];                               // FIXME: this kinda sucks
+  // Ensure env and block params don't share memory with other helpers
+  env = _.clone(env);
+  if(env.blockParams) env.blockParams = _.clone(env.blockParams);
 
   // Create a lazy value that returns the value of our evaluated helper.
-  options.lazyValue = new LazyValue(function() {
+  options.lazyValue = new LazyValue(function(){
     var plainParams = [],
-        plainHash = {},
-        result,
-        relpath = $.splitPath(path),
-        first, rest;
-        relpath.shift();
-        relpath = relpath.join('.');
-
-        rest = $.splitPath(relpath);
-        first = rest.shift();
-        rest = rest.join('.');
+        plainHash = {};
 
     // Assemble our args and hash variables. For each lazyvalue param, push the lazyValue's value so helpers with no concept of lazyvalues.
     _.each(params, function(param, index){
@@ -92,23 +79,19 @@ function constructHelper(el, path, context, params, hash, options, env, helper) 
     });
 
     // Call our helper functions with our assembled args.
-    result = helper.apply((context.__root__ || context), [plainParams, plainHash, options, env]);
+    return helper.apply((context.__root__ || context), [plainParams, plainHash, options, env]);
 
-    if(result && relpath){
-      return result.get(relpath);
-    }
-
-    return result;
   }, {morph: options.morph});
 
   options.lazyValue.path = path;
 
-  // For each param passed to our helper, add it to our helper's dependant list. Helper will re-evaluate when one changes.
-  params.forEach(function(node) {
-    if (node && node.isLazyValue) {
-      options.lazyValue.addDependentValue(node);
-    }
+  // For each param or hash value passed to our helper, add it to our helper's dependant list. Helper will re-evaluate when one changes.
+  params.forEach(function(param) {
+    if (param && param.isLazyValue){ options.lazyValue.addDependentValue(param); }
   });
+  for(key in hash){
+    if (hash[key] && hash[key].isLazyValue){ options.lazyValue.addDependentValue(hash[key]); }
+  }
 
   return options.lazyValue;
 }
@@ -136,15 +119,23 @@ var subtreeObserver = new MutationObserver(cleanSubtree);
 ********************************/
 
 hooks.get = function get(env, context, path){
-  context.blockParams || (context.blockParams = {});
-  if(path === 'this'){ path = ''; }
-  // context = (context.blockParams.has(path)) ? context.blockParams : context;
+  if(path === 'this') path = '';
+  var key,
+      rest = $.splitPath(path),
+      first = rest.shift();
+
+  // If this path referances a block param, use that as the context instead.
+  if(env.blockParams && env.blockParams[first]){
+    context = env.blockParams[first];
+    path = rest.join('.');
+  }
+
   return streamProperty(context, path);
 };
 
 hooks.set = function set(env, context, name, value){
-  context.blockParams || (context.blockParams = {});
-  // context.blockParams.set(name, value);
+  env.blockParams || (env.blockParams = {});
+  env.blockParams[name] = value;
 };
 
 
@@ -176,14 +167,13 @@ hooks.concat = function concat(env, params) {
 
 hooks.subexpr = function subexpr(env, context, helperName, params, hash) {
 
-  var helper = helpers.lookupHelper(helperName, env, context),
+  var helper = helpers.lookupHelper(helperName, env),
   lazyValue;
 
   if (helper) {
-    // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
     lazyValue = constructHelper(false, helperName, context, params, hash, {}, env, helper);
   } else {
-    lazyValue = streamProperty(context, helperName);
+    lazyValue = hooks.get(env, context, helperName);
   }
 
   for (var i = 0, l = params.length; i < l; i++) {
@@ -203,9 +193,9 @@ hooks.block = function block(env, morph, context, path, params, hash, template, 
   };
 
   var lazyValue,
-  value,
-  observer = subtreeObserver,
-  helper = helpers.lookupHelper(path, env, context);
+      value,
+      observer = subtreeObserver,
+      helper = helpers.lookupHelper(path, env);
 
   if(!_.isFunction(helper)){
     return console.error(path + ' is not a valid helper!');
@@ -229,20 +219,18 @@ hooks.block = function block(env, morph, context, path, params, hash, template, 
     value = (_.isUndefined(value)) ? '' : value;
     if(!_.isNull(value)){ morph.appendContent(value); }
 
-      // Observe this content morph's parent's children.
-      // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
-      // Timeout delay hack to give out dom a change to get their parent
-      if(morph._parent){
-        morph._parent.__lazyValue = lazyValue;
-        setTimeout(function(){
-          if(morph.contextualElement){
-            observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
-          }
-        }, 0);
-      }
-
+    // Observe this content morph's parent's children.
+    // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
+    // Timeout delay hack to give out dom a change to get their parent
+    if(morph._parent){
+      morph._parent.__lazyValue = lazyValue;
+      setTimeout(function(){
+        if(morph.contextualElement){
+          observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
+        }
+      }, 0);
     }
-
+  }
 };
 
 hooks.inline = function inline(env, morph, context, path, params, hash) {
@@ -250,7 +238,7 @@ hooks.inline = function inline(env, morph, context, path, params, hash) {
   var lazyValue,
   value,
   observer = subtreeObserver,
-  helper = helpers.lookupHelper(path, env, context);
+  helper = helpers.lookupHelper(path, env);
 
   if(!_.isFunction(helper)){
     return console.error(path + ' is not a valid helper!');
@@ -294,9 +282,13 @@ hooks.content = function content(env, morph, context, path) {
   var lazyValue,
       value,
       observer = subtreeObserver,
-      helper = helpers.lookupHelper(path, env, context);
+      helper = helpers.lookupHelper(path, env);
 
-  lazyValue = streamProperty(context, path);
+  if (helper) {
+    lazyValue = constructHelper(morph, path, context, [], {}, {}, env, helper);
+  } else {
+    lazyValue = hooks.get(env, context, path);
+  }
 
   // If we have our lazy value, update our dom.
   // morph is a morph element representing our dom node
@@ -331,7 +323,7 @@ hooks.content = function content(env, morph, context, path) {
 // Handle morphs in element tags
 // TODO: handle dynamic attribute names?
 hooks.element = function element(env, domElement, context, path, params, hash) {
-  var helper = helpers.lookupHelper(path, env, context),
+  var helper = helpers.lookupHelper(path, env),
       lazyValue,
       value;
 
@@ -339,7 +331,7 @@ hooks.element = function element(env, domElement, context, path, params, hash) {
     // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
     lazyValue = constructHelper(domElement, path, context, params, hash, {}, env, helper);
   } else {
-    lazyValue = streamProperty(context, path);
+    lazyValue = hooks.get(env, context, path);
   }
 
   // When we have our lazy value run it and start listening for updates.
@@ -469,7 +461,7 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
     // For each lazy param passed to our component, create its lazyValue
     _.each(plainData, function(value, key) {
       if(contextData[key] && contextData[key].isLazyValue){
-        componentData[key] = streamProperty(component, key);
+        componentData[key] = hooks.get(env, component, key);
       }
     });
 

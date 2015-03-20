@@ -26,12 +26,11 @@
       inputModified: function(event){
         // If enter
         if(event.keyCode == 13)
-          this.doneEditing(event);
-
+          this.set('editing', false);
+          
         // If escape
         if(event.keyCode == 27){
-          this.set('value', this.oldValue);
-          this.doneEditing(event);
+          this.set({'value': this.oldValue, 'editing': false});
         }
       }
     })

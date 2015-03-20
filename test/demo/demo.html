@@ -13,14 +13,14 @@
 		  {{#if todos}}
 				<section id="main">
 					<ul id="todo-list">
-						{{#each filteredTodos}}
-							<li class="{{if isCompleted "completed"}} {{if editing "editing"}}">
-								{{#if editing}}
-		              <edit-todo value={{title}} editing={{editing}} arr={{arr}} obj={{obj}}></edit-todo>
+						{{#each filteredTodos as | item |}}
+							<li class="{{if item.isCompleted "completed"}} {{if item.editing "editing"}}">
+								{{#if item.editing}}
+		              <edit-todo value={{item.title}} editing={{item.editing}} arr={{item.arr}} obj={{item.obj}}></edit-todo>
 								{{else}}
-									<input type="checkbox" class="toggle" checked="{{isCompleted}}">
-									<label {{on "dblclick" "editTodo"}}>{{title}}</label>
-									<button {{on "click" "removeTodo"}} class="destroy"></button>
+									<input type="checkbox" class="toggle" checked="{{item.isCompleted}}">
+									<label {{on "dblclick" "editTodo" item=item}}>{{item.title}}</label>
+									<button {{on "click" "removeTodo" item=item}} class="destroy"></button>
 								{{/if}}
 							</li>
 						{{/each}}
@@ -166,10 +166,10 @@
 			);
 		},
 		removeTodo: function(event){
-			this.get('todos').remove(event.context);
+			this.get('todos').remove(event.data.item);
 		},
 		editTodo: function(event){
-			event.context.set('editing', true); // event.context by default is the context the element was rendered in
+			event.data.item.set('editing', true); // event.context by default is the context the element was rendered in
 		},
 		filterList: function(filter){
 			this.set('filter', filter)

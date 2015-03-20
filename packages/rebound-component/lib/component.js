@@ -32,24 +32,26 @@ function renderCallback(){
   this._toRender.added = {};
 }
 
-var env = {
-  helpers: helpers.helpers,
-  hooks: hooks
-};
-
-env.hydrate = function hydrate(spec, options){
+function hydrate(spec, options){
   // Return a wrapper function that will merge user provided helpers and hooks with our defaults
   return function(data, options){
-    // Ensure we have a well-formed object as var options
-    var env = options || {},
-        contextElement = data.el || document.body;
-    env.helpers = env.helpers || {};
-    env.hooks = env.hooks || {};
-    env.dom = env.dom || new DOMHelper();
+
+    // Rebound's default environment
+    // The application environment is propagated down each render call and
+    // augmented with helpers as it goes
+    var env = {
+      helpers: helpers.helpers,
+      hooks: hooks,
+      dom: new DOMHelper(),
+      useFragmentCache: true
+    };
+
+    // Ensure we have a contextual element to pass to render
+    var contextElement = data.el || document.body;
 
     // Merge our default helpers and hooks with user provided helpers
-    env.helpers = _.defaults(env.helpers, helpers.helpers);
-    env.hooks = _.defaults(env.hooks, hooks);
+    env.helpers = _.defaults((options.helpers || {}), env.helpers);
+    env.hooks = _.defaults((options.hooks || {}), env.hooks);
 
     // Call our func with merged helpers and hooks
     return spec.render(data, env, contextElement);
@@ -103,10 +105,11 @@ var Component = Model.extend({
     // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
     if(!options.template && !this.template){ throw('Template must provided for ' + this.__name + ' component!'); }
     this.template = options.template || this.template;
-    this.template = (typeof this.template === 'object') ? env.hydrate(this.template) : this.template;
+    this.template = (typeof this.template === 'object') ? hydrate(this.template) : this.template;
 
 
     // Render our dom and place the dom in our custom element
+    // Template accepts [data, options, contextualElement]
     this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
 
     // Add active class to this newly rendered template's link elements that require it
