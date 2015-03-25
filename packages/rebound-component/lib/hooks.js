@@ -204,32 +204,26 @@ hooks.block = function block(env, morph, context, path, params, hash, template, 
   // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
   lazyValue = constructHelper(morph, path, context, params, hash, options, env, helper);
 
-  // If we have our lazy value, update our dom.
-  // morph is a morph element representing our dom node
-  if (lazyValue) {
-    lazyValue.onNotify(function(lazyValue) {
-      var val = lazyValue.value();
-      val = (_.isUndefined(val)) ? '' : val;
-      if(!_.isNull(val)){
-        morph.setContent(val);
-      }
-    });
-
-    value = lazyValue.value();
-    value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ morph.appendContent(value); }
-
-    // Observe this content morph's parent's children.
-    // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
-    // Timeout delay hack to give out dom a change to get their parent
-    if(morph._parent){
-      morph._parent.__lazyValue = lazyValue;
-      setTimeout(function(){
-        if(morph.contextualElement){
-          observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
-        }
-      }, 0);
+  var renderHook = function(lazyValue) {
+    var val = lazyValue.value();
+    val = (_.isUndefined(val)) ? '' : val;
+    if(!_.isNull(val)){
+      morph.setContent(val);
     }
+  }
+  lazyValue.onNotify(renderHook);
+  renderHook(lazyValue);
+
+  // Observe this content morph's parent's children.
+  // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
+  // Timeout delay hack to give out dom a change to get their parent
+  if(morph._parent){
+    morph._parent.__lazyValue = lazyValue;
+    setTimeout(function(){
+      if(morph.contextualElement){
+        observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
+      }
+    }, 0);
   }
 };
 
@@ -247,35 +241,32 @@ hooks.inline = function inline(env, morph, context, path, params, hash) {
   // Abstracts our helper to provide a handlebars type interface. Constructs our LazyValue.
   lazyValue = constructHelper(morph, path, context, params, hash, {}, env, helper);
 
+  var renderHook = function(lazyValue) {
+    var val = lazyValue.value();
+    val = (_.isUndefined(val)) ? '' : val;
+    if(!_.isNull(val)){
+      morph.setContent(val);
+    }
+  }
+
   // If we have our lazy value, update our dom.
   // morph is a morph element representing our dom node
-  if (lazyValue) {
-    lazyValue.onNotify(function(lazyValue) {
-      var val = lazyValue.value();
-      val = (_.isUndefined(val)) ? '' : val;
-      if(!_.isNull(val)){
-        morph.setContent(val);
+  lazyValue.onNotify(renderHook);
+  renderHook(lazyValue)
+
+  // Observe this content morph's parent's children.
+  // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
+  // Timeout delay hack to give out dom a change to get their parent
+  if(morph._parent){
+    morph._parent.__lazyValue = lazyValue;
+    setTimeout(function(){
+      if(morph.contextualElement){
+        observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
       }
-    });
+    }, 0);
+  }
 
-    value = lazyValue.value();
-    value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ morph.appendContent(value); }
-
-      // Observe this content morph's parent's children.
-      // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
-      // Timeout delay hack to give out dom a change to get their parent
-      if(morph._parent){
-        morph._parent.__lazyValue = lazyValue;
-        setTimeout(function(){
-          if(morph.contextualElement){
-            observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
-          }
-        }, 0);
-      }
-
-    }
-  };
+};
 
 hooks.content = function content(env, morph, context, path) {
 
@@ -290,34 +281,29 @@ hooks.content = function content(env, morph, context, path) {
     lazyValue = hooks.get(env, context, path);
   }
 
+  var renderHook = function(lazyValue) {
+    var val = lazyValue.value();
+    val = (_.isUndefined(val)) ? '' : val;
+    if(!_.isNull(val)) morph.setContent(val);
+  }
+
   // If we have our lazy value, update our dom.
   // morph is a morph element representing our dom node
-  if (lazyValue) {
-    lazyValue.onNotify(function(lazyValue) {
-      var val = lazyValue.value();
-      val = (_.isUndefined(val)) ? '' : val;
-      if(!_.isNull(val)){
-        morph.setContent(val);
+  lazyValue.onNotify(renderHook);
+  renderHook(lazyValue);
+
+  // Observe this content morph's parent's children.
+  // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
+  // Timeout delay hack to give out dom a change to get their parent
+  if(morph._parent){
+    morph._parent.__lazyValue = lazyValue;
+    setTimeout(function(){
+      if(morph.contextualElement){
+        observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
       }
-    });
-
-    value = lazyValue.value();
-    value = (_.isUndefined(value)) ? '' : value;
-    if(!_.isNull(value)){ morph.appendContent(value); }
-
-    // Observe this content morph's parent's children.
-    // When the morph element's containing element (morph) is removed, clean up the lazyvalue.
-    // Timeout delay hack to give out dom a change to get their parent
-    if(morph._parent){
-      morph._parent.__lazyValue = lazyValue;
-      setTimeout(function(){
-        if(morph.contextualElement){
-          observer.observe(morph.contextualElement, { attributes: false, childList: true, characterData: false, subtree: true });
-        }
-      }, 0);
-    }
-
+    }, 0);
   }
+
 };
 
 // Handle morphs in element tags
@@ -334,12 +320,13 @@ hooks.element = function element(env, domElement, context, path, params, hash) {
     lazyValue = hooks.get(env, context, path);
   }
 
-  // When we have our lazy value run it and start listening for updates.
-  lazyValue.onNotify(function(lazyValue) {
+  var renderHook = function(lazyValue) {
     lazyValue.value();
-  });
+  }
 
-  value = lazyValue.value();
+  // When we have our lazy value run it and start listening for updates.
+  lazyValue.onNotify(renderHook);
+  renderHook(lazyValue);
 
 };
 hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
@@ -423,13 +410,13 @@ hooks.attribute = function attribute(env, attrMorph, domElement, name, value){
 
   }, {attrMorph: attrMorph});
 
-  value.onNotify(function(){
+  var renderHook = function(){
     lazyValue.value();
-  });
+  }
+
+  value.onNotify(renderHook);
   lazyValue.addDependentValue(value);
-
-  return lazyValue.value();
-
+  renderHook();
 };
 
 hooks.component = function(env, morph, context, tagName, contextData, template) {
@@ -525,7 +512,9 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
     // Set the properties on our element for visual referance if we are on a top level attribute
     var compjson = component.toJSON();
     _.each(compjson, function(value, key){
-      // TODO: Currently, showing objects as properties on the custom element causes problems. Linked models between the context and component become the same exact model and all hell breaks loose. Find a way to remedy this. Until then, don't show objects.
+      // TODO: Currently, showing objects as properties on the custom element causes problems.
+      // Linked models between the context and component become the same exact model and all hell breaks loose.
+      // Find a way to remedy this. Until then, don't show objects.
       if((_.isObject(value))){ return; }
       value = (_.isObject(value)) ? JSON.stringify(value) : value;
       if(!_.isNull(value) && !_.isUndefined(value)){
@@ -548,18 +537,16 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
     return element;
   }, {morph: morph});
 
-
+  var renderHook = function(lazyValue) {
+    var val = lazyValue.value();
+    if(val !== undefined){ morph.setContent(val); }
+  }
 
   // If we have our lazy value, update our dom.
   // morph is a morph element representing our dom node
   if (lazyValue) {
-    lazyValue.onNotify(function(lazyValue) {
-      var val = lazyValue.value();
-      if(val !== undefined){ morph.setContent(val); }
-    });
-
-    value = lazyValue.value();
-    if(value !== undefined){ morph.appendContent(value); }
+    lazyValue.onNotify(renderHook);
+    renderHook(lazyValue);
   }
 };
 

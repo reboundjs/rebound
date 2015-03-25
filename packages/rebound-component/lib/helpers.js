@@ -212,6 +212,10 @@ helpers.each = function(params, hash, options, env){
         return element.cid === cid; // Returns true if currently observed element is the current model.
       };
 
+  if((!_.isArray(value) || value.length === 0) && options.inverse){debugger;
+    return options.inverse.render(options.context, options, options.morph.contextualElement);
+  }
+
   // For each item in this collection
   for(i=0;i < value.length;i++){
     obj = value[i];

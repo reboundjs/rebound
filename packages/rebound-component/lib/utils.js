@@ -301,6 +301,21 @@ utils.prototype = {
           return result;
         },
 
+  unMarkLinks: function(){
+    var links = this[0].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]')
+    for(var i=0;i<links.length;i++){
+      links.item(i).classList.remove('active');
+      links.item(i).active = false;
+    }
+  },
+  markLinks: function(){
+    var links = this[0].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]');
+    for(var i=0;i<links.length;i++){
+      links.item(i).classList.add('active');
+      links.item(i).active = true;
+    }
+  },
+
   // http://krasimirtsonev.com/blog/article/Cross-browser-handling-of-Ajax-requests-in-absurdjs
   ajax: function(ops) {
       if(typeof ops == 'string') ops = { url: ops };

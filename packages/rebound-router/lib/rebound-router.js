@@ -230,23 +230,13 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         // If path is not an remote url, ends in .[a-z], or blank, try and navigate to that route.
         if( path && path !== '#' && !remoteUrl.test(path) ){
           e.preventDefault();
-          if(path !== '/'+Backbone.history.fragment){
-            var links = document.querySelectorAll('a[href="/'+Backbone.history.fragment+'"]')
-            for(var i=0;i<links.length;i++){
-              links.item(i).classList.remove('active');
-              links.item(i).active = false;
-            }
-          }
+          if(path !== '/'+Backbone.history.fragment) $(document).unMarkLinks();
           router.navigate(path, {trigger: true});
         }
       });
 
       Backbone.history.on('route', function(route, params){
-        var links = document.querySelectorAll('a[href="/'+Backbone.history.fragment+'"]');
-        for(var i=0;i<links.length;i++){
-          links.item(i).classList.add('active');
-          links.item(i).active = true;
-        }
+        $(document).markLinks();
       });
 
       // Install our global components
