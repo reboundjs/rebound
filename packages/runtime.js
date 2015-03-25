@@ -29,6 +29,7 @@ var Config = document.getElementById('Rebound').innerHTML;
 
 // Create Global Rebound Object
 window.Rebound = {
+  services: {},
   registerHelper: helpers.registerHelper,
   registerPartial: helpers.registerPartial,
   registerComponent: Component.register,

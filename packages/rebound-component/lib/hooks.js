@@ -455,7 +455,7 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
     // Global seed data is consumed by element as its created. This is not scoped and very dumb.
     Rebound.seedData = plainData;
     element = document.createElement(tagName);
-    Rebound.seedData = {};
+    delete Rebound.seedData;
     component = element.__component__;
 
     // For each lazy param passed to our component, create its lazyValue
@@ -540,6 +540,7 @@ hooks.component = function(env, morph, context, tagName, contextData, template) 
     // If an outlet marker is present in component's template, and a template is provided, render it into <content>
     outlet = element.getElementsByTagName('content')[0];
     if(template && _.isElement(outlet)){
+      outlet.innerHTML = '';
       outlet.appendChild(template.render(context, env, outlet));
     }
 

@@ -7,6 +7,7 @@ import helpers from "rebound-component/helpers";
 import $ from "rebound-component/utils";
 import { Model } from "rebound-data/rebound-data";
 
+
 // If Backbone hasn't been started yet, throw error
 if(!window.Backbone) throw "Backbone must be on the page for Rebound to load.";
 

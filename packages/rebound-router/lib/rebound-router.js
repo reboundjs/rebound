@@ -63,7 +63,9 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     }, this);
 
     if(!isGlobal){
-      window.Rebound.page = (this.current = pageInstance).__component__;
+      window.Rebound.services.page = (this.current = pageInstance).__component__;
+    } else{
+      window.Rebound.services[pageInstance.__name] = pageInstance.__component__;
     }
 
     // Return our newly installed app
