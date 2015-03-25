@@ -170,6 +170,18 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
     notify(data, 'arr');
     equal(dom.firstChild.innerHTML, '1234', 'Block params defined in higher contexts available to child contexts and re-render.');
 
+    template = compiler.compile('<div>{{#each arr as | obj1 |}}Template{{else}}Inverse{{/each}}</div>', {name: 'test/partial'});
+    data = new Model({arr: []});
+    dom = template.render(data);
+    equal(dom.firstChild.innerHTML, 'Inverse', 'If Each has an inverse template, it is rendered when the list is empty');
+
+    data.get('arr').add({list: [{val:4}]});
+    notify(data, 'arr');
+    equal(dom.firstChild.innerHTML, 'Template', 'If Each has an inverse template, the normal template is rendered instead when an item is added.');
+
+    data.get('arr').pop();
+    notify(data, 'arr');
+    equal(dom.firstChild.innerHTML, 'Inverse', 'If Each has an inverse template, the Inverse template is rendered when list lengths drops to zero.');
 
   });
 });

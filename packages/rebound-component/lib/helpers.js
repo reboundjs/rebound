@@ -213,7 +213,7 @@ helpers.each = function(params, hash, options, env){
       };
 
   if((!_.isArray(value) || value.length === 0) && options.inverse){debugger;
-    return options.inverse.render(options.context, options, options.morph.contextualElement);
+    return options.inverse.render(options.context, env, options.morph.contextualElement);
   }
 
   // For each item in this collection
