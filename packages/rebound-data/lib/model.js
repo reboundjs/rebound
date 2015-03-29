@@ -208,6 +208,7 @@ var Model = Backbone.Model.extend({
       if(_.isNull(val) || _.isUndefined(val)) val = this.defaults[key];
       if(val && val.isComputedProperty) val = val.value();
       else if(_.isNull(val) || _.isUndefined(val)) val = undefined;
+      else if(val.isComponent) val = val;
       else if(destination.isComputedProperty && destination.func === val) continue;
       else if(_.isFunction(val)) val = new ComputedProperty(val, lineage);
       else if(val.isData && target.hasParent(val)) val = val;

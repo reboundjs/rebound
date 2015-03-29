@@ -5,6 +5,7 @@
     <script src="../../dist/rebound.runtime.js" id="Rebound" async>
     {
       "root": "/test/demo",
+      "globalComponents": {"service" : "nav"},
       "jsPath": "/test/demo/templates/:app.js",
       "cssPath": "/test/demo/:app.css",
       "triggerOnFirstLoad": false,
@@ -18,6 +19,7 @@
   </head>
 
   <body>
+    <nav></nav>
     <content></content>
   </body>
 </html>

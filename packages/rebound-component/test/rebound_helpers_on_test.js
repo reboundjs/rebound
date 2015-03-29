@@ -76,7 +76,7 @@ require(['rebound-compiler/rebound-compiler', 'simple-html-tokenizer', 'rebound-
       equal(1, 1, 'Events are triggered on the element');
 
     }};
-    dom = template.render(data, {helpers: {__callOnComponent: function(name, event){
+    dom = template.render(data, {helpers: {_callOnComponent: function(name, event){
       return data[name].call(data, event);
     }}});
     $(dom.firstChild).trigger('click');

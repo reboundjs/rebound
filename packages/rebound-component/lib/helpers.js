@@ -87,7 +87,7 @@ helpers.on = function(params, hash, options, env){
 
   // Attach event
   $(element).on(eventName, delegate, hash, function(event){
-    return env.helpers.__callOnComponent(callback, event);
+    return env.helpers._callOnComponent(callback, event);
   });
 };
 
@@ -212,7 +212,7 @@ helpers.each = function(params, hash, options, env){
         return element.cid === cid; // Returns true if currently observed element is the current model.
       };
 
-  if((!_.isArray(value) || value.length === 0) && options.inverse){debugger;
+  if((!_.isArray(value) || value.length === 0) && options.inverse){
     return options.inverse.render(options.context, env, options.morph.contextualElement);
   }
 

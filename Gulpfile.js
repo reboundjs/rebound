@@ -153,6 +153,17 @@ gulp.task('recompile-demo', ['cjs', 'docco', 'runtime'],  function(){
       }
     });
   });
+  fs.readFile('./test/demo/service.html', 'utf8', function (err,data) {
+    if (err) return console.log(err);
+    var template = precompile(data);
+    fs.writeFile('./test/demo/templates/service.js', template, function(err) {
+      if(err)console.log(err);
+      else{
+        console.log("Service component compiled successfully!");
+        (finished) ? connect.reload() : (finished = true);
+      }
+    });
+  });
   fs.readFile('./test/demo/editing.html', 'utf8', function (err,data) {
     if (err) return console.log(err);
     var template = precompile(data);

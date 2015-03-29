@@ -85,6 +85,8 @@
 
 	/************** Component Properties *****************/
 
+		service: Rebound.services.service,
+
 		newTitle: '',
 		filter: 'all',
 		todos: [
@@ -104,6 +106,10 @@
 		],
 
 	/************** Computed Properties *****************/
+
+		serviceTest: function(){
+			return this.get('service.obj.test');
+		},
 
 
 		allAreDone: function(){

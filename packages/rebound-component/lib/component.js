@@ -59,20 +59,48 @@ function hydrate(spec, options){
   };
 };
 
+
 // New Backbone Component
 var Component = Model.extend({
 
   isComponent: true,
 
+  _callOnComponent: function(name, event){
+    if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
+    return this[name].call(this, event);
+  },
+
+  _listenToService: function(key, service){
+    this.listenTo(service, 'all', (type, model) => {
+      var attr,
+          path = model.__path(),
+          changed;
+      if(type.indexOf('change:') === 0){
+        changed = model.changedAttributes();
+        for(attr in changed){
+          // TODO: Modifying arguments array is bad. change this
+          arguments[0] = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
+          this.trigger.apply(this, arguments);
+        }
+        return;
+      }
+      return this.trigger.apply(this, arguments);
+    });
+  },
+
   constructor: function(options){
+    var key, attr, self = this;
     options = options || (options = {});
-    _.bindAll(this, '__callOnComponent');
+    _.bindAll(this, '_callOnComponent', '_listenToService');
     this.cid = _.uniqueId('component');
     this.attributes = {};
     this.changed = {};
     this.helpers = {};
     this.__parent__ = this.__root__ = this;
     this.listenTo(this, 'all', this._onChange);
+
+    // For all services that have been added to this component,
+    for(key in this.services) this._listenToService(key, this.services[key]);
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
@@ -82,7 +110,7 @@ var Component = Model.extend({
     this.set((options.data || {}));
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
-    this.helpers.__callOnComponent = this.__callOnComponent;
+    this.helpers._callOnComponent = this._callOnComponent;
 
 
     // Get any additional routes passed in from options
@@ -93,28 +121,28 @@ var Component = Model.extend({
         if(!this[value]){ throw('Callback function '+value+' does not exist on the  ' + this.__name + ' component!'); }
     }, this);
 
-
-    // Set our outlet and template if we have one
-    this.el = options.outlet || undefined;
-    this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
-
+    // Our Component is fully created now, but not rendered. Call created callback.
     if(_.isFunction(this.createdCallback)){
       this.createdCallback.call(this);
     }
 
+    // Set our outlet and template if we have them
+    this.el = options.outlet || document.createDocumentFragment();
+    this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
+    this.template = options.template || this.template;
+
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
     // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
-    if(!options.template && !this.template){ throw('Template must provided for ' + this.__name + ' component!'); }
-    this.template = options.template || this.template;
-    this.template = (typeof this.template === 'object') ? hydrate(this.template) : this.template;
+    if(this.template){
+      this.template = (typeof this.template === 'object') ? hydrate(this.template) : this.template;
 
+      // Render our dom and place the dom in our custom element
+      // Template accepts [data, options, contextualElement]
+      this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
 
-    // Render our dom and place the dom in our custom element
-    // Template accepts [data, options, contextualElement]
-    this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
-
-    // Add active class to this newly rendered template's link elements that require it
-    $(this.el).markLinks();
+      // Add active class to this newly rendered template's link elements that require it
+      $(this.el).markLinks();
+    }
 
     this.initialize();
 
@@ -133,11 +161,6 @@ var Component = Model.extend({
       $(this.el).trigger(eventName, arguments);
     }
     Backbone.Model.prototype.trigger.apply(this, arguments);
-  },
-
-  __callOnComponent: function(name, event){
-    if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
-    return this[name].call(this, event);
   },
 
   _onAttributeChange: function(attrName, oldVal, newVal){
@@ -223,6 +246,7 @@ var Component = Model.extend({
 
 });
 
+
 Component.extend= function(protoProps, staticProps) {
   var parent = this,
       child,
@@ -238,13 +262,18 @@ Component.extend= function(protoProps, staticProps) {
         'detachedCallback':1
       };
 
+  protoProps || (protoProps = {});
+  staticProps || (staticProps = {});
   protoProps.defaults = {};
+  staticProps.services = {};
 
   // For each property passed into our component base class
   _.each(protoProps, function(value, key, protoProps){
 
     // If a configuration property, ignore it
     if(configProperties[key]){ return; }
+
+    if(value.isComponent) staticProps.services[key] = value;
 
     // If a primative or backbone type object, or computed property (function which takes no arguments and returns a value) move it to our defaults
     if(!_.isFunction(value) || value.isModel || value.isComponent || (_.isFunction(value) && value.length === 0 && value.toString().indexOf('return') > -1)){

@@ -23,6 +23,7 @@ var sharedMethods = {
           changed = model.changedAttributes();
 
       for(key in changed){
+        // TODO: Modifying arguments array is bad. change this
         arguments[0] = ('change:' + path + (path && '.') + key); // jshint ignore:line
         this.__parent__.trigger.apply(this.__parent__, arguments);
       }
