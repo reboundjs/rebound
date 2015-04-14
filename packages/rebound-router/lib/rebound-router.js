@@ -62,11 +62,11 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       router.route(key, value, this[routeFunctionName]);
     }, this);
 
-    if(!isGlobal){
-      window.Rebound.services.page = (this.current = pageInstance).__component__;
-    } else{
-      window.Rebound.services[pageInstance.__name] = pageInstance.__component__;
-    }
+    var name = (isGlobal) ? primaryRoute : 'page';
+    if(!isGlobal) this.current = pageInstance;
+    if(window.Rebound.services[name].isService)
+      window.Rebound.services[name].hydrate(pageInstance.__component__);
+    window.Rebound.services[name] = pageInstance.__component__;
 
     // Return our newly installed app
     return pageInstance;
@@ -148,7 +148,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       }
       else{
         // AMD Will Manage Dependancies For Us. Load The App.
-        window.require([jsUrl], function(PageClass){
+        return window.require([jsUrl], function(PageClass){
 
           if((jsLoaded = true) && (PageApp = PageClass) && cssLoaded){
 
@@ -168,6 +168,37 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         });
       }
 
+  }
+
+  // Services keep track of their consumers. LazyComponent are placeholders
+  // for services that haven't loaded yet. A LazyComponent mimics the api of a
+  // real service/component (they are the same), and when the service finally
+  // loads, its ```hydrate``` method is called. All consumers of the service will
+  // have the now fully loaded service set, the LazyService will transfer all of
+  // its consumers over to the fully loaded service, and then destroy itself.
+  function LazyComponent(){
+    this.isService = true;
+    this.isComponent = true;
+    this.isModel = true;
+    this.attributes = {};
+    this.consumers = [];
+    this.set = this.on = this.off = function(){
+      return 1;
+    };
+    this.get = function(path){
+      return (path) ? undefined : this;
+    };
+    this.hydrate = function(service){
+      _.each(this.consumers, function(consumer){
+        var component = consumer.component,
+            key = consumer.key;
+        if(component.attributes && component.set) component.set(key, service);
+        if(component.services) component.services[key] = service;
+        if(component.defaults) component.defaults[key] = service;
+      });
+      service.consumers = this.consumers;
+      delete this.consumers;
+    }
   }
 
   // ReboundRouter Constructor
@@ -213,8 +244,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       this.config.handlers = [];
 
       var remoteUrl = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/,
-
-      router = this;
+          router = this;
 
       // Convert our routeMappings to regexps and push to our handlers
       _.each(this.config.routeMapping, function(value, route){
@@ -239,8 +269,11 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         $(document).markLinks();
       });
 
+      Rebound.services.page = new LazyComponent();
+
       // Install our global components
-      _.each(this.config.globalComponents, function(selector, route){
+      _.each(this.config.services, function(selector, route){
+        Rebound.services[route] = new LazyComponent();
         fetchResources.call(router, route, route, selector);
       });
 

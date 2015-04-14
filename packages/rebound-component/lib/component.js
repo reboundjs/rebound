@@ -71,7 +71,8 @@ var Component = Model.extend({
   },
 
   _listenToService: function(key, service){
-    this.listenTo(service, 'all', (type, model) => {
+    var self = this;
+    this.listenTo(service, 'all', (type, model, value, options) => {
       var attr,
           path = model.__path(),
           changed;
@@ -79,13 +80,56 @@ var Component = Model.extend({
         changed = model.changedAttributes();
         for(attr in changed){
           // TODO: Modifying arguments array is bad. change this
-          arguments[0] = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
-          this.trigger.apply(this, arguments);
+          type = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
+          options.service = key;
+          this.trigger.call(this, type, model, value, options);
         }
         return;
       }
-      return this.trigger.apply(this, arguments);
+      return this.trigger.call(this, type, model, value, options);
     });
+  },
+
+  deinitialize: function(){
+    if(this.consumers.length) return;
+    _.each(this.services, (service, key) => {
+      _.each(service.consumers, (consumer, index) => {
+        if(consumer.component === this) service.consumers.splice(index, 1);
+      });
+    });
+    delete this.services;
+    Rebound.Model.prototype.deinitialize.apply(this, arguments);
+  },
+
+  // Set is overridden on components to accept components as a valid input type.
+  // Components set on other Components are mixed in as a shared object. {raw: true}
+  // It also marks itself as a consumer of this component
+  set: function(key, val, options){
+    var attrs, attr, serviceOptions;
+    if (typeof key === 'object') {
+      attrs = (key.isModel) ? key.attributes : key;
+      options = val;
+    } else (attrs = {})[key] = val;
+    options || (options = {});
+
+    // If reset option passed, do a reset. If nothing passed, return.
+    if(options.reset === true) return this.reset(attrs, options);
+    if(options.defaults === true) this.defaults = attrs;
+    if(_.isEmpty(attrs)) return;
+
+    // For each attribute passed:
+    for(key in attrs){
+      attr = attrs[key];
+      if(attr && attr.isComponent){
+        serviceOptions || (serviceOptions = _.defaults(_.clone(options), {raw: true}));
+        attr.consumers.push({key: key, component: this});
+        this.services[key] = attr;
+        this._listenToService(key, attr);
+        Rebound.Model.prototype.set.call(this, key, attr, serviceOptions);
+      }
+      Rebound.Model.prototype.set.call(this, key, attr, options);
+    }
+    return this;
   },
 
   constructor: function(options){
@@ -96,17 +140,16 @@ var Component = Model.extend({
     this.attributes = {};
     this.changed = {};
     this.helpers = {};
+    this.consumers = [];
+    this.services = {};
     this.__parent__ = this.__root__ = this;
     this.listenTo(this, 'all', this._onChange);
-
-    // For all services that have been added to this component,
-    for(key in this.services) this._listenToService(key, this.services[key]);
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and added as computed properties
     // Set our component's context with the passed data merged with the component's defaults
-    this.set((this.defaults || {}), {defaults: true});
+    this.set((this.defaults || {}));
     this.set((options.data || {}));
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
@@ -192,7 +235,7 @@ var Component = Model.extend({
     model || (model = {});
     collection || (collection = {});
     options || (options = {});
-    !collection.isData && (options = collection) && (collection = model);
+    !collection.isData && (type.indexOf('change:') === -1) && (options = collection) && (collection = model);
     this._toRender || (this._toRender = []);
 
     if( (type === 'reset' && options.previousAttributes) || type.indexOf('change:') !== -1){
@@ -219,6 +262,8 @@ var Component = Model.extend({
     };
     var context = this;
     var basePath = data.__path();
+    // If this event came from within a service, include the service key in the base path
+    if(options.service) basePath = options.service + '.' + basePath;
     var parts = $.splitPath(basePath);
     var key, obsPath, path, observers;
 
@@ -265,15 +310,25 @@ Component.extend= function(protoProps, staticProps) {
   protoProps || (protoProps = {});
   staticProps || (staticProps = {});
   protoProps.defaults = {};
-  staticProps.services = {};
+  // staticProps.services = {};
+
+  // If given a constructor, use it, otherwise use the default one defined above
+  if (protoProps && _.has(protoProps, 'constructor')) {
+    child = protoProps.constructor;
+  } else {
+    child = function(){ return parent.apply(this, arguments); };
+  }
+
+  // Our class should inherit everything from its parent, defined above
+  var Surrogate = function(){ this.constructor = child; };
+  Surrogate.prototype = parent.prototype;
+  child.prototype = new Surrogate();
 
   // For each property passed into our component base class
   _.each(protoProps, function(value, key, protoProps){
 
     // If a configuration property, ignore it
     if(configProperties[key]){ return; }
-
-    if(value.isComponent) staticProps.services[key] = value;
 
     // If a primative or backbone type object, or computed property (function which takes no arguments and returns a value) move it to our defaults
     if(!_.isFunction(value) || value.isModel || value.isComponent || (_.isFunction(value) && value.length === 0 && value.toString().indexOf('return') > -1)){
@@ -287,18 +342,6 @@ Component.extend= function(protoProps, staticProps) {
     // All other values are component methods, leave them be unless already defined.
 
   }, this);
-
-  // If given a constructor, use it, otherwise use the default one defined above
-  if (protoProps && _.has(protoProps, 'constructor')) {
-    child = protoProps.constructor;
-  } else {
-    child = function(){ return parent.apply(this, arguments); };
-  }
-
-  // Our class should inherit everything from its parent, defined above
-  var Surrogate = function(){ this.constructor = child; };
-  Surrogate.prototype = parent.prototype;
-  child.prototype = new Surrogate();
 
   // Extend our prototype with any remaining protoProps, overriting pre-defined ones
   if (protoProps){ _.extend(child.prototype, protoProps, staticProps); }

@@ -74,7 +74,7 @@ var Model = Backbone.Model.extend({
       else if(_.isUndefined(value)) obj[key] && (changed[key] = obj[key]);
       else if (key === this.idAttribute) continue;
       else if (value.isCollection || value.isModel || value.isComputedProperty){
-        value.reset((obj[key]||[]), {silent: true});
+        value.reset((obj[key] || []), {silent: true});
         if(value.isCollection) changed[key] = [];
         else if(value.isModel && value.isComputedProperty) changed[key] = value.cache.model.changed;
         else if(value.isModel) changed[key] = value.changed
@@ -193,7 +193,8 @@ var Model = Backbone.Model.extend({
       }
       // - If val is `null` or `undefined`, set to default value.
       // - If val is a `Computed Property`, get its current cache object.
-      // - If val is `null`, set to default value or (fallback `undefined`).
+      // - If val (default value or evaluated computed property) is `null`, set to default value or (fallback `undefined`).
+      // - Else If `{raw: true}` option is passed, set the exact object that was passed. No promotion to a Rebound Data object.
       // - Else If this function is the same as the current computed property, continue.
       // - Else If this value is a `Function`, turn it into a `Computed Property`.
       // - Else If this is going to be a cyclical dependancy, use the original object, don't make a copy.
@@ -207,8 +208,8 @@ var Model = Backbone.Model.extend({
 
       if(_.isNull(val) || _.isUndefined(val)) val = this.defaults[key];
       if(val && val.isComputedProperty) val = val.value();
-      else if(_.isNull(val) || _.isUndefined(val)) val = undefined;
-      else if(val.isComponent) val = val;
+      if(_.isNull(val) || _.isUndefined(val)) val = undefined;
+      else if(options.raw === true) val = val;
       else if(destination.isComputedProperty && destination.func === val) continue;
       else if(_.isFunction(val)) val = new ComputedProperty(val, lineage);
       else if(val.isData && target.hasParent(val)) val = val;
@@ -237,15 +238,15 @@ var Model = Backbone.Model.extend({
   // Recursive `toJSON` function traverses the data tree returning a JSON object.
   // If there are any cyclic dependancies the object's `cid` is used instead of looping infinitely.
   toJSON: function() {
-      if (this._isSerializing) return this.id || this.cid;
-      this._isSerializing = true;
-      var json = _.clone(this.attributes);
-      _.each(json, function(value, name) {
-          if( _.isNull(value) || _.isUndefined(value) ){ return; }
-          _.isFunction(value.toJSON) && (json[name] = value.toJSON());
-      });
-      this._isSerializing = false;
-      return json;
+    if (this._isSerializing) return this.id || this.cid;
+    this._isSerializing = true;
+    var json = _.clone(this.attributes);
+    _.each(json, function(value, name) {
+        if( _.isNull(value) || _.isUndefined(value) ){ return; }
+        _.isFunction(value.toJSON) && (json[name] = value.toJSON());
+    });
+    this._isSerializing = false;
+    return json;
   }
 
 });
