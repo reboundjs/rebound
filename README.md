@@ -69,7 +69,7 @@ You can include Rebound on your page like this:
 <script src="/javascripts/lib/rebound.runtime.js" id="Rebound">
 {
   "root": "/",
-  "globalComponents": {"chrome" : "nav"},
+  "services": {"chrome" : "nav"},
   "jsPrefix": "/javascripts/apps/:route/",
   "jsSuffix": "",
   "cssPrefix": "/stylesheets/apps/",
@@ -86,7 +86,7 @@ Because the Rebound script tag contains a src, nothing inside it gets executed, 
 ##### Config Options
 
  - __root__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
- - __globalComponents__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
+ - __services__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
  - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
  - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
  - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
@@ -315,7 +315,7 @@ Your component's template is always rendered in the scope of your component. Tak
       /********* Default Properties ********/
       className: 'SomeClass',
       content: {
-        'first' : 'This Content', 
+        'first' : 'This Content',
         'last' : 'AWESOME!'
       }
       awesomeContent: function(){
@@ -326,7 +326,7 @@ Your component's template is always rendered in the scope of your component. Tak
       upgrade: function(event){
         this.set('content.last', 'SUPER AWESOME!!');
       }
-      
+
     })
   </script>
 </element>
@@ -337,7 +337,7 @@ It does exactly as you'd expect. The dom output of this element is:
 <example-element><div class="FirstClass SomeClass">This Content Is AWESOME!</div></example-element>
 ```
 
-You'll notice that, because of HTMLBars, we can simply write a variable, or "handlebar", anywhere in our template. It does not care if it is inside of an element, inside of a property, or even on the element itself! 
+You'll notice that, because of HTMLBars, we can simply write a variable, or "handlebar", anywhere in our template. It does not care if it is inside of an element, inside of a property, or even on the element itself!
 
 Also for free, all of these properties are automatically data bound to your property's data structure, no matter how deeply nested the data is. When the component method ```upgrade``` is run, ```content.last``` is updated and you would see the dom automatically update itself to:
 
@@ -358,7 +358,7 @@ This data nesting, data selection and data binding works with any mixture of obj
       /********* Default Properties ********/
 
       content: [{'bar': 'foo'}, {'biz': 'baz'}],
-      
+
       awesomeContent: function(){
         return this.get('content[0].bar');
       }
@@ -388,7 +388,7 @@ The ```{{on}}``` helper binds a component method to an element in your template 
 
 
 ##### if
-The ```{{#if}}``` helper has two forms. 
+The ```{{#if}}``` helper has two forms.
 
 Used as a block helper it looks like this:
 ```html
@@ -446,7 +446,7 @@ Inline:
 
 ##### with
 
-Sometimes you may want to invoke a section of your template with a different context. ```{{#with}}``` changes the context of the block you pass to it. 
+Sometimes you may want to invoke a section of your template with a different context. ```{{#with}}``` changes the context of the block you pass to it.
 
 ```html
 {{user.firstName}} {{user.lastName}}
@@ -457,9 +457,9 @@ Sometimes you may want to invoke a section of your template with a different con
 
 ##### partial
 
-The ```{{partial}}``` helper renders a registered partial. 
+The ```{{partial}}``` helper renders a registered partial.
 
-Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. They can be a conveinent way of breaking up and organizing what may otherwise be a very large template. When rendered they inherit the context of its parent template. 
+Unlike components, partials are templates with no functionality and are literally just a HTMLBars template. They can be a conveinent way of breaking up and organizing what may otherwise be a very large template. When rendered they inherit the context of its parent template.
 
 The variable passed to this helper is the path to a .hbs template file on the server. When using the precompiler, Rebound will add a dependancy for the partial's template to the parent component / template so you don't need to worry about getting it on the page. Otherwise, the partial's template must be loaded on the page for it to appear. It is convention for partials to begin with an underscore. This underscore and the file extension are absent from the variable passed to the partial, so ```{{partial /public/demo/partial }}``` referances ```http://domain.com/public/demo/_partial.hbs```.
 
@@ -495,7 +495,7 @@ Your page level component:
   <script>
     return ({
       users: [
-        { 
+        {
           firstName: 'Adam',
           lastName: 'Miller'
         },{
@@ -529,7 +529,7 @@ The above example is very simple, but your new component can have all of the bel
 
 Rebound knows that home-page requires user-card because of the ```<link href="/public/components/user-card.html">``` in its template. When Rebound sees this link tag it will will add user-card to home-page's dependancies list.
 
-By default, child components inherit no scope from their parent components. You can pass in attributes by adding them right on to the tag, as the above example does with ```{{firstName}}``` and ```{{lastName}}```. And the values passed in are not limited to primitives! Any object, array or combination of the two can also be passed in to components. 
+By default, child components inherit no scope from their parent components. You can pass in attributes by adding them right on to the tag, as the above example does with ```{{firstName}}``` and ```{{lastName}}```. And the values passed in are not limited to primitives! Any object, array or combination of the two can also be passed in to components.
 
 Attributes passed in on the tag will override any values set in the component declaration. So, the above code will render:
 

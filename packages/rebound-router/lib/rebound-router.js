@@ -272,7 +272,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       Rebound.services.page = new LazyComponent();
 
       // Install our global components
-      _.each(this.config.globalComponents, function(selector, route){
+      _.each(this.config.services, function(selector, route){
         Rebound.services[route] = new LazyComponent();
         fetchResources.call(router, route, route, selector);
       });
