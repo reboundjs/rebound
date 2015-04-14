@@ -70,10 +70,8 @@ You can include Rebound on your page like this:
 {
   "root": "/",
   "services": {"chrome" : "nav"},
-  "jsPrefix": "/javascripts/apps/:route/",
-  "jsSuffix": "",
-  "cssPrefix": "/stylesheets/apps/",
-  "cssSuffix": "",
+  "jsPath": "/templates/:route/:app.js",
+  "cssPath": "/stylesheets/apps/:app.css",
   "triggerOnFirstLoad": true,
   "routeMapping": {
     "": "home"
@@ -86,11 +84,9 @@ Because the Rebound script tag contains a src, nothing inside it gets executed, 
 ##### Config Options
 
  - __root__ - This is the equivelent to passing the ```root``` option to Backbone.history.start. If your application is not being served from the root url ```/``` of your domain, be sure to tell History where the root really is.
- - __services__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
- - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
- - __jsSuffix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile'). See routing for more details.
- - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
- - __cssSuffix__ - Used by Rebound to construct the path to each page's css file. See routing for more details.
+ - __services__ - By default, as will be talked about in the next section, there is only one page level component loaded at a time. The components specified here are for page elements or data services you want to live the entire length of the user's session, like a global nav bar, footer, site-wide chat, etc. The object specifies ```{ "componentName": "cssSelector" }```. The output of the component will be loaded into the first matching element for the provided css selector on the page.
+ - __jsPrefix__ - Used by Rebound to construct the path to each page's js file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile') and :app as a placeholder for the app name, if a different one is specified in your routeMappings. See routing for more details.
+ - __cssPrefix__ - Used by Rebound to construct the path to each page's css file. Use :route as a placeholder for the top level route's name (ex: /profile/1/activity is 'profile') and :app as a placeholder for the app name, if a different one is specified in your routeMappings. See routing for more details.
  - __triggerOnFirstLoad__ - If false, Rebound will not try and trigger the route  once the page is loaded. Equivalent to passing ```{ silent: true }``` to Backbone.history.start
  - __routeMapping__ - Object which defines custom base route path to component name mappings. ex: if the root url ```/``` should load the home component, pass ```{ "": "home" }```
 
