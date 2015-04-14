@@ -170,7 +170,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
   }
 
-  // Services and keep track of their consumers. LazyServices are placeholders
+  // Services keep track of their consumers. LazyComponent are placeholders
   // for services that haven't loaded yet. A LazyComponent mimics the api of a
   // real service/component (they are the same), and when the service finally
   // loads, its ```hydrate``` method is called. All consumers of the service will

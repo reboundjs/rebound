@@ -321,8 +321,6 @@ Component.extend= function(protoProps, staticProps) {
     // If a configuration property, ignore it
     if(configProperties[key]){ return; }
 
-    if(value && value.isService) value.consumers.push({component: child.prototype, key: key});
-
     if(value && value.isComponent) staticProps.services[key] = value;
 
     // If a primative or backbone type object, or computed property (function which takes no arguments and returns a value) move it to our defaults
