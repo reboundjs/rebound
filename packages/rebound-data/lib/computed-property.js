@@ -241,7 +241,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
 
     if(!this.isChanging) return;
 
-    this.stopListening(value, 'all', this.onModify);
+    if(this.returnType !== 'value') this.stopListening(value, 'all', this.onModify);
 
     result = this.func.apply(context, params);
 
@@ -290,6 +290,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     object._cid || (object._cid = object.cid);
     target.cid = object.cid;
     this.tracking = object;
+    console.log('TARGET:', target);
     this.listenTo(target, 'all', this.onModify);
   },
 
