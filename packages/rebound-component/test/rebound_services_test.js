@@ -123,6 +123,11 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
       equal(service2.get('foo'), instance1.get('service2.foo'), 'A component can inherit from multiple services.');
       equal(service2.get('foo'), instance2.get('service2.foo'), 'Multiple components can inherit from multiple shared services.');
 
+      instance2.deinitialize();
+
+      equal(instance1.get('service2.foo'), 'bar', 'Services continue to persist even after consuming object deinitialization.');
+
+
     });
 
 

@@ -75,6 +75,7 @@ var sharedMethods = {
     if (this.undelegateEvents) this.undelegateEvents();
     if (this.stopListening) this.stopListening();
     if (this.off) this.off();
+    if (this.unwire) this.unwire();
 
   // Destroy this data object's lineage
     delete this.__parent__;
@@ -107,11 +108,13 @@ var sharedMethods = {
   // Destroy all children of this data object.
   // If a Collection, de-init all of its Models, if a Model, de-init all of its
   // Attributes, if a Computed Property, de-init its Cache objects.
-    _.each(this.models, function (val) { val && val.deinitialize && val.deinitialize(); });
-    _.each(this.attributes, function (val) { val && val.deinitialize && val.deinitialize();});
-    this.cache && this.cache.collection.deinitialize();
-    this.cache && this.cache.model.deinitialize();
-
+    _.each(this.models, function(val){ val && val.deinitialize && val.deinitialize(); });
+    this.models && (this.models.length = 0);
+    _.each(this.attributes, (val, key) => { delete this.attributes[key]; val && val.deinitialize && val.deinitialize(); });
+    if(this.cache){
+      this.cache.collection.deinitialize();
+      this.cache.model.deinitialize();
+    }
   }
 };
 

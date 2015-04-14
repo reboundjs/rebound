@@ -198,6 +198,19 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     context.off('all', this.onRecompute).on('all', this.onRecompute);
   },
 
+  unwire: function(){
+    var root = this.__root__;
+    var context = this.__parent__;
+
+    _.each(this.deps, function(path){
+      var dep = root.get(path, {raw: true});
+      if(!dep || !dep.isComputedProperty) return;
+      dep.off('dirty', this.markDirty);
+    }, this);
+
+    context.off('all', this.onRecompute);
+  },
+
   // Call this computed property like you would with Function.call()
   call: function(){
     var args = Array.prototype.slice.call(arguments),
@@ -215,13 +228,13 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   // the original object and return the value.
   apply: function(context, params){
 
-    if(!this.isDirty || this.isChanging) return;
+    context || (context = this.__parent__);
+
+    if(!this.isDirty || this.isChanging || !context) return;
     this.isChanging = true;
 
     var value = this.cache[this.returnType],
         result;
-
-    context || (context = this.__parent__);
 
     // Check all of our dependancies to see if they are evaluating.
     // If we have a dependancy that is dirty and this isnt its first run,
@@ -290,7 +303,6 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     object._cid || (object._cid = object.cid);
     target.cid = object.cid;
     this.tracking = object;
-    console.log('TARGET:', target);
     this.listenTo(target, 'all', this.onModify);
   },
 

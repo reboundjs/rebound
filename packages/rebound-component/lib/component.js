@@ -64,7 +64,6 @@ function hydrate(spec, options){
 var Component = Model.extend({
 
   isComponent: true,
-  consumers: [],
 
   _callOnComponent: function(name, event){
     if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
@@ -91,6 +90,17 @@ var Component = Model.extend({
     });
   },
 
+  deinitialize: function(){
+    if(this.consumers.length) return;
+    _.each(this.services, (service, key) => {
+      _.each(service.consumers, (consumer, index) => {
+        if(consumer.component === this) service.consumers.splice(index, 1);
+      });
+    });
+    delete this.services;
+    Rebound.Model.prototype.deinitialize.apply(this, arguments);
+  },
+
   // Set is overridden on components to accept components as a valid input type.
   // Components set on other Components are mixed in as a shared object. {raw: true}
   // It also marks itself as a consumer of this component
@@ -113,6 +123,8 @@ var Component = Model.extend({
       if(attr && attr.isComponent){
         serviceOptions || (serviceOptions = _.defaults(_.clone(options), {raw: true}));
         attr.consumers.push({key: key, component: this});
+        this.services[key] = attr;
+        this._listenToService(key, attr);
         Rebound.Model.prototype.set.call(this, key, attr, serviceOptions);
       }
       Rebound.Model.prototype.set.call(this, key, attr, options);
@@ -128,11 +140,10 @@ var Component = Model.extend({
     this.attributes = {};
     this.changed = {};
     this.helpers = {};
+    this.consumers = [];
+    this.services = {};
     this.__parent__ = this.__root__ = this;
     this.listenTo(this, 'all', this._onChange);
-
-    // For all services that have been added to this component,
-    for(key in this.services) this._listenToService(key, this.services[key]);
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
@@ -140,8 +151,6 @@ var Component = Model.extend({
     // Set our component's context with the passed data merged with the component's defaults
     this.set((this.defaults || {}));
     this.set((options.data || {}));
-
-    if(this.serviceName) Rebound.services[this.serviceName] = this;
 
     // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
     this.helpers._callOnComponent = this._callOnComponent;
@@ -301,7 +310,7 @@ Component.extend= function(protoProps, staticProps) {
   protoProps || (protoProps = {});
   staticProps || (staticProps = {});
   protoProps.defaults = {};
-  staticProps.services = {};
+  // staticProps.services = {};
 
   // If given a constructor, use it, otherwise use the default one defined above
   if (protoProps && _.has(protoProps, 'constructor')) {
@@ -320,8 +329,6 @@ Component.extend= function(protoProps, staticProps) {
 
     // If a configuration property, ignore it
     if(configProperties[key]){ return; }
-
-    if(value && value.isComponent) staticProps.services[key] = value;
 
     // If a primative or backbone type object, or computed property (function which takes no arguments and returns a value) move it to our defaults
     if(!_.isFunction(value) || value.isModel || value.isComponent || (_.isFunction(value) && value.length === 0 && value.toString().indexOf('return') > -1)){
