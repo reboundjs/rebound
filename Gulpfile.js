@@ -116,9 +116,8 @@ gulp.task('runtime', ['amd'], function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
-    'shims/mutationObserver.js',
+    'bower_components/webcomponentsjs/webcomponents-lite.min.js',
     'node_modules/gulp-6to5/node_modules/6to5-core/runtime.js',
-    'bower_components/document-register-element/build/document-register-element.js',
     'bower_components/backbone/backbone.js',
     'bower_components/requirejs/require.js',
     'wrap/start.frag',
