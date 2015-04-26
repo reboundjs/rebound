@@ -133,10 +133,17 @@ gulp.task('runtime', ['amd'], function() {
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('test-helpers', ['clean'], function(){
+gulp.task('test-helpers', ['runtime'], function(){
   return gulp.src([
-      'packages/rebound-test/lib/test-helpers.js',
+      "bower_components/underscore/underscore.js",
+      "bower_components/jquery/dist/jquery.min.js",
+      "bower_components/route-recognizer/dist/route-recognizer.js",
+      "bower_components/FakeXMLHttpRequest/fake_xml_http_request.js",
+      "bower_components/pretender/pretender.js",
+      "dist/rebound.runtime.js",
+      "packages/rebound-test/lib/test-helpers.js",
     ])
+  .pipe(concat('rebound.test.js'))
   .pipe(gulp.dest('dist'));
 });
 
