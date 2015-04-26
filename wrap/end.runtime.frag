@@ -5,3 +5,7 @@
 
   return require('runtime');
 }));
+
+require.config({
+    baseUrl: "/"
+});
