@@ -17,7 +17,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       oldPageName = this.current.__name;
       // Unset Previous Application's Routes. For each route in the page app:
-      _.each(this.current.__component__.routes, function (value, key) {
+      _.each(this.current['data'].routes, function (value, key) {
 
         var regExp = router._routeToRegExp(key).toString();
 
@@ -30,7 +30,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       });
 
       // Un-hook Event Bindings, Delete Objects
-      this.current.__component__.deinitialize();
+      this.current['data'].deinitialize();
 
       // Disable old css if it exists
       setTimeout(function(){
@@ -52,12 +52,12 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     document.body.scrollTop = 0;
 
     // Augment ApplicationRouter with new routes from PageApp
-    _.each(pageInstance.__component__.routes, function (value, key) {
+    _.each(pageInstance['data'].routes, function (value, key) {
       // Generate our route callback's new name
       var routeFunctionName = '_function_' + key,
           functionName;
       // Add the new callback referance on to our router
-      router[routeFunctionName] =  function () { pageInstance.__component__[value].apply(pageInstance.__component__, arguments); };
+      router[routeFunctionName] =  function () { pageInstance['data'][value].apply(pageInstance['data'], arguments); };
       // Add the route handler
       router.route(key, value, this[routeFunctionName]);
     }, this);
@@ -65,8 +65,8 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     var name = (isGlobal) ? primaryRoute : 'page';
     if(!isGlobal) this.current = pageInstance;
     if(window.Rebound.services[name].isService)
-      window.Rebound.services[name].hydrate(pageInstance.__component__);
-    window.Rebound.services[name] = pageInstance.__component__;
+      window.Rebound.services[name].hydrate(pageInstance['data']);
+    window.Rebound.services[name] = pageInstance['data'];
 
     // Return our newly installed app
     return pageInstance;
@@ -239,8 +239,12 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     // On startup, save our config object and start the router
     initialize: function(options) {
 
+      // Default to first content tag on the page if no container is provided
+      options.container || (options.container = 'content');
+      var container = $(options.container)[0];
+
       // Save our config referance
-      this.config = options.config;
+      this.config = options;
       this.config.handlers = [];
 
       var remoteUrl = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/,
@@ -253,20 +257,20 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
       }, this);
 
       // Navigate to route for any link with a relative href
-      $(document).on('click', 'a', function(e){
+      $(container).on('click', 'a', function(e){
 
         var path = e.target.getAttribute('href');
 
         // If path is not an remote url, ends in .[a-z], or blank, try and navigate to that route.
         if( path && path !== '#' && !remoteUrl.test(path) ){
           e.preventDefault();
-          if(path !== '/'+Backbone.history.fragment) $(document).unMarkLinks();
+          if(path !== '/'+Backbone.history.fragment) $(container).unMarkLinks();
           router.navigate(path, {trigger: true});
         }
       });
 
       Backbone.history.on('route', function(route, params){
-        $(document).markLinks();
+        $(container).markLinks();
       });
 
       Rebound.services.page = new LazyComponent();
@@ -282,7 +286,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       // Start the history
       Backbone.history.start({
-        pushState: true,
+        pushState: (this.config.pushState === undefined) ? true : this.config.pushState,
         root: this.config.root
       });
 

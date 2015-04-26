@@ -46,7 +46,7 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
         }
       });
 
-      el.__component__ = new component({template: template, outlet: el});
+      el['data'] = new component({template: template, outlet: el});
       equalTokens(el, '<div><div></div></div>', 'Component places rendered template inside of outlet');
 
       // template = compiler.compile("<element name='rebound-demo'><template>asdf</template></element><script>return ({test: 'woo'});</script>");

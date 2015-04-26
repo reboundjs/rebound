@@ -99,7 +99,6 @@ gulp.task('amd', ['clean'], function() {
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
     gulp.src(paths.reboundRuntime)
   )
-  .pipe(sourcemaps.init())
   .pipe(to5({
     modules: "amd",
     moduleIds: true,
@@ -108,7 +107,6 @@ gulp.task('amd', ['clean'], function() {
   }))
   .pipe(gulp.dest('dist/amd'))
   .pipe(concat('rebound.runtime.js'))
-  .pipe(sourcemaps.write())
   .pipe(gulp.dest('dist'))
 });
 
@@ -135,7 +133,14 @@ gulp.task('runtime', ['amd'], function() {
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('recompile-demo', ['cjs', 'docco', 'runtime'],  function(){
+gulp.task('test-helpers', ['clean'], function(){
+  return gulp.src([
+      'packages/rebound-test/lib/test-helpers.js',
+    ])
+  .pipe(gulp.dest('dist'));
+});
+
+gulp.task('recompile-demo', ['cjs', 'test-helpers', 'docco', 'runtime'],  function(){
   // When everything is finished, re-compile the demo
   var fs   = require('fs');
   var precompile = require('./dist/cjs/rebound-precompiler/rebound-precompiler').precompile;

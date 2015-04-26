@@ -24,15 +24,6 @@ function startsWith(str, test){
   return true;
 }
 
-function renderCallback(){
-  var i = 0, len = this._toRender.length;
-  delete this._renderTimeout;
-  for(i=0;i<len;i++){
-    this._toRender.shift().notify();
-  }
-  this._toRender.added = {};
-}
-
 function hydrate(spec, options){
   // Return a wrapper function that will merge user provided helpers and hooks with our defaults
   return function(data, options){
@@ -64,6 +55,15 @@ function hydrate(spec, options){
 var Component = Model.extend({
 
   isComponent: true,
+
+  _render: function(){
+    var i = 0, len = this._toRender.length;
+    delete this._renderTimeout;
+    for(i=0;i<len;i++){
+      this._toRender.shift().notify();
+    }
+    this._toRender.added = {};
+  },
 
   _callOnComponent: function(name, event){
     if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.__name + "!"; }
@@ -135,7 +135,7 @@ var Component = Model.extend({
   constructor: function(options){
     var key, attr, self = this;
     options = options || (options = {});
-    _.bindAll(this, '_callOnComponent', '_listenToService');
+    _.bindAll(this, '_callOnComponent', '_listenToService', '_render');
     this.cid = _.uniqueId('component');
     this.attributes = {};
     this.changed = {};
@@ -286,7 +286,8 @@ var Component = Model.extend({
 
     // Queue our render callback to be called after the current call stack has been exhausted
     window.clearTimeout(this._renderTimeout);
-    this._renderTimeout = window.setTimeout(_.bind(renderCallback, this), 0);
+    if(this.el && this.el.testing) return this._render();
+    this._renderTimeout = window.setTimeout(this._render, 0);
   }
 
 });
@@ -361,7 +362,7 @@ Component.register = function registerComponent(name, options) {
   var proto = Object.create(HTMLElement.prototype, {});
 
   proto.createdCallback = function() {
-    this.__component__ = new component({
+    this['data'] = new component({
       template: template,
       outlet: this,
       data: Rebound.seedData
@@ -369,17 +370,17 @@ Component.register = function registerComponent(name, options) {
   };
 
   proto.attachedCallback = function() {
-    script.attachedCallback && script.attachedCallback.call(this.__component__);
+    script.attachedCallback && script.attachedCallback.call(this['data']);
   };
 
   proto.detachedCallback = function() {
-    script.detachedCallback && script.detachedCallback.call(this.__component__);
-    this.__component__.deinitialize();
+    script.detachedCallback && script.detachedCallback.call(this['data']);
+    this['data'].deinitialize();
   };
 
   proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
-    this.__component__._onAttributeChange(attrName, oldVal, newVal);
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this.__component__, attrName, oldVal, newVal);
+    this['data']._onAttributeChange(attrName, oldVal, newVal);
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this['data'], attrName, oldVal, newVal);
   };
 
   return document.registerElement(name, { prototype: proto });
