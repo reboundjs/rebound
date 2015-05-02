@@ -269,10 +269,10 @@ hooks.inline = function inline(env, morph, context, path, params, hash) {
 };
 
 hooks.content = function content(env, morph, context, path) {
-
   var lazyValue,
       value,
       observer = subtreeObserver,
+      domElement = morph.contextualElement,
       helper = helpers.lookupHelper(path, env);
 
   if (helper) {
@@ -287,10 +287,22 @@ hooks.content = function content(env, morph, context, path) {
     if(!_.isNull(val)) morph.setContent(val);
   }
 
+  var updateTextarea = function(lazyValue){
+    domElement.value = lazyValue.value();
+  }
+
   // If we have our lazy value, update our dom.
   // morph is a morph element representing our dom node
   lazyValue.onNotify(renderHook);
   renderHook(lazyValue);
+
+  // Two way databinding for textareas
+  if(domElement.tagName === 'TEXTAREA'){
+    lazyValue.onNotify(updateTextarea);
+    $(domElement).on('change keyup', function(event){
+      lazyValue.set(lazyValue.path, this.value);
+    });
+  }
 
   // Observe this content morph's parent's children.
   // When the morph element's containing element (morph) is removed, clean up the lazyvalue.

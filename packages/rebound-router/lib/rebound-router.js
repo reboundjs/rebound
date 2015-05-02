@@ -143,6 +143,8 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
                 document.body.classList.remove('loading');
               }
             });
+          }).on('error', function(){
+            fetchResources.call(Rebound.router, '404', 'error', false);
           });
 
       }
@@ -165,6 +167,8 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
             }
             document.body.classList.remove('loading');
           }
+        }, function(err){
+          fetchResources.call(Rebound.router, '404', 'error', false);
         });
       }
 
@@ -228,7 +232,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
 
       // If Page Is Already Loaded Then The Route Does Not Exist. 404 and Exit.
       if (this.current && this.current.name === primaryRoute) {
-        return Backbone.history.loadUrl('404');
+        return fetchResources.call(this, '404', 'error', false);
       }
 
       // Fetch Resources
@@ -239,13 +243,11 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     // On startup, save our config object and start the router
     initialize: function(options) {
 
-      // Default to first content tag on the page if no container is provided
-      options.container || (options.container = 'content');
-      var container = $(options.container)[0];
-
       // Save our config referance
-      this.config = options;
+      this.config = options || {};
       this.config.handlers = [];
+      this.config.container || (this.config.container = 'content');
+      var container = $(this.config.container)[0];
 
       var remoteUrl = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/,
           router = this;

@@ -39,10 +39,13 @@ var Rebound = {
   Component: Component,
   start: function(options){
     return new Promise(function(resolve, reject) {
-      document.addEventListener("DOMContentLoaded", function() {
+      function run() {
+        if(document.readyState !== "complete") return;
         Rebound.router = new Router(options);
         resolve(Rebound.router);
-      });
+      }
+      if(document.readyState === "complete") return run();
+      document.addEventListener("readystatechange", run);
     })
   }
 };
