@@ -23,10 +23,6 @@ import Router from "rebound-router/rebound-router";
 // If Backbone doesn't have an ajax method from an external DOM library, use ours
 window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Backbone.ajax || utils.ajax;
 
-// Fetch Rebound's Config Object from Rebound's `script` tag
-var Config = document.getElementById('Rebound');
-    Config = (Config) ? Config.innerHTML : false;
-
 // Create Global Rebound Object
 var Rebound = {
   services: {},
@@ -41,14 +37,17 @@ var Rebound = {
     return new Promise(function(resolve, reject) {
       function run() {
         if(document.readyState !== "complete") return;
-        Rebound.router = new Router(options);
-        resolve(Rebound.router);
+        Rebound.router = new Router(options, resolve);
       }
       if(document.readyState === "complete") return run();
       document.addEventListener("readystatechange", run);
     })
   }
 };
+
+// Fetch Rebound's Config Object from Rebound's `script` tag
+var Config = document.getElementById('Rebound');
+    Config = (Config) ? Config.innerHTML : false;
 
 // Start the router if a config object is preset
 if(Config) Rebound.start(JSON.parse(Config));

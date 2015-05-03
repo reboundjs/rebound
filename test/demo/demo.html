@@ -80,6 +80,7 @@
 
 		},
 		routes: {
+			"" : "filterList",
 			":filter" : "filterList"
 		},
 
@@ -110,7 +111,6 @@
 		serviceTest: function(){
 			return this.get('service.obj.test');
 		},
-
 
 		allAreDone: function(){
 			return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length;
