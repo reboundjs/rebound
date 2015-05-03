@@ -48,12 +48,7 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
         return true;
       }
     });
-
-    // Always return a promise
-    return new Promise(function(resolve, reject) {
-      if(resp && resp.constructor === Promise) resp.then(resolve);
-      resolve(resp)
-    });
+    return resp;
   }
 
   // ReboundRouter Constructor
@@ -100,7 +95,13 @@ if(!window.Backbone){ throw "Backbone must be on the page for Rebound to load.";
     // `Backbone.history.navigate`
     navigate: function(fragment, options={}) {
       (options.trigger === undefined) && (options.trigger = true)
-      return Backbone.history.navigate(fragment, options);
+      var resp = Backbone.history.navigate(fragment, options);
+
+      // Always return a promise
+      return new Promise(function(resolve, reject) {
+        if(resp && resp.constructor === Promise) resp.then(resolve);
+        resolve(resp)
+      });
     },
 
     // Modify `router.execute` to return the value of our route callback
