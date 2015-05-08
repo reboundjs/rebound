@@ -160,15 +160,15 @@ var Component = Model.extend({
         if(!this[value]){ throw('Callback function '+value+' does not exist on the  ' + this.__name + ' component!'); }
     }, this);
 
-    // Our Component is fully created now, but not rendered. Call created callback.
-    if(_.isFunction(this.createdCallback)){
-      this.createdCallback.call(this);
-    }
-
     // Set our outlet and template if we have them
     this.el = options.outlet || document.createDocumentFragment();
     this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
     this.template = options.template || this.template;
+
+    // Our Component is fully created now, but not rendered. Call created callback.
+    if(_.isFunction(this.createdCallback)){
+      this.createdCallback.call(this);
+    }
 
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
     // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
