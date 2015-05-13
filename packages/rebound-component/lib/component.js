@@ -164,11 +164,7 @@ var Component = Model.extend({
     this.el = options.outlet || document.createDocumentFragment();
     this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
     this.template = options.template || this.template;
-
-    // Our Component is fully created now, but not rendered. Call created callback.
-    if(_.isFunction(this.createdCallback)){
-      this.createdCallback.call(this);
-    }
+    this.el['data'] = this;
 
     // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
     // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
@@ -181,6 +177,11 @@ var Component = Model.extend({
 
       // Add active class to this newly rendered template's link elements that require it
       $(this.el).markLinks();
+    }
+    
+    // Our Component is fully created now, but not rendered. Call created callback.
+    if(_.isFunction(this.createdCallback)){
+      this.createdCallback.call(this);
     }
 
     this.initialize();
@@ -322,13 +323,18 @@ Component.extend= function(protoProps, staticProps) {
   child.prototype = new Surrogate();
 
   // For each property passed into our component base class
-  _.each(protoProps, function(value, key, protoProps){
+  for(var key in protoProps){
+    let get, set;
 
-    // If a configuration property, ignore it
-    if(configProperties[key]){ return; }
+    // If a configuration property, or not actually on the obj, ignore it
+    if(!protoProps.hasOwnProperty(key) || configProperties[key]) continue;
+
+    $.extractComputedProps(protoProps)
+
+    let value = protoProps[key];
 
     // If a primative or backbone type object, or computed property (function which takes no arguments and returns a value) move it to our defaults
-    if(!_.isFunction(value) || value.isModel || value.isComponent || (_.isFunction(value) && value.length === 0 && value.toString().indexOf('return') > -1)){
+    if(!_.isFunction(value) || value.isComputedProto || value.isModel || value.isComponent){
       protoProps.defaults[key] = value;
       delete protoProps[key];
     }
@@ -338,7 +344,7 @@ Component.extend= function(protoProps, staticProps) {
 
     // All other values are component methods, leave them be unless already defined.
 
-  }, this);
+  };
 
   // Extend our prototype with any remaining protoProps, overriting pre-defined ones
   if (protoProps){ _.extend(child.prototype, protoProps, staticProps); }
@@ -358,7 +364,7 @@ Component.register = function registerComponent(name, options) {
   var proto = Object.create(HTMLElement.prototype, {});
 
   proto.createdCallback = function() {
-    this['data'] = new component({
+    new component({
       template: template,
       outlet: this,
       data: Rebound.seedData

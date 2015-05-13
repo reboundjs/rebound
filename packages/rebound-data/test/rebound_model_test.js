@@ -123,7 +123,7 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
         prop: true,
         arr: (new collection()),
         obj: { foo: {bar: 'bar'} },
-        func: function(){
+        get func(){
           return this.get('obj');
         }
       });
@@ -177,6 +177,21 @@ require(['rebound-data/rebound-data'], function(reboundData, tokenizer){
         equal(model.get('d'), value, 'Change events propagated with proper name on root');
       });
       model.set('a.b.c.d', 1);
+
+
+      var NewModel = Model.extend({
+        defaults: {
+          val: 'foo',
+          get prop(){
+            return this.get('val');
+          }
+        }
+      });
+
+      model = new NewModel();
+
+      equal(model.get('prop'), model.get('val'), 'Extended Rebound models with a computed property in its defaults hash are parsed succesfully.');
+
 
 
 
