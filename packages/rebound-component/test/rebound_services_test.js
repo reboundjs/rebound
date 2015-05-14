@@ -16,19 +16,19 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
         service: service,
         service2: service2,
 
-        attributeProxy: function(){
+        get attributeProxy(){
           return this.get('service.int');
         },
-        deepObjectAttributeProxy: function(){
+        get deepObjectAttributeProxy(){
           return this.get('service.obj.f');
         },
-        deepArrayAttributeProxy: function(){
+        get deepArrayAttributeProxy(){
           return this.get('service.arr[0].b');
         },
-        arrayProxy: function(){
+        get arrayProxy(){
           return this.get('service.arr');
         },
-        objectProxy: function(){
+        get objectProxy(){
           return this.get('service.obj');
         }
       });
@@ -36,19 +36,19 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
         service: service,
         service2: service2,
 
-        attributeProxy: function(){
+        get attributeProxy(){
           return this.get('service.int');
         },
-        deepObjectAttributeProxy: function(){
+        get deepObjectAttributeProxy(){
           return this.get('service.obj.f');
         },
-        deepArrayAttributeProxy: function(){
+        get deepArrayAttributeProxy(){
           return this.get('service.arr[0].b');
         },
-        arrayProxy: function(){
+        get arrayProxy(){
           return this.get('service.arr');
         },
-        objectProxy: function(){
+        get objectProxy(){
           return this.get('service.obj');
         }
       });

@@ -108,32 +108,32 @@
 
 	/************** Computed Properties *****************/
 
-		serviceTest: function(){
+		get serviceTest(){
 			return this.get('service.obj.test');
 		},
 
-		allAreDone: function(){
+		get allAreDone(){
 			return this.get('todos').where({'isCompleted': true}).length == this.get('todos').length;
 		},
-		noneAreDone: function(){
+		get noneAreDone(){
 			return this.get('todos').where({'isCompleted': true}).length == 0;
 		},
-		remaining: function(){
+		get remaining(){
 			return this.get('todos').where({'isCompleted': false}).length;
 		},
-		completed: function(){
+		get completed(){
 			return this.get('todos').where({'isCompleted': true}).length;
 		},
-		todosProxy: function(){
+		get todosProxy(){
 			return this.get('filteredTodos');
 		},
-		firstTodo: function(){
+		get firstTodo(){
 			return this.get('todosProxy[0]');
 		},
-		secondTodo: function(){
+		get secondTodo(){
 			return this.get('filteredTodos[1]');
 		},
-		filteredTodos: function(){
+		get filteredTodos(){
 			if(this.get('filter') == 'all')
 				return this.get('todos');
 			if(this.get('filter') == 'active')
@@ -141,9 +141,9 @@
 			if(this.get('filter') == 'completed')
 				return this.get('todos').where({'isCompleted': true});
 		},
-		isAll: function(){ return this.get('filter') === 'all'; },
-		isActive: function(){ return this.get('filter') === 'active'; },
-		isCompleted: function(){ return this.get('filter') === 'completed'; },
+		get isAll(){ return this.get('filter') === 'all'; },
+		get isActive(){ return this.get('filter') === 'active'; },
+		get isCompleted(){ return this.get('filter') === 'completed'; },
 
 
 	/************** Component Methods *****************/

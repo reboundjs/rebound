@@ -5,11 +5,18 @@ require(['rebound-data/rebound-data'], function(reboundData){
     QUnit.test('Rebound Data - Computed Properties', function( assert ) {
       var model, collection, model2, model3;
 
+
+    /*****************************
+
+              GET Tests
+
+    *****************************/
+
     // Basic get and recompute
       model = new Model({
         a: 1,
         b: 1,
-        prop: function(){
+        get prop(){
           return this.get('a') + this.get('b');
         }
       });
@@ -20,10 +27,10 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
     // Returning vanilla objects
       model = new Model({
-        'objProp': function(){
+        get objProp(){
           return {a: 1, b: 2};
         },
-        'arrProp': function(){
+        get arrProp(){
           return [{a: 1, b: 2}];
         }
       });
@@ -51,10 +58,10 @@ require(['rebound-data/rebound-data'], function(reboundData){
           arr: [{val: 1}, {val: 2}]
         },
 
-        'objProp': function(){
+        get objProp(){
           return this.get('obj');
         },
-        'arrProp': function(){
+        get arrProp(){
           return this.get('arr');
         }
       });
@@ -136,7 +143,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
           }
         },
 
-        deep: function(){
+        get deep(){
           return (this.get('obj.a') || 0) + (this.get('obj.b.c.d') || 0);
         }
 
@@ -159,7 +166,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
         arr: [{a:1}, {b: {c: {d: 2}}}],
 
-        sum: function(){
+        get sum(){
           return (this.get('arr[0].a') || 0) + (this.get('arr[1].b.c.d') || 0) + (this.get('arr[2].e') || 0);
         }
 
@@ -187,10 +194,10 @@ require(['rebound-data/rebound-data'], function(reboundData){
       model = new Model({
         foo: 1,
         bar: 1,
-        'sum': function(){
+        get sum(){
           return this.get('foo') + this.get('bar');
         },
-        'sumProxy': function(){
+        get sumProxy(){
           return this.get('sum');
         }
       });
@@ -210,13 +217,13 @@ require(['rebound-data/rebound-data'], function(reboundData){
           foo: 1,
           bar: 2
         },
-        objProxy: function(){
+        get objProxy(){
           return this.get('obj');
         },
-        objValue: function(){
+        get objValue(){
           return this.get('objProxy.foo') || 0;
         },
-        objSum: function(){
+        get objSum(){
           return (this.get('objProxy.foo') || 0) + (this.get('objProxy.bar') || 0);
         }
       });
@@ -238,7 +245,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
             test: true
           }
         },
-        objAbuse: function(){
+        get objAbuse(){
           var attrs = this.get('obj').attributes;
           attrs.test = false;
           return attrs;
@@ -255,10 +262,10 @@ require(['rebound-data/rebound-data'], function(reboundData){
     // Returning Modified Collection & Recompute
       model = new Model({
         arr: [{val: 1}, {val: 2}, {val: 3}, {val: 4}, {val: 5}],
-        even: function(){
+        get even(){
           return this.get('arr').filter(function(obj){ return obj.get('val') % 2 === 0; });
         },
-        firstEven: function(){
+        get firstEven(){
           return this.get('even[0]');
         }
       });
@@ -284,8 +291,6 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
 
 
-
-
     // @parent Recompute
       model = new Model({
         foo: 1,
@@ -293,7 +298,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
         arr: [
           {
-            func: function(){
+            get func(){
               return this.get('@parent.@parent.foo') + this.get('@parent.@parent.bar');
             }
           }
@@ -330,19 +335,19 @@ require(['rebound-data/rebound-data'], function(reboundData){
 
         bar: 2,
 
-        sum: function(){
+        get sum(){
           return this.get('foo') + this.get('bar');
         },
 
-        barsum: function(){
+        get barsum(){
           return this.get('sum') + this.get('bar');
         },
 
-        sumbarsum: function(){
+        get sumbarsum(){
           return this.get('sum') + this.get('barsum');
         },
 
-        foosumbarsum: function(){
+        get foosumbarsum(){
           return this.get('foo') + this.get('sumbarsum');
         }
 
@@ -357,15 +362,15 @@ require(['rebound-data/rebound-data'], function(reboundData){
     // Complex Dependancy Chain Tests
       model = new Model({
 
-        one: function(){
+        get one(){
           return this.get('three');
         },
 
-        two: function(){
+        get two(){
           return this.get('one.foo');
         },
 
-        three: function(){
+        get three(){
           return {foo: 'bar'};
         }
 
@@ -383,7 +388,7 @@ require(['rebound-data/rebound-data'], function(reboundData){
           }
         ],
 
-        proxy: function(){
+        get proxy(){
           return this.get('arr[0].arr[0].val');
         }
 
@@ -392,30 +397,108 @@ require(['rebound-data/rebound-data'], function(reboundData){
       model.set('arr[0].arr[0].val', 2);
       equal(model.get('proxy'), 2, 'Computed properties with dependancies in two collections deep re-evaluates on dependancy change.');
 
-        window.count = 0;
-      // Dependancies Deep Inside Multiple Collection
-        model = new Model({
 
-          arr: [
-            {val: 1},{val: 2},{val: 3},{val: 4},{val: 5}
-          ],
+    /*****************************
 
-          callback: function(){
-            window.count++;
-            return this.get('arr[4].val');
-          }
+              SET Tests
 
-        });
+    *****************************/
 
-        model.get('arr').each(function(obj){
-          obj.set('val', 6);
-        });
+      var model;
 
-        stop();
-        setTimeout(function(){
-          start();
-          equal(window.count, 1, 'Repetitive changes to a Collection recompute a Computed Property that depends on it only once after all changes are made.');
-        }, 0);
+    // Basic set
+      model = new Model({
+        a: 1,
+        set proxy(val){
+          this.set('a', val);
+        }
+      });
+      equal(undefined, model.get('proxy'), 'Computed proeprties with only a set function return undefined when accessed the first time.');
+      model.set('proxy', 2);
+      equal(2, model.get('a'), 'Computed proerties with only a set value can be used to set a simple value.');
+      equal(2, model.get('proxy'), 'Computed properties with only a set value return the newly set value after set.');
+      model.set('a', 3);
+      equal(2, model.get('proxy'), 'Computed properties with only a set value do not re-evaluate when values it sets change.');
+
+
+    // Basic get, set and recompute
+      model = new Model({
+        a: 1,
+        get proxy(){
+          return this.get('a');
+        },
+        set proxy(val){
+          this.set('a', val);
+        }
+      });
+      equal(1, model.get('proxy'), 'Computed proeprties with a get and set function can be gotten before setting a value.');
+      model.set('proxy', 2);
+      equal(2, model.get('a'), 'Computed proerties with a set value can be used to set a simple value.');
+      equal(2, model.get('proxy'), 'Computed properties with a set value return the newly set value after set changes dependancies.');
+      model.set('a', 3);
+      equal(3, model.get('proxy'), 'Computed properties with a set value return the newly set value after a dependancy changes.');
+
+
+    // Model set
+      // model = new Model({
+      //   a: {
+      //     foo: 'bar'
+      //   },
+      //   set proxy(val){
+      //     this.set('a', val);
+      //   }
+      // });
+      // equal(undefined, model.get('proxy'), 'Computed properties with only a set function, setting a models, return undefined when accessed the first time.');
+      // // debugger;
+      // window.now = true;
+      // model.set('proxy', {biz: 'baz'});
+      // equal({foo: 'bar', biz: 'baz'}, model.get('a').toJSON(), 'Computed proerties with only a set value, setting a model, can be used to set a model\'s value.');
+      // equal({biz: 'baz'}, model.get('proxy'), 'Computed properties with only a set value return only the newly set value after set.');
+
+
+
+    /********************************
+
+     Execution and Concurrency Tests
+
+    ********************************/
+
+      window.count2 = 0;
+      model = new Model({
+
+        arr: [
+          {val: 1},{val: 2},{val: 3},{val: 4},{val: 5}
+        ],
+
+        get callback(){
+          window.count++;
+          return this.get('arr');
+        }
+
+      });
+
+
+      window.count = 0;
+      model.get('arr').each(function(obj){
+        obj.set('val', 6);
+        model.get('callback');
+      });
+      equal(window.count, 5, 'Computed Property changes that would normally be pushed to the end of the callstack are called immediately when retreiving the Computed Property\'s value.');
+
+
+      window.count = 0;
+      model.get('arr').each(function(obj){
+        obj.set('val', 7);
+      });
+      stop();
+      setTimeout(function(){
+        start();
+        equal(window.count, 1, 'Repetitive changes to a Collection recompute a Computed Property that depends on it only once after all changes are made.');
+      }, 0);
+
+
 
     });
+
+
 });

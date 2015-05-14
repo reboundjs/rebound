@@ -131,6 +131,22 @@ utils.prototype = {
     }
   },
 
+  // Searches each key in an object and tests if the property has a lookupGetter or
+  // lookupSetter. If either are preset convert the property into a computed property.
+  extractComputedProps: function(obj){
+    for(var key in obj){
+      let get, set;
+      if(!obj.hasOwnProperty(key)) continue;
+      var desc = Object.getOwnPropertyDescriptor(obj, key);
+      get = desc.hasOwnProperty('get') && desc.get;
+      set = desc.hasOwnProperty('set') && desc.set;
+      if(get || set){
+        delete obj[key];
+        obj[key] = {get: get, set: set, isComputedProto: true};
+      }
+    };
+  },
+
   // Events registry. An object containing all events bound through this util shared among all instances.
   _events: {},
 
