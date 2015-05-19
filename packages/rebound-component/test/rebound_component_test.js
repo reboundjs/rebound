@@ -37,9 +37,11 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
       document.body.appendChild(el);
       window.attached = false;
 
+
       component = Component.register('test-component', {
         prototype: {
           createdCallback: function(){
+            window.created = true;
             equal(this.el.innerHTML, '<div></div>', 'Created callback is called after template is placed in outlet');
             equal(this.el.parentNode, null, 'Created callback in called before this.el has been added to the dom tree')
             equal(this.el.tagName, 'TEST-COMPONENT', 'Scope of created callback has the outlet in this.el');
@@ -50,7 +52,6 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
             equal(this.el.parentNode, el, 'Attached callback in called after this.el has been added to the dom tree and has a referance to its parent')
             equal(typeof this.$el, 'object', 'this.$el has a jQuery wrapped node if jQuery is present on the page')
             equal(this.$('div')[0], this.el.firstChild, 'this.$ does a jQuery lookup in the scope of the component, if jQuery is on the page')
-
           },
           bool: true,
           int: 1,
@@ -71,8 +72,14 @@ require(['rebound-component/component', 'simple-html-tokenizer', 'rebound-compil
       equal(c1.data.method(), 1, 'Plain functions passed to Component.extend are attached as methods to the Component object');
       equal(c1.innerHTML, '<div></div>', 'Component places rendered template inside of outlet');
 
+
       el.appendChild(c1);
-      equal(window.attached, true, 'Attached callback is called when component is added to the dom tree');
+      stop();
+      setTimeout(function(){
+        start();
+        equal(window.created, true, 'Created callback is called when component is created in memory');
+        equal(window.attached, true, 'Attached callback is called when component is added to the dom tree');
+      }, 0);
 
       deepEqual(c1.data.toJSON(), {
         bool: true,

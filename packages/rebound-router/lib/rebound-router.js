@@ -15,6 +15,9 @@ var DEFAULT_404_PAGE =
 </div>`;
 
 var ERROR_ROUTE_NAME = 'error';
+var SUCCESS = 'success';
+var ERROR = 'error';
+var LOADING = 'loading';
 
 // Overload Backbone's loadUrl so it returns the value of the routed callback
 // instead of undefined
@@ -33,7 +36,7 @@ Backbone.history.loadUrl = function(fragment) {
 // ReboundRouter Constructor
 var ReboundRouter = Backbone.Router.extend({
 
-  loadedError: true,
+  status: SUCCESS, // loading, success or error
 
   // By default there is one route. The wildcard route fetches the required
   // page assets based on user-defined naming convention.
@@ -188,7 +191,8 @@ var ReboundRouter = Backbone.Router.extend({
     this.current = undefined;
 
     // Disable old css if it exists
-    setTimeout(function(){
+    setTimeout(() => {
+      if(this.status = ERROR) return;
       document.getElementById(oldPageName + '-css').setAttribute('disabled', true);
     }, 500);
 
@@ -272,7 +276,7 @@ var ReboundRouter = Backbone.Router.extend({
     // It rejects if either of the css or js resources fails to load.
     return new Promise((resolve, reject) => {
 
-      var thrown = false;
+      this.status = LOADING;
 
       var defaultError = (err) => {
         if(!isService){
@@ -284,8 +288,8 @@ var ReboundRouter = Backbone.Router.extend({
 
       var throwError = (err) => {
         if(route === ERROR_ROUTE_NAME) return defaultError()
-        if(thrown) return;
-        thrown = true;
+        if(this.status === ERROR) return;
+        this.status = ERROR;
         console.error('Could not ' + ((isService) ? 'load the ' + route + ' service:' : 'find the ' + route + ' page:') +
                       '\n  - CSS Url: '+ cssUrl +
                       '\n  - JavaScript Url: ' + jsUrl);
@@ -293,7 +297,7 @@ var ReboundRouter = Backbone.Router.extend({
       }
 
       // If Page Is Already Loaded Then The Route Does Not Exist. 404 and Exit.
-      if (this.current && this.current.name === primaryRoute && window.Rebound.router.loadedError) {
+      if (this.current && this.current.name === primaryRoute) {
         return throwError();
       }
 
@@ -308,6 +312,7 @@ var ReboundRouter = Backbone.Router.extend({
         cssElement.setAttribute('id', appName + '-css');
         $(cssElement).on('load', (event) => {
             if((cssLoaded = true) && jsLoaded){
+              this.status = SUCCESS;
               this._installResource(PageClass, appName, container);
               resolve(this);
             }
@@ -330,6 +335,7 @@ var ReboundRouter = Backbone.Router.extend({
         jsElement = $('script[src="'+jsUrl+'"]')[0]
         jsElement.setAttribute('id', appName + '-js');
         if((jsLoaded = true) && (PageClass = c) && cssLoaded){
+          this.status = SUCCESS;
           cssElement && cssElement.removeAttribute('disabled');
           this._installResource(PageClass, appName, container);
           resolve(this);

@@ -178,7 +178,7 @@ var Component = Model.extend({
       // Add active class to this newly rendered template's link elements that require it
       $(this.el).markLinks();
     }
-    
+
     // Our Component is fully created now, but not rendered. Call created callback.
     if(_.isFunction(this.createdCallback)){
       this.createdCallback.call(this);
@@ -322,14 +322,14 @@ Component.extend= function(protoProps, staticProps) {
   Surrogate.prototype = parent.prototype;
   child.prototype = new Surrogate();
 
+  $.extractComputedProps(protoProps);
+
   // For each property passed into our component base class
   for(var key in protoProps){
     let get, set;
 
     // If a configuration property, or not actually on the obj, ignore it
     if(!protoProps.hasOwnProperty(key) || configProperties[key]) continue;
-
-    $.extractComputedProps(protoProps)
 
     let value = protoProps[key];
 
