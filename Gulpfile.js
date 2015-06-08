@@ -1,6 +1,6 @@
 var gulp = require('gulp');
 var es = require('event-stream');
-var to5 = require('gulp-6to5');
+var babel = require('gulp-babel');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var jshint = require('gulp-jshint');
@@ -23,10 +23,11 @@ var paths = {
     reboundCompiler:    'packages/rebound-compiler/lib/**/*.js',
     reboundComponent:   'packages/rebound-component/lib/**/*.js',
     reboundData:        'packages/rebound-data/lib/**/*.js',
-    reboundPrecompiler: 'packages/rebound-precompiler/lib/**/*.js',
+    reboundPrecompiler: 'packages/rebound-compiler/lib/**/*.js',
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
     reboundRuntime:     'packages/runtime.js'
   };
+
 
 gulp.task('clean', function(cb) {
   // You can use multiple globbing patterns as you would with `gulp.src`
@@ -58,11 +59,11 @@ gulp.task('cjs', ['clean'], function() {
     gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
     gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
     gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
-    gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
     gulp.src(paths.reboundRuntime)
   )
-  .pipe(to5({blacklist: ['forOf','generators','spread','destructuring']}))
+  .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
   .pipe(gulp.dest('dist/cjs'))
   .pipe(connect.reload());
 });
@@ -82,7 +83,6 @@ gulp.task('docco', ['clean'], function() {
     'packages/rebound-component/lib/utils.js',
     'packages/property-compiler/lib/property-compiler.js',
     'packages/rebound-compiler/lib/rebound-compiler.js',
-    'packages/rebound-precompiler/lib/rebound-precompiler.js',
   ])
   .pipe(concat('rebound.js'))
   .pipe(docco())
@@ -95,15 +95,14 @@ gulp.task('amd', ['clean'], function() {
     gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
     gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
     gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
-    gulp.src(paths.reboundPrecompiler).pipe(rename({prefix: "rebound-precompiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
     gulp.src(paths.reboundRuntime)
   )
-  .pipe(to5({
+  .pipe(babel({
     modules: "amd",
     moduleIds: true,
-    runtime: true,
-    blacklist: ['forOf','generators','spread','destructuring']
+    blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']
   }))
   .pipe(gulp.dest('dist/amd'))
   .pipe(concat('rebound.runtime.js'))
@@ -115,14 +114,12 @@ gulp.task('runtime', ['amd'], function() {
     'shims/classList.js',
     'shims/matchesSelector.js',
     'bower_components/webcomponentsjs/webcomponents-lite.min.js',
-    'node_modules/gulp-6to5/node_modules/6to5-core/runtime.js',
     'bower_components/backbone/backbone.js',
     'bower_components/requirejs/require.js',
     'wrap/start.frag',
     'bower_components/almond/almond.js',
     'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
-    'node_modules/htmlbars/dist/amd/morph-attr.amd.js',
-    'node_modules/htmlbars/dist/amd/dom-helper.amd.js',
+    'node_modules/htmlbars/dist/amd/htmlbars-runtime.amd.js',
     'dist/rebound.runtime.js',
     'wrap/end.runtime.frag'
     ])
@@ -147,10 +144,25 @@ gulp.task('test-helpers', ['runtime'], function(){
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('recompile-demo', ['cjs', 'test-helpers', 'docco', 'runtime'],  function(){
+gulp.task('compile-tests', function(){
+  return gulp.src([
+      "packages/*/test/*.js",
+      "packages/tests.js"
+    ])
+  .pipe(babel({
+    modules: "amd",
+    moduleIds: true,
+    blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']
+  }))
+  .pipe(concat('rebound.tests.js'))
+  .pipe(gulp.dest('test'));
+});
+
+
+gulp.task('recompile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
   // When everything is finished, re-compile the demo
   var fs   = require('fs');
-  var precompile = require('./dist/cjs/rebound-precompiler/rebound-precompiler').precompile;
+  var precompile = require('./dist/cjs/rebound-compiler/precompile');
   var finished = false;
   mkdirp.sync('./test/demo/templates');
   fs.readFile('./test/demo/demo.html', 'utf8', function (err,data) {

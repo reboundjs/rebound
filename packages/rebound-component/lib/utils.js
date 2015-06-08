@@ -152,7 +152,7 @@ utils.prototype = {
 
   // Takes the targed the event fired on and returns all callbacks for the delegated element
   _hasDelegate: function(target, delegate, eventType){
-    var callbacks = [];
+    var callbacks = [];debugger;
 
     // Get our callbacks
     if(target.delegateGroup && this._events[target.delegateGroup][eventType]){
@@ -252,12 +252,11 @@ utils.prototype = {
               var target, i, len, eventList, callbacks, callback, falsy;
               event = new $.Event((event || window.event)); // Convert to mutable event
               target = event.target || event.srcElement;
-
-              // Travel from target up to parent firing event on delegate when it exizts
+              // Travel from target up to parent firing event on delegate when it exists
               while(target){
 
                 // Get all specified callbacks (element specific and selector specified)
-                callbacks = $._hasDelegate(el, target, event.type);
+                callbacks = $._hasDelegate(this, target, event.type);
 
                 len = callbacks.length;
                 for(i=0;i<len;i++){
@@ -281,6 +280,9 @@ utils.prototype = {
         // If this is the first event of its type, add the event handler
         // AddEventListener supports IE9+
         if(!events[delegateGroup][eventName]){
+          // Because we're only attaching one callback per event type, this is okay.
+          // This also allows jquery's trigger method to actually fire delegated events
+          // el['on' + eventName] = callback;
           // If event is focus or blur, use capture to allow for event delegation.
           el.addEventListener(eventName, callback, (eventName === 'focus' || eventName === 'blur'));
         }

@@ -11,7 +11,6 @@ function LazyValue(fn, options) {
   this.context = options.context || null;
   this.morph = options.morph || null;
   this.attrMorph = options.attrMorph || null;
-  _.bindAll(this, 'value', 'set', 'addDependentValue', 'addObserver', 'notify', 'onNotify', 'destroy');
 }
 
 LazyValue.prototype = {
@@ -24,7 +23,7 @@ LazyValue.prototype = {
   subscribers: null, // TODO: do we need multiple subscribers?
   _childValues: null, // just for reusing the array, might not work well if children.length changes after computation
 
-  value: function() {
+  get value(){
     var cache = this.cache;
     if (cache !== NIL) { return cache; }
 
@@ -35,7 +34,7 @@ LazyValue.prototype = {
 
       for (var i = 0, l = children.length; i < l; i++) {
         child = children[i];
-        values[i] = (child && child.isLazyValue) ? child.value() : child;
+        values[i] = (child && child.isLazyValue) ? child.value : child;
       }
 
       return this.cache = this.valueFn(values);

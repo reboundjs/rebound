@@ -123,4 +123,4 @@ _.extend(Model.prototype, sharedMethods);
 _.extend(Collection.prototype, sharedMethods);
 _.extend(ComputedProperty.prototype, sharedMethods);
 
-export { Model, Collection, ComputedProperty };
+export default { Model, Collection, ComputedProperty };

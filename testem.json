@@ -1,0 +1,9 @@
+{
+  "framework": "qunit",
+  "launch_in_dev": ["Chrome", "PhantomJS"],
+  "test_page": "test/index.html",
+  "cwd": "",
+  "watch_files": [
+    "packages/**/*.js"
+  ]
+}

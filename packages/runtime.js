@@ -28,7 +28,7 @@ var Rebound = {
   services: {},
   registerHelper: helpers.registerHelper,
   registerPartial: helpers.registerPartial,
-  registerComponent: Component.register,
+  registerComponent: Component.registerComponent,
   Model: Model,
   Collection: Collection,
   ComputedProperty: ComputedProperty,
