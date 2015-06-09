@@ -222,7 +222,9 @@ gulp.task('test', function() {
   qunit('test/index.html', {
     verbose: true,
     timeout: 15
-  });
+  }, function(code) {
+    process.exit(code);
+  })
 });
 
 
