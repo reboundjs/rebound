@@ -113,7 +113,8 @@ gulp.task('runtime', ['amd'], function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
-    'bower_components/webcomponentsjs/webcomponents-lite.min.js',
+    // 'bower_components/webcomponentsjs/webcomponents-lite.min.js',
+    'node_modules/document-register-element/build/document-register-element.max.js',
     'bower_components/backbone/backbone.js',
     'bower_components/requirejs/require.js',
     'wrap/start.frag',
@@ -204,7 +205,8 @@ gulp.task('recompile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile
 // Start the test server
 gulp.task('connect', ['recompile-demo'], function() {
   return connect.server({
-    livereload: true
+    livereload: true,
+    port: 8000
   });
 });
 

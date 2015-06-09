@@ -36,7 +36,7 @@ function getTemplate(str) {
 
 // Get the component's name from its `name` attribute.
 function getName(str) {
-  return str.replace(/[^]*?<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>[^]*/ig, "$2");
+  return str.replace(/[^]*?<element[^>]*name=(["'])?([^'">\s]+)\1[^<>]*>[^]*/ig, "$2").trim();
 }
 
 // Minify the string passed in by replacing all whitespace.

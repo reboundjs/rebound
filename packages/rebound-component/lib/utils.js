@@ -20,6 +20,17 @@ var utils = function(query){
 function returnFalse(){return false;}
 function returnTrue(){return true;}
 
+// Shim console for IE9
+if(!(window.console && console.log)) {
+  console = {
+    log: function(){},
+    debug: function(){},
+    info: function(){},
+    warn: function(){},
+    error: function(){}
+  };
+}
+
 $.Event = function( src, props ) {
 	// Allow instantiation without the 'new' keyword
 	if ( !(this instanceof $.Event) ) {

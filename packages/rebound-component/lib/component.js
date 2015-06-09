@@ -142,6 +142,7 @@ var Component = Model.extend({
     this.template = options.template || this.template;
     this.el['data'] = this;
 
+
     // Render our dom and place the dom in our custom element
     // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
     if(this.template){
@@ -333,6 +334,7 @@ Component.registerComponent = function registerComponent(name, options) {
   var script = options.prototype;
   var template = options.template;
   var style = options.style;
+  name = name;
 
   var component = this.extend(script, { __name: name });
   var proto = Object.create(HTMLElement.prototype, {});

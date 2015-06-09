@@ -69,12 +69,16 @@ QUnit.test('Rebound Components', function() {
         </element>
       `);
 
+      console.log(component)
+
   window.el = document.createElement('div');
 
   document.body.appendChild(el);
   window.attached = false;
-
+console.log('CREATING');
   var c1 = document.createElement('test-component');
+  console.log('MADE', c1)
+  console.log('created:', c1)
   equal(typeof c1.data.cid, 'string', 'Component saves a referance to itself on its contextual element as el.data');
   equal(c1.data.method(), 1, 'Plain functions passed to Component.extend are attached as methods to the Component object');
   equal(c1.innerHTML, '<div><content><div></div></content></div>', 'Component places rendered template inside of outlet, with content');
