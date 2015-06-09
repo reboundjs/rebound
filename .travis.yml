@@ -14,4 +14,4 @@ before_script:
 env:
   - SUITE=phantom
   - SUITE=sauce
-script: [[ $SUITE = phantom ]] && gulp test || testem ci
+script: "[[ $SUITE = phantom ]] && gulp test || testem ci"
