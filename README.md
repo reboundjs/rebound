@@ -12,6 +12,10 @@
   <a href="http://zenhub.io" target="_blank">
     <img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png" height="18px" alt="Powered by ZenHub"/>
   </a>
+  <br>
+  <a href="https://saucelabs.com/u/reboundjs">
+    <img src="https://saucelabs.com/browser-matrix/reboundjs.svg" alt="Sauce Test Status"/>
+  </a>
 
   <h3 align="center">Automatic data binding for Backbone using HTMLBars.</h3>
 </p>
