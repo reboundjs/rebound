@@ -56,7 +56,7 @@ function notify(obj, path, env) {
       });
     }
   });
-  console.log(env.revalidateQueue);
+
   _.each(env.revalidateQueue, function(template){
     template.revalidate();
   });

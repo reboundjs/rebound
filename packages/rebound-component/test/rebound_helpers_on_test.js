@@ -87,12 +87,10 @@ QUnit.test('Rebound Helpers - On', function() {
     }
   };
   env.helpers._callOnComponent = function(name, event){
-    console.log(arguments);
     return data[name].call(data, event);
   };
-console.log(0)
-  template = compiler.compile(`
-    <div style="visibility:hidden;"
+
+  template = compiler.compile(`<div id="0" style="visibility:hidden;"
          {{on "click" "simpleCallback"}}
          {{on "click" "callbackWithData" foo="bar"}}
          {{on "click" "li" "delegateCallback"}}
@@ -102,18 +100,13 @@ console.log(0)
       <li id="2">Two</li>
      </ul>
    </div>`, {name: 'test/partial'});
-   console.log(1)
 
   dom = template.render(data, env);
-console.log(2)
-  var el = dom.fragment.firstElementChild;
+  // In PhantomJS, document fragments don't have a firstElementChild property
+  var el = dom.fragment.firstChild;
   document.body.appendChild(el);
-  console.log(3)
-
   var event = document.createEvent('Event');
   event.initEvent('click', true, true);
-  console.log(4)
-
   el.firstElementChild.firstElementChild.dispatchEvent(event)
 
 });

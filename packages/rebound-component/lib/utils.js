@@ -152,7 +152,7 @@ utils.prototype = {
 
   // Takes the targed the event fired on and returns all callbacks for the delegated element
   _hasDelegate: function(target, delegate, eventType){
-    var callbacks = [];debugger;
+    var callbacks = [];
 
     // Get our callbacks
     if(target.delegateGroup && this._events[target.delegateGroup][eventType]){

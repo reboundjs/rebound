@@ -111,7 +111,7 @@ function cleanSubtree(mutations, observer){
   });
 }
 
-var subtreeObserver = new MutationObserver(cleanSubtree);
+// var subtreeObserver = new MutationObserver(cleanSubtree);
 
 /*******************************
         Default Hooks
