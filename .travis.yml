@@ -8,9 +8,9 @@ addons:
     access_key: 07875532-956f-448b-a77d-1520ac359f66
 before_script:
   - npm install -g bower
-  - "[[ $SUITE = phantomjs ]] && npm install -g gulp"
-  - "[[ $SUITE = saucelabs ]] && npm install -g saucie"
-  - "[[ $SUITE = saucelabs ]] && npm install -g testem"
+  - "[[ $SUITE = phantomjs ]] && npm install -g gulp || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g saucie || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g testem || true"
 env:
   - SUITE=phantomjs
   - SUITE=saucelabs
