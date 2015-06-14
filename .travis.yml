@@ -1,8 +1,17 @@
 language: node_js
 node_js:
   - "0.12"
-  - "0.11"
+sudo: false
+addons:
+  sauce_connect:
+    username: reboundjs
+    access_key: 07875532-956f-448b-a77d-1520ac359f66
 before_script:
-  - npm install -g gulp
   - npm install -g bower
-script: npm test --verbose --force
+  - "[[ $SUITE = phantomjs ]] && npm install -g gulp || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g saucie || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g testem || true"
+env:
+  - SUITE=phantomjs
+  - SUITE=saucelabs
+script: "[[ $SUITE = phantomjs ]] && gulp test || testem ci"

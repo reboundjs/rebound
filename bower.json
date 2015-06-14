@@ -6,7 +6,9 @@
     "Adam Miller <adam@pages.me>"
   ],
   "description": "Automatic data-binding for Backbone. Whats not to love?",
-  "main": "dist/rebound.amd.js",
+  "main": [
+    "dist/rebound.runtime.js"
+  ],
   "moduleType": [
     "amd",
     "es6",
@@ -29,9 +31,6 @@
     "test",
     "wrap"
   ],
-  "main": [
-    "dist/rebound.runtime.js"
-  ],
   "devDependencies": {
     "jquery": "2.1.1",
     "underscore": "1.6.0",
@@ -44,6 +43,7 @@
     "almond": "0.2.9",
     "acorn": "~0.6.0",
     "qunit": "~1.14.0",
-    "todomvc-common": "0.1.9"
+    "todomvc-common": "0.1.9",
+    "html5shiv": "~3.7.2"
   }
 }

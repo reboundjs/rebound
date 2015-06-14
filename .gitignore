@@ -24,6 +24,7 @@ tmp
 amd
 dist
 test/demo/templates
+test/rebound.tests.js
 docs
 
 # Dependency directory

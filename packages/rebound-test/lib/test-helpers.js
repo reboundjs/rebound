@@ -30,5 +30,28 @@ document.addEventListener("DOMContentLoaded", function() {
   container.appendChild(content);
 
   document.body.appendChild(container);
-
 });
+
+// Route to the specified url
+var visit = function visit(url){
+
+}
+
+var click = function click(selector){
+
+}
+
+// Fill in the selected input with the text. Should trigger appropreate keyboard events
+var fillIn = function fillIn(selector, text){
+
+}
+
+// Triggers an event on an element
+var trigger = function trigger(url){
+
+}
+
+// Calls a synchronous callback
+var then = function then(callback){
+
+}

@@ -15,7 +15,7 @@ var Collection = Backbone.Collection.extend({
   isCollection: true,
   isData: true,
 
-  model: this.model || Model,
+  model: Model,
 
   __path: function(){return '';},
 

@@ -2,6 +2,7 @@
 // ----------------
 
 import DOMHelper from "dom-helper";
+import render from "htmlbars-runtime/render";
 import hooks from "rebound-component/hooks";
 import helpers from "rebound-component/helpers";
 import $ from "rebound-component/utils";
@@ -20,32 +21,6 @@ function startsWith(str, test){
   return true;
 }
 
-function hydrate(spec, options){
-  // Return a wrapper function that will merge user provided helpers and hooks with our defaults
-  return function(data, options){
-
-    // Rebound's default environment
-    // The application environment is propagated down each render call and
-    // augmented with helpers as it goes
-    var env = {
-      helpers: helpers.helpers,
-      hooks: hooks,
-      dom: new DOMHelper(),
-      useFragmentCache: true
-    };
-
-    // Ensure we have a contextual element to pass to render
-    var contextElement = data.el || document.body;
-
-    // Merge our default helpers and hooks with user provided helpers
-    env.helpers = _.defaults((options.helpers || {}), env.helpers);
-    env.hooks = _.defaults((options.hooks || {}), env.hooks);
-
-    // Call our func with merged helpers and hooks
-    return spec.render(data, env, contextElement);
-  };
-};
-
 
 // New Backbone Component
 var Component = Model.extend({
@@ -53,12 +28,15 @@ var Component = Model.extend({
   isComponent: true,
 
   _render: function(){
-    var i = 0, len = this._toRender.length;
+    var i = 0, len = this._toRender.length, key;
     delete this._renderTimeout;
     for(i=0;i<len;i++){
       this._toRender.shift().notify();
     }
     this._toRender.added = {};
+    for(key in this.env.revalidateQueue){
+      this.env.revalidateQueue[key].revalidate();
+    }
   },
 
   _callOnComponent: function(name, event){
@@ -133,9 +111,11 @@ var Component = Model.extend({
     options = options || (options = {});
     _.bindAll(this, '_callOnComponent', '_listenToService', '_render');
     this.cid = _.uniqueId('component');
+    this.env = hooks.createChildEnv(hooks.createFreshEnv());
+    // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
+    this.env.helpers._callOnComponent = this._callOnComponent;
     this.attributes = {};
     this.changed = {};
-    this.helpers = {};
     this.consumers = [];
     this.services = {};
     this.__parent__ = this.__root__ = this;
@@ -147,10 +127,6 @@ var Component = Model.extend({
     // Set our component's context with the passed data merged with the component's defaults
     this.set((this.defaults || {}));
     this.set((options.data || {}));
-
-    // Call on component is used by the {{on}} helper to call all event callbacks in the scope of the component
-    this.helpers._callOnComponent = this._callOnComponent;
-
 
     // Get any additional routes passed in from options
     this.routes =  _.defaults((options.routes || {}), this.routes);
@@ -166,14 +142,13 @@ var Component = Model.extend({
     this.template = options.template || this.template;
     this.el['data'] = this;
 
-    // Take our precompiled template and hydrates it. When Rebound Compiler is included, can be a handlebars template string.
+
+    // Render our dom and place the dom in our custom element
     // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
     if(this.template){
-      this.template = (typeof this.template === 'object') ? hydrate(this.template) : this.template;
-
-      // Render our dom and place the dom in our custom element
-      // Template accepts [data, options, contextualElement]
-      this.el.appendChild(this.template(this, {helpers: this.helpers}, this.el));
+      (this.template.reboundTemplate) || (this.template = hooks.wrap(this.template));
+      this.template = this.template.render(this, this.env, { contextualElement: this.el }, {});
+      this.el.appendChild(this.template.fragment);
 
       // Add active class to this newly rendered template's link elements that require it
       $(this.el).markLinks();
@@ -355,10 +330,11 @@ Component.extend= function(protoProps, staticProps) {
   return child;
 };
 
-Component.register = function registerComponent(name, options) {
+Component.registerComponent = function registerComponent(name, options) {
   var script = options.prototype;
   var template = options.template;
   var style = options.style;
+  name = name;
 
   var component = this.extend(script, { __name: name });
   var proto = Object.create(HTMLElement.prototype, {});
@@ -367,7 +343,8 @@ Component.register = function registerComponent(name, options) {
     new component({
       template: template,
       outlet: this,
-      data: Rebound.seedData
+      data: Rebound.seedData,
+      content: Rebound.content
     });
   };
 
@@ -388,6 +365,6 @@ Component.register = function registerComponent(name, options) {
   return document.registerElement(name, { prototype: proto });
 }
 
-_.bindAll(Component, 'register');
+_.bindAll(Component, 'registerComponent');
 
 export default Component;
