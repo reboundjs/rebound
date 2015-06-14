@@ -548,9 +548,9 @@ hooks.component = function(morph, env, scope, tagName, params, attrs, templates,
 
   // If a `<content>` outlet is present in component's template, and a template
   // is provided, render it into the outlet
-  if(templates.template && _.isElement(outlet)){
+  if(templates.default && _.isElement(outlet)){
     outlet.innerHTML = '';
-    outlet.appendChild(render.default(templates.template, env, scope, {}).fragment);
+    outlet.appendChild(render.default(templates.default, env, scope, {}).fragment);
   }
 
   morph.setNode(element);
