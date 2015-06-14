@@ -21,7 +21,7 @@
 </p>
 - - -
 
-#### Backbone and HTMLBars are a match made in heaven :heart:
+#### Backbone, HTMLBars and Web Components are a match made in heaven
 
 Now I know what you're thinking:
 
@@ -31,15 +31,15 @@ But just trust me on this, this is going to be good.
 
 #### Wait, what is this again?
 
-**tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. And, like Ember, we can use these features to allow for live data-binding with our Backbone models - change a value in your model or collection, and your views update automagically. Throw in a brilliant Custom-Elements polyfill and *bam* – Rebound.
+**tl;dr**: We have a blazingly fast, syntactically beautiful templating library at our disposal that understands where it is and what is going on in your DOM. We can use these features to allow for live data-binding with our souped-up Backbone models - change a value in your model or collection, and your views update automagically. Throw in a brilliant Custom-Elements polyfill and *bam* – Rebound.
 
 **The full version**: The good people over at [tildeio](https://github.com/tildeio) have been working hard on a variant of Handlebars that emits DOM rather than relying on crazy string manipulation. Go google it for more nitty-gritty details. But long story short is this new library makes data binding very fast and very powerful.
 
-Powerful polyfills for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
-
 [Backbone](https://github.com/jashkenas/backbone), for those of you living under a rock, is a client side MV* framework that makes creating data heavy web pages a breeze. Its evented Models and Collections are exceptionally powerful, and it has a  robust Router which makes navigating in singe page apps possible. However, its views are notoriously minimal and it makes no assumptions about application structure, leaving much up to the developer.
 
-[Rebound](https://github.com/epicmiller/rebound) is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars templates, binding to your models to the dom on render and live updating your page as they change. To make the conversation two-way, event helpers and automatic binding to form elements lets you respond to user interaction. Combine this with an augmented but still powerfully simple router and the new W3 Web Components syntax, and you get an amazingly small but powerful framework to develop data-bound single page apps.
+Powerful polyfills for the new custom elements api that allows us to start using this exceptionally powerfull technology today.
+
+[Rebound](https://github.com/epicmiller/rebound) is a Model-View-Component framework build on Backbone. Rebound replaces Backbone's view layer with HTMLBars templates, binding to your models to the dom on render and live updating your page as they change. To make the conversation two-way, event helpers and automatic binding to form elements lets you respond to user interaction. Combine this with an augmented but still powerfully simple router and package it all in the new W3 Web Components, and you get an amazingly small but powerful framework to develop data-bound single page apps.
 
 So we remove Backbone's most annoying 'feature' - manual data binding – while avoiding the overhead, proprietary convention restrictions and learning curve of Ember. And unlike some of the very few other data-binding libraries out there (heres looking at you React, epoxyjs, knockoutjs, etc), we get the simple interface of the much-loved Handlebars syntax for our templates, without any extra elements or data attributes cluttering our DOM! Server side rendering of data-bound templates will be possible in the near future! Whats there not to love?!
 
