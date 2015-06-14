@@ -72,35 +72,23 @@ QUnit.test('Rebound Components', function() {
       console.log(component)
 
   window.el = document.createElement('div');
-
   document.body.appendChild(el);
   window.attached = false;
-console.log('CREATING');
   var c1 = document.createElement('test-component');
-  console.log('MADE', c1)
-  console.log('created:', c1)
+  equal(c1.data.isComponent, true, 'Components can be created from document.createElement');
   equal(typeof c1.data.cid, 'string', 'Component saves a referance to itself on its contextual element as el.data');
   equal(c1.data.method(), 1, 'Plain functions passed to Component.extend are attached as methods to the Component object');
   equal(c1.innerHTML, '<div><content><div></div></content></div>', 'Component places rendered template inside of outlet, with content');
 
+  var template = compiler.compile(`<test-component foo="bar" biz={{baz}}></test-component>`, {name: 'component-test'});
+  var data = new Model({baz: 'baz'})
+  var partial = template.render(data);
+  var c2 = partial.fragment.childNodes[1];
+  equal(c2.data.isComponent, true, 'Components can be created from other HTMLBars templates');
+  equal(c2.data.get('foo'), 'bar', 'Components can receive properties as plain strings');
+  equal(c2.data.get('biz'), 'baz', 'Components can receive properties as handlebars');
 
-  // el.appendChild(c1);
-  // stop();
-  // setTimeout(function(){
-  //   start();
-  //   equal(window.created, true, 'Created callback is called when component is created in memory');
-  //   equal(window.attached, true, 'Attached callback is called when component is added to the dom tree');
-  // }, 0);
-  //
-  // deepEqual(c1.data.toJSON(), {
-  //   bool: true,
-  //   int: 1,
-  //   arr: [{a:1, b:2, c:3}],
-  //   obj: {d:4, e:5, f:6},
-  //   compProp: 1
-  // }, 'Non-callback and method properties passed into the component prototype are set as default properties');
 
-  // template = compiler.compile("<element name='rebound-demo'><template>asdf</template></element><script>return ({test: 'woo'});</script>");
 
 });
 

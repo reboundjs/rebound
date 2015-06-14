@@ -470,16 +470,18 @@ hooks.component = function(morph, env, scope, tagName, params, attrs, templates,
   for(var prop in componentData){
     let key = prop;
     // For each lazy param passed to our component, have it update the original context when changed.
-    // TODO: Make this sync work with complex arguments with more than one child
-    // if(attrs[key].children === null){
-    componentData[key].onNotify(function(){
-      attrs[key].set(attrs[key].path, componentData[key].value);
-    }); // }
+    if(componentData[key].isLazyValue){
+      componentData[key].onNotify(function(){
+        attrs[key].set(attrs[key].path, componentData[key].value);
+      });
+    }
 
     // For each lazy param passed to our component, have it update the component when changed.
-    attrs[key].onNotify(function(){
-      componentData[key].set(key, attrs[key].value);
-    });
+    if(attrs[key].isLazyValue){
+      attrs[key].onNotify(function(){
+        componentData[key].set(key, attrs[key].value);
+      });
+    }
 
     // Seed the cache
     componentData[key].value;
