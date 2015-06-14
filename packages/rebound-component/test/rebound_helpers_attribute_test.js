@@ -84,7 +84,7 @@ QUnit.test('Rebound Helpers - Attribute', function() {
   evt.initEvent("change", false, true);
 
   var template, data, dom;
-  
+
   template = compiler.compile('<div class={{bar}}>test</div>', {name: 'test/partial'});
   dom = template.render(new Model({foo:'bar', bar:'foo'}));
   equalTokens(dom.fragment, '<div class="foo">test</div>', 'Attribute helper adds element attribute');

@@ -93,12 +93,15 @@ QUnit.test('Rebound Helpers - If', function() {
 
 
 
-  template = compiler.compile('<div>{{#if bool}}{{foo}}{{/if}}</div>', {name: 'test/partial'});
+  template = compiler.compile('<div>{{#if bool}}{{foo}}{{else}}{{bar}}{{/if}}</div>', {name: 'test/partial'});
   data = new Model({foo:'bar', bar:'foo', bool: false});
   dom = template.render(data);
   data.set('bool', true);
   notify(data, 'bool', dom);
   equalTokens(dom.fragment, '<div>bar</div>', 'Block If helper is data bound');
+  data.set('bool', false);
+  notify(data, 'bool', dom);
+  equalTokens(dom.fragment, '<div>foo</div>', 'Block If helper is data bound and returns to old value');
 
 
 

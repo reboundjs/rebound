@@ -174,17 +174,16 @@ helpers.each = function(params, hash, templates){
   var key, value = (params[0].isCollection) ? params[0].models : params[0]; // Accepts collections or arrays
 
   if((!_.isArray(value) || value.length === 0)){
-    if(!templates.inverse || !templates.inverse.yield || !templates.inverse.yield)
-      return '';
-    templates.inverse.yield();
+    if(templates.inverse && templates.inverse.yield)
+      templates.inverse.yield();
   }
   else{
-    this.yield();
     for (key in value) {
       if(value.hasOwnProperty(key))
         this.yieldItem(value[key].cid, [ value[key] ], value);
     }
   }
+  return _.uniqueId('rand');
 };
 
 helpers.partial = function(params, hash, options, env){

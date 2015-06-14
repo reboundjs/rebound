@@ -49,7 +49,8 @@
   ],
   "launch_in_dev": [
     "PhantomJS",
-    "Chrome"
+    "Chrome",
+    "Firefox"
   ],
   "launch_in_ci": [
     "SL_Chrome_Current",

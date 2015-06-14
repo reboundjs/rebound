@@ -2,7 +2,7 @@
 // ----------------
 
 import parse from "./parser";
-import { compileSpec as htmlbarsCompileSpec } from "htmlbars";
+import { compileSpec } from "htmlbars";
 
 function precompile(str, options={}){
 
@@ -14,7 +14,7 @@ function precompile(str, options={}){
   str = parse(str, options);
 
   // Compile
-  str.template = '' + htmlbarsCompileSpec(str.template);
+  str.template = '' + compileSpec(str.template);
 
   // If is a partial
   if(str.isPartial){

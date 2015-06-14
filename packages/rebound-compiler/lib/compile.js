@@ -2,7 +2,7 @@
 // ----------------
 
 import parse from "rebound-compiler/parser";
-import { compileSpec, template } from "htmlbars-compiler/compiler";
+import { compile as htmlbars } from "htmlbars-compiler/compiler";
 import { merge } from "htmlbars-util/object-utils";
 import DOMHelper from "dom-helper";
 import helpers from "rebound-component/helpers";
@@ -14,13 +14,13 @@ function compile(str, options={}){
   var str = parse(str, options);
 
   // Compile our template function
-  var func = hooks.wrap(template(compileSpec(str.template)));
+  var func = htmlbars(str.template);
 
   if(str.isPartial){
     return helpers.registerPartial(options.name, func);
   } else{
     return Component.registerComponent(str.name, {
-      prototype: eval(str.script),
+      prototype: new Function("return " + str.script)(),
       template: func,
       style: str.style
     });

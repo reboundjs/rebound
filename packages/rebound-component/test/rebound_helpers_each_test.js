@@ -57,7 +57,11 @@ function notify(obj, path, template) {
       });
     }
   });
-  template.revalidate();
+
+  for(var key in template.env.revalidateQueue){
+    template.env.revalidateQueue[key].revalidate();
+  }
+  // template.revalidate();
 }
 
 
@@ -176,17 +180,33 @@ QUnit.test('Rebound Helpers - Each', function() {
   notify(data, 'arr', dom);
   equal(dom.fragment.firstChild.innerHTML, '1234', 'Block params defined in higher contexts available to child contexts and re-render.');
 
+  // Empty -> Not-Empty -> Empty
   template = compiler.compile('<div>{{#each arr as | obj1 |}}Template{{else}}Inverse{{/each}}</div>', {name: 'test/partial'});
   data = new Model({arr: []});
   dom = template.render(data);
   equal(dom.fragment.firstChild.innerHTML, 'Inverse', 'If Each has an inverse template, it is rendered when the list is empty');
 
-  data.get('arr').add({list: [{val:4}]});
+  data.get('arr').add({val:1});
   notify(data, 'arr', dom);
   equal(dom.fragment.firstChild.innerHTML, 'Template', 'If Each has an inverse template, the normal template is rendered instead when an item is added.');
 
   data.get('arr').pop();
   notify(data, 'arr', dom);
+  equal(dom.fragment.firstChild.innerHTML, 'Inverse', 'If Each has an inverse template, the Inverse template is rendered when list lengths drops back to zero.');
+
+  // Not-Empty -> Empty -> Not-Empty
+  template = compiler.compile('<div>{{#each arr as | obj1 |}}Template{{else}}Inverse{{/each}}</div>', {name: 'test/partial'});
+  data = new Model({arr: [{val:1}]});
+  dom = template.render(data);
+  equal(dom.fragment.firstChild.innerHTML, 'Template', 'The normal template is rendered when an item is added.');
+
+  data.get('arr').pop();
+  notify(data, 'arr', dom);
   equal(dom.fragment.firstChild.innerHTML, 'Inverse', 'If Each has an inverse template, the Inverse template is rendered when list lengths drops to zero.');
+
+  data.get('arr').add({val:1});
+  notify(data, 'arr', dom);
+  equal(dom.fragment.firstChild.innerHTML, 'Template', 'List is re-rendered again when length goes back up from zero.');
+
 
 });
