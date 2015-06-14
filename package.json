@@ -1,8 +1,8 @@
 {
   "name": "reboundjs",
-  "version": "0.0.79",
+  "version": "0.0.80",
   "description": "Automatic data binding for Backbone using HTMLBars.",
-  "main": "dist/cjs/rebound-precompiler/precompile.js",
+  "main": "dist/cjs/rebound-compiler/precompile.js",
   "scripts": {
     "test": "gulp test",
     "start": "gulp default",
