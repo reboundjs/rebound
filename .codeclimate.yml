@@ -4,3 +4,4 @@ exclude_paths:
  - "shims"
  - "test"
  - "wrap"
+ - "packages/property-compiler/lib/tokenizer.js"
