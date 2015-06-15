@@ -32,11 +32,11 @@
     },
 
     "SL_Opera_Current": {
-      "command": "saucie --browserNameSL='opera' --versionSL='12.0' --platformSL='Windows 7' --ct=0",
+      "command": "saucie --browserNameSL='opera' --versionSL='12.15' --platformSL='Linux' --ct=0",
       "protocol": "tap"
     },
     "SL_Opera_Last": {
-      "command": "saucie --browserNameSL='opera' --versionSL='11.0' --platformSL='Windows 7' --ct=0",
+      "command": "saucie --browserNameSL='opera' --versionSL='11.64' --platformSL='Windows 7' --ct=0",
       "protocol": "tap"
     },
 
