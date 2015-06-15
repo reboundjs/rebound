@@ -140,7 +140,7 @@ var Component = Model.extend({
     this.el = options.outlet || document.createDocumentFragment();
     this.$el = (_.isUndefined(window.Backbone.$)) ? false : window.Backbone.$(this.el);
     this.template = options.template || this.template;
-    this.el['data'] = this;
+    this.el.data = this;
 
 
     // Render our dom and place the dom in our custom element
@@ -254,7 +254,7 @@ var Component = Model.extend({
           }
         }
       }
-    } while(context !== data && (context = context.get(parts.shift())))
+    } while(context !== data && (context = context.get(parts.shift())));
 
     // Queue our render callback to be called after the current call stack has been exhausted
     window.clearTimeout(this._renderTimeout);
@@ -319,7 +319,7 @@ Component.extend= function(protoProps, staticProps) {
 
     // All other values are component methods, leave them be unless already defined.
 
-  };
+  }
 
   // Extend our prototype with any remaining protoProps, overriting pre-defined ones
   if (protoProps){ _.extend(child.prototype, protoProps, staticProps); }
@@ -349,21 +349,21 @@ Component.registerComponent = function registerComponent(name, options) {
   };
 
   proto.attachedCallback = function() {
-    script.attachedCallback && script.attachedCallback.call(this['data']);
+    script.attachedCallback && script.attachedCallback.call(this.data);
   };
 
   proto.detachedCallback = function() {
-    script.detachedCallback && script.detachedCallback.call(this['data']);
-    this['data'].deinitialize();
+    script.detachedCallback && script.detachedCallback.call(this.data);
+    this.data.deinitialize();
   };
 
   proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
-    this['data']._onAttributeChange(attrName, oldVal, newVal);
-    script.attributeChangedCallback && script.attributeChangedCallback.call(this['data'], attrName, oldVal, newVal);
+    this.data._onAttributeChange(attrName, oldVal, newVal);
+    script.attributeChangedCallback && script.attributeChangedCallback.call(this.data, attrName, oldVal, newVal);
   };
 
   return document.registerElement(name, { prototype: proto });
-}
+};
 
 _.bindAll(Component, 'registerComponent');
 

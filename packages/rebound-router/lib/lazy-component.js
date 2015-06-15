@@ -26,7 +26,7 @@ function LazyComponent(){
     });
     service.consumers = this.consumers;
     delete this.consumers;
-  }
+  };
 }
 
 export default LazyComponent;

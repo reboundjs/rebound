@@ -41,7 +41,7 @@ var Rebound = {
       }
       if(document.readyState === "complete") return run();
       document.addEventListener("readystatechange", run);
-    })
+    });
   }
 };
 

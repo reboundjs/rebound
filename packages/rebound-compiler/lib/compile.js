@@ -10,19 +10,18 @@ import hooks from "rebound-component/hooks";
 import Component from "rebound-component/component";
 
 function compile(str, options={}){
+  /* jshint evil: true */
+  // Parse the template and compile our template function
+  var defs = parse(str, options),
+      template = htmlbars(defs.template);
 
-  var str = parse(str, options);
-
-  // Compile our template function
-  var func = htmlbars(str.template);
-
-  if(str.isPartial){
-    return helpers.registerPartial(options.name, func);
+  if(defs.isPartial){
+    return helpers.registerPartial(options.name, template);
   } else{
-    return Component.registerComponent(str.name, {
-      prototype: new Function("return " + str.script)(),
-      template: func,
-      style: str.style
+    return Component.registerComponent(defs.name, {
+      prototype: new Function("return " + defs.script)(),
+      template: template,
+      style: defs.style
     });
   }
 }

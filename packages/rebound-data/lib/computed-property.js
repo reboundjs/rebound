@@ -123,7 +123,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // anything inside that collection or that contains that collection.
     else if(type === 'add' || type === 'remove'){
       _.each(this.__computedDeps, function(dependants, dependancy){
-        if( startsWith(dependancy, vector) || startsWith(vector, dependancy) ) push.call(this._toCall, dependants);;
+        if( startsWith(dependancy, vector) || startsWith(vector, dependancy) ) push.call(this._toCall, dependants);
       }, this);
     }
 

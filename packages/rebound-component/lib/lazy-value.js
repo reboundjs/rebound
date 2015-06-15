@@ -5,7 +5,7 @@ var NIL = function NIL(){},
     EMPTY_ARRAY = [];
 
 function LazyValue(fn, options) {
-  options || (options = {})
+  options || (options = {});
   this.cid = _.uniqueId('lazyValue');
   this.valueFn = fn;
   this.context = options.context || null;
@@ -33,11 +33,11 @@ LazyValue.prototype = {
         child = children[i];
         values[i] = (child && child.isLazyValue) ? child.value : child;
       }
-
-      return this.cache = this.valueFn(values);
+      this.cache = this.valueFn(values);
     } else {
-      return this.cache = this.valueFn(EMPTY_ARRAY);
+      this.cache = this.valueFn(EMPTY_ARRAY);
     }
+    return this.cache;
   },
 
   set: function(key, value, options){

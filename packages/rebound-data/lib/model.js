@@ -1,7 +1,7 @@
 // Rebound Model
 // ----------------
 
-// Rebound **Models** are the basic data object in the framework — frequently
+// Rebound **Models** are the basic data object in the framework - frequently
 // representing a row in a table in a database on your server. The inherit from
 // Backbone Models and have all of the same useful methods you are used to for
 // performing computations and transformations on that data. Rebound augments
@@ -84,7 +84,7 @@ var Model = Backbone.Model.extend({
         value.reset((obj[key] || []), {silent: true});
         if(value.isCollection) changed[key] = [];
         else if(value.isModel && value.isComputedProperty) changed[key] = value.cache.model.changed;
-        else if(value.isModel) changed[key] = value.changed
+        else if(value.isModel) changed[key] = value.changed;
       }
       else if (obj.hasOwnProperty(key)){ changed[key] = obj[key]; }
       else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
@@ -94,7 +94,7 @@ var Model = Backbone.Model.extend({
         changed[key] = undefined;
         this.unset(key, {silent: true});
       }
-    };
+    }
 
     // Any unset changed values will be set to obj[key]
     _.each(obj, function(value, key, obj){
@@ -173,7 +173,7 @@ var Model = Backbone.Model.extend({
 
     // For each attribute passed:
     for(key in attrs){
-      var val = attrs[key],
+      let val = attrs[key],
           paths = $.splitPath(key),
           attr  = paths.pop() || '';           // The key        ex: foo[0].bar --> bar
           target = this.get(paths.join('.')),  // The element    ex: foo.bar.baz --> foo.bar
@@ -190,7 +190,7 @@ var Model = Backbone.Model.extend({
       }
 
       // The old value of `attr` in `target`
-      var destination = target.get(attr, {raw: true}) || {};
+      destination = target.get(attr, {raw: true}) || {};
 
       // Create this new object's lineage.
       lineage = {
@@ -200,7 +200,7 @@ var Model = Backbone.Model.extend({
         path: pathGenerator(target, key),
         silent: true,
         defaults: options.defaults
-      }
+      };
       // - If val is `null` or `undefined`, set to default value.
       // - If val is a `Computed Property`, get its current cache object.
       // - If val (default value or evaluated computed property) is `null`, set to default value or (fallback `undefined`).
@@ -238,7 +238,7 @@ var Model = Backbone.Model.extend({
       // Set the value
       Backbone.Model.prototype.set.call(target, attr, val, options); // TODO: Event cleanup when replacing a model or collection with another value
 
-    };
+    }
 
     return this;
 
@@ -264,6 +264,6 @@ var Model = Backbone.Model.extend({
 Model.extend = function(protoProps, staticProps) {
   $.extractComputedProps(protoProps.defaults);
   return Backbone.Model.extend.call(this, protoProps, staticProps);
-}
+};
 
 export default Model;

@@ -31,6 +31,15 @@
       "protocol": "tap"
     },
 
+    "SL_Opera_Current": {
+      "command": "saucie --browserNameSL='opera' --versionSL='12.0' --platformSL='Windows 7' --ct=0",
+      "protocol": "tap"
+    },
+    "SL_Opera_Last": {
+      "command": "saucie --browserNameSL='opera' --versionSL='11.0' --platformSL='Windows 7' --ct=0",
+      "protocol": "tap"
+    },
+
     "SL_IE_11": {
       "command": "saucie --browserNameSL='internet explorer' --versionSL='11.0' --platformSL='Windows 7' --ct=0",
       "protocol": "tap"
@@ -59,6 +68,8 @@
     "SL_Firefox_Last",
     "SL_Safari_Current",
     "SL_Safari_Last",
+    "SL_Opera_Current",
+    "SL_Opera_Last",
     "SL_IE_11",
     "SL_IE_10",
     "SL_IE_9"

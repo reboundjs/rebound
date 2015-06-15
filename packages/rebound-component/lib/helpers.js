@@ -59,14 +59,15 @@ helpers.registerHelper = function(name, callback){
 ********************************/
 
 helpers.debugger = function(params, hash, options, env){
+  /* jshint -W087 */
   debugger;
   return '';
-}
+};
 
 helpers.log = function(params, hash, options, env){
   console.log.apply(console, params);
   return '';
-}
+};
 
 helpers.on = function(params, hash, options, env){
   var i, callback, delegate, element,
@@ -147,7 +148,7 @@ helpers.unless = function(params, hash, templates){
 
 // Given an array, predicate and optional extra variable, finds the index in the array where predicate is true
 function findIndex(arr, predicate, cid) {
-  if (arr == null) {
+  if (arr === null) {
     throw new TypeError('findIndex called on null or undefined');
   }
   if (typeof predicate !== 'function') {
@@ -194,4 +195,4 @@ helpers.partial = function(params, hash, options, env){
 };
 
 export default helpers;
-export { partials }
+export { partials };

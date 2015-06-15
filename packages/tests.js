@@ -1,5 +1,3 @@
-
-
 import propertyCompiler from "property-compiler/test/property_compiler_test";
 
 import compiler from "rebound-compiler/test/rebound_compiler_test";
@@ -20,5 +18,4 @@ import model from "rebound-data/test/rebound_model_test";
 import collection from "rebound-data/test/rebound_collection_test";
 import computedProperty from "rebound-data/test/rebound_computed_property_test";
 
-
-QUnit.start()
+QUnit.start();
