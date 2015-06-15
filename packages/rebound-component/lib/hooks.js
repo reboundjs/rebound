@@ -263,7 +263,7 @@ hooks.getValue = function(referance){
 
 hooks.subexpr = function subexpr(env, scope, helperName, params, hash) {
   var helper = helpers.lookupHelper(helperName, env),
-      lazyValue, i = 0, l = 0,
+      lazyValue, i, l,
       name = `subexpr ${helperName}: `;
   for (i = 0, l = params.length; i < l; i++) {
     if(params[i].isLazyValue) name += params[i].cid;
@@ -290,7 +290,7 @@ hooks.subexpr = function subexpr(env, scope, helperName, params, hash) {
 
 hooks.concat = function concat(env, params){
 
-  var name = "concat: ", i = 0;
+  var name = "concat: ", i, l;
 
   if(params.length === 1){
     return params[0];
