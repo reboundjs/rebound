@@ -1,7 +1,8 @@
 languages:
   JavaScript: true
 exclude_paths:
- - "shims"
- - "test"
- - "wrap"
+ - "shims/*"
+ - "test/*"
+ - "wrap/*"
+ - "Gulpfile.js"
  - "packages/property-compiler/lib/tokenizer.js"
