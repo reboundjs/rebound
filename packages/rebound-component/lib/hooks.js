@@ -129,15 +129,15 @@ function streamHelper(morph, env, scope, visitor, params, hash, helper, template
   }
 
   return lazyValue;
+}
+
+hooks.cleanupRenderNode = function(){
 };
 
-hooks.cleanupRenderNode= function(){
-};
-
-hooks.destroyRenderNode= function(renderNode){
+hooks.destroyRenderNode = function(renderNode){
 
 };
-hooks.willCleanupTree= function(renderNode){
+hooks.willCleanupTree = function(renderNode){
   // for(let i in renderNode.lazyValues)
   //   if(renderNode.lazyValues[i].isLazyValue)
   //     renderNode.lazyValues[i].destroy();
@@ -167,7 +167,7 @@ hooks.createFreshEnv = function(){
     revalidateQueue: {},
     isReboundEnv: true
   };
-}
+};
 
 hooks.createChildEnv = function(parent){
   var env = createObject(parent);
@@ -180,7 +180,7 @@ hooks.createFreshScope = function() {
   // separate dictionary to track whether a local was bound.
   // See `bindLocal` for more information.
   return { self: null, blocks: {}, locals: {}, localPresent: {}, streams: {} };
-}
+};
 
 hooks.createChildScope = function(parent) {
   var scope = createObject(parent);
@@ -236,7 +236,7 @@ hooks.linkRenderNode = function linkRenderNode(renderNode, env, scope, path, par
 
   // Save the path on our render node for easier debugging
   renderNode.path = path;
-  renderNode.lazyValues || (renderNode.lazyValues = {})
+  renderNode.lazyValues || (renderNode.lazyValues = {});
 
   if (params && params.length) {
     for (var i = 0; i < params.length; i++) {
@@ -263,9 +263,9 @@ hooks.getValue = function(referance){
 
 hooks.subexpr = function subexpr(env, scope, helperName, params, hash) {
   var helper = helpers.lookupHelper(helperName, env),
-      lazyValue,
+      lazyValue, i = 0, l = 0,
       name = `subexpr ${helperName}: `;
-  for (var i = 0, l = params.length; i < l; i++) {
+  for (i = 0, l = params.length; i < l; i++) {
     if(params[i].isLazyValue) name += params[i].cid;
   }
 
@@ -277,7 +277,7 @@ hooks.subexpr = function subexpr(env, scope, helperName, params, hash) {
     lazyValue = hooks.get(env, context, helperName);
   }
 
-  for (var i = 0, l = params.length; i < l; i++) {
+  for (i = 0, l = params.length; i < l; i++) {
     if(params[i].isLazyValue) {
       lazyValue.addDependentValue(params[i]);
     }
@@ -290,13 +290,13 @@ hooks.subexpr = function subexpr(env, scope, helperName, params, hash) {
 
 hooks.concat = function concat(env, params){
 
-  var name = "concat: ";
+  var name = "concat: ", i = 0;
 
   if(params.length === 1){
     return params[0];
   }
 
-  for (var i = 0, l = params.length; i < l; i++) {
+  for (i = 0, l = params.length; i < l; i++) {
     name += (params[i].isLazyValue) ? params[i].cid : params[i];
   }
 
@@ -305,14 +305,14 @@ hooks.concat = function concat(env, params){
   var lazyValue = new LazyValue(function(params) {
     var value = "";
 
-    for (var i = 0, l = params.length; i < l; i++) {
+    for (i = 0, l = params.length; i < l; i++) {
       value += (params[i].isLazyValue) ? params[i].value : params[i];
     }
 
     return value;
   }, {context: params[0].context});
 
-  for (var i = 0, l = params.length; i < l; i++) {
+  for (i = 0, l = params.length; i < l; i++) {
     lazyValue.addDependentValue(params[i]);
   }
 
@@ -324,15 +324,14 @@ hooks.concat = function concat(env, params){
 
 // Content Hook
 hooks.content = function content(morph, env, context, path, lazyValue){
-  var lazyValue,
-      value,
+  var value,
       observer = subtreeObserver,
       domElement = morph.contextualElement,
       helper = helpers.lookupHelper(path, env);
 
   var updateTextarea = function(lazyValue){
     domElement.value = lazyValue.value;
-  }
+  };
 
   // Two way databinding for textareas
   if(domElement.tagName === 'TEXTAREA'){
@@ -425,10 +424,10 @@ hooks.attribute = function attribute(attrMorph, env, scope, name, value){
 };
 
 hooks.partial = function partial(renderNode, env, scope, path){
-  var partial = partials[path];
-  if( partial && partial.render ){
+  let part = partials[path];
+  if( part && part.render ){
     env = Object.create(env);
-    env.template = partial.render(scope.self, env, {contextualElement: renderNode.contextualElement}, scope.block);
+    env.template = part.render(scope.self, env, {contextualElement: renderNode.contextualElement}, scope.block);
     return env.template.fragment;
   }
 };
@@ -447,7 +446,7 @@ hooks.component = function(morph, env, scope, tagName, params, attrs, templates,
       componentData = {};
 
   // Create a plain data object to pass to our new component as seed data
-  for(var key in attrs){
+  for(let key in attrs){
     seedData[key] = hooks.getValue(attrs[key]);
   }
 
@@ -456,11 +455,11 @@ hooks.component = function(morph, env, scope, tagName, params, attrs, templates,
   // Global seed data is consumed by element as its created. This is not scoped and very dumb.
   Rebound.seedData = seedData;
   element = document.createElement(tagName);
-  component = element['data'];
+  component = element.data;
   delete Rebound.seedData;
 
   // For each lazy param passed to our component, create its lazyValue
-  for(key in seedData){
+  for(let key in seedData){
     componentData[key] = streamProperty(component, key);
   }
 
@@ -544,7 +543,7 @@ hooks.component = function(morph, env, scope, tagName, params, attrs, templates,
     if(el.tagName === 'CONTENT') outlet = el;
     if(el.tagName.indexOf('-') > -1) return false;
     return true;
-  })
+  });
 
   // If a `<content>` outlet is present in component's template, and a template
   // is provided, render it into the outlet
