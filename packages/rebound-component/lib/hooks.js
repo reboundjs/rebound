@@ -297,7 +297,7 @@ hooks.concat = function concat(env, params){
   }
 
   for (i = 0, l = params.length; i < l; i++) {
-    name += (params[i].isLazyValue) ? params[i].cid : params[i];
+    name += (params[i] && params[i].isLazyValue) ? params[i].cid : params[i];
   }
 
   if(env.streams[name]) return env.streams[name];
@@ -306,7 +306,7 @@ hooks.concat = function concat(env, params){
     var value = "";
 
     for (i = 0, l = params.length; i < l; i++) {
-      value += (params[i].isLazyValue) ? params[i].value : params[i];
+      value += (params[i] && params[i].isLazyValue) ? params[i].value : (params[i] || '');
     }
 
     return value;

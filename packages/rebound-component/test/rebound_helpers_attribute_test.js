@@ -198,4 +198,16 @@ QUnit.test('Rebound Helpers - Attribute', function() {
   equalTokens(dom.fragment, "<input type='checkbox' checked='true'>", 'Checked Attribute on checkbox present on true, and is data bound');
 
 
+  template = compiler.compile('<div class="{{foo}} {{bar}}"></div>', {name: 'test/partial'});
+  data = new Model({foo: 'foo', bar: 'bar'});
+  dom = template.render(data);
+  equalTokens(dom.fragment, "<div class='foo bar'></div>", 'Multiple attribute morphs concat properly');
+  data.set('bar', 'foo');
+  notify(data, ['bar'], dom);
+  equalTokens(dom.fragment, "<div class='foo foo'></div>", 'Concatted attributes are data bound');
+  data.set('bar', undefined);
+  notify(data, ['bar'], dom);
+  equalTokens(dom.fragment, "<div class='foo'></div>", 'Concatted attributes handle undefined values');
+
+
 });
