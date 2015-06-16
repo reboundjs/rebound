@@ -28,4 +28,3 @@ function compile(str, options={}){
 }
 
 export default { compile };
-
