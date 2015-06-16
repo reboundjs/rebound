@@ -209,4 +209,17 @@ QUnit.test('Rebound Helpers - Each', function() {
   equal(dom.fragment.firstChild.innerHTML, 'Template', 'List is re-rendered again when length goes back up from zero.');
 
 
+  // Scoping
+  template = compiler.compile('<div>{{#each arr as | local |}}{{local.val}} {{parent}}{{/each}}</div>', {name: 'test/partial'});
+  data = new Model({parent: 'bar', arr: [{val:'foo'}]});
+  dom = template.render(data);
+  equal(dom.fragment.firstChild.innerHTML, 'foo bar', 'Inside each blocks have access to both block and parent scopes');
+  data.set('parent', 'foo')
+  notify(data, 'parent', dom);
+  equal(dom.fragment.firstChild.innerHTML, 'foo foo', 'Each blocks are bound to parent scope args');
+  data.set('arr[0].val', 'bar');
+  notify(data.get('arr[0]'), 'val', dom);
+  equal(dom.fragment.firstChild.innerHTML, 'bar foo', 'Each blocks are bound to block scope args');
+
+
 });

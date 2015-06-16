@@ -4,10 +4,10 @@
 import LazyValue from "rebound-component/lazy-value";
 import $ from "rebound-component/utils";
 
-
 var helpers  = {},
     partials = {};
 
+window.partials = partials;
 helpers.registerPartial = function(name, func){
   if(func && typeof name === 'string'){
     return partials[name] = func;
@@ -181,7 +181,7 @@ helpers.each = function(params, hash, templates){
   else{
     for (key in value) {
       if(value.hasOwnProperty(key))
-        this.yieldItem(value[key].cid, [ value[key] ], params[0]);
+        this.yieldItem(value[key].cid, [ value[key] ]);
     }
   }
   return _.uniqueId('rand');
