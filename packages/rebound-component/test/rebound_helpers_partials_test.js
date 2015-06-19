@@ -89,10 +89,15 @@ QUnit.test('Rebound Helpers - Partial', function() {
   notify(data, ['foo', 'bar'], env);
   equalTokens(dom.fragment, '<div class="bar">foo</div>bar', 'Partial is data bound to data in scope');
 
+  partial = compiler.compile('{{partial partialName}}', {name: 'test2'});
+  data = new Model({partialName:'test/partial', foo:'bar', bar:'foo'});
+  dom = partial.render(data, env);
+  equalTokens(dom.fragment, '<div class="foo">bar</div>', 'Partial can take a dynamic variable as partial name');
+
 
 
   template = compiler.compile('<div class={{test.val}}>{{foo}}</div>', {name: 'test/partial2'});
-  partial = compiler.compile('{{#each local as |test|}}{{partial "test/partial2"}}{{/each}}', {name: 'test2'});
+  partial = compiler.compile('{{#each local as |test|}}{{partial "test/partial2"}}{{/each}}', {name: 'test3'});
   data = new Model({foo:'bar', local:[{val: 'foo'}]});
   dom = partial.render(data, env);
   equalTokens(dom.fragment, '<div class="foo">bar</div>', 'Partial has access to data in parents block scope');
