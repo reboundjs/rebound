@@ -129,6 +129,11 @@ QUnit.test('Rebound Services', function() {
 
   equal(instance1.get('service2.foo'), 'bar', 'Services continue to persist even after consuming object deinitialization.');
 
+  instance1.set('service2.foo', 'foo');
+  instance1.reset();
+  equal(instance1.get('service2.foo'), 'foo', 'Services are unaffected by comsuming objects\' reset events.');
+
+
 
 });
 

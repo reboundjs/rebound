@@ -106,7 +106,7 @@ var Model = Backbone.Model.extend({
       value = this.attributes[key];
       if(value === obj[key]) continue;
       else if(_.isUndefined(value)) obj[key] && (changed[key] = obj[key]);
-      else if (key === this.idAttribute || value.isComponent) continue;
+      else if (value.isComponent) continue;
       else if (value.isCollection || value.isModel || value.isComputedProperty){
         value.reset((obj[key] || []), {silent: true});
         if(value.isCollection) changed[key] = [];
