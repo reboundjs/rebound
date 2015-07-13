@@ -57,6 +57,33 @@ var Model = Backbone.Model.extend({
     return this.set(attr, !val, options);
   },
 
+  destroy: function(options) {
+    options = options ? _.clone(options) : {};
+    var model = this;
+    var success = options.success;
+    var wait = options.wait;
+
+    var destroy = function() {
+      model.trigger('destroy', model, model.collection, options);
+    };
+
+    options.success = function(resp) {
+      if (wait) destroy();
+      if (success) success.call(options.context, model, resp, options);
+      if (!model.isNew()) model.trigger('sync', model, resp, options);
+    };
+
+    var xhr = false;
+    if (this.isNew()) {
+      _.defer(options.success);
+    } else {
+      wrapError(this, options);
+      xhr = this.sync('delete', this, options);
+    }
+    if (!wait) destroy();
+    return xhr;
+  },
+
   // Model Reset does a deep reset on the data tree starting at this Model.
   // A `previousAttributes` property is set on the `options` property with the Model's
   // old values.
