@@ -5,7 +5,7 @@
     <img src="https://travis-ci.org/reboundjs/rebound.svg?branch=master" alt="Build Status" />
     <br>
   </a>
-  <a href="https://gitter.im/epicmiller/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+  <a href="https://gitter.im/reboundjs/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
     <img src="https://badges.gitter.im/Join%20Chat.svg" alt="Gitter" />
     <br>
   </a>
