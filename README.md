@@ -1,8 +1,8 @@
 <p align="center">
   <img src="http://reboundjs.com/images/rebound.svg" alt="Rebound Logo" width="520px" />
   <br>
-  <a href="https://travis-ci.org/epicmiller/rebound">
-    <img src="https://travis-ci.org/epicmiller/rebound.svg?branch=master" alt="Build Status" />
+  <a href="https://travis-ci.org/reboundjs/rebound">
+    <img src="https://travis-ci.org/reboundjs/rebound.svg?branch=master" alt="Build Status" />
     <br>
   </a>
   <a href="https://gitter.im/epicmiller/rebound?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
