@@ -246,7 +246,7 @@ gulp.task('cleanrelease', function(cb){
 gulp.task('clone', ['cleanrelease'],  function(cb){
   console.log('Cloning reboundjs-dist to /tmp');
   mkdirp.sync('./tmp');
-  git.clone('https://github.com/epicmiller/reboundjs-dist.git', {cwd: './tmp'}, cb);
+  git.clone('https://github.com/reboundjs/rebound-dist.git', {cwd: './tmp'}, cb);
 });
 
 gulp.task('release-copy', ['clone'], function(cb){
