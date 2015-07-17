@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="http://reboundjs.com/images/rebound.svg" alt="Rebound Logo" width="520px" />
+  <img src="http://reboundjs.com/images/rebound-large.svg" alt="Rebound Logo" width="420px" />
   <br>
   <a href="https://travis-ci.org/reboundjs/rebound">
     <img src="https://travis-ci.org/reboundjs/rebound.svg?branch=master" alt="Build Status" />
