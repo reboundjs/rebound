@@ -90,8 +90,18 @@ QUnit.test('Rebound Components', function() {
   equal(c2.innerHTML, '<div><content>Test Content</content></div>', 'Component places rendered template inside of outlet, with supplied content');
 
 
+  var template = compiler.compile(`{{#each arr as |obj|}}<test-component val={{obj}}>Test Content</test-component>{{/each}}`, {name: 'component-each-test'});
+  var data = new Model({arr: [{val: 0}, {val: 1}, {val: 2}]});
+  var partial = template.render(data);
+  var c3 = partial.fragment.querySelectorAll('test-component')[0];
+  equal(c3.data.isComponent, true, 'Components can be created inside block helpers');
+  deepEqual(c3.data.get('val').toJSON(), data.get('arr[0]').toJSON(), 'Components can receive locally defined objects inside block helpers');
+  c3.data.set('val.val', 'baz');
+  QUnit.stop();
+  setTimeout(function(){
+    QUnit.start();
+    equal(data.get('arr[0].val'), 'baz', 'Components can modify local scope objects passed in via a block helper and the results are databound to the original object.');
+  }, 10);
 });
-
-
 
 // Components pass default settings to child models and are reset propery on reset()
