@@ -3,11 +3,13 @@
 // real service/component (they are the same), and when the service finally
 // loads, its ```hydrate``` method is called. All consumers of the service will
 // have the now fully loaded service set, the LazyService will transfer all of
-// its consumers over to the fully loaded service, and then destroy itself.
+// its consumers over to the fully loaded service, and then commit seppiku,
+// destroying itself.
 function LazyComponent(){
   this.isService = true;
   this.isComponent = true;
   this.isModel = true;
+  this.isLazyComponent = true;
   this.attributes = {};
   this.consumers = [];
   this.set = this.on = this.off = function(){

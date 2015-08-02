@@ -22,6 +22,7 @@
     "package.json"
   ],
   "dependencies": {
+    "gulp-merge": "^0.1.1",
     "htmlbars": "0.13.30"
   },
   "devDependencies": {

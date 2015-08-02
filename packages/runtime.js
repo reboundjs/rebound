@@ -34,14 +34,19 @@ var Rebound = {
   ComputedProperty: ComputedProperty,
   Component: Component,
   start: function(options){
-    return new Promise(function(resolve, reject) {
-      function run() {
+    return new Promise((resolve, reject) => {
+      let run = () => {
         if(document.readyState !== "complete") return;
-        Rebound.router = new Router(options, resolve);
+        delete this.router;
+        this.router = new Router(options, resolve);
       }
       if(document.readyState === "complete") return run();
       document.addEventListener("readystatechange", run);
     });
+  },
+  stop: function(){
+    if(!this.router) return console.error('No running Rebound router found!');
+    this.router.stop();
   }
 };
 
