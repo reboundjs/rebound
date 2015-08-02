@@ -195,7 +195,7 @@ gulp.task('watch', ['connect'], function() {
 // The default task (called when you run `gulp` from cli)
 gulp.task('default', [ 'watch' ]);
 
-gulp.task('build', [ 'recompile-demo' ]);
+gulp.task('build', [ 'compile-demo', 'compile-apps' ]);
 
 gulp.task('test', function() {
   qunit('test/index.html', {
