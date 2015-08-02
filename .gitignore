@@ -24,8 +24,8 @@ tmp
 amd
 dist
 test/demo/templates
-test/demo/dummy-apps/*.js
-test/demo/dummy-apps/**/*.js
+test/dummy-apps/*.js
+test/dummy-apps/**/*.js
 
 test/rebound.tests.js
 docs

@@ -111,14 +111,27 @@ gulp.task('amd', ['clean'], function() {
   .pipe(gulp.dest('dist'))
 });
 
-gulp.task('runtime', ['amd'], function() {
+gulp.task('shims', function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
     // 'bower_components/webcomponentsjs/webcomponents-lite.min.js',
     'node_modules/document-register-element/build/document-register-element.max.js',
+    'bower_components/setimmediate/setImmediate.js',
+    'bower_components/promise-polyfill/Promise.js',
     'bower_components/backbone/backbone.js',
-    'bower_components/requirejs/require.js',
+    'bower_components/requirejs/require.js'
+    ])
+  .pipe(concat('rebound.shims.js'))
+  .pipe(gulp.dest('dist'))
+  .pipe(uglify())
+  .pipe(rename({basename: "rebound.shims.min"}))
+  .pipe(gulp.dest('dist'));
+});
+
+gulp.task('runtime', ['shims', 'amd'], function() {
+  return gulp.src([
+    'dist/rebound.shims.js',
     'wrap/start.frag',
     'bower_components/almond/almond.js',
     'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
