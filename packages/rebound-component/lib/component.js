@@ -75,6 +75,13 @@ var Component = Model.extend({
     Rebound.Model.prototype.deinitialize.apply(this, arguments);
   },
 
+  // LazyComponents have an onLoad function that calls all the registered callbacks
+  // after it has been hydrated. If we are calling onLoad on an already loaded
+  // component, just call the callback provided.
+  onLoad: function(cb){
+    cb(this);
+  },
+
   // Set is overridden on components to accept components as a valid input type.
   // Components set on other Components are mixed in as a shared object. {raw: true}
   // It also marks itself as a consumer of this component

@@ -10,7 +10,7 @@ before_script:
   - npm install -g bower
   - "[[ $SUITE = phantomjs ]] && npm install -g gulp || true"
   - "[[ $SUITE = saucelabs ]] && npm install -g saucie || true"
-  - "[[ $SUITE = saucelabs ]] && npm install -g testem || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g testem@0.8.3 || true"
 env:
   - SUITE=phantomjs
   - SUITE=saucelabs

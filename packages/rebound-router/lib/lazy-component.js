@@ -6,6 +6,7 @@
 // its consumers over to the fully loaded service, and then commit seppiku,
 // destroying itself.
 function LazyComponent(){
+  var loadCallbacks = [];
   this.isService = true;
   this.isComponent = true;
   this.isModel = true;
@@ -27,8 +28,17 @@ function LazyComponent(){
       if(component.defaults) component.defaults[key] = service;
     });
     service.consumers = this.consumers;
+
+    // Call all of our callbacks
+    _.each(loadCallbacks, (cb)=>{ cb(service); });
+
+    // Destroy everything
+    delete this.loadCallbacks;
     delete this.consumers;
   };
+  this.onLoad = function(cb){
+    loadCallbacks.push(cb)
+  }
 }
 
 export default LazyComponent;

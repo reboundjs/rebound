@@ -276,9 +276,6 @@ var ReboundRouter = Backbone.Router.extend({
         resolve(PageClass);
       }, function(err){
         console.error(err);
-        jsElement = $('script[src="'+jsUrl+'"]')[0];
-        jsElement.setAttribute('id', jsID);
-        jsElement.dataset.error = '';
         reject(err);
       });
     });

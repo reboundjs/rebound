@@ -14,6 +14,8 @@ var container = document.createElement('main');
     container.style.boxSizing = 'border-box';
     container.style.transform = 'scale(.4)';
     container.style.transformOrigin = '100% 100%';
+    container.style['-webkit-transform'] = 'scale(.4)';
+    container.style['-webkit-transformOrigin'] = '100% 100%';
 var nav = document.createElement('nav');
     nav.id = "nav";
 var content = document.createElement('content');
@@ -217,15 +219,23 @@ function serviceLoading(){
   QUnit.stop();
 
   app.then(function(){
+    // Block until services are loaded
+    return new Promise(function(resolve, reject){
+      var count = 0;
+      function checkServices(){
+        if(++count == 2) resolve();
+      };
+      Rebound.services.service1.onLoad(checkServices);
+      Rebound.services.service2.onLoad(checkServices);
+    });
+  })
+  .then(function(){
     QUnit.start();
 
     equal(Rebound.services.service1.isLazyComponent, undefined, 'After services are loaded, lazy components are replaced by their actual objects on the global Rebound object.');
     equal(Rebound.services.page.attributes.service1.cid, Rebound.services.service1.cid, 'Components consuming a service have their instances of the service upgraded from a LazyComponent when the service loads.');
     equal(Rebound.services.page.attributes.service2.cid, Rebound.services.service2.cid, 'Components consuming multiple services referance multiple servces appropriately.');
     equal(Rebound.services.service1.consumers.length, 1, 'Services track who is consuming them in their `consumers` property.');
-
-    // Block until services are loaded
-    while(Rebound.services.service1.isLazyComponent || Rebound.services.service2.isLazyComponent){1}
 
     equal(typeof Rebound.services.page.services.service1.cid, 'string', 'Pages that consume a service track the service they consume in their `services` hash.');
     equal(typeof Rebound.services.page.services.service2.cid, 'string', 'Pages that consume multiple services track the additional services they consume in their `services` hash.');
@@ -279,7 +289,6 @@ QUnit.test('Rebound Router', function() {
   .then(function(){
     // Reset our path to home after all route tests are done
     history.pushState({}, "Router Tests Done", oldLocation);
+    QUnit.start();
   })
-
-
 });
