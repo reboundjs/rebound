@@ -223,6 +223,10 @@ function serviceLoading(){
     equal(Rebound.services.page.attributes.service1.cid, Rebound.services.service1.cid, 'Components consuming a service have their instances of the service upgraded from a LazyComponent when the service loads.');
     equal(Rebound.services.page.attributes.service2.cid, Rebound.services.service2.cid, 'Components consuming multiple services referance multiple servces appropriately.');
     equal(Rebound.services.service1.consumers.length, 1, 'Services track who is consuming them in their `consumers` property.');
+
+    // Block until services are loaded
+    while(Rebound.services.service1.isLazyComponent || Rebound.services.service2.isLazyComponent){1}
+
     equal(typeof Rebound.services.page.services.service1.cid, 'string', 'Pages that consume a service track the service they consume in their `services` hash.');
     equal(typeof Rebound.services.page.services.service2.cid, 'string', 'Pages that consume multiple services track the additional services they consume in their `services` hash.');
     equal(Rebound.services.page.services.service2.isLazyComponent, undefined, 'Pages that consume services have their services upgraded from a LazyComponent when everything is loaded.');
@@ -262,7 +266,9 @@ function serviceLoading(){
 
 
 QUnit.test('Rebound Router', function() {
-
+  // Start off at a standard url and save what our page was loaded at
+  var oldLocation = window.location.pathname;
+  history.pushState({}, "Router Tests Start", "/test");
   default404()
   .then(custom404)
   .then(defaultIndex)
@@ -272,7 +278,7 @@ QUnit.test('Rebound Router', function() {
   .then(serviceLoading)
   .then(function(){
     // Reset our path to home after all route tests are done
-    history.pushState({}, "Router Tests Done", "/test");
+    history.pushState({}, "Router Tests Done", oldLocation);
   })
 
 
