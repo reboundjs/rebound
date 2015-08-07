@@ -24,6 +24,7 @@ var LOADING = 'loading';
 Backbone.history.loadUrl = function(fragment) {
   fragment = this.fragment = this.getFragment(fragment);
   var resp = false;
+
   _.any(this.handlers, function(handler) {
     if (handler.route.test(fragment)) {
       resp = handler.callback(fragment);
@@ -207,61 +208,61 @@ var ReboundRouter = Backbone.Router.extend({
 
   },
 
+  // Give our new page component, load routes and render a new instance of the
+  // page component in the top level outlet.
+  _installResource: function(PageApp, appName, container) {
+    var oldPageName, pageInstance, routes = [];
+    var isService = (container !== this.config.container);
+    container.classList.remove('error', 'loading');
 
-    // Give our new page component, load routes and render a new instance of the
-    // page component in the top level outlet.
-    _installResource: function(PageApp, appName, container) {
-      var oldPageName, pageInstance, routes = [];
-      var isService = (container !== this.config.container);
-      container.classList.remove('error', 'loading');
+    if(!isService && this.current) this._uninstallResource();
 
-      if(!isService && this.current) this._uninstallResource();
+    // Load New PageApp, give it it's name so we know what css to remove when it deinitializes
+    pageInstance = new PageApp();
+    pageInstance.__name = this.uid + '-' + appName;
 
-      // Load New PageApp, give it it's name so we know what css to remove when it deinitializes
-      pageInstance = new PageApp();
-      pageInstance.__name = this.uid + '-' + appName;
+    // Add to our page
+    container.innerHTML = '';
+    container.appendChild(pageInstance);
 
-      // Add to our page
-      container.innerHTML = '';
-      container.appendChild(pageInstance);
+    // Make sure we're back at the top of the page
+    document.body.scrollTop = 0;
 
-      // Make sure we're back at the top of the page
-      document.body.scrollTop = 0;
+    // Augment ApplicationRouter with new routes from PageApp added in reverse order to preserve order higherarchy
+    if(!isService) this.route(this._currentRoute, 'default', function(){ return 'DEFAULT'; });
+    _.each(pageInstance.data.routes, (value, key) => {
+      // If key is a stringified regexp literal, convert to a regexp object
+      if(key[0] === '/') key = new RegExp(key.split('/')[1], key.split('/')[2]);
+      routes.unshift({key: key, value: value});
+      // Add the new callback referance on to our router and add the route handler
+    }, this);
+    _.each(routes, (route) => {
+      this.route(route.key, route.value, function () { return pageInstance.data[route.value].apply(pageInstance.data, arguments); });
+    });
 
-      // Augment ApplicationRouter with new routes from PageApp added in reverse order to preserve order higherarchy
-      if(!isService) this.route(this._currentRoute, 'default', function(){});
-      _.each(pageInstance.data.routes, (value, key) => {
-        // If key is a stringified regexp literal, convert to a regexp object
-        if(key[0] === '/') key = new RegExp(key.split('/')[1], key.split('/')[2]);
-        routes.unshift({key: key, value: value});
-        // Add the new callback referance on to our router and add the route handler
-      }, this);
-      _.each(routes, (route) => {
-        this.route(route.key, route.value, function () { return pageInstance.data[route.value].apply(pageInstance.data, arguments); });
-      });
+    var name = (isService) ? appName : 'page';
+    if(!isService) this.current = pageInstance;
 
-      var name = (isService) ? appName : 'page';
-      if(!isService) this.current = pageInstance;
+    // If the target is a dummy service, hydrate it with the proper service object
+    // Otherwise, install the page instance here
+    if(window.Rebound.services[name].isService)
+      window.Rebound.services[name].hydrate(pageInstance.data);
+    window.Rebound.services[name] = pageInstance.data;
 
-      // If the target is a dummy service, hydrate it with the proper service object
-      // Otherwise, install the page instance here
-      if(window.Rebound.services[name].isService)
-        window.Rebound.services[name].hydrate(pageInstance.data);
-      window.Rebound.services[name] = pageInstance.data;
+    // Always return a promise
+    return new Promise(function(resolve, reject){
 
-      // Always return a promise
-      return new Promise(function(resolve, reject){
-        // Re-trigger route so the newly added route may execute if there's a route match.
-        // If no routes are matched, app will hit wildCard route which will then trigger 404
-        if(!isService){
-          let res = Backbone.history.loadUrl(Backbone.history.fragment);
-          if(res && typeof res.then === 'function') return res.then(resolve);
-          return resolve(res);
-        }
-        // Return our newly installed app
-        return resolve(pageInstance);
-      });
-    },
+      // Re-trigger route so the newly added route may execute if there's a route match.
+      // If no routes are matched, app will hit wildCard route which will then trigger 404
+      if(!isService){
+        let res = Backbone.history.loadUrl(Backbone.history.fragment);
+        if(res && typeof res.then === 'function') return res.then(resolve);
+        return resolve(res);
+      }
+      // Return our newly installed app
+      return resolve(pageInstance);
+    });
+  },
 
   _fetchJavascript: function(routeName, appName){
     var jsID = this.uid + '-' + appName + '-js',
@@ -362,7 +363,8 @@ var ReboundRouter = Backbone.Router.extend({
         if(!(cssElement instanceof Element) || typeof PageClass !== 'function') return throwError();
         (!isService && !isError) && (this.status = SUCCESS);
         cssElement && cssElement.removeAttribute('disabled');
-        this._installResource(PageClass, appName, container).then(resolve);
+
+        this._installResource(PageClass, appName, container).then(resolve, resolve);
       };
 
       // If loading a page, set status to loading
@@ -370,7 +372,6 @@ var ReboundRouter = Backbone.Router.extend({
 
       // If Page Is Already Loaded Then The Route Does Not Exist. 404 and Exit.
       if (this.current && this.current.__name === (this.uid + '-' + appName)) return throwError();
-
       // Fetch our css and js in paralell, install or throw when both complete
       Promise.all([this._fetchCSS(routeName, appName), this._fetchJavascript(routeName, appName)])
       .then(install, throwError);

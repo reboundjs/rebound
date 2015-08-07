@@ -20,6 +20,7 @@ function LazyComponent(){
     return (path) ? undefined : this;
   };
   this.hydrate = function(service){
+    this._component = service;
     _.each(this.consumers, function(consumer){
       var component = consumer.component,
           key = consumer.key;
@@ -31,10 +32,7 @@ function LazyComponent(){
 
     // Call all of our callbacks
     _.each(loadCallbacks, (cb)=>{ cb(service); });
-
-    // Destroy everything
     delete this.loadCallbacks;
-    delete this.consumers;
   };
   this.onLoad = function(cb){
     loadCallbacks.push(cb)
