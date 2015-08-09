@@ -294,11 +294,15 @@ var ReboundRouter = Backbone.Router.extend({
     return new Promise(function(resolve, reject){
       var count = 0, ti;
       if(cssElement === null){
+        // Construct our `<link>` element.
         cssElement = document.createElement('link');
         cssElement.setAttribute('type', 'text/css');
         cssElement.setAttribute('rel', 'stylesheet');
         cssElement.setAttribute('href', cssUrl);
         cssElement.setAttribute('id', cssID);
+
+        // On successful load, clearInterval and resolve.
+        // On failed load, clearInterval and reject.
         var successCallback = function(){
           clearInterval(ti);
           resolve(cssElement);
@@ -319,10 +323,14 @@ var ReboundRouter = Backbone.Router.extend({
           }
         }, 50);
 
+        // Modern browsers support loading events on `<link>` elements, bind these
+        // events. These will be callsed before our interval is called and they will
+        // clearInterval so the resolve/reject handlers aren't called twice.
         $(cssElement).on('load', successCallback);
         $(cssElement).on('error', errorCallback);
         $(cssElement).on('readystatechange', function(){ clearInterval(ti); })
 
+        // Add our `<link>` element to the page.
         document.head.appendChild(cssElement);
 
       } else {
