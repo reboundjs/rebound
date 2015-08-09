@@ -211,8 +211,8 @@ gulp.task('default', [ 'watch' ]);
 
 gulp.task('build', [ 'compile-demo', 'compile-apps' ]);
 
-gulp.task('test', function() {
-  qunit('http://localhost:8000/test', {
+gulp.task('test', ['connect'], function() {
+  qunit('http://localhost:8000/test/index.html', {
     verbose: true,
     timeout: 15
   }, function(code) {
