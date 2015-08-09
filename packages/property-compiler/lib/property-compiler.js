@@ -100,7 +100,7 @@ function compile(prop, name){
 
   } while(token.start !== token.end);
 
-  console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
+  // console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
 
   // Save our finished paths directly on the function
   prop.__params = finishedPaths;

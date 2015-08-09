@@ -44,6 +44,10 @@
     "acorn": "~0.6.0",
     "qunit": "~1.14.0",
     "todomvc-common": "0.1.9",
-    "html5shiv": "~3.7.2"
+    "html5shiv": "~3.7.2",
+    "promise-polyfill": "~2.1.0"
+  },
+  "dependencies": {
+    "setimmediate": "~1.0.1"
   }
 }

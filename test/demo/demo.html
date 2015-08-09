@@ -4,6 +4,12 @@
 		<link href="/test/demo/templates/editing.html">
 
 		<section id="todoapp">
+			<a href="/random/path/that/doesnt/exist" style="position:fixed;top:0;left:0;">Trigger 404</a>
+			<a href="/foo/bar/subroute" style="position:fixed;top:30px;left:0;">Go to foo/bar/subroute</a>
+			<a href="/foo/bar" style="position:fixed;top:60px;left:0;">Go to foo/bar</a>
+			<a href="/test" style="position:fixed;top:90px;left:0;">Go to test</a>
+			<a href="/test/subroute" style="position:fixed;top:120px;left:0;">Go to test/subroute</a>
+
 
 			<header id="header">
 				<h1>{{firstTodo.title}}</h1>
@@ -80,8 +86,8 @@
 
 		},
 		routes: {
-			"" : "filterList",
-			":filter" : "filterList"
+			// "(:filter)" : "filterList",
+			"/^(completed|active|all)$/": "filterList"
 		},
 
 	/************** Component Properties *****************/
@@ -178,7 +184,8 @@
 			event.data.item.set('editing', true); // event.context by default is the context the element was rendered in
 		},
 		filterList: function(filter){
-			this.set('filter', filter)
+			filter || (filter = 'all');
+			this.set('filter', filter);
 		},
 		test: function(event){
 

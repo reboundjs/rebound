@@ -69,8 +69,6 @@ QUnit.test('Rebound Components', function() {
         </element>
       `);
 
-      console.log(component)
-
   window.el = document.createElement('div');
   document.body.appendChild(el);
   window.attached = false;

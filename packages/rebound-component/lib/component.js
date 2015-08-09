@@ -75,6 +75,13 @@ var Component = Model.extend({
     Rebound.Model.prototype.deinitialize.apply(this, arguments);
   },
 
+  // LazyComponents have an onLoad function that calls all the registered callbacks
+  // after it has been hydrated. If we are calling onLoad on an already loaded
+  // component, just call the callback provided.
+  onLoad: function(cb){
+    cb(this);
+  },
+
   // Set is overridden on components to accept components as a valid input type.
   // Components set on other Components are mixed in as a shared object. {raw: true}
   // It also marks itself as a consumer of this component
@@ -95,6 +102,7 @@ var Component = Model.extend({
     for(key in attrs){
       attr = attrs[key];
       if(attr && attr.isComponent){
+        if(attr.isLazyComponent && attr._component) attr = attr._component;
         serviceOptions || (serviceOptions = _.defaults(_.clone(options), {raw: true}));
         attr.consumers.push({key: key, component: this});
         this.services[key] = attr;
@@ -103,6 +111,7 @@ var Component = Model.extend({
       }
       Rebound.Model.prototype.set.call(this, key, attr, options);
     }
+
     return this;
   },
 
@@ -125,7 +134,9 @@ var Component = Model.extend({
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and added as computed properties
     // Set our component's context with the passed data merged with the component's defaults
+    if(options.debug) window.debug = true;
     this.set((this.defaults || {}));
+    if(options.debug) window.debug = false;
     this.set((options.data || {}));
 
     // Get any additional routes passed in from options
@@ -155,9 +166,7 @@ var Component = Model.extend({
     }
 
     // Our Component is fully created now, but not rendered. Call created callback.
-    if(_.isFunction(this.createdCallback)){
-      this.createdCallback.call(this);
-    }
+    if(_.isFunction(this.createdCallback)) this.createdCallback.call(this);
 
     this.initialize();
 
@@ -341,6 +350,7 @@ Component.registerComponent = function registerComponent(name, options) {
 
   proto.createdCallback = function() {
     new component({
+      debug: options.debug,
       template: template,
       outlet: this,
       data: Rebound.seedData,

@@ -1,4 +1,6 @@
 var gulp = require('gulp');
+var rebound = require('gulp-rebound');
+var merge = require('gulp-merge');
 var es = require('event-stream');
 var babel = require('gulp-babel');
 var concat = require('gulp-concat');
@@ -18,7 +20,7 @@ var replace = require('gulp-replace');
 
 
 var paths = {
-    all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/demo/*.html'],
+    all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/**/*.html'],
     propertyCompiler:   'packages/property-compiler/lib/**/*.js',
     reboundCompiler:    'packages/rebound-compiler/lib/**/*.js',
     reboundComponent:   'packages/rebound-component/lib/**/*.js',
@@ -109,14 +111,27 @@ gulp.task('amd', ['clean'], function() {
   .pipe(gulp.dest('dist'))
 });
 
-gulp.task('runtime', ['amd'], function() {
+gulp.task('shims', function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
     // 'bower_components/webcomponentsjs/webcomponents-lite.min.js',
     'node_modules/document-register-element/build/document-register-element.max.js',
+    'bower_components/setimmediate/setImmediate.js',
+    'bower_components/promise-polyfill/Promise.js',
     'bower_components/backbone/backbone.js',
-    'bower_components/requirejs/require.js',
+    'bower_components/requirejs/require.js'
+    ])
+  .pipe(concat('rebound.shims.js'))
+  .pipe(gulp.dest('dist'))
+  .pipe(uglify())
+  .pipe(rename({basename: "rebound.shims.min"}))
+  .pipe(gulp.dest('dist'));
+});
+
+gulp.task('runtime', ['shims', 'amd'], function() {
+  return gulp.src([
+    'dist/rebound.shims.js',
     'wrap/start.frag',
     'bower_components/almond/almond.js',
     'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
@@ -160,51 +175,27 @@ gulp.task('compile-tests', function(){
 });
 
 
-gulp.task('recompile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
-  // When everything is finished, re-compile the demo
-  var fs   = require('fs');
-  var precompile = require('./dist/cjs/rebound-compiler/precompile');
-  var finished = false;
-  mkdirp.sync('./test/demo/templates');
-  fs.readFile('./test/demo/demo.html', 'utf8', function (err,data) {
-    if (err) return console.log(err);
-    var template = precompile(data);
-    fs.writeFile('./test/demo/templates/demo.js', template, function(err) {
-      if(err)console.log(err);
-      else{
-        console.log("Demo component compiled successfully!");
-        (finished) ? connect.reload() : (finished = true);
-      }
-    });
-  });
-  fs.readFile('./test/demo/service.html', 'utf8', function (err,data) {
-    if (err) return console.log(err);
-    var template = precompile(data);
-    fs.writeFile('./test/demo/templates/service.js', template, function(err) {
-      if(err)console.log(err);
-      else{
-        console.log("Service component compiled successfully!");
-        (finished) ? connect.reload() : (finished = true);
-      }
-    });
-  });
-  fs.readFile('./test/demo/editing.html', 'utf8', function (err,data) {
-    if (err) return console.log(err);
-    var template = precompile(data);
-    fs.writeFile('./test/demo/templates/editing.js', template, function(err) {
-      if(err) console.log(err);
-      else{
-        console.log("Edit component compiled successfully!");
-        (finished) ? connect.reload() : (finished = true);
-      }
-    });
-  });
+gulp.task('compile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
 
-})
+  var demo = gulp.src(["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html"])
+  .pipe(rebound())
+  .pipe(gulp.dest('test/demo/templates'));
+
+  return demo;
+});
+gulp.task('compile-apps', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
+
+  var apps = gulp.src(["test/dummy-apps/**/*.html"])
+  .pipe(rebound())
+  .pipe(gulp.dest('test/dummy-apps'));
+
+  return apps;
+});
 
 // Start the test server
-gulp.task('connect', ['recompile-demo'], function() {
+gulp.task('connect', ['compile-demo', 'compile-apps'], function() {
   return connect.server({
+    root: __dirname,
     livereload: true,
     port: 8000
   });
@@ -212,16 +203,16 @@ gulp.task('connect', ['recompile-demo'], function() {
 
 // Rerun the tasks when a file changes
 gulp.task('watch', ['connect'], function() {
-  gulp.watch(paths.all, ['recompile-demo']);
+  gulp.watch(paths.all, ['compile-demo', 'compile-apps']);
 });
 
 // The default task (called when you run `gulp` from cli)
 gulp.task('default', [ 'watch' ]);
 
-gulp.task('build', [ 'recompile-demo' ]);
+gulp.task('build', [ 'compile-demo', 'compile-apps' ]);
 
-gulp.task('test', function() {
-  qunit('test/index.html', {
+gulp.task('test', ['connect'], function() {
+  qunit('http://localhost:8000/test/index.html', {
     verbose: true,
     timeout: 15
   }, function(code) {
