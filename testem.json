@@ -5,20 +5,20 @@
   "port": 8080,
   "launchers": {
     "SL_Chrome_Current": {
-      "command": "saucie --browserNameSL='chrome' --versionSL='43.0' --platformSL='OS X 10.10' --ct=0",
+      "command": "saucie --browserNameSL='chrome' --versionSL='44.0' --platformSL='OS X 10.10' --ct=0",
       "protocol": "tap"
     },
     "SL_Chrome_Last": {
-      "command": "saucie --browserNameSL='chrome' --versionSL='42.0' --platformSL='OS X 10.10' --ct=0",
+      "command": "saucie --browserNameSL='chrome' --versionSL='43.0' --platformSL='OS X 10.10' --ct=0",
       "protocol": "tap"
     },
 
     "SL_Firefox_Current": {
-      "command": "saucie --browserNameSL='firefox' --versionSL='38.0' --platformSL='Linux' --ct=0",
+      "command": "saucie --browserNameSL='firefox' --versionSL='39.0' --platformSL='Linux' --ct=0",
       "protocol": "tap"
     },
     "SL_Firefox_Last": {
-      "command": "saucie --browserNameSL='firefox' --versionSL='37.0' --platformSL='Linux' --ct=0",
+      "command": "saucie --browserNameSL='firefox' --versionSL='38.0' --platformSL='Linux' --ct=0",
       "protocol": "tap"
     },
 
@@ -41,11 +41,11 @@
     },
 
     "SL_IE_11": {
-      "command": "saucie --browserNameSL='internet explorer' --versionSL='11.0' --platformSL='Windows 7' --ct=0",
+      "command": "saucie --browserNameSL='internet explorer' --versionSL='11.0' --platformSL='Windows 10' --ct=0",
       "protocol": "tap"
     },
     "SL_IE_10": {
-      "command": "saucie --browserNameSL='internet explorer' --versionSL='10.0' --platformSL='Windows 7' --ct=0",
+      "command": "saucie --browserNameSL='internet explorer' --versionSL='10.0' --platformSL='Windows 8' --ct=0",
       "protocol": "tap"
     },
     "SL_IE_9": {
@@ -58,8 +58,7 @@
   ],
   "launch_in_dev": [
     "PhantomJS",
-    "Chrome",
-    "Firefox"
+    "Chrome"
   ],
   "launch_in_ci": [
     "SL_Chrome_Current",

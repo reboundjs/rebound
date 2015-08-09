@@ -213,6 +213,9 @@ var ReboundRouter = Backbone.Router.extend({
   _installResource: function(PageApp, appName, container) {
     var oldPageName, pageInstance, routes = [];
     var isService = (container !== this.config.container);
+
+    if(!container) throw 'No container found on the page! Please specify a container that exists in your Rebound config.';
+
     container.classList.remove('error', 'loading');
 
     if(!isService && this.current) this._uninstallResource();
