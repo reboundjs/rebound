@@ -48,6 +48,9 @@ function default404(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Oops! We couldn't find this page.", 'No index component and no error component displays default 404 page.');
     QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
     Rebound.stop();
   });
 }
@@ -67,6 +70,9 @@ function custom404(){
     var handlers = getHandlers();
     equal(handlers, `^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$`, "When routing to a custom 404 with no sub routes, the current page's path is added to history's handlers to prevent infinite looping.");
     QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
     Rebound.stop();
     ran.push('custom404');
   });
@@ -83,6 +89,9 @@ function defaultIndex(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Default Index!", 'If no custom index page is specified, index.html component is used.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/2/index.css']")[0] instanceof Element, true, 'Default index component loads its CSS document.');
     QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
     Rebound.stop();
     ran.push('defaultIndex');
   });
@@ -104,6 +113,9 @@ function customIndex(){
     var handlers = getHandlers();
     equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "When routing to a custom index with no sub routes, the current route is still added to history's handlers");
     QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
     Rebound.stop();
     ran.push('customIndex');
   });
@@ -125,6 +137,9 @@ function customIndex404(){
     var handlers = getHandlers();
     equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "When routing to custom index 404 page, the current route is added to history's handlers");
     QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
     Rebound.stop();
     ran.push('customIndex404');
   });
@@ -144,7 +159,7 @@ function routeTransitions(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Index Page 5!', 'App with multiple routes loads index page.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/5/index.css']")[0] instanceof Element, true, 'App with multiple routes loads index page\'s css.');
     QUnit.stop();
-    return Rebound.router.navigate('test')
+    return Rebound.router.navigate('test');
   })
   .then(function(){
     QUnit.start();
@@ -193,13 +208,15 @@ function routeTransitions(){
     var handlers = getHandlers();
     equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating back to index from another app uninstalls the app's handlers and installs index'");
     QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
     Rebound.stop();
     ran.push('routeTransitions');
   });
 }
 
 function serviceLoading(){
-  window.foo = true;
   var app = Rebound.start({
     "container": "#content",
     "services": {
@@ -225,7 +242,7 @@ function serviceLoading(){
       var count = 0;
       function checkServices(){
         if(++count == 3) resolve();
-      };
+      }
       Rebound.services.service1.onLoad(checkServices);
       Rebound.services.service2.onLoad(checkServices);
       Rebound.services.page.onLoad(checkServices);
@@ -247,10 +264,10 @@ function serviceLoading(){
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'App with multiple services load subsequent services.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/6/service2.css']")[0] instanceof Element, true, 'App with multiple services load subsequent service\s css.');
 
-    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, 'active', 'Links on the main page service receive an active class on their route.')
-    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, 'active', 'Links in a service receive an active class on their route.')
-    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own.')
-    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, '', 'Links in a service don\'t receive an active class on a route other than their own.')
+    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, 'active', 'Links on the main page service receive an active class on their route.');
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, 'active', 'Links in a service receive an active class on their route.');
+    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own.');
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, '', 'Links in a service don\'t receive an active class on a route other than their own.');
 
     QUnit.stop();
     return Rebound.router.navigate('test');
@@ -267,21 +284,67 @@ function serviceLoading(){
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'After transition to new app, and app with multiple services still has the first service rendered.');
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'After transition to new app, and app with multiple services still has the subsequent services rendered.');
 
-    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a transition.')
-    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a transition.')
-    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, 'active', 'Links on the main page service receive an active class on their route after a transition.')
-    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, 'active', 'Links in a service receive an active class on their route after a transition.')
+    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a transition.');
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a transition.');
+    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, 'active', 'Links on the main page service receive an active class on their route after a transition.');
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, 'active', 'Links in a service receive an active class on their route after a transition.');
     QUnit.stop();
 
     return Rebound.router.navigate('', {trigger: false});
   })
   .then(function(){
     QUnit.start();
-    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, 'active', 'Links on the main page service receive an active class on their route after a silent transition.')
-    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, 'active', 'Links in a service receive an active class on their route after a silent transition.')
-    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a silent transition.')
-    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a silent transition.')
+    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, 'active', 'Links on the main page service receive an active class on their route after a silent transition.');
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, 'active', 'Links in a service receive an active class on their route after a silent transition.');
+    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a silent transition.');
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a silent transition.');
     ran.push('serviceLoading');
+    QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
+    Rebound.stop();
+  });
+}
+
+
+function queryParams(){
+
+  return Rebound.start({
+    "container": "#content",
+    "services": {},
+    "root": window.location.pathname,
+    "jsPath": "/test/dummy-apps/7/:app.js",
+    "cssPath": "/test/dummy-apps/7/:app.css",
+    "routeMapping": {}
+  })
+  .then(function(){
+    return Rebound.router.navigate('test?foo');
+  })
+  .then(function(){
+    QUnit.start();
+    equal(window._queryParams, "foo", "When capturing query params, if a single undefined query param is in the url the callback function receives the key as a string.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo=bar');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: 'bar'}, "When capturing query params, if a single query param with a value is in the url the callback function receives the key and value as a hash.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo=bar&biz');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: 'bar', biz: undefined}, "When capturing query params, if a multiple query params are in the url, one with a value and the other undefined, the callback function receives the key and value as a hash.");
+    return Rebound.router.navigate('test?foo=bar&biz=baz');
+  })
+  .then(function(){
+    deepEqual(window._queryParams, {foo: 'bar', biz: 'baz'}, "When capturing query params, if a multiple query params ar in the url , both with values, the callback function receives the key and value as a hash.");
+    QUnit.stop();
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
+    Rebound.stop();
   });
 }
 
@@ -297,10 +360,11 @@ QUnit.test('Rebound Router', function() {
   .then(customIndex)
   .then(customIndex404)
   .then(routeTransitions)
+  .then(queryParams)
   .then(serviceLoading)
   .then(function(){
     // Reset our path to home after all route tests are done
     Rebound.stop();
-    equal(ran.length, 6, 'All async routing tests ran sucessfully.')
-  })
+    equal(ran.length, 6, 'All async routing tests ran sucessfully.');
+  });
 });

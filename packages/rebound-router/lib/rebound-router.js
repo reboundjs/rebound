@@ -19,6 +19,19 @@ var SUCCESS = 'success';
 var ERROR = 'error';
 var LOADING = 'loading';
 
+// If the string passed to this function is a valid query string, split its values
+// out into a hash and return the object.
+function parseQueryString(str){
+  var res = {};
+  if(!str || str.indexOf('=') == -1) return str;
+  str = str.split('&');
+  str.forEach(function(item){
+    item = item.split('=');
+    res[item[0]] = item[1];
+  });
+  return res;
+};
+
 // Overload Backbone's loadUrl so it returns the value of the routed callback
 // instead of undefined and prefixes all fragment tests with the current app name
 Backbone.history.loadUrl = function(fragment) {
@@ -79,7 +92,10 @@ var ReboundRouter = Backbone.Router.extend({
   },
 
   // Modify `router.execute` to return the value of our route callback
+  // and parse query string args into a hash.
   execute: function(callback, args, name) {
+    if(args[args.length - 1] === null) args.pop();
+    args.push(parseQueryString(args.pop()));
     if (callback) return callback.apply(this, args);
   },
 
