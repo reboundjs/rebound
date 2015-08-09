@@ -226,34 +226,34 @@ gulp.task('test', ['connect'], function() {
 Release Tasks:
 
 gulp release is run on postpublish and automatically pushes the contents of /dist
-to https://github.com/epicmiller/reboundjs-dist for consumption by bower.
+to https://github.com/epicmiller/rebound-dist for consumption by bower.
 
 *******************************************************************************/
-gulp.task('cleanrelease', function(cb){
+gulp.task('cleanrelease', ['build'], function(cb){
   return del(['tmp'], cb);
 });
 
 // Clone a remote repo
 gulp.task('clone', ['cleanrelease'],  function(cb){
-  console.log('Cloning reboundjs-dist to /tmp');
+  console.log('Cloning rebound-dist to /tmp');
   mkdirp.sync('./tmp');
   git.clone('https://github.com/reboundjs/rebound-dist.git', {cwd: './tmp'}, cb);
 });
 
 gulp.task('release-copy', ['clone'], function(cb){
   return gulp.src('dist/**/*')
-      .pipe(gulp.dest('tmp/reboundjs-dist'));
+      .pipe(gulp.dest('tmp/rebound-dist'));
 });
 
 gulp.task('bump-version', ['release-copy'], function(cb){
-  return gulp.src(['tmp/reboundjs-dist/bower.json'])
+  return gulp.src(['tmp/rebound-dist/bower.json'])
     .pipe(replace(/(.\s"version": ")[^"]*(")/g, '$1'+pjson.version+'$2'))
-    .pipe(gulp.dest('tmp/reboundjs-dist'));
+    .pipe(gulp.dest('tmp/rebound-dist'));
 });
 
 gulp.task('add', ['bump-version'], function(){
-  console.log('Adding Rebound /dist to reboundjs-dist');
-  process.chdir('tmp/reboundjs-dist');
+  console.log('Adding Rebound /dist directory to rebound-dist');
+  process.chdir('tmp/rebound-dist');
   return gulp.src('./*')
       .pipe(git.add({args: '-A'}));
 });
