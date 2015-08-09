@@ -308,19 +308,23 @@ var ReboundRouter = Backbone.Router.extend({
           cssElement.dataset.error = '';
           reject(err);
         }
-        $(cssElement).on('load', successCallback);
-        $(cssElement).on('error', errorCallback);
-        document.head.appendChild(cssElement);
 
         // Older browsers and phantomJS < 2.0 don't support the onLoad event for
-        // `<link>` tags. Pool stylesheets array as a fallback. Timeout at 2s.
+        // `<link>` tags. Pool stylesheets array as a fallback. Timeout at 5s.
         ti = setInterval(function() {
           for(var i = 0; i < document.styleSheets.length; i++){
             count = count + 50;
             if(document.styleSheets[i].href.indexOf(cssUrl) > -1) successCallback();
-            else if(count >= 2000) errorCallback('CSS Timeout')
+            else if(count >= 5000) errorCallback('CSS Timeout')
           }
         }, 50);
+
+        $(cssElement).on('load', successCallback);
+        $(cssElement).on('error', errorCallback);
+        $(cssElement).on('readystatechange', function(){ clearInterval(ti); })
+
+        document.head.appendChild(cssElement);
+
       } else {
         if(cssElement.hasAttribute('data-error')) return reject();
         resolve(cssElement);
