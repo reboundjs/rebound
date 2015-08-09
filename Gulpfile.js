@@ -195,6 +195,7 @@ gulp.task('compile-apps', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-t
 // Start the test server
 gulp.task('connect', ['compile-demo', 'compile-apps'], function() {
   return connect.server({
+    root: __dirname,
     livereload: true,
     port: 8000
   });
@@ -211,7 +212,7 @@ gulp.task('default', [ 'watch' ]);
 gulp.task('build', [ 'compile-demo', 'compile-apps' ]);
 
 gulp.task('test', function() {
-  qunit('test/index.html', {
+  qunit('http://localhost:8000/test', {
     verbose: true,
     timeout: 15
   }, function(code) {

@@ -292,15 +292,35 @@ var ReboundRouter = Backbone.Router.extend({
     // create the element and load the css resource.
     // Else if the css resource has been loaded before, enable it
     return new Promise(function(resolve, reject){
+      var count = 0, ti;
       if(cssElement === null){
         cssElement = document.createElement('link');
         cssElement.setAttribute('type', 'text/css');
         cssElement.setAttribute('rel', 'stylesheet');
         cssElement.setAttribute('href', cssUrl);
         cssElement.setAttribute('id', cssID);
-        $(cssElement).on('load', function(){resolve(cssElement)});
-        $(cssElement).on('error', function(err){cssElement.dataset.error = ''; reject(err);});
+        var successCallback = function(){
+          clearInterval(ti);
+          resolve(cssElement);
+        }
+        var errorCallback = function(err){
+          clearInterval(ti);
+          cssElement.dataset.error = '';
+          reject(err);
+        }
+        $(cssElement).on('load', successCallback);
+        $(cssElement).on('error', errorCallback);
         document.head.appendChild(cssElement);
+
+        // Older browsers and phantomJS < 2.0 don't support the onLoad event for
+        // `<link>` tags. Pool stylesheets array as a fallback. Timeout at 2s.
+        ti = setInterval(function() {
+          for(var i = 0; i < document.styleSheets.length; i++){
+            count = count + 50;
+            if(document.styleSheets[i].href.indexOf(cssUrl) > -1) successCallback();
+            else if(count >= 2000) errorCallback('CSS Timeout')
+          }
+        }, 50);
       } else {
         if(cssElement.hasAttribute('data-error')) return reject();
         resolve(cssElement);
@@ -339,7 +359,6 @@ var ReboundRouter = Backbone.Router.extend({
     return new Promise((resolve, reject) => {
 
       var throwError = (err) => {
-
         // If we are already in an error state, this means we were unable to load
         // a custom error page. Uninstall anything we have and insert our default 404 page.
         if(this.status === ERROR){
@@ -350,7 +369,7 @@ var ReboundRouter = Backbone.Router.extend({
         }
 
         // Set our status to error and attempt to load a custom error page.
-        console.error('Could not ' + ((isService) ? 'load the ' + route + ' service:' : 'find the ' + route + ' page.'));
+        console.error('Could not ' + ((isService) ? 'load the ' + appName + ' service:' : 'find the ' + appName + ' app.', 'at', ('/' + route)));
         this.status = ERROR;
         this._currentRoute = route;
         resolve(this._fetchResource(ERROR_ROUTE_NAME, container));

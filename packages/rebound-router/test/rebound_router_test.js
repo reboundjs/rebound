@@ -33,7 +33,7 @@ document.body.appendChild(container);
 function getHandlers(){
   var handlers = '';
   Backbone.history.handlers.forEach(function(handler){
-    handlers += handler.route.toString();
+    handlers += handler.route.source.replace(/\\/g, '');
   });
   return handlers;
 }
@@ -63,7 +63,7 @@ function custom404(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Custom 404!", 'No index component and a custom error component displays the custom 404 page.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/1/error.css']")[0] instanceof Element, true, 'Custom error component loads its CSS document.');
     var handlers = getHandlers();
-    equal(handlers, "/^(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "When routing to a custom 404 with no sub routes, the current page's path is added to history's handlers to prevent infinite looping.");
+    equal(handlers, `^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$`, "When routing to a custom 404 with no sub routes, the current page's path is added to history's handlers to prevent infinite looping.");
     QUnit.stop();
     Rebound.stop();
   });
@@ -98,7 +98,7 @@ function customIndex(){
     equal(document.head.querySelectorAll("[src='/test/dummy-apps/3/there.js']")[0] instanceof Element, true, 'Empty string in route mapping attempts to load the specified app for index.');
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Custom Index!", 'Custom mapped index loads properly if present.');
     var handlers = getHandlers();
-    equal(handlers, "/^(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "When routing to a custom index with no sub routes, the current route is still added to history's handlers");
+    equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "When routing to a custom index with no sub routes, the current route is still added to history's handlers");
     QUnit.stop();
     Rebound.stop();
   });
@@ -118,7 +118,7 @@ function customIndex404(){
     equal(document.head.querySelectorAll("[src='/test/dummy-apps/4/not-there.js']")[0] instanceof Element, true, 'Empty string in route mapping attempts to load the specified app for index.');
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Custom 404 v2!", 'Custom mapped index routes 404 properly if not present.');
     var handlers = getHandlers();
-    equal(handlers, "/^(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "When routing to custom index 404 page, the current route is added to history's handlers");
+    equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "When routing to custom index 404 page, the current route is added to history's handlers");
     QUnit.stop();
     Rebound.stop();
   });
@@ -144,9 +144,8 @@ function routeTransitions(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Test Page 5!', 'When route is triggered, new app is loaded and rendered.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/5/index.css']")[0] instanceof Element, true, 'Second app loads it\'s css document.');
-
     var handlers = getHandlers();
-    equal(handlers, "/^test\\/foo(?:\\?([\\s\\S]*))?$//^test\\/bar(?:\\?([\\s\\S]*))?$//^test(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "Second app's subroutes are loaded into the history's handlers in the apropreate order.");
+    equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Second app's subroutes are loaded into the history's handlers in the apropreate order.");
     QUnit.stop();
     return Rebound.router.navigate('test/foo');
   })
@@ -161,7 +160,7 @@ function routeTransitions(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Custom 404 v5!', 'When subroute is triggered from the parent app that does not exist, the error page is loaded properly');
 
     var handlers = getHandlers();
-    equal(handlers, "/^test\\/non\\-existant(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "Navigating to an error page from another route removed the installed handlers and adds the route it is on.");
+    equal(handlers, "^test/non-existant(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating to an error page from another route removed the installed handlers and adds the route it is on.");
     QUnit.stop();
     return Rebound.router.navigate('test/bar');
   })
@@ -171,7 +170,7 @@ function routeTransitions(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Test Page 5!', 'Navigating to a subroute from an error route loads the subroute page properly.');
 
     var handlers = getHandlers();
-    equal(handlers, "/^test\\/foo(?:\\?([\\s\\S]*))?$//^test\\/bar(?:\\?([\\s\\S]*))?$//^test(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "Navigating to a route from an error route loads its subroutes into the history's handlers in the apropreate order.");
+    equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating to a route from an error route loads its subroutes into the history's handlers in the apropreate order.");
     QUnit.stop();
     return Rebound.router.navigate('test/foo');
   })
@@ -186,7 +185,7 @@ function routeTransitions(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Index Page 5!', 'Navigating back to index from a secondary app will load the index page again.');
     var handlers = getHandlers();
-    equal(handlers, "/^(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "Navigating back to index from another app uninstalls the app's handlers and installs indes'");
+    equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating back to index from another app uninstalls the app's handlers and installs index'");
     QUnit.stop();
     Rebound.stop();
   });
@@ -250,7 +249,7 @@ function serviceLoading(){
     equal(Rebound.services.service1.consumers.length, 0, "Pages consuming services remove themselves from the service's `consumers` array on deinit.");
 
     var handlers = getHandlers();
-    equal(handlers, "/^test\\/foo(?:\\?([\\s\\S]*))?$//^test\\/bar(?:\\?([\\s\\S]*))?$//^test(?:\\?([\\s\\S]*))?$//^([^?]*?)(?:\\?([\\s\\S]*))?$/", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
+    equal(handlers, "/^test/foo(?:?([sS]*))?$//^test/bar(?:?([sS]*))?$//^test(?:?([sS]*))?$//^([^?]*?)(?:?([sS]*))?$/", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
 
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'After transition to new app, and app with multiple services still has the first service rendered.');
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'After transition to new app, and app with multiple services still has the subsequent services rendered.');
@@ -264,7 +263,7 @@ function serviceLoading(){
 QUnit.test('Rebound Router', function() {
   // Start off at a standard url and save what our page was loaded at
   var oldLocation = window.location.pathname;
-  // history.pushState({}, "Router Tests Start", "/test");
+
   QUnit.stop();
   default404()
   .then(custom404)
@@ -276,6 +275,5 @@ QUnit.test('Rebound Router', function() {
   .then(function(){
     // Reset our path to home after all route tests are done
     Rebound.stop();
-    // history.pushState({}, "Router Tests Done", oldLocation);
   })
 });
