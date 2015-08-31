@@ -348,7 +348,7 @@ utils.prototype = {
   unMarkLinks: function(){
     var len = this.length;
     while(len--){
-      var links = this[len].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]')
+      var links = this[len].querySelectorAll('a')
       for(var i=0;i<links.length;i++){
         links.item(i).classList.remove('active');
         links.item(i).active = false;
