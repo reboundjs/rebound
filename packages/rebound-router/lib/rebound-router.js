@@ -66,11 +66,15 @@ var ReboundRouter = Backbone.Router.extend({
   // `Backbone.history.navigate` inside of a promise.
   navigate: function(fragment, options={}) {
     (options.trigger === undefined) && (options.trigger = true);
+    var $container = $(this.config.containers).unMarkLinks();
     var resp = Backbone.history.navigate(fragment, options);
     // Always return a promise
     return new Promise(function(resolve, reject) {
       if(resp && resp.constructor === Promise) resp.then(resolve, resolve);
       resolve(resp);
+    }).then(function(resp){
+      $container.markLinks();
+      return resp;
     });
   },
 
@@ -110,15 +114,13 @@ var ReboundRouter = Backbone.Router.extend({
     // Save our config referance
     this.config = options;
     this.config.handlers = [];
+    this.config.containers = [];
 
     // Get a unique instance id for this router
     this.uid = _.uniqueId('router');
 
     // Allow user to override error route
-    ERROR_ROUTE_NAME = this.config.errorRoute || ERROR_ROUTE_NAME;
-
-    // Use the user provided container, or default to the closest `<main>` tag
-    var container = this.config.container = $((this.config.container || 'main'))[0];
+    this.config.errorRoute && (ERROR_ROUTE_NAME = this.config.errorRoute);
 
     // Convert our routeMappings to regexps and push to our handlers
     _.each(this.config.routeMapping, function(value, route){
@@ -126,16 +128,21 @@ var ReboundRouter = Backbone.Router.extend({
       this.config.handlers.unshift({ route: route, regex: regex, app: value });
     }, this);
 
-    this._watchLinks(container);
+    // Use the user provided container, or default to the closest `<main>` tag
+    this.config.container = $((this.config.container || 'main'))[0];
+    this.config.containers.push(this.config.container);
     Rebound.services.page = new LazyComponent();
 
     // Install our global components
     _.each(this.config.services, function(selector, route){
       var container = $(selector)[0] || document.createElement('span');
-      this._watchLinks(container);
+      this.config.containers.push(container);
       Rebound.services[route] = new LazyComponent();
       this._fetchResource(route, container).catch(function(){});
     }, this);
+
+    // Watch click events on links in all out containers
+    this._watchLinks(this.config.containers);
 
     // Start the history and call the provided callback
     Backbone.history.start({
@@ -161,13 +168,13 @@ var ReboundRouter = Backbone.Router.extend({
     var remoteUrl = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/;
     $(container).on('click', 'a', (e) => {
       var path = e.target.getAttribute('href');
+
       // If path is not an remote url, ends in .[a-z], or blank, try and navigate to that route.
       if( path && path !== '#' && !remoteUrl.test(path) ) e.preventDefault();
+
       // If this is not our current route, navigate to the new route
       if(path !== '/'+Backbone.history.fragment){
-        $(container).unMarkLinks();
-        this.navigate(path, {trigger: true})
-          .then(function(){ $(container).markLinks(); });
+        this.navigate(path, {trigger: true});
       }
     });
   },
@@ -384,7 +391,7 @@ var ReboundRouter = Backbone.Router.extend({
         }
 
         // Set our status to error and attempt to load a custom error page.
-        console.error('Could not ' + ((isService) ? 'load the ' + appName + ' service:' : 'find the ' + appName + ' app.', 'at', ('/' + route)));
+        console.error('Could not ' + ((isService) ? 'load the ' + appName + ' service:' : 'find the ' + (appName || 'index') + ' app.'), 'at', ('/' + route));
         this.status = ERROR;
         this._currentRoute = route;
         resolve(this._fetchResource(ERROR_ROUTE_NAME, container));

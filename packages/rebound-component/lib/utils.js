@@ -6,7 +6,20 @@ var $ = function(query){
 };
 
 var utils = function(query){
-  var i, selector = _.isElement(query) && [query] || (query === document) && [document] || _.isString(query) && document.querySelectorAll(query) || [];
+  var i, selector;
+  if(_.isArray(query)){
+    selector = [];
+    _.each(query, function(item, index){
+      if(_.isElement(item) || item === document || item === window)
+        selector.push(item);
+      else if(_.isString(item))
+       Array.prototype.push.apply(selector, document.querySelectorAll(item));
+    });
+  }
+  else if(_.isElement(query) || query === document || query === window) selector = [query];
+  else if(_.isString(query)) selector = document.querySelectorAll(query);
+  else selector = [];
+
   this.length = selector.length;
 
   // Add selector to object for method chaining
@@ -333,18 +346,26 @@ utils.prototype = {
         },
 
   unMarkLinks: function(){
-    var links = this[0].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]')
-    for(var i=0;i<links.length;i++){
-      links.item(i).classList.remove('active');
-      links.item(i).active = false;
+    var len = this.length;
+    while(len--){
+      var links = this[len].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]')
+      for(var i=0;i<links.length;i++){
+        links.item(i).classList.remove('active');
+        links.item(i).active = false;
+      }
     }
+    return this;
   },
   markLinks: function(){
-    var links = this[0].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]');
-    for(var i=0;i<links.length;i++){
-      links.item(i).classList.add('active');
-      links.item(i).active = true;
+    var len = this.length;
+    while(len--){
+      var links = this[len].querySelectorAll('a[href="/'+Backbone.history.fragment+'"]');
+      for(var i=0;i<links.length;i++){
+        links.item(i).classList.add('active');
+        links.item(i).active = true;
+      }
     }
+    return this;
   },
 
   // http://krasimirtsonev.com/blog/article/Cross-browser-handling-of-Ajax-requests-in-absurdjs

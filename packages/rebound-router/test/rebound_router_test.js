@@ -52,6 +52,8 @@ function default404(){
   });
 }
 
+var ran = [];
+
 function custom404(){
   return Rebound.start({
     "container": "#content",
@@ -66,6 +68,7 @@ function custom404(){
     equal(handlers, `^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$`, "When routing to a custom 404 with no sub routes, the current page's path is added to history's handlers to prevent infinite looping.");
     QUnit.stop();
     Rebound.stop();
+    ran.push('custom404');
   });
 }
 
@@ -81,6 +84,7 @@ function defaultIndex(){
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/2/index.css']")[0] instanceof Element, true, 'Default index component loads its CSS document.');
     QUnit.stop();
     Rebound.stop();
+    ran.push('defaultIndex');
   });
 }
 
@@ -101,6 +105,7 @@ function customIndex(){
     equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "When routing to a custom index with no sub routes, the current route is still added to history's handlers");
     QUnit.stop();
     Rebound.stop();
+    ran.push('customIndex');
   });
 }
 
@@ -121,6 +126,7 @@ function customIndex404(){
     equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "When routing to custom index 404 page, the current route is added to history's handlers");
     QUnit.stop();
     Rebound.stop();
+    ran.push('customIndex404');
   });
 }
 
@@ -188,6 +194,7 @@ function routeTransitions(){
     equal(handlers, "^(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating back to index from another app uninstalls the app's handlers and installs index'");
     QUnit.stop();
     Rebound.stop();
+    ran.push('routeTransitions');
   });
 }
 
@@ -208,20 +215,21 @@ function serviceLoading(){
   });
 
   QUnit.start();
+  window.debug = true;
   equal(Rebound.services.service1.isLazyComponent, true, 'Before services are loaded, lazy components hold their place on the global Rebound object.');
   QUnit.stop();
 
-  app.then(function(){
+  return app.then(function(){
     // Block until services are loaded
-    var check = new Promise(function(resolve, reject){
+    return new Promise(function(resolve, reject){
       var count = 0;
       function checkServices(){
-        if(++count == 2) resolve();
+        if(++count == 3) resolve();
       };
       Rebound.services.service1.onLoad(checkServices);
       Rebound.services.service2.onLoad(checkServices);
+      Rebound.services.page.onLoad(checkServices);
     });
-    return check;
   })
   .then(function(){
     QUnit.start();
@@ -236,9 +244,14 @@ function serviceLoading(){
 
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'App with multiple services load the first service.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/6/service1.css']")[0] instanceof Element, true, 'App with multiple services load the first service\s css.');
-
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'App with multiple services load subsequent services.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/6/service2.css']")[0] instanceof Element, true, 'App with multiple services load subsequent service\s css.');
+
+    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, 'active', 'Links on the main page service receive an active class on their route.')
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, 'active', 'Links in a service receive an active class on their route.')
+    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own.')
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, '', 'Links in a service don\'t receive an active class on a route other than their own.')
+
     QUnit.stop();
     return Rebound.router.navigate('test');
   })
@@ -249,14 +262,27 @@ function serviceLoading(){
     equal(Rebound.services.service1.consumers.length, 0, "Pages consuming services remove themselves from the service's `consumers` array on deinit.");
 
     var handlers = getHandlers();
-    equal(handlers, "/^test/foo(?:?([sS]*))?$//^test/bar(?:?([sS]*))?$//^test(?:?([sS]*))?$//^([^?]*?)(?:?([sS]*))?$/", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
+    equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
 
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'After transition to new app, and app with multiple services still has the first service rendered.');
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'After transition to new app, and app with multiple services still has the subsequent services rendered.');
 
-    return Rebound.router.navigate('');
+    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a transition.')
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a transition.')
+    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, 'active', 'Links on the main page service receive an active class on their route after a transition.')
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, 'active', 'Links in a service receive an active class on their route after a transition.')
+    QUnit.stop();
+
+    return Rebound.router.navigate('', {trigger: false});
+  })
+  .then(function(){
+    QUnit.start();
+    equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, 'active', 'Links on the main page service receive an active class on their route after a silent transition.')
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, 'active', 'Links in a service receive an active class on their route after a silent transition.')
+    equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a silent transition.')
+    equal(Rebound.services.service1.el.getElementsByTagName('a')[1].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a silent transition.')
+    ran.push('serviceLoading');
   });
-  return app;
 }
 
 
@@ -275,5 +301,6 @@ QUnit.test('Rebound Router', function() {
   .then(function(){
     // Reset our path to home after all route tests are done
     Rebound.stop();
+    equal(ran.length, 6, 'All async routing tests ran sucessfully.')
   })
 });

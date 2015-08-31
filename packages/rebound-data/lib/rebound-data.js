@@ -107,10 +107,13 @@ var sharedMethods = {
 
   // Destroy all children of this data object.
   // If a Collection, de-init all of its Models, if a Model, de-init all of its
-  // Attributes, if a Computed Property, de-init its Cache objects.
+  // Attributes that aren't services, if a Computed Property, de-init its Cache objects.
     _.each(this.models, function(val){ val && val.deinitialize && val.deinitialize(); });
     this.models && (this.models.length = 0);
-    _.each(this.attributes, (val, key) => { delete this.attributes[key]; val && val.deinitialize && val.deinitialize(); });
+    _.each(this.attributes, (val, key) => {
+      delete this.attributes[key];
+      val && !val.isComponent && val.deinitialize && val.deinitialize();
+    });
     if(this.cache){
       this.cache.collection.deinitialize();
       this.cache.model.deinitialize();
