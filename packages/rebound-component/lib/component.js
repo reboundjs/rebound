@@ -2,6 +2,7 @@
 // ----------------
 
 import DOMHelper from "dom-helper";
+import cleanslate from "rebound-component/cleanslate";
 import render from "htmlbars-runtime/render";
 import hooks from "rebound-component/hooks";
 import helpers from "rebound-component/helpers";
@@ -62,6 +63,14 @@ var Component = Model.extend({
       }
       return this.trigger.call(this, type, model, value, options);
     });
+  },
+
+  _generateIdChain: function(includeTag){
+    var id = '',
+        scope = this;
+    do{ id = `${((includeTag)?scope.el.tagName:'')} shadow#${scope.cid} ` + id; }
+    while(scope !== scope.__scope__ && (scope = scope.__scope__));
+    return id;
   },
 
   deinitialize: function(){
@@ -128,15 +137,14 @@ var Component = Model.extend({
     this.consumers = [];
     this.services = {};
     this.__parent__ = this.__root__ = this;
+    this.__scope__ = options.scope || this;
     this.listenTo(this, 'all', this._onChange);
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
     // Functions are compiled to find their dependancies and added as computed properties
     // Set our component's context with the passed data merged with the component's defaults
-    if(options.debug) window.debug = true;
     this.set((this.defaults || {}));
-    if(options.debug) window.debug = false;
     this.set((options.data || {}));
 
     // Get any additional routes passed in from options
@@ -159,7 +167,16 @@ var Component = Model.extend({
     if(this.template){
       (this.template.reboundTemplate) || (this.template = hooks.wrap(this.template));
       this.template = this.template.render(this, this.env, { contextualElement: this.el }, {});
-      this.el.appendChild(this.template.fragment);
+      var shadow = document.createElement('shadow');
+      var reset = document.createElement('style');
+          reset.innerHTML = cleanslate.replace(/#ID/g, this._generateIdChain(false));
+      var style = document.createElement('style');
+          style.innerHTML = options.style.replace(/%ID%/g, this._generateIdChain(true));
+      shadow.id = this.cid;
+      shadow.appendChild(reset);
+      shadow.appendChild(style);
+      shadow.appendChild(this.template.fragment);
+      this.el.appendChild(shadow);
 
       // Add active class to this newly rendered template's link elements that require it
       $(this.el).markLinks();
@@ -341,20 +358,19 @@ Component.extend= function(protoProps, staticProps) {
 
 Component.registerComponent = function registerComponent(name, options) {
   var script = options.prototype;
-  var template = options.template;
-  var style = options.style;
-  name = name;
-
-  var component = this.extend(script, { __name: name });
+  var component = this.extend(options.prototype, { __name: name });
   var proto = Object.create(HTMLElement.prototype, {});
 
   proto.createdCallback = function() {
+    var seedData = Rebound.seedData || {};
+    var parentScope = seedData.__scope__;
+    delete seedData.__scope__;
     new component({
-      debug: options.debug,
-      template: template,
+      template: options.template,
+      style: options.style,
+      data: seedData,
       outlet: this,
-      data: Rebound.seedData,
-      content: Rebound.content
+      scope: parentScope
     });
   };
 

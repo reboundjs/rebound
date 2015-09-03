@@ -473,6 +473,7 @@ hooks.component = function(morph, env, scope, tagName, params, attrs, templates,
   for(let key in attrs){
     seedData[key] = hooks.getValue(attrs[key]);
   }
+  seedData.__scope__ = scope.self;
 
   // For each param passed to our shared component, add it to our custom element
   // TODO: there has to be a better way to get seed data to element instances
