@@ -39,7 +39,7 @@ var Rebound = {
         if(document.readyState !== "complete") return;
         delete this.router;
         this.router = new Router(options, resolve);
-      }
+      };
       if(document.readyState === "complete") return run();
       document.addEventListener("readystatechange", run);
     });
