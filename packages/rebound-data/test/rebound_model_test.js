@@ -29,6 +29,15 @@ QUnit.test('Rebound Data - Model', function() {
   model.set('bool', false);
   deepEqual( model.attributes, {str: 'test', int: 1, bool: false}, 'Model.set works with primitive values at top level' );
 
+// Shallow Set - Primitive Value Constructors
+  model = new Model();
+  model.set('str', new String('test')); // jshint ignore:line
+  model.set('int', new Number(1)); // jshint ignore:line
+  model.set('bool', new Boolean(false)); // jshint ignore:line
+  deepEqual( model.attributes, {str: 'test', int: 1, bool: false}, 'Model.set works with primitive values created by primitive contructors' );
+
+
+
 // Shallow Toggle Boolean Values
   model.toggle('bool');
   deepEqual( model.attributes, {str: 'test', int: 1, bool: true}, 'Model.toggle works with boolean values at top level' );

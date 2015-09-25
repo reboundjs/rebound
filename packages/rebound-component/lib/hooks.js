@@ -69,7 +69,7 @@ function streamProperty(context, path) {
 
   // Lazy value that returns the value of context.path
   var lazyValue = new LazyValue(function() {
-    return context.get(path);
+    return context.get(path, {isPath: true});
   }, {context: context});
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from

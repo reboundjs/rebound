@@ -57,12 +57,12 @@ gulp.task('jshint', function() {
 
 gulp.task('cjs', ['clean'], function() {
   return es.merge(
-    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
-    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
+    gulp.src(paths.propertyCompiler).pipe(rename({dirname: "property-compiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundComponent).pipe(rename({dirname: "rebound-component/"})),
+    gulp.src(paths.reboundData).pipe(rename({dirname: "rebound-data/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundRouter).pipe(rename(function (path){path.dirname = "rebound-router/" + path.dirname;})),
     gulp.src(paths.reboundRuntime)
   )
   .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
@@ -93,12 +93,12 @@ gulp.task('docco', ['clean'], function() {
 
 gulp.task('amd', ['clean'], function() {
   return es.merge(
-    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
-    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
+    gulp.src(paths.propertyCompiler).pipe(rename({dirname: "property-compiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundComponent).pipe(rename({dirname: "rebound-component/"})),
+    gulp.src(paths.reboundData).pipe(rename({dirname: "rebound-data/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundRouter).pipe(rename(function (path){path.dirname = "rebound-router/" + path.dirname;})),
     gulp.src(paths.reboundRuntime)
   )
   .pipe(babel({
@@ -115,7 +115,6 @@ gulp.task('shims', function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
-    // 'bower_components/webcomponentsjs/webcomponents-lite.min.js',
     'node_modules/document-register-element/build/document-register-element.max.js',
     'bower_components/setimmediate/setImmediate.js',
     'bower_components/promise-polyfill/Promise.js',

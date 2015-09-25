@@ -159,8 +159,9 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     !collection.isData && _.isObject(collection) && (options = collection) && (collection = model);
     var src = this;
     var path = collection.__path().replace(src.__path(), '').replace(/^\./, '');
-    var dest = this.tracking.get(path);
-
+    // Need to pass isPath: true here because when syncing across computed properties
+    // that return collections we may just be passing the model index for the path.
+    var dest = this.tracking.get(path, {raw: true, isPath: true});
     if(_.isUndefined(dest)) return;
     if(type === 'change') dest.set && dest.set(model.changedAttributes());
     else if(type === 'reset') dest.reset && dest.reset(model);
@@ -178,7 +179,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     root.__computedDeps || (root.__computedDeps = {});
 
     _.each(this.deps, function(path){
-      var dep = root.get(path, {raw: true});
+      var dep = root.get(path, {raw: true, isPath: true});
       if(!dep || !dep.isComputedProperty) return;
       dep.on('dirty', this.markDirty);
     }, this);
@@ -208,7 +209,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     var context = this.__parent__;
 
     _.each(this.deps, function(path){
-      var dep = root.get(path, {raw: true});
+      var dep = root.get(path, {raw: true, isPath: true});
       if(!dep || !dep.isComputedProperty) return;
       dep.off('dirty', this.markDirty);
     }, this);
@@ -246,7 +247,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // Let this dependancy know that we are waiting for it.
     // It will re-run this Computed Property after it finishes.
     _.each(this.deps, function(dep){
-      var dependancy = context.get(dep, {raw: true});
+      var dependancy = context.get(dep, {raw: true, isPath: true});
       if(!dependancy || !dependancy.isComputedProperty) return;
       if(dependancy.isDirty && dependancy.returnType !== null){
         dependancy.waiting[this.cid] = this;

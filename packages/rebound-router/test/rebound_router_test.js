@@ -1,5 +1,7 @@
 import Rebound from 'runtime';
 
+var testsRun = [];
+
 window.Rebound = Rebound;
 var container = document.createElement('main');
     container.id = 'router-test';
@@ -51,6 +53,7 @@ function default404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
   });
 }
@@ -73,6 +76,7 @@ function custom404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
     ran.push('custom404');
   });
@@ -92,6 +96,7 @@ function defaultIndex(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
     ran.push('defaultIndex');
   });
@@ -116,6 +121,7 @@ function customIndex(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
     ran.push('customIndex');
   });
@@ -140,6 +146,7 @@ function customIndex404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
     ran.push('customIndex404');
   });
@@ -166,7 +173,7 @@ function routeTransitions(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Test Page 5!', 'When route is triggered, new app is loaded and rendered.');
     equal(document.head.querySelectorAll("[href='/test/dummy-apps/5/index.css']")[0] instanceof Element, true, 'Second app loads it\'s css document.');
     var handlers = getHandlers();
-    equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Second app's subroutes are loaded into the history's handlers in the apropreate order.");
+    equal(handlers, "^test/bar(?:?([sS]*))?$^test/foo(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Second app's subroutes are loaded into the history's handlers in the apropreate order.");
     QUnit.stop();
     return Rebound.router.navigate('test/foo');
   })
@@ -191,7 +198,7 @@ function routeTransitions(){
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), 'Test Page 5!', 'Navigating to a subroute from an error route loads the subroute page properly.');
 
     var handlers = getHandlers();
-    equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating to a route from an error route loads its subroutes into the history's handlers in the apropreate order.");
+    equal(handlers, "^test/bar(?:?([sS]*))?$^test/foo(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "Navigating to a route from an error route loads its subroutes into the history's handlers in the apropreate order.");
     QUnit.stop();
     return Rebound.router.navigate('test/foo');
   })
@@ -211,32 +218,33 @@ function routeTransitions(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
     ran.push('routeTransitions');
   });
 }
 
 function serviceLoading(){
-  var app = Rebound.start({
-    "container": "#content",
-    "services": {
-      "service1": "#nav",
-      "service2": "#footer"
-    },
-    "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/6/:app.js",
-    "cssPath": "/test/dummy-apps/6/:app.css",
-    "routeMapping": {
-      "foo": "test"
-    }
-  });
-
-  QUnit.start();
-  window.debug = true;
-  equal(Rebound.services.service1.isLazyComponent, true, 'Before services are loaded, lazy components hold their place on the global Rebound object.');
-  QUnit.stop();
-
-  return app.then(function(){
+  return (function(){
+    var app = Rebound.start({
+      "container": "#content",
+      "services": {
+        "service1": "#nav",
+        "service2": "#footer"
+      },
+      "root": window.location.pathname,
+      "jsPath": "/test/dummy-apps/6/:app.js",
+      "cssPath": "/test/dummy-apps/6/:app.css",
+      "routeMapping": {
+        "foo": "test"
+      }
+    });
+    QUnit.start();
+    equal(Rebound.services.service1.isLazyComponent, true, 'Before services are loaded, lazy components hold their place on the global Rebound object.');
+    QUnit.stop();
+    return app;
+  })()
+  .then(function(){
     // Block until services are loaded
     return new Promise(function(resolve, reject){
       var count = 0;
@@ -280,6 +288,7 @@ function serviceLoading(){
 
     var handlers = getHandlers();
     equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
+    equal(handlers, "^test/bar(?:?([sS]*))?$^test/foo(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
 
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'After transition to new app, and app with multiple services still has the first service rendered.');
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'After transition to new app, and app with multiple services still has the subsequent services rendered.');
@@ -303,13 +312,13 @@ function serviceLoading(){
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
     Rebound.stop();
   });
 }
 
 
 function queryParams(){
-
   return Rebound.start({
     "container": "#content",
     "services": {},
@@ -319,31 +328,93 @@ function queryParams(){
     "routeMapping": {}
   })
   .then(function(){
+    return Rebound.router.navigate('test');
+  })
+  .then(function(){
+    deepEqual(window._queryParams, {}, "If a no query params are in the url, the callback function receives an empty object.");
     return Rebound.router.navigate('test?foo');
   })
   .then(function(){
     QUnit.start();
-    equal(window._queryParams, "foo", "When capturing query params, if a single undefined query param is in the url the callback function receives the key as a string.");
+    deepEqual(window._queryParams, {'foo': ''}, "If a single undefined query param is in the url the callback function receives an object with the key defined on it as an empty string.");
     QUnit.stop();
     return Rebound.router.navigate('test?foo=bar');
   })
   .then(function(){
     QUnit.start();
-    deepEqual(window._queryParams, {foo: 'bar'}, "When capturing query params, if a single query param with a value is in the url the callback function receives the key and value as a hash.");
+    deepEqual(window._queryParams, {'foo': 'bar'}, "If a single query param with a value is in the url the callback function receives the key and value in a hash containing the value.");
     QUnit.stop();
     return Rebound.router.navigate('test?foo=bar&biz');
   })
   .then(function(){
     QUnit.start();
-    deepEqual(window._queryParams, {foo: 'bar', biz: undefined}, "When capturing query params, if a multiple query params are in the url, one with a value and the other undefined, the callback function receives the key and value as a hash.");
+    deepEqual(window._queryParams, {foo: 'bar', biz: ''}, "If a multiple query params are in the url, one with a value and the other undefined, the callback function receives the key and value as a hash.");
+    QUnit.stop();
     return Rebound.router.navigate('test?foo=bar&biz=baz');
   })
   .then(function(){
-    deepEqual(window._queryParams, {foo: 'bar', biz: 'baz'}, "When capturing query params, if a multiple query params ar in the url , both with values, the callback function receives the key and value as a hash.");
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: 'bar', biz: 'baz'}, "If a multiple query params ar in the url , both with values, the callback function receives the key and value as a hash.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo=bar&foo=baz');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: ['bar', 'baz']}, "If a multiple query params of the same name are in the url , both with values, the callback function receives the key and value as a hash containing an array.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo[]=bar&foo[]=baz');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: ['bar', 'baz']}, "If a multiple query params of the same name are in the url, suffixed with [], both with values, the callback function receives the key and value as a hash containing an array.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo=bar,baz');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: ['bar', 'baz']}, "If a query param with comma seperated values are in the url , both with values, the callback function receives the key and value as a hash containing an array.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo[bar]=asdf&foo[baz]=fdsa');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: {'bar': 'asdf', 'baz': 'fdsa'}}, "If a query param with named properties are in the url, both with values, the callback function receives the key and value as a hash containing an object with those values.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?foo[bar][baz]=asdf&foo[baz]=fdsa');
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: {'bar': {'baz': 'asdf'}, 'baz': 'fdsa'}}, "If a query param with deeply nested named properties are in the url, both with values, the callback function receives the key and value as a hash containing an object with those values.");
     QUnit.stop();
     return Rebound.router.navigate('');
   })
   .then(function(){
+    testsRun++;
+    Rebound.stop();
+  });
+}
+
+function regexpRoutes(){
+  return Rebound.start({
+    "container": "#content",
+    "root": window.location.pathname,
+    "jsPath": "/test/dummy-apps/8/:app.js",
+    "cssPath": "/test/dummy-apps/8/:app.css"
+  }).then(function(){
+    return Rebound.router.navigate('test/baz');
+  })
+  .then(function(page){
+    equal(page, 'baz', 'Routes defined as regular expressions receive their captured values.');
+    equal(page, 'baz', 'Routes defined as regular expressions with no query params receive an empty object.');
+    return Rebound.router.navigate('test/bar?foo=bar');
+  })
+  .then(function(page){
+    equal(page, 'bar', 'Routes defined as regular expressions receive their captured values on re-route.');
+    deepEqual(window._queryParams, {'foo': 'bar'}, 'Routes defined as regular expressions with query params receive a well formed query object.');
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
+    testsRun++;
     Rebound.stop();
   });
 }
@@ -360,11 +431,13 @@ QUnit.test('Rebound Router', function() {
   .then(customIndex)
   .then(customIndex404)
   .then(routeTransitions)
-  .then(queryParams)
   .then(serviceLoading)
+  .then(queryParams)
+  .then(regexpRoutes)
   .then(function(){
     // Reset our path to home after all route tests are done
     Rebound.stop();
-    equal(ran.length, 6, 'All async routing tests ran sucessfully.');
+    QUnit.start();
+    equal(testsRun, 9, 'All tests ran.')
   });
 });

@@ -1,4 +1,4 @@
-//     Rebound.js 0.0.60
+//     Rebound.js 0.0.92
 
 //     (c) 2015 Adam Miller
 //     Rebound may be freely distributed under the MIT license.

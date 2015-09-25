@@ -1,0 +1,17 @@
+<element name="test-page-8">
+  <template>
+    <h1>Test Page 8!</h1>
+  </template>
+  <script>
+    return ({
+      routes: {
+        "/^test/(foo|bar|baz)/": "test"
+      },
+      test: function(page, queryParams){
+        debugger;
+        window._queryParams = queryParams
+        return page;
+      }
+    })
+  </script>
+</element>
