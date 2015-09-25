@@ -170,4 +170,12 @@ QUnit.test('Rebound Helpers - If', function() {
   notify(data, 'bool', dom);
   equal(dom.fragment.firstChild.innerHTML, 'false', 'If helpers that are the immediate children of if helpers re-render successfully on change.');
 
+  // Re-eval on reset of collection
+  template = compiler.compile('<div>{{if arr 1 0}}</div>', {name: 'test/partial'});
+  data = new Model({arr: []});
+  dom = template.render(data);
+  data.reset({arr: [{id: 1}]});
+  notify(data, 'arr', dom);
+  equalTokens(dom.fragment, '<div>1</div>', 'Inline If helper is data bound for collection reset');
+
 });

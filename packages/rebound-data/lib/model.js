@@ -109,9 +109,9 @@ var Model = Backbone.Model.extend({
       else if (value.isComponent) continue;
       else if (value.isCollection || value.isModel || value.isComputedProperty){
         value.reset((obj[key] || []), {silent: true});
-        if(value.isCollection) changed[key] = [];
-        else if(value.isModel && value.isComputedProperty) changed[key] = value.cache.model.changed;
-        else if(value.isModel) changed[key] = value.changed;
+        if(value.isCollection) changed[key] = value.previousModels;
+        else if(value.isModel && value.isComputedProperty) changed[key] = value.cache.model.changedAttributes();
+        else if(value.isModel) changed[key] = value.changedAttributes();
       }
       else if (obj.hasOwnProperty(key)){ changed[key] = obj[key]; }
       else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
@@ -202,7 +202,7 @@ var Model = Backbone.Model.extend({
     for(key in attrs){
       let val = attrs[key],
           paths = $.splitPath(key),
-          attr  = paths.pop() || '';           // The key        ex: foo[0].bar --> bar
+          attr  = (paths.pop() || ''),       // The key        ex: foo[0].bar --> bar
           target = this.get(paths.join('.')),  // The element    ex: foo.bar.baz --> foo.bar
           lineage;
 

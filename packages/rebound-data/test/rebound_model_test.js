@@ -134,7 +134,7 @@ QUnit.test('Rebound Data - Model', function() {
   model.reset({prop: false, arr: [{id: 1}], obj: {foo: {test: true}}});
   notify(model, 'obj');
   deepEqual(model.toJSON(), {prop: false, arr: [{id: 1, test: true}], obj: {foo: {test: true}}, func: {foo: {test: true}}}, 'Calling reset() with new values on a model resets it with these new values');
-
+  deepEqual(model.changed, {prop: false, arr: [{id: 1}], obj: {foo: {bar: undefined, test: true}}, func: {foo: {bar: undefined}}}, 'Calling reset() with new values on a model resets it with these new values and properly sets its changed property.');
 
   model.reset();
   notify(model, 'obj');
