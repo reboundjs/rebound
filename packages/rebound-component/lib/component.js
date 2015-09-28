@@ -258,7 +258,7 @@ var Component = Model.extend({
           observers = context.__observers[obsPath];
           if(startsWith(obsPath, path)){
             // If this is a collection event, trigger everything, otherwise only trigger property change callbacks
-            if(_.isArray(changed[key])) push.call(this._toRender, observers.collection);
+            if(_.isArray(changed[key]) || data.isCollection) push.call(this._toRender, observers.collection);
             push.call(this._toRender, observers.model);
           }
         }
