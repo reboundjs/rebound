@@ -9,7 +9,7 @@
     <img src="https://badges.gitter.im/Join%20Chat.svg" alt="Gitter" />
     <br>
   </a>
-  <a href="http://http://104.200.18.51:4100">
+  <a href="http://104.200.18.51:4100">
     <img src="http://104.200.18.51:4100/badge.svg" alt="Gitter" />
     <br>
   </a>
