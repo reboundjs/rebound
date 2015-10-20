@@ -61,18 +61,14 @@ function notify(obj, path, template) {
   for(var key in template.env.revalidateQueue){
     template.env.revalidateQueue[key].revalidate();
   }
-  // template.revalidate();
+
 }
-
-
-
-// TODO: Add each helper tests
 
 QUnit.test('Rebound Helpers - Each', function() {
 
   var template, data, dom;
 
-  // End Modifications
+  // Modifications to the end
 
   template = compiler.compile('<div>{{#each arr as | obj |}}{{obj.val}}{{/each}}</div>', {name: 'test/partial'});
   data = new Model({arr: [{val: 1}, {val: 2}, {val: 3}]});
@@ -100,7 +96,7 @@ QUnit.test('Rebound Helpers - Each', function() {
   notify(data, 'arr', dom);
   equal(dom.fragment.firstChild.innerHTML, '123', 'Each helper will re-render on multiple remove from end.');
 
-  // Begining Modification
+  // Modification to the Begining
 
   data.get('arr').unshift({val: 4});
   notify(data, 'arr', dom);
@@ -123,7 +119,7 @@ QUnit.test('Rebound Helpers - Each', function() {
   notify(data, 'arr', dom);
   equal(dom.fragment.firstChild.innerHTML, '123', 'Each helper will re-render on multiple remove from begining.');
 
-  // Middle Modifications
+  // Modifications to the Middle
 
   data.get('arr').add({val: 4}, {at: 2});
   notify(data, 'arr', dom);
@@ -210,16 +206,44 @@ QUnit.test('Rebound Helpers - Each', function() {
 
 
   // Scoping
-  template = compiler.compile('<div>{{#each arr as | local |}}{{local.val}} {{parent}}{{/each}}</div>', {name: 'test/partial'});
-  data = new Model({parent: 'bar', arr: [{val:'foo'}]});
-  dom = template.render(data);
-  equal(dom.fragment.firstChild.innerHTML, 'foo bar', 'Inside each blocks have access to both block and parent scopes');
-  data.set('parent', 'foo')
-  notify(data, 'parent', dom);
-  equal(dom.fragment.firstChild.innerHTML, 'foo foo', 'Each blocks are bound to parent scope args');
-  data.set('arr[0].val', 'bar');
-  notify(data.get('arr[0]'), 'val', dom);
-  equal(dom.fragment.firstChild.innerHTML, 'bar foo', 'Each blocks are bound to block scope args');
+    template = compiler.compile('<div>{{#each arr as | local |}}{{local.val}} {{parent}}{{/each}}</div>', {name: 'test/partial'});
+    data = new Model({parent: 'bar', arr: [{val:'foo'}]});
+    dom = template.render(data);
+    equal(dom.fragment.firstChild.innerHTML, 'foo bar', 'Inside each blocks have access to both block and parent scopes');
+    data.set('parent', 'foo');
+    notify(data, 'parent', dom);
+    equal(dom.fragment.firstChild.innerHTML, 'foo foo', 'Each blocks are bound to parent scope args');
+    data.set('arr[0].val', 'bar');
+    notify(data.get('arr[0]'), 'val', dom);
+    equal(dom.fragment.firstChild.innerHTML, 'bar foo', 'Each blocks are bound to block scope args');
+
+
+  // Nested Model Itertion
+    template = compiler.compile('<div>{{#each obj as | local |}}{{local.value}}{{/each}}</div>', {name: 'test/partial'});
+    data = new Model({obj: {foo: {value: 1}, biz: {value: 2}}});
+    dom = template.render(data);
+    equal(dom.fragment.firstChild.innerHTML, '12', 'Each helper iterates over properties in an object');
+    data.set('obj.baz', {value: 3});
+    notify(data, 'obj', dom);
+    equal(dom.fragment.firstChild.innerHTML, '123', 'Additions to a model re-computes each helper');
+    data.unset('obj.foo');
+    notify(data, 'obj', dom);
+    equal(dom.fragment.firstChild.innerHTML, '23', 'Removals from a model re-computes each helper');
+
+
+
+  // TODO: Model Property Itertion
+    // template = compiler.compile('<div>{{#each obj as | local |}}{{local}}{{/each}}</div>', {name: 'test/partial'});
+    // data = new Model({obj: {foo: 'bar', biz: 'baz'}});
+    // dom = template.render(data);
+    // equal(dom.fragment.firstChild.innerHTML, 'bar baz', 'Each helper iterates over properties in an object');
+    // data.set('obj.firstName', 'Adam');
+    // notify(data, 'obj.firstName', dom);
+    // equal(dom.fragment.firstChild.innerHTML, 'bar baz Adam', 'Additions to a model re-computes each helper');
+    // data.unset('obj.foo');
+    // notify(data, 'obj.foo', dom);
+    // equal(dom.fragment.firstChild.innerHTML, 'baz Adam', 'Removals from a model re-computes each helper');
+
 
 
 });

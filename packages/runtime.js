@@ -24,7 +24,7 @@ import Router from "rebound-router/rebound-router";
 window.Backbone.ajax = window.Backbone.$ && window.Backbone.$.ajax && window.Backbone.ajax || utils.ajax;
 
 // Create Global Rebound Object
-var Rebound = {
+var Rebound = window.Rebound = {
   services: {},
   registerHelper: helpers.registerHelper,
   registerPartial: helpers.registerPartial,
@@ -36,12 +36,11 @@ var Rebound = {
   start: function(options){
     return new Promise((resolve, reject) => {
       let run = () => {
-        if(document.readyState !== "complete") return;
+        if(!document.body) return setTimeout(run.bind(this), 1);
         delete this.router;
         this.router = new Router(options, resolve);
       };
-      if(document.readyState === "complete") return run();
-      document.addEventListener("readystatechange", run);
+      run();
     });
   },
   stop: function(){

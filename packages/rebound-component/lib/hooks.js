@@ -185,6 +185,7 @@ hooks.createFreshScope = function() {
 hooks.createChildScope = function(parent) {
   var scope = createObject(parent);
   scope.locals = createObject(parent.locals);
+  scope.localPresent = createObject(parent.localPresent);
   scope.streams = createObject(parent.streams);
   return scope;
 };
