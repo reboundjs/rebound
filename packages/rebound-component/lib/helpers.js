@@ -168,23 +168,31 @@ function findIndex(arr, predicate, cid) {
   return -1;
 }
 
-helpers.each = function(params, hash, templates){
+function shouldRender(value){
+  return (_.isArray(value) && value.length > 0) || (_.isObject(value) && Object.keys(value).length > 0);
+}
 
-  if(_.isNull(params[0]) || _.isUndefined(params[0])){ console.warn('Undefined value passed to each helper! Maybe try providing a default value?', params, hash); return null; }
+helpers.each = function (params, hash, templates) {
 
-  var key, value = (params[0].isCollection) ? params[0].models : params[0]; // Accepts collections or arrays
-
-  if((!_.isArray(value) || value.length === 0)){
-    if(templates.inverse && templates.inverse.yield)
-      templates.inverse.yield();
+  if (_.isNull(params[0]) || _.isUndefined(params[0])) {
+    console.warn("Undefined value passed to each helper.", params, hash);
+    return null;
   }
-  else{
+
+  var key, eachId,
+      value = params[0].isCollection ? params[0].models : (params[0].isModel ? params[0].attributes : params[0]); // Accepts collections, arrays, or models
+
+  if (shouldRender(value)) {
     for (key in value) {
-      if(value.hasOwnProperty(key))
-        this.yieldItem(value[key].cid, [ value[key], key ]);
+      eachId = (value[key] && value[key].isData) ? value[key].cid : params[0].cid + key;
+      if (value.hasOwnProperty(key)) this.yieldItem(eachId, [value[key], key]);
     }
   }
-  return _.uniqueId('rand');
+  else {
+    if(templates.inverse && templates.inverse["yield"]) templates.inverse["yield"]();
+  }
+
+  return _.uniqueId("rand");
 };
 
 helpers.partial = function(params, hash, options, env){
