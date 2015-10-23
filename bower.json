@@ -33,11 +33,11 @@
   ],
   "devDependencies": {
     "jquery": "2.1.1",
-    "underscore": "1.6.0",
+    "underscore": "1.8.0",
     "lodash": "~2.4.1",
     "webcomponentsjs": "0.6.1",
     "pretender": "0.6.0",
-    "backbone": "https://github.com/jashkenas/backbone.git#743ebb788d8909b277ca459c6c9159f9528b6f87",
+    "backbone": "1.2.3",
     "exoskeleton": "https://github.com/paulmillr/exoskeleton.git",
     "requirejs": "https://github.com/jrburke/requirejs.git#19a98167858db65342a269ba76f06e3be152210e",
     "almond": "0.2.9",

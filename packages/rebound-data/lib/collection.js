@@ -104,9 +104,12 @@ var Collection = Backbone.Collection.extend({
 
     // If the model already exists in this collection, or we are told not to clone it, let Backbone handle the merge
     // Otherwise, create our copy of this model, give them the same cid so our helpers treat them as the same object
+    // Use the more unique of the two constructors. If our Model has a custom constructor, use that. Otherwise, use
+    // Collection default Model constructor.
     _.each(models, function(data, index){
       if(data.isModel && options.clone === false || this._byId[data.cid]) return newModels[index] = data;
-      newModels[index] = new this.model(data, _.defaults(lineage, options));
+      var constructor = (data.constructor !== Object && data.constructor !== Rebound.Model) ? data.constructor : this.model;
+      newModels[index] = new constructor(data, _.defaults(lineage, options));
       data.isModel && (newModels[index].cid = data.cid);
     }, this);
 

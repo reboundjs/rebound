@@ -45,4 +45,18 @@ QUnit.test('Reboudnd Data - Collection', function() {
   collection.set('[0].test2', 'bar');
   deepEqual(collection.toJSON(), [{test2: 'bar'}], 'Collection.set can accept a path to call the .set at');
 
+  var CustomModel = Model.extend({
+    toJSON: function(){
+      return 'works';
+    }
+  });
+
+  model = new CustomModel();
+  collection = new Collection();
+  collection.add(model);
+
+
+  deepEqual(['works'], collection.toJSON(), 'Customized models added to a collection retain their custom attributes when added to the collection');
+
+
 });
