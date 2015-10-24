@@ -90,7 +90,7 @@ QUnit.test('Rebound Helpers - Each', function() {
 
   var removeArr = [];
   removeArr.push(data.get('arr[3]'));
-  removeArr.push(data.get('arr[4]'))
+  removeArr.push(data.get('arr[4]'));
 
   data.get('arr').remove(removeArr);
   notify(data, 'arr', dom);
@@ -113,7 +113,7 @@ QUnit.test('Rebound Helpers - Each', function() {
 
   removeArr = [];
   removeArr.push(data.get('arr[0]'));
-  removeArr.push(data.get('arr[1]'))
+  removeArr.push(data.get('arr[1]'));
 
   data.get('arr').remove(removeArr);
   notify(data, 'arr', dom);
@@ -136,7 +136,7 @@ QUnit.test('Rebound Helpers - Each', function() {
 
   removeArr = [];
   removeArr.push(data.get('arr[2]'));
-  removeArr.push(data.get('arr[3]'))
+  removeArr.push(data.get('arr[3]'));
 
   data.get('arr').remove(removeArr);
   notify(data, 'arr', dom);
@@ -243,7 +243,5 @@ QUnit.test('Rebound Helpers - Each', function() {
     // data.unset('obj.foo');
     // notify(data, 'obj.foo', dom);
     // equal(dom.fragment.firstChild.innerHTML, 'baz Adam', 'Removals from a model re-computes each helper');
-
-
 
 });

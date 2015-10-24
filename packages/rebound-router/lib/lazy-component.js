@@ -35,8 +35,8 @@ function LazyComponent(){
     delete this.loadCallbacks;
   };
   this.onLoad = function(cb){
-    loadCallbacks.push(cb)
-  }
+    loadCallbacks.push(cb);
+  };
 }
 
 export default LazyComponent;

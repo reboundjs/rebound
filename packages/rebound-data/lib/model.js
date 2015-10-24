@@ -192,7 +192,7 @@ var Model = Backbone.Model.extend({
   // find the correct value to call the original `Backbone.Set` on.
   set: function(key, val, options){
 
-    var attrs, attr, newKey, target, destination, props = [], lineage;
+    var attrs, newKey, target, destination, props = [], lineage;
 
     if (typeof key === 'object') {
       attrs = (key.isModel) ? key.attributes : key;

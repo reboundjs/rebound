@@ -438,6 +438,6 @@ QUnit.test('Rebound Router', function() {
     // Reset our path to home after all route tests are done
     Rebound.stop();
     QUnit.start();
-    equal(testsRun, 9, 'All tests ran.')
+    equal(testsRun, 9, 'All tests ran.');
   });
 });

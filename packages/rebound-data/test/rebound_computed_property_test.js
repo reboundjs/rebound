@@ -405,14 +405,14 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
 
 *****************************/
 
-  var model;
 
 // Basic set
   model = new Model({
     a: 1,
     set proxy(val){
       this.set('a', val);
-    }
+    },
+    get proxy(){}
   });
   equal(undefined, model.get('proxy'), 'Computed proeprties with only a set function return undefined when accessed the first time.');
   model.set('proxy', 2);

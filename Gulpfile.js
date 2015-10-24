@@ -17,6 +17,7 @@ var git = require('gulp-git');
 var pjson = require('./package.json');
 var mkdirp = require('mkdirp');
 var replace = require('gulp-replace');
+var stylish = require('jshint-stylish');
 
 
 var paths = {
@@ -29,12 +30,6 @@ var paths = {
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
     reboundRuntime:     'packages/runtime.js'
   };
-
-
-gulp.task('clean', function(cb) {
-  // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist', 'test/demo/templates'], cb);
-});
 
 // JS hint task
 gulp.task('jshint', function() {
@@ -52,7 +47,12 @@ gulp.task('jshint', function() {
       jQuery: true
     }
   }))
-  .pipe(jshint.reporter('default'));
+  .pipe(jshint.reporter(stylish));
+});
+
+gulp.task('clean', ['jshint'], function(cb) {
+  // You can use multiple globbing patterns as you would with `gulp.src`
+  return del(['dist', 'test/demo/templates'], cb);
 });
 
 gulp.task('cjs', ['clean'], function() {
@@ -68,27 +68,6 @@ gulp.task('cjs', ['clean'], function() {
   .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
   .pipe(gulp.dest('dist/cjs'))
   .pipe(connect.reload());
-});
-
-gulp.task('docco', ['clean'], function() {
-  return gulp.src([
-    'packages/runtime.js',
-    'packages/rebound-data/lib/rebound-data.js',
-    'packages/rebound-data/lib/model.js',
-    'packages/rebound-data/lib/collection.js',
-    'packages/rebound-data/lib/computed-property.js',
-    'packages/rebound-component/lib/component.js',
-    'packages/rebound-component/lib/helpers.js',
-    'packages/rebound-component/lib/hooks.js',
-    'packages/rebound-component/lib/lazy-value.js',
-    'packages/rebound-router/lib/rebound-router.js',
-    'packages/rebound-component/lib/utils.js',
-    'packages/property-compiler/lib/property-compiler.js',
-    'packages/rebound-compiler/lib/rebound-compiler.js',
-  ])
-  .pipe(concat('rebound.js'))
-  .pipe(docco())
-  .pipe(gulp.dest('dist/docs'));
 });
 
 gulp.task('amd', ['clean'], function() {
@@ -133,6 +112,7 @@ gulp.task('runtime', ['shims', 'amd'], function() {
     'dist/rebound.shims.js',
     'wrap/start.frag',
     'bower_components/almond/almond.js',
+    'node_modules/qs/dist/qs.js',
     'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
     'node_modules/htmlbars/dist/amd/htmlbars-runtime.amd.js',
     'dist/rebound.runtime.js',
@@ -174,7 +154,7 @@ gulp.task('compile-tests', function(){
 });
 
 
-gulp.task('compile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
+gulp.task('compile-demo', ['cjs', 'test-helpers', 'runtime', 'compile-tests'],  function(){
 
   var demo = gulp.src(["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html"])
   .pipe(rebound())
@@ -182,7 +162,7 @@ gulp.task('compile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-t
 
   return demo;
 });
-gulp.task('compile-apps', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
+gulp.task('compile-apps', ['cjs', 'test-helpers', 'runtime', 'compile-tests'],  function(){
 
   var apps = gulp.src(["test/dummy-apps/**/*.html"])
   .pipe(rebound())
@@ -217,6 +197,36 @@ gulp.task('test', ['connect'], function() {
   }, function(code) {
     process.exit(code);
   })
+});
+
+/*******************************************************************************
+
+Docco Task:
+
+docco is run on prepublish to automatically generate annotated source code in
+/dist.
+
+*******************************************************************************/
+
+gulp.task('docco', [], function() {
+  return gulp.src([
+    'packages/runtime.js',
+    'packages/rebound-data/lib/rebound-data.js',
+    'packages/rebound-data/lib/model.js',
+    'packages/rebound-data/lib/collection.js',
+    'packages/rebound-data/lib/computed-property.js',
+    'packages/rebound-component/lib/component.js',
+    'packages/rebound-component/lib/helpers.js',
+    'packages/rebound-component/lib/hooks.js',
+    'packages/rebound-component/lib/lazy-value.js',
+    'packages/rebound-router/lib/rebound-router.js',
+    'packages/rebound-component/lib/utils.js',
+    'packages/property-compiler/lib/property-compiler.js',
+    'packages/rebound-compiler/lib/rebound-compiler.js',
+  ])
+  .pipe(concat('rebound.js'))
+  .pipe(docco())
+  .pipe(gulp.dest('dist/docs'));
 });
 
 

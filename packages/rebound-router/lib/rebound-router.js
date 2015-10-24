@@ -3,7 +3,7 @@
 
 import $ from "rebound-component/utils";
 import LazyComponent from "rebound-router/lazy-component";
-import qs from "rebound-router/query-string";
+import qs from "qs";
 
 var DEFAULT_404_PAGE =
 `<div style="display: block;text-align: center;font-size: 22px;">

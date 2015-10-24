@@ -1,3 +1,5 @@
+/*jslint evil: true */
+
 import compiler from 'rebound-compiler/compile';
 import parse from 'rebound-compiler/parser';
 import tokenizer from 'simple-html-tokenizer';
@@ -105,7 +107,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
   var dom = template.render(new Model({foo:'bar', bar:'foo'}));
   equalTokens(dom.fragment.firstChild, '<div class="foo">bar</div>', 'Compiler accepts plain HTMLBars strings and returns working template');
 
-  template = compiler.compile('{{partial "test/partial"}}', {name:'test'})
+  template = compiler.compile('{{partial "test/partial"}}', {name:'test'});
   var partial = template.render(new Model({foo:'bar', bar:'foo'}));
   // In PhantomJS, document fragments don't have a firstElementChild property
   equalTokens(partial.fragment.childNodes[1], '<div class="foo">bar</div>', 'Compiler registers partial for use in other templates');

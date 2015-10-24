@@ -168,7 +168,7 @@ utils.prototype = {
         delete obj[key];
         obj[key] = {get: get, set: set, isComputedProto: true};
       }
-    };
+    }
   },
 
   // Events registry. An object containing all events bound through this util shared among all instances.

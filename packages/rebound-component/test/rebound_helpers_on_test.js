@@ -103,10 +103,10 @@ QUnit.test('Rebound Helpers - On', function() {
 
   dom = template.render(data, env);
   // In PhantomJS, document fragments don't have a firstElementChild property
-  var el = dom.fragment.firstChild;
+  el = dom.fragment.firstChild;
   document.body.appendChild(el);
   var event = document.createEvent('Event');
   event.initEvent('click', true, true);
-  el.firstElementChild.firstElementChild.dispatchEvent(event)
+  el.firstElementChild.firstElementChild.dispatchEvent(event);
 
 });
