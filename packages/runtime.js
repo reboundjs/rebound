@@ -7,7 +7,7 @@
 
 // Rebound Runtime
 // ----------------
-
+debugger;
 // If Backbone isn't preset on the page yet, or if `window.Rebound` is already
 // in use, throw an error
 if(!window.Backbone) throw "Backbone must be on the page for Rebound to load.";

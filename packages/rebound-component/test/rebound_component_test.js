@@ -1,5 +1,5 @@
 import Component from 'rebound-component/component';
-import tokenizer from 'simple-html-tokenizer';
+import tokenizer from 'htmlbars/dist/cjs/simple-html-tokenizer';
 import compiler from 'rebound-compiler/compile';
 import reboundData from 'rebound-data/rebound-data';
 

@@ -1,8 +1,8 @@
 // Rebound Component
 // ----------------
 
-import DOMHelper from "dom-helper";
-import render from "htmlbars-runtime/render";
+import DOMHelper from "htmlbars/dist/cjs/dom-helper";
+import render from "htmlbars/dist/cjs/htmlbars-runtime/render";
 import hooks from "rebound-component/hooks";
 import helpers from "rebound-component/helpers";
 import $ from "rebound-component/utils";

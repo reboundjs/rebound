@@ -4,10 +4,10 @@
 import LazyValue from "rebound-component/lazy-value";
 import $ from "rebound-component/utils";
 import helpers, { partials } from "rebound-component/helpers";
-import hooks, { wrapForHelper } from "htmlbars-runtime/hooks";
-import DOMHelper from "dom-helper";
-import { createObject } from "../htmlbars-util/object-utils";
-import render from "htmlbars-runtime/render";
+import hooks, { wrapForHelper } from "htmlbars/dist/cjs/htmlbars-runtime/hooks";
+import DOMHelper from "htmlbars/dist/cjs/dom-helper";
+import { createObject } from "htmlbars/dist/cjs/htmlbars-util/object-utils";
+import render from "htmlbars/dist/cjs/htmlbars-runtime/render";
 
 
 

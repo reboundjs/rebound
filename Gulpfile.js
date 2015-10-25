@@ -19,6 +19,12 @@ var mkdirp = require('mkdirp');
 var replace = require('gulp-replace');
 var stylish = require('jshint-stylish');
 
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+var uglify = require('gulp-uglify');
+var sourcemaps = require('gulp-sourcemaps');
+var gutil = require('gulp-util');
 
 var paths = {
     all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/**/*.html'],
@@ -85,9 +91,9 @@ gulp.task('amd', ['clean'], function() {
     moduleIds: true,
     blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']
   }))
-  .pipe(gulp.dest('dist/amd'))
-  .pipe(concat('rebound.runtime.js'))
-  .pipe(gulp.dest('dist'))
+  .pipe(gulp.dest('dist/amd'));
+  // .pipe(concat('rebound.runtime.js'))
+  // .pipe(gulp.dest('dist'));
 });
 
 gulp.task('shims', function() {
@@ -108,20 +114,20 @@ gulp.task('shims', function() {
 });
 
 gulp.task('runtime', ['shims', 'amd'], function() {
-  return gulp.src([
-    'dist/rebound.shims.js',
-    'wrap/start.frag',
-    'bower_components/almond/almond.js',
-    'node_modules/qs/dist/qs.js',
-    'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
-    'node_modules/htmlbars/dist/amd/htmlbars-runtime.amd.js',
-    'dist/rebound.runtime.js',
-    'wrap/end.runtime.frag'
-    ])
-  .pipe(concat('rebound.runtime.js'))
+  return browserify({
+    entries: './dist/cjs/runtime.js',
+    paths: ['./dist/cjs'],
+    debug: true
+  })
+  .bundle()
+  .pipe(source('rebound.runtime.js'))
+  .pipe(buffer())
+  .pipe(sourcemaps.init({loadMaps: true}))
   .pipe(gulp.dest('dist'))
-  .pipe(uglify())
   .pipe(rename({basename: "rebound.runtime.min"}))
+  .pipe(uglify())
+  .on('error', gutil.log)
+  .pipe(sourcemaps.write('./'))
   .pipe(gulp.dest('dist'));
 });
 
@@ -196,96 +202,13 @@ gulp.task('test', ['connect'], function() {
     timeout: 15
   }, function(code) {
     process.exit(code);
-  })
+  });
 });
 
-/*******************************************************************************
+// The docco task: called on prepublish
+var docco = require('./tasks/docco');
 
-Docco Task:
-
-docco is run on prepublish to automatically generate annotated source code in
-/dist.
-
-*******************************************************************************/
-
-gulp.task('docco', [], function() {
-  return gulp.src([
-    'packages/runtime.js',
-    'packages/rebound-data/lib/rebound-data.js',
-    'packages/rebound-data/lib/model.js',
-    'packages/rebound-data/lib/collection.js',
-    'packages/rebound-data/lib/computed-property.js',
-    'packages/rebound-component/lib/component.js',
-    'packages/rebound-component/lib/helpers.js',
-    'packages/rebound-component/lib/hooks.js',
-    'packages/rebound-component/lib/lazy-value.js',
-    'packages/rebound-router/lib/rebound-router.js',
-    'packages/rebound-component/lib/utils.js',
-    'packages/property-compiler/lib/property-compiler.js',
-    'packages/rebound-compiler/lib/rebound-compiler.js',
-  ])
-  .pipe(concat('rebound.js'))
-  .pipe(docco())
-  .pipe(gulp.dest('dist/docs'));
-});
+// The reease task: called on postpublish
+var release = require('./tasks/release');
 
 
-/*******************************************************************************
-
-Release Tasks:
-
-gulp release is run on postpublish and automatically pushes the contents of /dist
-to https://github.com/epicmiller/rebound-dist for consumption by bower.
-
-*******************************************************************************/
-gulp.task('cleanrelease', ['build'], function(cb){
-  return del(['tmp'], cb);
-});
-
-// Clone a remote repo
-gulp.task('clone', ['cleanrelease'],  function(cb){
-  console.log('Cloning rebound-dist to /tmp');
-  mkdirp.sync('./tmp');
-  git.clone('https://github.com/reboundjs/rebound-dist.git', {cwd: './tmp'}, cb);
-});
-
-gulp.task('release-copy', ['clone'], function(cb){
-  return gulp.src('dist/**/*')
-      .pipe(gulp.dest('tmp/rebound-dist'));
-});
-
-gulp.task('bump-version', ['release-copy'], function(cb){
-  return gulp.src(['tmp/rebound-dist/bower.json'])
-    .pipe(replace(/(.\s"version": ")[^"]*(")/g, '$1'+pjson.version+'$2'))
-    .pipe(gulp.dest('tmp/rebound-dist'));
-});
-
-gulp.task('add', ['bump-version'], function(){
-  console.log('Adding Rebound /dist directory to rebound-dist');
-  process.chdir('tmp/rebound-dist');
-  return gulp.src('./*')
-      .pipe(git.add({args: '-A'}));
-});
-
-gulp.task('commit', ['add'], function(cb){
-  console.log('Committing Rebound v' + pjson.version);
-  return gulp.src('./*')
-      .pipe(git.commit('Rebound version v'+pjson.version));
-});
-
-// Tag the repo with a version
-gulp.task('tag', ['commit'], function(cb){
-  console.log('Tagging Rebound as version ' + pjson.version);
-  git.tag(''+pjson.version, "Rebound version v"+pjson.version, cb);
-});
-
-gulp.task('push', ['tag'], function(cb){
-  console.log('Pushing Rebound v' + pjson.version);
-  git.push('origin', 'master', {args: '--tags'}, cb);
-});
-
-gulp.task('release', ['push'], function(cb){
-  git.status();
-  console.log('Rebound v'+pjson.version+' successfully released!');
-  return del(['tmp'], cb);
-});
