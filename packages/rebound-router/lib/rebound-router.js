@@ -83,7 +83,7 @@ var ReboundRouter = Backbone.Router.extend({
 
   // Override routeToRegExp so:
   //  - If key is a stringified regexp literal, convert to a regexp object
-  //  - Else If route is a string, append query params capture
+  //  - Else If route is a string, proxy right through
   _routeToRegExp: function(route){
     if(route[0] === '/' && route[route.length-1] === '/' ) {
       let res = new RegExp(route.slice(1, route.length-1), '');
@@ -96,7 +96,8 @@ var ReboundRouter = Backbone.Router.extend({
   },
 
   // Override route so if callback returns false, the route event is not triggered
-  // Every route also looks for query params and passes an extra variable to callbacks
+  // Every route also looks for query params, parses with QS, and passes the extra
+  // variable as a POJO to callbacks
   route: function(route, name, callback) {
     if (_.isFunction(name)) {
       callback = name;
