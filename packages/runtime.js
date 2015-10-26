@@ -7,7 +7,7 @@
 
 // Rebound Runtime
 // ----------------
-debugger;
+
 // If Backbone isn't preset on the page yet, or if `window.Rebound` is already
 // in use, throw an error
 if(!window.Backbone) throw "Backbone must be on the page for Rebound to load.";
@@ -52,6 +52,11 @@ var Rebound = window.Rebound = {
 // Fetch Rebound's Config Object from Rebound's `script` tag
 var Config = document.getElementById('Rebound');
     Config = (Config) ? Config.innerHTML : false;
+
+// Set our require config
+requirejs.config({
+    baseUrl: "/"
+});
 
 // Start the router if a config object is preset
 if(Config) Rebound.start(JSON.parse(Config));

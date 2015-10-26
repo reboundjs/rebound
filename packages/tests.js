@@ -1,7 +1,7 @@
-import propertyCompiler from "property-compiler/test/property_compiler_test";
-
-import compiler from "rebound-compiler/test/rebound_compiler_test";
-import precompiler from "rebound-compiler/test/rebound_precompiler_test";
+// import propertyCompiler from "property-compiler/test/property_compiler_test";
+//
+// import compiler from "rebound-compiler/test/rebound_compiler_test";
+// import precompiler from "rebound-compiler/test/rebound_precompiler_test";
 
 import component from "rebound-component/test/rebound_component_test";
 import services from "rebound-component/test/rebound_services_test";

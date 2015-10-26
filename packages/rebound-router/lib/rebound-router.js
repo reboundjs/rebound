@@ -19,12 +19,15 @@ var ERROR_ROUTE_NAME = 'error';
 var SUCCESS = 'success';
 var ERROR = 'error';
 var LOADING = 'loading';
+var QS_OPTS = {
+  allowDots: true,
+  delimiter: /[;,&]/
+};
 
 // Overload Backbone's loadUrl so it returns the value of the routed callback
 Backbone.history.loadUrl = function(fragment) {
   var key, resp = false;
   this.fragment = this.getFragment(fragment);
-  console.log(this.handlers);
   for(key in this.handlers){
     if(this.handlers[key].route.test(this.fragment)){ return this.handlers[key].callback(this.fragment); }
   }
@@ -114,8 +117,9 @@ var ReboundRouter = Backbone.Router.extend({
       // then our args have the params as its last agrument as of Backbone 1.2.0
       // If the route is a user provided regex, add in parsed search params from
       // the history object before passing to the callback.
-      if(!route._userProvided) args.push((search) ? qs.parse(args.pop()) : {});
-      else args.push((search) ? qs.parse(search) : {});
+      if(search[0] === '?') search = search.slice(1);
+      if(!route._userProvided) args.push((search) ? qs.parse(args.pop(), QS_OPTS) : {});
+      else args.push((search) ? qs.parse(search, QS_OPTS) : {});
 
       var resp = this.execute(callback, args, name);
       if ( resp !== false) {

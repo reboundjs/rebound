@@ -9,20 +9,24 @@
   <div id="qunit"></div>
   <div id="qunit-fixture"></div>
   <script src="../bower_components/underscore/underscore.js"></script>
-  <script src="../dist/rebound.shims.js"></script>
   <script src="../bower_components/html5shiv/dist/html5shiv.js"></script>
+  <script src="../dist/rebound.shims.js"></script>
+  <script src="../dist/rebound.js"></script>
+  <script src="../node_modules/htmlbars/dist/amd/htmlbars-util.amd.js"></script>
+  <script src="../node_modules/htmlbars/dist/amd/htmlbars.amd.js"></script>
   <script src="../bower_components/qunit/qunit/qunit.js"></script>
   <script src="/testem.js"></script>
   <script type="text/javascript">
     QUnit.config.autostart = false;
     require.config({
-        baseUrl: "../dist/amd"
+        baseUrl: "../dist/amd",
+        paths: {
+          "qs": "/node_modules/qs/dist/qs"
+        }
     })
-    window.Rebound = {};
   </script>
 
-  <script src="../dist/rebound.runtime.js"></script>
-
+  <script src="./rebound.tests.js"></script>
 
   <script>require(['tests']);</script>
 

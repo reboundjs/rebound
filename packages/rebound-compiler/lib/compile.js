@@ -2,9 +2,9 @@
 // ----------------
 
 import parse from "rebound-compiler/parser";
-import { compileSpec as htmlbars } from "htmlbars/dist/cjs/htmlbars-compiler/compiler";
-import { merge } from "htmlbars/dist/cjs/htmlbars-util/object-utils";
-import DOMHelper from "htmlbars/dist/cjs/dom-helper";
+import { compileSpec as htmlbars } from "htmlbars-compiler/compiler";
+import { merge } from "htmlbars-util/object-utils";
+import DOMHelper from "dom-helper";
 import helpers from "rebound-component/helpers";
 import hooks from "rebound-component/hooks";
 import Component from "rebound-component/component";

@@ -287,7 +287,6 @@ function serviceLoading(){
     equal(Rebound.services.service1.consumers.length, 0, "Pages consuming services remove themselves from the service's `consumers` array on deinit.");
 
     var handlers = getHandlers();
-    equal(handlers, "^test/foo(?:?([sS]*))?$^test/bar(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
     equal(handlers, "^test/bar(?:?([sS]*))?$^test/foo(?:?([sS]*))?$^test(?:?([sS]*))?$^([^?]*?)(?:?([sS]*))?$", "With services present, the new app's subroutes are loaded into the history's handlers in the apropreate order.");
 
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'After transition to new app, and app with multiple services still has the first service rendered.');
@@ -368,7 +367,7 @@ function queryParams(){
     QUnit.start();
     deepEqual(window._queryParams, {foo: ['bar', 'baz']}, "If a multiple query params of the same name are in the url, suffixed with [], both with values, the callback function receives the key and value as a hash containing an array.");
     QUnit.stop();
-    return Rebound.router.navigate('test?foo=bar,baz');
+    return Rebound.router.navigate('test?foo=bar,foo=baz');
   })
   .then(function(){
     QUnit.start();

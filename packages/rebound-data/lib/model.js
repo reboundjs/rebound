@@ -11,8 +11,6 @@
 import ComputedProperty from "rebound-data/computed-property";
 import $ from "rebound-component/utils";
 
-const VALUE_KEY = '__rebound_primitive_model_value__';
-
 // Returns a function that, when called, generates a path constructed from its
 // parent's path and the key it is assigned to. Keeps us from re-naming children
 // when parents change.
@@ -44,14 +42,6 @@ var Model = Backbone.Model.extend({
     this.setParent( options.parent || this );
     this.setRoot( options.root || this );
     this.__path = options.path || this.__path;
-
-    if(!_.isObject(attributes)){
-      this.isPrimitiveModel = true;
-      attributes = {
-        [VALUE_KEY]: attributes,
-        get value(){ return this.attributes[VALUE_KEY]; }
-      };
-    }
 
     // Convert getters and setters to computed properties
     $.extractComputedProps(attributes);
@@ -161,7 +151,7 @@ var Model = Backbone.Model.extend({
   // - If a `Computed Property` and `options.raw` is true, return it.
   // - If a `Computed Property` traverse to its value.
   // - If not set, return its falsy value.
-  // - If a `Model`, `Collection`, or primitive value, traverse to it.
+  // - If a `Model` or `Collection`, traverse to it.
   get: function(key, options){
     options || (options = {});
     var parts  = $.splitPath(key),

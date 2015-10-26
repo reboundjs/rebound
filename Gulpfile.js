@@ -34,7 +34,8 @@ var paths = {
     reboundData:        'packages/rebound-data/lib/**/*.js',
     reboundPrecompiler: 'packages/rebound-compiler/lib/**/*.js',
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
-    reboundRuntime:     'packages/runtime.js'
+    reboundRuntime:     'packages/runtime.js',
+    reboundCompiletime: 'packages/compiler.js'
   };
 
 // JS hint task
@@ -69,11 +70,11 @@ gulp.task('cjs', ['clean'], function() {
     gulp.src(paths.reboundData).pipe(rename({dirname: "rebound-data/"})),
     gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename(function (path){path.dirname = "rebound-router/" + path.dirname;})),
-    gulp.src(paths.reboundRuntime)
+    gulp.src(paths.reboundRuntime),
+    gulp.src(paths.reboundCompiletime)
   )
   .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
-  .pipe(gulp.dest('dist/cjs'))
-  .pipe(connect.reload());
+  .pipe(gulp.dest('dist/cjs'));
 });
 
 gulp.task('amd', ['clean'], function() {
@@ -84,7 +85,8 @@ gulp.task('amd', ['clean'], function() {
     gulp.src(paths.reboundData).pipe(rename({dirname: "rebound-data/"})),
     gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
     gulp.src(paths.reboundRouter).pipe(rename(function (path){path.dirname = "rebound-router/" + path.dirname;})),
-    gulp.src(paths.reboundRuntime)
+    gulp.src(paths.reboundRuntime),
+    gulp.src(paths.reboundCompiletime)
   )
   .pipe(babel({
     modules: "amd",
@@ -114,15 +116,16 @@ gulp.task('shims', function() {
 });
 
 gulp.task('runtime', ['shims', 'amd'], function() {
-  return browserify({
+  return es.merge(browserify({
     entries: './dist/cjs/runtime.js',
-    paths: ['./dist/cjs'],
+    paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
     debug: true
   })
   .bundle()
   .pipe(source('rebound.runtime.js'))
   .pipe(buffer())
-  .pipe(sourcemaps.init({loadMaps: true}))
+  .pipe(sourcemaps.init({loadMaps: true})), gulp.src('./dist/rebound.shims.js'))
+  .pipe(concat('rebound.runtime.js'))
   .pipe(gulp.dest('dist'))
   .pipe(rename({basename: "rebound.runtime.min"}))
   .pipe(uglify())
@@ -131,7 +134,27 @@ gulp.task('runtime', ['shims', 'amd'], function() {
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('test-helpers', ['runtime'], function(){
+
+gulp.task('compiletime', ['shims', 'amd'], function() {
+  return es.merge(browserify({
+    entries: './dist/cjs/compiler.js',
+    paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
+    debug: true
+  })
+  .bundle()
+  .pipe(source('rebound.js'))
+  .pipe(buffer())
+  .pipe(sourcemaps.init({loadMaps: true})), gulp.src('./dist/rebound.shims.js'))
+  .pipe(concat('rebound.js'))
+  .pipe(gulp.dest('dist'))
+  .pipe(rename({basename: "rebound.min"}))
+  .pipe(uglify())
+  .on('error', gutil.log)
+  .pipe(sourcemaps.write('./'))
+  .pipe(gulp.dest('dist'));
+});
+
+gulp.task('test-helpers', ['runtime', 'compiletime'], function(){
   return gulp.src([
       "bower_components/underscore/underscore.js",
       "bower_components/jquery/dist/jquery.min.js",
@@ -160,7 +183,7 @@ gulp.task('compile-tests', function(){
 });
 
 
-gulp.task('compile-demo', ['cjs', 'test-helpers', 'runtime', 'compile-tests'],  function(){
+gulp.task('compile-demo', ['cjs', 'test-helpers', 'compile-tests'],  function(){
 
   var demo = gulp.src(["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html"])
   .pipe(rebound())
@@ -168,7 +191,7 @@ gulp.task('compile-demo', ['cjs', 'test-helpers', 'runtime', 'compile-tests'],  
 
   return demo;
 });
-gulp.task('compile-apps', ['cjs', 'test-helpers', 'runtime', 'compile-tests'],  function(){
+gulp.task('compile-apps', ['cjs', 'test-helpers', 'compile-tests'],  function(){
 
   var apps = gulp.src(["test/dummy-apps/**/*.html"])
   .pipe(rebound())
@@ -177,8 +200,13 @@ gulp.task('compile-apps', ['cjs', 'test-helpers', 'runtime', 'compile-tests'],  
   return apps;
 });
 
+gulp.task('compile', ['compile-demo', 'compile-apps'],  function(){
+  return gulp.src(["dist/**/*.js"])
+  .pipe(connect.reload());
+});
+
 // Start the test server
-gulp.task('connect', ['compile-demo', 'compile-apps'], function() {
+gulp.task('connect', ['compile'], function() {
   return connect.server({
     root: __dirname,
     livereload: true,
@@ -188,7 +216,7 @@ gulp.task('connect', ['compile-demo', 'compile-apps'], function() {
 
 // Rerun the tasks when a file changes
 gulp.task('watch', ['connect'], function() {
-  gulp.watch(paths.all, ['compile-demo', 'compile-apps']);
+  gulp.watch(paths.all, ['compile']);
 });
 
 // The default task (called when you run `gulp` from cli)

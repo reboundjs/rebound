@@ -2,7 +2,7 @@
 
 import compiler from 'rebound-compiler/compile';
 import parse from 'rebound-compiler/parser';
-import tokenizer from 'htmlbars/dist/cjs/simple-html-tokenizer';
+import tokenizer from 'simple-html-tokenizer';
 import Model from 'rebound-data/model';
 
 function equalTokens(fragment, html, message) {

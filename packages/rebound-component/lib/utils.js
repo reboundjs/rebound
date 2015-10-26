@@ -1,3 +1,5 @@
+import qs from "qs";
+
 // Rebound Utils
 // ----------------
 
@@ -348,7 +350,7 @@ utils.prototype = {
   unMarkLinks: function(){
     var len = this.length;
     while(len--){
-      var links = this[len].querySelectorAll('a')
+      var links = this[len].querySelectorAll('a');
       for(var i=0;i<links.length;i++){
         links.item(i).classList.remove('active');
         links.item(i).active = false;
@@ -375,17 +377,7 @@ utils.prototype = {
       ops.json = ops.json || true;
       ops.method = ops.method || 'get';
       ops.data = ops.data || {};
-      var getParams = function(data, url) {
-          var arr = [], str;
-          for(var name in data) {
-              arr.push(name + '=' + encodeURIComponent(data[name]));
-          }
-          str = arr.join('&');
-          if(str !== '') {
-              return url ? (url.indexOf('?') < 0 ? '?' + str : '&' + str) : str;
-          }
-          return '';
-      };
+      var getParams = qs.stringify;
       var api = {
           host: {},
           process: function(ops) {
