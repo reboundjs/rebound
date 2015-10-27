@@ -24,6 +24,7 @@ var QS_OPTS = {
   delimiter: /[;,&]/
 };
 
+
 // Overload Backbone's loadUrl so it returns the value of the routed callback
 Backbone.history.loadUrl = function(fragment) {
   var key, resp = false;
@@ -32,6 +33,15 @@ Backbone.history.loadUrl = function(fragment) {
     if(this.handlers[key].route.test(this.fragment)){ return this.handlers[key].callback(this.fragment); }
   }
 };
+
+// Remove the hash up to a `?` character. In IE9, which does not support the
+// History API, we need to allow query params to be set both on the URL itself
+// and in the hash, giving precedence to the query params in the URL.
+Backbone.history.getSearch = function() {
+   var match = this.location.href.replace(/#[^\?]*/, '').match(/\?.+/);
+   return match ? match[0] : '';
+};
+
 
 // ReboundRouter Constructor
 var ReboundRouter = Backbone.Router.extend({
@@ -110,8 +120,10 @@ var ReboundRouter = Backbone.Router.extend({
 
     if (!callback) callback = this[name];
     Backbone.history.route(route, (fragment) => {
+
       var args = this._extractParameters(route, fragment),
           search = Backbone.history.getSearch();
+
       if(args[args.length - 1] === null) args.pop();
 
       // If the route is not user prodided, if the history object has search params

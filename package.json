@@ -4,7 +4,7 @@
   "description": "Automatic data binding for Backbone using HTMLBars.",
   "main": "dist/cjs/rebound-compiler/precompile.js",
   "scripts": {
-    "test": "gulp test",
+    "test": "TEST_ENV=true gulp test",
     "start": "gulp default",
     "prepublish": "bower install && gulp build && gulp docco",
     "postpublish": "gulp release"

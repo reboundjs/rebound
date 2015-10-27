@@ -209,7 +209,7 @@ gulp.task('build', ['compile-demo', 'compile-apps'], function(){
 gulp.task('connect', ['build'], function() {
   return connect.server({
     root: __dirname,
-    livereload: true,
+    livereload: !process.env.TEST_ENV,
     port: 8000
   });
 });

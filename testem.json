@@ -51,6 +51,10 @@
     "SL_IE_9": {
       "command": "saucie --browserNameSL='internet explorer' --versionSL='9.0' --platformSL='Windows 7' --ct=0",
       "protocol": "tap"
+    },
+    "SL_EDGE_20": {
+      "command": "saucie --browserNameSL='microsoftedge' --versionSL='20.10240' --platformSL='Windows 10' --ct=0",
+      "protocol": "tap"
     }
   },
   "watch_files": [
@@ -70,6 +74,7 @@
     "SL_Opera_Current",
     "SL_IE_11",
     "SL_IE_10",
-    "SL_IE_9"
+    "SL_IE_9",
+    "SL_EDGE_20"
   ]
 }
