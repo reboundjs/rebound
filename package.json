@@ -22,7 +22,6 @@
     "package.json"
   ],
   "dependencies": {
-    "gulp-merge": "^0.1.1",
     "htmlbars": "0.13.30",
     "qs": "5.0.0"
   },
@@ -39,6 +38,7 @@
     "gulp-docco": "0.0.4",
     "gulp-git": "1.0.0",
     "gulp-jshint": "1.11.2",
+    "gulp-merge": "^0.1.1",
     "gulp-rebound": "1.0.0",
     "gulp-rename": "1.2.0",
     "gulp-replace": "0.5.3",

@@ -201,7 +201,7 @@ gulp.task('compile-apps', ['cjs', 'test-helpers', 'compile-tests'],  function(){
 });
 
 gulp.task('compile', ['compile-demo', 'compile-apps'], function(){
-  gulp.src(paths.all)
+  return gulp.src(paths.all)
     .pipe(connect.reload());
 });
 
@@ -220,7 +220,7 @@ gulp.task('default', ['connect'], function() {
   gulp.watch(paths.all, ['compile']);
 });
 
-gulp.task('test', ['connect'], function() {
+gulp.task('test', ['connect'], function(cb) {
   qunit('http://localhost:8000/test/index.html', {
     verbose: true,
     timeout: 15
