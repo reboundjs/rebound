@@ -200,13 +200,13 @@ gulp.task('compile-apps', ['cjs', 'test-helpers', 'compile-tests'],  function(){
   return apps;
 });
 
-gulp.task('compile', ['compile-demo', 'compile-apps'], function(){
+gulp.task('build', ['compile-demo', 'compile-apps'], function(){
   return gulp.src(paths.all)
     .pipe(connect.reload());
 });
 
 // Start the test server
-gulp.task('connect', ['compile'], function() {
+gulp.task('connect', ['build'], function() {
   return connect.server({
     root: __dirname,
     livereload: true,
@@ -217,7 +217,7 @@ gulp.task('connect', ['compile'], function() {
 // The default task (called when you run `npm start` from cli)
 // Build Rebound and re-run the build when a file changes
 gulp.task('default', ['connect'], function() {
-  gulp.watch(paths.all, ['compile']);
+  gulp.watch(paths.all, ['build']);
 });
 
 gulp.task('test', ['connect'], function(cb) {
