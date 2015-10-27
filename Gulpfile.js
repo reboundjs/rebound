@@ -57,10 +57,17 @@ gulp.task('jshint', function() {
   .pipe(jshint.reporter(stylish));
 });
 
-gulp.task('clean', ['jshint'], function(cb) {
+gulp.task('acorn', ['jshint'], function(cb) {
   // You can use multiple globbing patterns as you would with `gulp.src`
   return del(['dist/**', 'test/demo/templates/**'], cb);
 });
+
+gulp.task('clean', ['acorn'], function() {
+  return gulp.src('./node_modules/acorn/src/**/*.js')
+  .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
+  .pipe(gulp.dest('dist/cjs/acorn'));
+});
+
 
 gulp.task('cjs', ['clean'], function() {
   return es.merge(

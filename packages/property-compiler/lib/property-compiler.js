@@ -1,7 +1,7 @@
 // Property Compiler
 // ----------------
 
-import tokenizer from "property-compiler/tokenizer";
+import { tokenizer } from "acorn";
 
 const TERMINATORS = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '===', '&&', '||', '+', '-', '/', '*', '{', '}'];
 
@@ -24,17 +24,15 @@ function compile(prop, name){
   if(prop.__params) return prop.__params;
 
   var str = prop.toString(), //.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
-      nextToken = tokenizer.tokenize(str),
-      token,
+      token = tokenizer(str),
       finishedPaths = [],
       listening = 0,
       paths = [],
-      path,
       attrs = [],
       workingpath = [];
-  do{
+  while(token.start !== token.end){
 
-    token = nextToken();
+    token.nextToken();
 
     if(token.value === 'this'){
       listening++;
@@ -43,50 +41,50 @@ function compile(prop, name){
 
     // TODO: handle gets on collections
     if(token.value === 'get'){
-      path = nextToken();
-      while(_.isUndefined(path.value)){
-        path = nextToken();
+      token.nextToken();
+      while(_.isUndefined(token.value)){
+        token.nextToken();
       }
 
       // Replace any access to a collection with the generic @each placeholder and push dependancy
-      workingpath.push(path.value.replace(/\[.+\]/g, ".@each").replace(/^\./, ''));
+      workingpath.push(token.value.replace(/\[.+\]/g, ".@each").replace(/^\./, ''));
     }
 
     if(token.value === 'pluck'){
-      path = nextToken();
-      while(_.isUndefined(path.value)){
-        path = nextToken();
+      token.nextToken();
+      while(_.isUndefined(token.value)){
+        token.nextToken();
       }
 
-      workingpath.push('@each.' + path.value);
+      workingpath.push('@each.' + token.value);
     }
 
     if(token.value === 'slice' || token.value === 'clone' || token.value === 'filter'){
-      path = nextToken();
-      if(path.type.type === '(') workingpath.push('@each');
+      token.nextToken();
+      if(token.type.type === '(') workingpath.push('@each');
     }
 
     if(token.value === 'at'){
-      path = nextToken();
-      while(_.isUndefined(path.value)){
-        path = nextToken();
+      token.nextToken();
+      while(_.isUndefined(token.value)){
+        token.nextToken();
       }
       workingpath.push('@each');
     }
 
     if(token.value === 'where' || token.value === 'findWhere'){
       workingpath.push('@each');
-      path = nextToken();
+      token.nextToken();
       attrs = [];
       var itr = 0;
-      while(path.type.type !== ')'){
-        if(path.value){
+      while(token.type.type !== ')'){
+        if(token.value){
           if(itr%2 === 0){
-            attrs.push(path.value);
+            attrs.push(token.value);
           }
           itr++;
         }
-        path = nextToken();
+        token.nextToken();
       }
       workingpath.push(attrs);
     }
@@ -97,10 +95,10 @@ function compile(prop, name){
       workingpath = [];
       listening--;
     }
+// debugger;
+  }
 
-  } while(token.start !== token.end);
-
-  // console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
+  console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
 
   // Save our finished paths directly on the function
   prop.__params = finishedPaths;
