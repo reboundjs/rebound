@@ -410,6 +410,11 @@ function regexpRoutes(){
   .then(function(page){
     equal(page, 'bar', 'Routes defined as regular expressions receive their captured values on re-route.');
     deepEqual(window._queryParams, {'foo': 'bar'}, 'Routes defined as regular expressions with query params receive a well formed query object.');
+    return Rebound.router.navigate('test/biz?biz=baz');
+  })
+  .then(function(page){
+    equal(page, 'biz', 'Routes defined as regular expressions, with ^ and $ for begining and end, receive their captured values on re-route.');
+    deepEqual(window._queryParams, {'biz': 'baz'}, 'Routes defined as regular expressions, with ^ and $ for begining and end, with query params receive a well formed query object.');
     return Rebound.router.navigate('');
   })
   .then(function(){

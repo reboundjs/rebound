@@ -5,9 +5,14 @@
   <script>
     return ({
       routes: {
-        "/^test/(foo|bar|baz)/": "test"
+        "/^test/(foo|bar|baz)/": "test",
+        "/^test/(biz)$/": "test2"
       },
       test: function(page, queryParams){
+        window._queryParams = queryParams
+        return page;
+      },
+      test2: function(page, queryParams){
         window._queryParams = queryParams
         return page;
       }

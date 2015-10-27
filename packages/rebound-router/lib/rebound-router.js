@@ -26,9 +26,10 @@ var QS_OPTS = {
 
 
 // Overload Backbone's loadUrl so it returns the value of the routed callback
+// Only ever compare the current path (excludes the query params) to the route regexp
 Backbone.history.loadUrl = function(fragment) {
   var key, resp = false;
-  this.fragment = this.getFragment(fragment);
+  this.fragment = this.getFragment(fragment).split('?')[0];
   for(key in this.handlers){
     if(this.handlers[key].route.test(this.fragment)){ return this.handlers[key].callback(this.fragment); }
   }
@@ -95,14 +96,17 @@ var ReboundRouter = Backbone.Router.extend({
   //  - If key is a stringified regexp literal, convert to a regexp object
   //  - Else If route is a string, proxy right through
   _routeToRegExp: function(route){
+    var res;
     if(route[0] === '/' && route[route.length-1] === '/' ) {
-      let res = new RegExp(route.slice(1, route.length-1), '');
-      res._userProvided = true;
-      return res;
+      res = new RegExp(route.slice(1, route.length-1), '');
+      res._isRegexp = true;
     }
     else if(typeof route == 'string'){
-      return Backbone.Router.prototype._routeToRegExp.call(this, route);
+      res = Backbone.Router.prototype._routeToRegExp.call(this, route);
+      res._isString = true;
     }
+    return res;
+
   },
 
   // Override route so if callback returns false, the route event is not triggered
@@ -121,18 +125,25 @@ var ReboundRouter = Backbone.Router.extend({
     if (!callback) callback = this[name];
     Backbone.history.route(route, (fragment) => {
 
-      var args = this._extractParameters(route, fragment),
-          search = Backbone.history.getSearch();
+      // If this route was defined as a regular expression, we don't capture
+      // query params. Only parse the actual path.
+      fragment = fragment.split('?')[0];
 
-      if(args[args.length - 1] === null) args.pop();
+      // Extract the arguments we care about from the fragment
+      var args = this._extractParameters(route, fragment),
+
+      // Get the query params string
+          search = (Backbone.history.getSearch() || '').slice(1);
+
+      // If this route was created from a string (not a regexp), remove the auto-captured
+      // search params.
+      if(route._isString) args.pop();
 
       // If the route is not user prodided, if the history object has search params
       // then our args have the params as its last agrument as of Backbone 1.2.0
       // If the route is a user provided regex, add in parsed search params from
       // the history object before passing to the callback.
-      if(search[0] === '?') search = search.slice(1);
-      if(!route._userProvided) args.push((search) ? qs.parse(args.pop(), QS_OPTS) : {});
-      else args.push((search) ? qs.parse(search, QS_OPTS) : {});
+      args.push((search) ? qs.parse(search, QS_OPTS) : {});
 
       var resp = this.execute(callback, args, name);
       if ( resp !== false) {
