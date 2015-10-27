@@ -59,7 +59,7 @@ gulp.task('jshint', function() {
 
 gulp.task('clean', ['jshint'], function(cb) {
   // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist', 'test/demo/templates'], cb);
+  return del(['dist/**', 'test/demo/templates/**'], cb);
 });
 
 gulp.task('cjs', ['clean'], function() {
@@ -200,9 +200,9 @@ gulp.task('compile-apps', ['cjs', 'test-helpers', 'compile-tests'],  function(){
   return apps;
 });
 
-gulp.task('compile', ['compile-demo', 'compile-apps'],  function(){
-  return gulp.src(["dist/**/*.js"])
-  .pipe(connect.reload());
+gulp.task('compile', ['compile-demo', 'compile-apps'], function(){
+  gulp.src(paths.all)
+    .pipe(connect.reload());
 });
 
 // Start the test server
@@ -214,15 +214,11 @@ gulp.task('connect', ['compile'], function() {
   });
 });
 
-// Rerun the tasks when a file changes
-gulp.task('watch', ['connect'], function() {
+// The default task (called when you run `npm start` from cli)
+// Build Rebound and re-run the build when a file changes
+gulp.task('default', ['connect'], function() {
   gulp.watch(paths.all, ['compile']);
 });
-
-// The default task (called when you run `gulp` from cli)
-gulp.task('default', [ 'watch' ]);
-
-gulp.task('build', [ 'compile-demo', 'compile-apps' ]);
 
 gulp.task('test', ['connect'], function() {
   qunit('http://localhost:8000/test/index.html', {
