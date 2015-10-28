@@ -203,7 +203,7 @@ hooks.wrap = function wrap(template){
     meta: template.meta,
     arity: template.arity,
     raw: template,
-    render: function(data, env=hooks.createFreshEnv(), options={}, blockArguments){
+    render: function(data, env=hooks.createFreshEnv(), options={}, blockArguments){ // jshint ignore:line
       // Create a fresh scope if it doesn't exist
       var scope = hooks.createFreshScope();
 
@@ -231,7 +231,7 @@ hooks.wrapPartial = function wrapPartial(template){
     meta: template.meta,
     arity: template.arity,
     raw: template,
-    render: function(scope, env=hooks.createFreshEnv(), options={}, blockArguments){
+    render: function(scope, env=hooks.createFreshEnv(), options={}, blockArguments){ // jshint ignore:line
       env = hooks.createChildEnv(env);
 
       // Ensure we have a contextual element to pass to render
