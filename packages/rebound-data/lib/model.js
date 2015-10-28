@@ -11,7 +11,6 @@
 import ComputedProperty from "rebound-data/computed-property";
 import $ from "rebound-component/utils";
 
-
 // Returns a function that, when called, generates a path constructed from its
 // parent's path and the key it is assigned to. Keeps us from re-naming children
 // when parents change.
@@ -34,7 +33,8 @@ var Model = Backbone.Model.extend({
   // Create a new Model with the specified attributes. The Model's lineage is set
   // up here to keep track of it's place in the data tree.
   constructor: function(attributes, options){
-    attributes || (attributes = {});
+    var self = this;
+    if(attributes === null || attributes === undefined) attributes = {};
     attributes.isModel && (attributes = attributes.attributes);
     options || (options = {});
     this.helpers = {};
@@ -47,6 +47,7 @@ var Model = Backbone.Model.extend({
     $.extractComputedProps(attributes);
 
     Backbone.Model.call( this, attributes, options );
+
   },
 
   // New convenience function to toggle boolean values in the Model.
@@ -150,7 +151,7 @@ var Model = Backbone.Model.extend({
   // - If a `Computed Property` and `options.raw` is true, return it.
   // - If a `Computed Property` traverse to its value.
   // - If not set, return its falsy value.
-  // - If a `Model`, `Collection`, or primitive value, traverse to it.
+  // - If a `Model` or `Collection`, traverse to it.
   get: function(key, options){
     options || (options = {});
     var parts  = $.splitPath(key),
@@ -181,7 +182,7 @@ var Model = Backbone.Model.extend({
   // find the correct value to call the original `Backbone.Set` on.
   set: function(key, val, options){
 
-    var attrs, attr, newKey, target, destination, props = [], lineage;
+    var attrs, newKey, target, destination, props = [], lineage;
 
     if (typeof key === 'object') {
       attrs = (key.isModel) ? key.attributes : key;
@@ -231,6 +232,7 @@ var Model = Backbone.Model.extend({
       // - If val is `null` or `undefined`, set to default value.
       // - If val is a `Computed Property`, get its current cache object.
       // - If val (default value or evaluated computed property) is `null`, set to default value or (fallback `undefined`).
+      // - Else If val is a primitive object instance, convert to primitive value.
       // - Else If `{raw: true}` option is passed, set the exact object that was passed. No promotion to a Rebound Data object.
       // - Else If this function is the same as the current computed property, continue.
       // - Else If this value is a `Function`, turn it into a `Computed Property`.
@@ -245,6 +247,9 @@ var Model = Backbone.Model.extend({
       if(_.isNull(val) || _.isUndefined(val)) val = this.defaults[key];
       if(val && val.isComputedProperty) val = val.value();
       if(_.isNull(val) || _.isUndefined(val)) val = undefined;
+      else if(val instanceof String) val = String(val);
+      else if(val instanceof Number) val = Number(val);
+      else if(val instanceof Boolean) val = Boolean(val.valueOf());
       else if(options.raw === true) val = val;
       else if(destination.isComputedProperty && destination.func === val) continue;
       else if(val.isComputedProto) val = new ComputedProperty(val.get, val.set, lineage);

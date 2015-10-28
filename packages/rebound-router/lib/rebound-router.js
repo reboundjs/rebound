@@ -3,6 +3,7 @@
 
 import $ from "rebound-component/utils";
 import LazyComponent from "rebound-router/lazy-component";
+import qs from "qs";
 
 var DEFAULT_404_PAGE =
 `<div style="display: block;text-align: center;font-size: 22px;">
@@ -18,22 +19,30 @@ var ERROR_ROUTE_NAME = 'error';
 var SUCCESS = 'success';
 var ERROR = 'error';
 var LOADING = 'loading';
+var QS_OPTS = {
+  allowDots: true,
+  delimiter: /[;,&]/
+};
+
 
 // Overload Backbone's loadUrl so it returns the value of the routed callback
-// instead of undefined and prefixes all fragment tests with the current app name
+// Only ever compare the current path (excludes the query params) to the route regexp
 Backbone.history.loadUrl = function(fragment) {
-  fragment = this.fragment = this.getFragment(fragment);
-  var resp = false;
-
-  _.any(this.handlers, function(handler) {
-    if (handler.route.test(fragment)) {
-      resp = handler.callback(fragment);
-      return true;
-    }
-  });
-
-  return resp;
+  var key, resp = false;
+  this.fragment = this.getFragment(fragment).split('?')[0];
+  for(key in this.handlers){
+    if(this.handlers[key].route.test(this.fragment)){ return this.handlers[key].callback(this.fragment); }
+  }
 };
+
+// Remove the hash up to a `?` character. In IE9, which does not support the
+// History API, we need to allow query params to be set both on the URL itself
+// and in the hash, giving precedence to the query params in the URL.
+Backbone.history.getSearch = function() {
+   var match = this.location.href.replace(/#[^\?]*/, '').match(/\?.+/);
+   return match ? match[0] : '';
+};
+
 
 // ReboundRouter Constructor
 var ReboundRouter = Backbone.Router.extend({
@@ -83,17 +92,59 @@ var ReboundRouter = Backbone.Router.extend({
     if (callback) return callback.apply(this, args);
   },
 
+  // Override routeToRegExp so:
+  //  - If key is a stringified regexp literal, convert to a regexp object
+  //  - Else If route is a string, proxy right through
+  _routeToRegExp: function(route){
+    var res;
+    if(route[0] === '/' && route[route.length-1] === '/' ) {
+      res = new RegExp(route.slice(1, route.length-1), '');
+      res._isRegexp = true;
+    }
+    else if(typeof route == 'string'){
+      res = Backbone.Router.prototype._routeToRegExp.call(this, route);
+      res._isString = true;
+    }
+    return res;
+
+  },
+
   // Override route so if callback returns false, the route event is not triggered
+  // Every route also looks for query params, parses with QS, and passes the extra
+  // variable as a POJO to callbacks
   route: function(route, name, callback) {
-    if (!_.isRegExp(route)) route = this._routeToRegExp(route);
     if (_.isFunction(name)) {
       callback = name;
       name = '';
     }
 
+    if (!_.isRegExp(route)){
+      route = this._routeToRegExp(route);
+    }
+
     if (!callback) callback = this[name];
     Backbone.history.route(route, (fragment) => {
-      var args = this._extractParameters(route, fragment);
+
+      // If this route was defined as a regular expression, we don't capture
+      // query params. Only parse the actual path.
+      fragment = fragment.split('?')[0];
+
+      // Extract the arguments we care about from the fragment
+      var args = this._extractParameters(route, fragment),
+
+      // Get the query params string
+          search = (Backbone.history.getSearch() || '').slice(1);
+
+      // If this route was created from a string (not a regexp), remove the auto-captured
+      // search params.
+      if(route._isString) args.pop();
+
+      // If the route is not user prodided, if the history object has search params
+      // then our args have the params as its last agrument as of Backbone 1.2.0
+      // If the route is a user provided regex, add in parsed search params from
+      // the history object before passing to the callback.
+      args.push((search) ? qs.parse(search, QS_OPTS) : {});
+
       var resp = this.execute(callback, args, name);
       if ( resp !== false) {
         this.trigger.apply(this, ['route:' + name].concat(args));
@@ -190,8 +241,7 @@ var ReboundRouter = Backbone.Router.extend({
     // Unset Previous Application's Routes. For each route in the page app, remove
     // the handler from our route object and delete our referance to the route's callback
     _.each(routes, (value, key) => {
-      if(key[0] === '/') key = new RegExp(key.split('/')[1], key.split('/')[2]);
-      var regExp = (key instanceof RegExp) ? key.toString() : this._routeToRegExp(key).toString();
+      var regExp = this._routeToRegExp(key).toString();
       Backbone.history.handlers = _.filter(Backbone.history.handlers, function(obj){
         return obj.route.toString() !== regExp;
       });
@@ -199,7 +249,7 @@ var ReboundRouter = Backbone.Router.extend({
 
     if(!this.current) return;
 
-    var oldPageName = this.current.__name
+    var oldPageName = this.current.__name;
 
     // Un-hook Event Bindings, Delete Objects
     this.current.data.deinitialize();
@@ -241,13 +291,8 @@ var ReboundRouter = Backbone.Router.extend({
     // Augment ApplicationRouter with new routes from PageApp added in reverse order to preserve order higherarchy
     if(!isService) this.route(this._currentRoute, 'default', function(){ return 'DEFAULT'; });
     _.each(pageInstance.data.routes, (value, key) => {
-      // If key is a stringified regexp literal, convert to a regexp object
-      if(key[0] === '/') key = new RegExp(key.split('/')[1], key.split('/')[2]);
-      routes.unshift({key: key, value: value});
       // Add the new callback referance on to our router and add the route handler
-    }, this);
-    _.each(routes, (route) => {
-      this.route(route.key, route.value, function () { return pageInstance.data[route.value].apply(pageInstance.data, arguments); });
+      this.route(key, value, function () { return pageInstance.data[value].apply(pageInstance.data, arguments); });
     });
 
     var name = (isService) ? appName : 'page';
@@ -316,12 +361,12 @@ var ReboundRouter = Backbone.Router.extend({
         var successCallback = function(){
           clearInterval(ti);
           resolve(cssElement);
-        }
+        };
         var errorCallback = function(err){
           clearInterval(ti);
           cssElement.dataset.error = '';
           reject(err);
-        }
+        };
 
         // Older browsers and phantomJS < 2.0 don't support the onLoad event for
         // `<link>` tags. Pool stylesheets array as a fallback. Timeout at 5s.
@@ -329,7 +374,7 @@ var ReboundRouter = Backbone.Router.extend({
           for(var i = 0; i < document.styleSheets.length; i++){
             count = count + 50;
             if(document.styleSheets[i].href.indexOf(cssUrl) > -1) successCallback();
-            else if(count >= 5000) errorCallback('CSS Timeout')
+            else if(count >= 5000) errorCallback('CSS Timeout');
           }
         }, 50);
 
@@ -338,7 +383,7 @@ var ReboundRouter = Backbone.Router.extend({
         // clearInterval so the resolve/reject handlers aren't called twice.
         $(cssElement).on('load', successCallback);
         $(cssElement).on('error', errorCallback);
-        $(cssElement).on('readystatechange', function(){ clearInterval(ti); })
+        $(cssElement).on('readystatechange', function(){ clearInterval(ti); });
 
         // Add our `<link>` element to the page.
         document.head.appendChild(cssElement);

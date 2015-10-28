@@ -17,7 +17,14 @@ var git = require('gulp-git');
 var pjson = require('./package.json');
 var mkdirp = require('mkdirp');
 var replace = require('gulp-replace');
+var stylish = require('jshint-stylish');
 
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+var uglify = require('gulp-uglify');
+var sourcemaps = require('gulp-sourcemaps');
+var gutil = require('gulp-util');
 
 var paths = {
     all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/**/*.html'],
@@ -27,14 +34,9 @@ var paths = {
     reboundData:        'packages/rebound-data/lib/**/*.js',
     reboundPrecompiler: 'packages/rebound-compiler/lib/**/*.js',
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
-    reboundRuntime:     'packages/runtime.js'
+    reboundRuntime:     'packages/runtime.js',
+    reboundCompiletime: 'packages/compiler.js'
   };
-
-
-gulp.task('clean', function(cb) {
-  // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist', 'test/demo/templates'], cb);
-});
 
 // JS hint task
 gulp.task('jshint', function() {
@@ -52,70 +54,54 @@ gulp.task('jshint', function() {
       jQuery: true
     }
   }))
-  .pipe(jshint.reporter('default'));
+  .pipe(jshint.reporter(stylish));
+});
+
+gulp.task('clean', ['jshint'], function(cb) {
+  // You can use multiple globbing patterns as you would with `gulp.src`
+  return del(['dist/**', 'test/demo/templates/**'], cb);
 });
 
 gulp.task('cjs', ['clean'], function() {
   return es.merge(
-    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
-    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
-    gulp.src(paths.reboundRuntime)
+    gulp.src(paths.propertyCompiler).pipe(rename({dirname: "property-compiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundComponent).pipe(rename({dirname: "rebound-component/"})),
+    gulp.src(paths.reboundData).pipe(rename({dirname: "rebound-data/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundRouter).pipe(rename(function (path){path.dirname = "rebound-router/" + path.dirname;})),
+    gulp.src(paths.reboundRuntime),
+    gulp.src(paths.reboundCompiletime)
   )
   .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
-  .pipe(gulp.dest('dist/cjs'))
-  .pipe(connect.reload());
-});
-
-gulp.task('docco', ['clean'], function() {
-  return gulp.src([
-    'packages/runtime.js',
-    'packages/rebound-data/lib/rebound-data.js',
-    'packages/rebound-data/lib/model.js',
-    'packages/rebound-data/lib/collection.js',
-    'packages/rebound-data/lib/computed-property.js',
-    'packages/rebound-component/lib/component.js',
-    'packages/rebound-component/lib/helpers.js',
-    'packages/rebound-component/lib/hooks.js',
-    'packages/rebound-component/lib/lazy-value.js',
-    'packages/rebound-router/lib/rebound-router.js',
-    'packages/rebound-component/lib/utils.js',
-    'packages/property-compiler/lib/property-compiler.js',
-    'packages/rebound-compiler/lib/rebound-compiler.js',
-  ])
-  .pipe(concat('rebound.js'))
-  .pipe(docco())
-  .pipe(gulp.dest('dist/docs'));
+  .pipe(gulp.dest('dist/cjs'));
 });
 
 gulp.task('amd', ['clean'], function() {
   return es.merge(
-    gulp.src(paths.propertyCompiler).pipe(rename({prefix: "property-compiler/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundComponent).pipe(rename({prefix: "rebound-component/"})),
-    gulp.src(paths.reboundData).pipe(rename({prefix: "rebound-data/"})),
-    gulp.src(paths.reboundCompiler).pipe(rename({prefix: "rebound-compiler/"})),
-    gulp.src(paths.reboundRouter).pipe(rename({prefix: "rebound-router/"})),
-    gulp.src(paths.reboundRuntime)
+    gulp.src(paths.propertyCompiler).pipe(rename({dirname: "property-compiler/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundComponent).pipe(rename({dirname: "rebound-component/"})),
+    gulp.src(paths.reboundData).pipe(rename({dirname: "rebound-data/"})),
+    gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
+    gulp.src(paths.reboundRouter).pipe(rename(function (path){path.dirname = "rebound-router/" + path.dirname;})),
+    gulp.src(paths.reboundRuntime),
+    gulp.src(paths.reboundCompiletime)
   )
   .pipe(babel({
     modules: "amd",
     moduleIds: true,
     blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']
   }))
-  .pipe(gulp.dest('dist/amd'))
-  .pipe(concat('rebound.runtime.js'))
-  .pipe(gulp.dest('dist'))
+  .pipe(gulp.dest('dist/amd'));
+  // .pipe(concat('rebound.runtime.js'))
+  // .pipe(gulp.dest('dist'));
 });
 
 gulp.task('shims', function() {
   return gulp.src([
     'shims/classList.js',
     'shims/matchesSelector.js',
-    // 'bower_components/webcomponentsjs/webcomponents-lite.min.js',
     'node_modules/document-register-element/build/document-register-element.max.js',
     'bower_components/setimmediate/setImmediate.js',
     'bower_components/promise-polyfill/Promise.js',
@@ -130,23 +116,45 @@ gulp.task('shims', function() {
 });
 
 gulp.task('runtime', ['shims', 'amd'], function() {
-  return gulp.src([
-    'dist/rebound.shims.js',
-    'wrap/start.frag',
-    'bower_components/almond/almond.js',
-    'node_modules/htmlbars/dist/amd/htmlbars-util.amd.js',
-    'node_modules/htmlbars/dist/amd/htmlbars-runtime.amd.js',
-    'dist/rebound.runtime.js',
-    'wrap/end.runtime.frag'
-    ])
+  return es.merge(browserify({
+    entries: './dist/cjs/runtime.js',
+    paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
+    debug: true
+  })
+  .bundle()
+  .pipe(source('rebound.runtime.js'))
+  .pipe(buffer())
+  .pipe(sourcemaps.init({loadMaps: true})), gulp.src('./dist/rebound.shims.js'))
   .pipe(concat('rebound.runtime.js'))
   .pipe(gulp.dest('dist'))
-  .pipe(uglify())
   .pipe(rename({basename: "rebound.runtime.min"}))
+  .pipe(uglify())
+  .on('error', gutil.log)
+  .pipe(sourcemaps.write('./'))
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('test-helpers', ['runtime'], function(){
+
+gulp.task('compiletime', ['shims', 'amd'], function() {
+  return es.merge(browserify({
+    entries: './dist/cjs/compiler.js',
+    paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
+    debug: true
+  })
+  .bundle()
+  .pipe(source('rebound.js'))
+  .pipe(buffer())
+  .pipe(sourcemaps.init({loadMaps: true})), gulp.src('./dist/rebound.shims.js'))
+  .pipe(concat('rebound.js'))
+  .pipe(gulp.dest('dist'))
+  .pipe(rename({basename: "rebound.min"}))
+  .pipe(uglify())
+  .on('error', gutil.log)
+  .pipe(sourcemaps.write('./'))
+  .pipe(gulp.dest('dist'));
+});
+
+gulp.task('test-helpers', ['runtime', 'compiletime'], function(){
   return gulp.src([
       "bower_components/underscore/underscore.js",
       "bower_components/jquery/dist/jquery.min.js",
@@ -175,7 +183,7 @@ gulp.task('compile-tests', function(){
 });
 
 
-gulp.task('compile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
+gulp.task('compile-demo', ['cjs', 'test-helpers', 'compile-tests'],  function(){
 
   var demo = gulp.src(["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html"])
   .pipe(rebound())
@@ -183,7 +191,7 @@ gulp.task('compile-demo', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-t
 
   return demo;
 });
-gulp.task('compile-apps', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-tests'],  function(){
+gulp.task('compile-apps', ['cjs', 'test-helpers', 'compile-tests'],  function(){
 
   var apps = gulp.src(["test/dummy-apps/**/*.html"])
   .pipe(rebound())
@@ -192,91 +200,39 @@ gulp.task('compile-apps', ['cjs', 'test-helpers', 'docco', 'runtime', 'compile-t
   return apps;
 });
 
+gulp.task('build', ['compile-demo', 'compile-apps'], function(){
+  return gulp.src(paths.all)
+    .pipe(connect.reload());
+});
+
 // Start the test server
-gulp.task('connect', ['compile-demo', 'compile-apps'], function() {
+gulp.task('connect', ['build'], function() {
   return connect.server({
     root: __dirname,
-    livereload: true,
+    livereload: !process.env.TEST_ENV,
     port: 8000
   });
 });
 
-// Rerun the tasks when a file changes
-gulp.task('watch', ['connect'], function() {
-  gulp.watch(paths.all, ['compile-demo', 'compile-apps']);
+// The default task (called when you run `npm start` from cli)
+// Build Rebound and re-run the build when a file changes
+gulp.task('default', ['connect'], function() {
+  gulp.watch(paths.all, ['build']);
 });
 
-// The default task (called when you run `gulp` from cli)
-gulp.task('default', [ 'watch' ]);
-
-gulp.task('build', [ 'compile-demo', 'compile-apps' ]);
-
-gulp.task('test', ['connect'], function() {
+gulp.task('test', ['connect'], function(cb) {
   qunit('http://localhost:8000/test/index.html', {
     verbose: true,
     timeout: 15
   }, function(code) {
     process.exit(code);
-  })
+  });
 });
 
+// The docco task: called on prepublish
+var docco = require('./tasks/docco');
 
-/*******************************************************************************
+// The reease task: called on postpublish
+var release = require('./tasks/release');
 
-Release Tasks:
 
-gulp release is run on postpublish and automatically pushes the contents of /dist
-to https://github.com/epicmiller/rebound-dist for consumption by bower.
-
-*******************************************************************************/
-gulp.task('cleanrelease', ['build'], function(cb){
-  return del(['tmp'], cb);
-});
-
-// Clone a remote repo
-gulp.task('clone', ['cleanrelease'],  function(cb){
-  console.log('Cloning rebound-dist to /tmp');
-  mkdirp.sync('./tmp');
-  git.clone('https://github.com/reboundjs/rebound-dist.git', {cwd: './tmp'}, cb);
-});
-
-gulp.task('release-copy', ['clone'], function(cb){
-  return gulp.src('dist/**/*')
-      .pipe(gulp.dest('tmp/rebound-dist'));
-});
-
-gulp.task('bump-version', ['release-copy'], function(cb){
-  return gulp.src(['tmp/rebound-dist/bower.json'])
-    .pipe(replace(/(.\s"version": ")[^"]*(")/g, '$1'+pjson.version+'$2'))
-    .pipe(gulp.dest('tmp/rebound-dist'));
-});
-
-gulp.task('add', ['bump-version'], function(){
-  console.log('Adding Rebound /dist directory to rebound-dist');
-  process.chdir('tmp/rebound-dist');
-  return gulp.src('./*')
-      .pipe(git.add({args: '-A'}));
-});
-
-gulp.task('commit', ['add'], function(cb){
-  console.log('Committing Rebound v' + pjson.version);
-  return gulp.src('./*')
-      .pipe(git.commit('Rebound version v'+pjson.version));
-});
-
-// Tag the repo with a version
-gulp.task('tag', ['commit'], function(cb){
-  console.log('Tagging Rebound as version ' + pjson.version);
-  git.tag(''+pjson.version, "Rebound version v"+pjson.version, cb);
-});
-
-gulp.task('push', ['tag'], function(cb){
-  console.log('Pushing Rebound v' + pjson.version);
-  git.push('origin', 'master', {args: '--tags'}, cb);
-});
-
-gulp.task('release', ['push'], function(cb){
-  git.status();
-  console.log('Rebound v'+pjson.version+' successfully released!');
-  return del(['tmp'], cb);
-});

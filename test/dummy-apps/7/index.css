@@ -1,0 +1,8 @@
+<element name="test-page-5">
+  <template>
+    <h1>Index Page 5!</h1>
+  </template>
+  <script>
+    return ({})
+  </script>
+</element>

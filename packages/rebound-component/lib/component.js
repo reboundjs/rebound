@@ -263,7 +263,7 @@ var Component = Model.extend({
           }
         }
       }
-    } while(context !== data && (context = context.get(parts.shift())));
+    } while(context !== data && (context = context.get(parts.shift(), {isPath: true})));
 
     // Queue our render callback to be called after the current call stack has been exhausted
     window.clearTimeout(this._renderTimeout);

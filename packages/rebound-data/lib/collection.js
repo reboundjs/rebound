@@ -22,6 +22,7 @@ var Collection = Backbone.Collection.extend({
   constructor: function(models, options){
     models || (models = []);
     options || (options = {});
+    this._byValue = {};
     this.__observers = {};
     this.helpers = {};
     this.cid = _.uniqueId('collection');
@@ -44,20 +45,32 @@ var Collection = Backbone.Collection.extend({
 
   get: function(key, options){
 
-    // If the key is a number or object, default to backbone's collection get
-    if(typeof key == 'number' || typeof key == 'object'){
-      return Backbone.Collection.prototype.get.call(this, key);
-    }
-
-    // If key is not a string, return undefined
-    if (!_.isString(key)) return void 0;
-
     // Split the path at all '.', '[' and ']' and find the value referanced.
-    var parts  = $.splitPath(key),
+    var parts = _.isString(key) ? $.splitPath(key) : [],
         result = this,
         l=parts.length,
         i=0;
         options || (options = {});
+
+    // If the key is a number or object, or just a single string that is not a path,
+    // get by id and return the first occurance
+    if(typeof key == 'number' || typeof key == 'object' || (parts.length == 1 && !options.isPath)){
+      if (key === null) return void 0;
+      var id = this.modelId(this._isModel(key) ? key.attributes : key);
+      var responses = [].concat(this._byValue[key], (this._byId[key] || this._byId[id] || this._byId[key.cid]));
+      var res = responses[0], idx = Infinity;
+
+      responses.forEach((value) => {
+        if(!value) return;
+        let i = _.indexOf(this.models, value);
+        if(i > -1 && i < idx){ idx = i; res = value;}
+      });
+
+      return res;
+    }
+
+    // If key is not a string, return undefined
+    if (!_.isString(key)) return void 0;
 
     if(_.isUndefined(key) || _.isNull(key)) return key;
     if(key === '' || parts.length === 0) return result;
@@ -82,6 +95,8 @@ var Collection = Backbone.Collection.extend({
 
   set: function(models, options){
     var newModels = [],
+        parts = _.isString(models) ? $.splitPath(models) : [],
+        res,
         lineage = {
           parent: this,
           root: this.__root__,
@@ -93,9 +108,11 @@ var Collection = Backbone.Collection.extend({
     // If no models passed, implies an empty array
     models || (models = []);
 
-    // If models is a string, call set at that path
-    if(_.isString(models)) return this.get($.splitPath(models)[0]).set($.splitPath(models).splice(1, models.length).join('.'), options);
-    if(!_.isObject(models)) return console.error('Collection.set must be passed a Model, Object, array or Models and Objects, or another Collection');
+    // If models is a string, and it has parts, call set at that path
+    if(_.isString(models) && parts.length > 1 && !isNaN(Number(parts[0]))){
+      let index = Number(parts[0]);
+      return this.at(index).set(parts.splice(1, parts.length).join('.'), options);
+    }
 
     // If another collection, treat like an array
     models = (models.isCollection) ? models.models : models;

@@ -1,0 +1,15 @@
+<element name="test-page-7">
+  <template>
+    <h1>Test Page 7!</h1>
+  </template>
+  <script>
+    return ({
+      routes: {
+        'test': 'foo'
+      },
+      foo: function(queryParams){
+        window._queryParams = queryParams
+      }
+    })
+  </script>
+</element>

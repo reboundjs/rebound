@@ -1,4 +1,4 @@
-//     Rebound.js 0.0.60
+//     Rebound.js 0.0.92
 
 //     (c) 2015 Adam Miller
 //     Rebound may be freely distributed under the MIT license.
@@ -52,6 +52,11 @@ var Rebound = window.Rebound = {
 // Fetch Rebound's Config Object from Rebound's `script` tag
 var Config = document.getElementById('Rebound');
     Config = (Config) ? Config.innerHTML : false;
+
+// Set our require config
+requirejs.config({
+    baseUrl: "/"
+});
 
 // Start the router if a config object is preset
 if(Config) Rebound.start(JSON.parse(Config));

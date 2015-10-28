@@ -39,12 +39,14 @@ QUnit.test('Reboudnd Data - Collection', function() {
   collection.on('change', function(model, options){
     deepEqual(model.changedAttributes(), {test2: 'foo'}, 'Events are propagated up to parent');
   });
+
   collection.at(0).set('test2', 'foo');
   collection.off();
 
   collection.set('[0].test2', 'bar');
   deepEqual(collection.toJSON(), [{test2: 'bar'}], 'Collection.set can accept a path to call the .set at');
 
+  // Custom Model Constructors
   var CustomModel = Model.extend({
     toJSON: function(){
       return 'works';
@@ -57,6 +59,5 @@ QUnit.test('Reboudnd Data - Collection', function() {
 
 
   deepEqual(['works'], collection.toJSON(), 'Customized models added to a collection retain their custom attributes when added to the collection');
-
 
 });

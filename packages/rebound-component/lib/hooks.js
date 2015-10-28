@@ -6,7 +6,7 @@ import $ from "rebound-component/utils";
 import helpers, { partials } from "rebound-component/helpers";
 import hooks, { wrapForHelper } from "htmlbars-runtime/hooks";
 import DOMHelper from "dom-helper";
-import { createObject } from "../htmlbars-util/object-utils";
+import { createObject } from "htmlbars-util/object-utils";
 import render from "htmlbars-runtime/render";
 
 
@@ -69,7 +69,7 @@ function streamProperty(context, path) {
 
   // Lazy value that returns the value of context.path
   var lazyValue = new LazyValue(function() {
-    return context.get(path);
+    return context.get(path, {isPath: true});
   }, {context: context});
 
   // Save our path so parent lazyvalues can know the data var or helper they are getting info from
