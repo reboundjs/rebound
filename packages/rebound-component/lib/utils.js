@@ -403,7 +403,7 @@ utils.prototype = {
                   };
               }
               if(ops.method == 'get') {
-                  this.xhr.open("GET", ops.url + getParams(ops.data, ops.url), true);
+                  this.xhr.open("GET", ops.url + getParams(ops.data), true);
                   this.setHeaders({
                     'X-Requested-With': 'XMLHttpRequest'
                   });
