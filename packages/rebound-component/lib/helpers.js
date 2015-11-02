@@ -31,14 +31,14 @@ helpers.lookupHelper = function(env, scope, name) {
   if(name === 'log')        return env.helpers.log;
 
   // If not a reserved helper, check env, then global helpers, or return undefined.
-  if(!this.hasHelper(env, null, name)) console.error('No helper named', name, 'registered with Rebound');
+  if(!helpers.hasHelper(env, null, name)) console.error('No helper named', name, 'registered with Rebound');
   return helpers[name] || env.helpers[name];
 };
 
 helpers.registerHelper = function(name, callback, env){
   if(!_.isString(name)) return console.error('Name provided to registerHelper must be a string!');
   if(!_.isFunction(callback)) return console.error('Callback provided to regierHelper must be a function!');
-  if(this.hasHelper(env, null, name)) return console.error('A helper called "' + name + '" is already registered!');
+  if(helpers.hasHelper(env, null, name)) return console.error('A helper called "' + name + '" is already registered!');
 
   helpers[name] = callback;
 
