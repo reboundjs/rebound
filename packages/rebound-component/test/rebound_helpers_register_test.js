@@ -67,10 +67,31 @@ Register Helper
 QUnit.test('Rebound Helpers - Register', function() {
 
   var func = function() {
-    return 1;
+    return 'test';
   };
   helpers.registerHelper('test', func);
   var regFunc = helpers.lookupHelper('test');
   equal(func, regFunc, 'helpers.register adds a helper to the global scope which can be fetched by Helpers.lookupHelper');
+
+
+  var template, dom;
+
+  template = compiler.compile('<div>{{doesnotexist foo bar}}</div>');
+  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(dom.fragment, '<div><!----></div>', 'Using a helper that does not exist failes silently.');
+
+  template = compiler.compile('<div>{{test foo bar}}</div>');
+  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(dom.fragment, '<div>test</div>', 'Using a helper that does exist outputs the return value.');
+
+
+  template = compiler.compile('<div>{{if bool (doesnotexist foo)}}</div>');
+  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(dom.fragment, '<div><!----></div>', 'Using a helper that does not exist in a subexpression fails silently.');
+
+  template = compiler.compile('<div>{{if bool (test)}}</div>');
+  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(dom.fragment, '<div>test</div>', 'Using a helper that does exist in a subexpression outputs the return value.');
+
 
 });

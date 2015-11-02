@@ -385,6 +385,20 @@ function queryParams(){
     QUnit.start();
     deepEqual(window._queryParams, {foo: {'bar': {'baz': 'asdf'}, 'baz': 'fdsa'}}, "If a query param with deeply nested named properties are in the url, both with values, the callback function receives the key and value as a hash containing an object with those values.");
     QUnit.stop();
+    return Rebound.router.navigate('test', {data: {foo: 'bar'}});
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {foo: 'bar'}, "Calling navigate can take a `data` option that is converted to query params.");
+    equal(window.location.search, '?foo=bar', "Calling navigate with a `data` option adds query params to the url in the navigation bar.");
+    QUnit.stop();
+    return Rebound.router.navigate('test?quux=norf', {data: {biz: 'baz'}});
+  })
+  .then(function(){
+    QUnit.start();
+    deepEqual(window._queryParams, {quux: 'norf', biz: 'baz'}, "Calling navigate with both a `data` option and a query string deliver both to the route callback.");
+    equal(window.location.search, '?quux=norf&biz=baz', "Calling navigate with both a `data` option and a query string adds both to the url in the navigation bar.");
+    QUnit.stop();
     return Rebound.router.navigate('');
   })
   .then(function(){

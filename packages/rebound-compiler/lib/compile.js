@@ -16,7 +16,7 @@ function compile(str, options={}){
       template = new Function("return " + htmlbars(defs.template))();
 
   if(defs.isPartial){
-    helpers.registerPartial(options.name, template);
+    if(options.name) helpers.registerPartial(options.name, template);
     return hooks.wrap(template);
   } else{
     return Component.registerComponent(defs.name, {

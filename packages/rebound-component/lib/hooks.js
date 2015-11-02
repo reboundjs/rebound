@@ -82,18 +82,6 @@ function streamProperty(context, path) {
 }
 
 
-hooks.invokeHelper = function invokeHelper(morph, env, scope, visitor, params, hash, helper, templates, context){
-  if(morph && scope.streams[morph.guid]){
-    scope.streams[morph.guid].value;
-    return scope.streams[morph.guid];
-  }
-  var lazyValue = streamHelper.apply(this, arguments);
-  lazyValue.path = helper.name;
-  lazyValue.value;
-  // if(morph) scope.streams[morph.guid] = lazyValue;
-  return lazyValue;
-};
-
 function streamHelper(morph, env, scope, visitor, params, hash, helper, templates, context){
 
   if(!_.isFunction(helper)) return console.error(scope + ' is not a valid helper!');
@@ -130,6 +118,20 @@ function streamHelper(morph, env, scope, visitor, params, hash, helper, template
 
   return lazyValue;
 }
+
+hooks.invokeHelper = function invokeHelper(morph, env, scope, visitor, params, hash, helper, templates, context){
+  if(morph && scope.streams[morph.guid]){
+    scope.streams[morph.guid].value;
+    return scope.streams[morph.guid];
+  }
+  if(!helper) return {value: ''};
+
+  var lazyValue = streamHelper.apply(this, arguments);
+  lazyValue.path = helper.name;
+  lazyValue.value;
+  // if(morph) scope.streams[morph.guid] = lazyValue;
+  return lazyValue;
+};
 
 hooks.cleanupRenderNode = function(){
 };
@@ -297,7 +299,7 @@ hooks.subexpr = function subexpr(env, scope, helperName, params, hash) {
   if (helper) {
     lazyValue = streamHelper(null, env, scope, null, params, hash, helper, {}, null);
   } else {
-    lazyValue = hooks.get(env, context, helperName);
+    lazyValue = hooks.get(env, scope, helperName);
   }
 
   for (i = 0, l = params.length; i < l; i++) {

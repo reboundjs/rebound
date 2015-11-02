@@ -7,15 +7,13 @@ import $ from "rebound-component/utils";
 var helpers  = {},
     partials = {};
 
-window.partials = partials;
 helpers.registerPartial = function(name, func){
-  if(func && typeof name === 'string'){
-    return partials[name] = func;
-  }
+  if(func && _.isString(name)) return partials[name] = func;
 };
 
 helpers.hasHelper = function(env, scope, name) {
-  return env.helpers[name] !== undefined;
+  (env && env.helpers) || (env = {helpers:helpers});
+  return !!(helpers[name] || env.helpers[name]);
 };
 
 // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
@@ -23,32 +21,24 @@ helpers.lookupHelper = function(env, scope, name) {
   if(_.isString(env)) name = env;
   (env && env.helpers) || (env = {helpers:helpers});
   // If a reserved helper, return it
-  if(name === 'attribute') { return env.helpers.attribute; }
-  if(name === 'if') { return env.helpers.if; }
-  if(name === 'unless') { return env.helpers.unless; }
-  if(name === 'each') { return env.helpers.each; }
-  if(name === 'partial') { return env.helpers.partial; }
-  if(name === 'on') { return env.helpers.on; }
-  if(name === 'debugger') { return env.helpers.debugger; }
-  if(name === 'log') { return env.helpers.log; }
+  if(name === 'attribute')  return env.helpers.attribute;
+  if(name === 'if')         return env.helpers.if;
+  if(name === 'unless')     return env.helpers.unless;
+  if(name === 'each')       return env.helpers.each;
+  if(name === 'partial')    return env.helpers.partial;
+  if(name === 'on')         return env.helpers.on;
+  if(name === 'debugger')   return env.helpers.debugger;
+  if(name === 'log')        return env.helpers.log;
 
-  // If not a reserved helper, check env, then global helpers, else return false
+  // If not a reserved helper, check env, then global helpers, or return undefined.
+  if(!this.hasHelper(env, null, name)) console.error('No helper named', name, 'registered with Rebound');
   return helpers[name] || env.helpers[name];
 };
 
-helpers.registerHelper = function(name, callback){
-  if(!_.isString(name)){
-    console.error('Name provided to registerHelper must be a string!');
-    return;
-  }
-  if(!_.isFunction(callback)){
-    console.error('Callback provided to regierHelper must be a function!');
-    return;
-  }
-  if(helpers.lookupHelper(null, null, name)){
-    console.error('A helper called "' + name + '" is already registered!');
-    return;
-  }
+helpers.registerHelper = function(name, callback, env){
+  if(!_.isString(name)) return console.error('Name provided to registerHelper must be a string!');
+  if(!_.isFunction(callback)) return console.error('Callback provided to regierHelper must be a function!');
+  if(this.hasHelper(env, null, name)) return console.error('A helper called "' + name + '" is already registered!');
 
   helpers[name] = callback;
 
