@@ -3,8 +3,24 @@ import qs from "qs";
 // Rebound Utils
 // ----------------
 
+var QS_STRINGIFY_OPTS = {
+  allowDots: true,
+  encode: false,
+  delimiter: '&'
+};
+
+var QS_PARSE_OPTS = {
+  allowDots: true,
+  delimiter: /[;,&]/
+};
+
 var $ = function(query){
   return new utils(query);
+};
+
+$.qs = {
+  stringify(str){ return qs.stringify(str, QS_STRINGIFY_OPTS); },
+  parse(obj){ return qs.parse(obj, QS_PARSE_OPTS); }
 };
 
 var utils = function(query){
@@ -377,7 +393,6 @@ utils.prototype = {
       ops.json = ops.json || true;
       ops.method = ops.method || 'get';
       ops.data = ops.data || {};
-      var getParams = qs.stringify;
       var api = {
           host: {},
           process: function(ops) {
@@ -403,7 +418,7 @@ utils.prototype = {
                   };
               }
               if(ops.method == 'get') {
-                  this.xhr.open("GET", ops.url + getParams(ops.data), true);
+                  this.xhr.open("GET", ops.url + $.qs.stringify(ops.data), true);
                   this.setHeaders({
                     'X-Requested-With': 'XMLHttpRequest'
                   });
@@ -418,7 +433,7 @@ utils.prototype = {
                   this.setHeaders(ops.headers);
               }
               setTimeout(function() {
-                  ops.method == 'get' ? self.xhr.send() : self.xhr.send(getParams(ops.data));
+                  ops.method == 'get' ? self.xhr.send() : self.xhr.send($.qs.stringify(ops.data));
               }, 20);
               return this.xhr;
           },

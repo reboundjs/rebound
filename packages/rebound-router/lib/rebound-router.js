@@ -3,7 +3,6 @@
 
 import $ from "rebound-component/utils";
 import LazyComponent from "rebound-router/lazy-component";
-import qs from "qs";
 
 var DEFAULT_404_PAGE =
 `<div style="display: block;text-align: center;font-size: 22px;">
@@ -22,11 +21,6 @@ var LOADING = 'loading';
 
 // Regexp to validate remote URLs
 var IS_REMOTE_URL = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/;
-
-var QS_OPTS = {
-  allowDots: true,
-  delimiter: /[;,&]/
-};
 
 
 // Overload Backbone's loadUrl so it returns the value of the routed callback
@@ -82,7 +76,7 @@ var ReboundRouter = Backbone.Router.extend({
 
     // Stringify any data passed in the options hash
     console.log(fragment, (~fragment.indexOf('?') ? '?' : '&'));
-    var query = options.data ? (~fragment.indexOf('?') ? '&' : '?') + qs.stringify(options.data, QS_OPTS) : '';
+    var query = options.data ? (~fragment.indexOf('?') ? '&' : '?') + $.qs.stringify(options.data) : '';
 
     // Un-Mark any `active` links in the page container
     var $container = $(this.config.containers).unMarkLinks();
@@ -160,7 +154,7 @@ var ReboundRouter = Backbone.Router.extend({
       // then our args have the params as its last agrument as of Backbone 1.2.0
       // If the route is a user provided regex, add in parsed search params from
       // the history object before passing to the callback.
-      args.push((search) ? qs.parse(search, QS_OPTS) : {});
+      args.push((search) ? $.qs.parse(search) : {});
 
       var resp = this.execute(callback, args, name);
       if ( resp !== false) {
