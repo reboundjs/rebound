@@ -1,4 +1,4 @@
-<element name="rebound-demo">
+<element name="demo-route">
 	<template>
 
 		<link href="/test/demo/templates/editing.html">
@@ -149,8 +149,8 @@
 	/************** Component Methods *****************/
 
 		createTodo: function(event){
-			if(event.keyCode !== 13){ return; } // if not enter key, return
-			if(this.get('newTitle') == '') return;
+			if(event.keyCode !== 13){ return void 0; } // if not enter key, return
+			if(this.get('newTitle') == ''){ return void 0; }
 			this.get('todos').add({
 				title: this.get('newTitle'),
 				editing: false,

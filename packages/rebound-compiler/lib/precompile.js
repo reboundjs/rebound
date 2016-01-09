@@ -2,9 +2,9 @@
 // ----------------
 
 import parse from "./parser";
-import { compileSpec } from "htmlbars";
+import { precompile as compileTemplate } from "../rebound-htmlbars/compile";
 
-function precompile(str, options={}){
+export default function precompile(str, options={}){
 
   if( !str || str.length === 0 ){
     return console.error('No template provided!');
@@ -14,30 +14,28 @@ function precompile(str, options={}){
   str = parse(str, options);
 
   // Compile
-  str.template = '' + compileSpec(str.template);
+  str.template = '' + compileTemplate(str.template);
 
   // If is a partial
-  if(str.isPartial){
-    template = `
-      define( [ ${str.deps.join(', ')} ], function(){
-        var template = ${str.template};
-        window.Rebound.registerPartial("${str.name}", template);
-      });`;
+  if (str.isPartial) {
+    template = [
+      "(function(R){",
+      "  R.router._loadDeps([ " + (str.deps.length ? ('"' + str.deps.join('", "') + '"') : '') + " ]);",
+      "  R.registerPartial(\"" + str.name + "\", " + str.template + ");",
+      "})(window.Rebound);"].join('\n');
   }
   // Else, is a component
-  else{
-    template = `
-      define( [ ${str.deps.join(', ')} ], function(){
-        return window.Rebound.registerComponent("${str.name}", {
-          prototype: ${str.script},
-          template: ${str.template},
-          style: "${str.style}"
-        });
-      });`;
+  else {
+    template = [
+      "(function(R){",
+      "  R.router._loadDeps([ " + (str.deps.length ? ('"' + str.deps.join('", "') + '"') : '') + " ]);",
+      "  document.currentScript.dataset.name = \"" + str.name + "\";",
+      "  return R.registerComponent(\"" + str.name + "\", {",
+      "    prototype: " + str.script + ",",
+      "    template: " + str.template + ",",
+      "    stylesheet: \"" + str.stylesheet + "\"",
+      "   });",
+      "})(window.Rebound);"].join('\n');
   }
-
-  return template;
+  return {src: template, deps: str.deps};
 }
-
-export default precompile;
-

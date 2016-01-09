@@ -29,19 +29,20 @@ function equalTokens(fragment, html) {
 }
 
 
-QUnit.test('Rebound Precompiler', function() {
-
+QUnit.test('Rebound Precompiler', function( assert ) {
   var out, exp;
 
-  out = precompile('<div></div>', {name: 'test/filepath'}).replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," ");
-  exp = " define( [ ], function(){ var template = (function() { return { meta: {}, arity: 0, cachedFragment: null, hasRendered: false, buildFragment: function buildFragment(dom) { var el0 = dom.createDocumentFragment(); var el1 = dom.createElement(\"div\"); dom.appendChild(el0, el1); return el0; }, buildRenderNodes: function buildRenderNodes() { return []; }, statements: [ ], locals: [], templates: [] }; }()); window.Rebound.registerPartial(\"test/filepath\", template); });";
+  assert.expect(2);
 
-  equal(out, exp, 'Pre-compiler can handle partials');
+  out = precompile('<div></div>', {name: 'test/filepath'}).src.replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," ");
+  exp = '(function(R){ R.router._loadDeps([ ]); R.registerPartial("test/filepath", (function() { return { meta: {}, arity: 0, cachedFragment: null, hasRendered: false, buildFragment: function buildFragment(dom) { var el0 = dom.createDocumentFragment(); var el1 = dom.createElement("div"); dom.appendChild(el0, el1); return el0; }, buildRenderNodes: function buildRenderNodes() { return []; }, statements: [ ], locals: [], templates: [] }; }())); })(window.Rebound);';
+
+  assert.equal(out, exp, 'Pre-compiler can handle partials');
 
 
 
   out = precompile(
-    '<element name="test-element">\n'         +
+    '<element name="test-element">\n' +
     '  <template>\n'      +
     '    <style>\n'       +
     '      .test{}\n'     +
@@ -51,8 +52,8 @@ QUnit.test('Rebound Precompiler', function() {
     '  <script>\n'        +
     '    alert(0)\n'      +
     '  </script>\n'       +
-    '</element>\n');
-  exp = 'define( [], function(){ (function(){var template = (function() { function build(dom) { var el0 = dom.createElement("div"); return el0; } var cachedFragment; return function template(context, env, contextualElement) { var dom = env.dom, hooks = env.hooks; if (cachedFragment === undefined) { cachedFragment = build(dom); } var fragment = dom.cloneNode(cachedFragment, true); return fragment; }; }()); window.Rebound.registerPartial( "test/filepath", template);})(); });';
-
+    '</element>\n').src.replace(/(\r\n|\n|\r)/gm," ").replace(/\s+/g," ");
+  exp = '(function(R){ R.router._loadDeps([ ]); document.currentScript.dataset.name = \"test-element\"; return R.registerComponent(\"test-element\", { prototype: (function(){ alert(0) })(), template: (function() { return { meta: {}, arity: 0, cachedFragment: null, hasRendered: false, buildFragment: function buildFragment(dom) { var el0 = dom.createDocumentFragment(); var el1 = dom.createTextNode(\"\\n \"); dom.appendChild(el0, el1); var el1 = dom.createElement(\"style\"); var el2 = dom.createTextNode(\"\\n .test{}\\n \"); dom.appendChild(el1, el2); dom.appendChild(el0, el1); var el1 = dom.createTextNode(\"\\n Test\\n \"); dom.appendChild(el0, el1); return el0; }, buildRenderNodes: function buildRenderNodes() { return []; }, statements: [ ], locals: [], templates: [] }; }()), stylesheet: \" .test{} \" }); })(window.Rebound);';
+  assert.equal(out, exp, 'Pre-compiler can handle components');
 
 });

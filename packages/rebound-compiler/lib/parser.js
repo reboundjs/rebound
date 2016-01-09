@@ -55,29 +55,28 @@ function getDependancies(template, base=''){
       partials = [],
       deps = [],
       match,
-      importsre = /<link [^h]*href=(['"]?)\/?([^.'"]*).html\1[^>]*>/gi,
-      partialsre = /\{\{>\s*?['"]?([^'"}\s]*)['"]?\s*?\}\}/gi,
+      importsre = /<link [^h]*href=(['"])?\/?([^.'"]*).html\1[^>]*>/gi,
+      partialsre = /\{\{>\s*?(['"])?([^'"}\s]*)\1\s*?\}\}/gi,
+      helpersre = /\{\{partial\s*?(['"])([^'"}\s]*)\1\s*?\}\}/gi,
       start = template.indexOf("<template>"),
       end = template.lastIndexOf('</template>');
-  if(start > -1 && end > -1)
-    template = template.substring((start + 10), end);
 
-  // Assemple our component dependancies by finding link tags and parsing their src
-  while ((match = importsre.exec(template)) !== null) {
-      imports.push(match[2]);
-  }
-  imports.forEach(function(importString, index){
-    deps.push('"' + base + importString + '"');
+  if(start > -1 && end > -1) { template = template.substring((start + 10), end); }
+
+  // Assemble our imports dependancies
+  (template.match(importsre) || []).forEach(function(importString, index){
+    deps.push(base + importString.replace(importsre, '$2'));
   });
 
   // Assemble our partial dependancies
-  partials = template.match(partialsre);
+  (template.match(partialsre) || []).forEach(function(partial, index){
+    deps.push(base + partial.replace(partialsre, '$2'));
+  });
 
-  if(partials){
-    partials.forEach(function(partial, index){
-      deps.push('"' + base + partial.replace(/\{\{>[\s*]?['"]?([^'"]*)['"]?[\s*]?\}\}/gi, '$1') + '"');
-    });
-  }
+  // Assemble our partial dependancies
+  (template.match(helpersre) || []).forEach(function(partial, index){
+    deps.push(base + partial.replace(helpersre, '$2'));
+  });
 
   return deps;
 }
@@ -88,7 +87,7 @@ function parse(str, options={}){
     return {
       isPartial: false,
       name: getName(str),
-      style: getStyle(str),
+      stylesheet: getStyle(str),
       template: getTemplate(str),
       script: getScript(str),
       deps: getDependancies(str, options.baseDest)

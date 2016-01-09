@@ -1,8 +1,7 @@
 import Rebound from 'runtime';
-
-var testsRun = [];
-
+debugger;
 window.Rebound = Rebound;
+
 var container = document.createElement('main');
     container.id = 'router-test';
     container.style.width = '100%';
@@ -34,13 +33,13 @@ document.body.appendChild(container);
 
 function getHandlers(){
   var handlers = '';
-  Backbone.history.handlers.forEach(function(handler){
+  Rebound.history.handlers.forEach(function(handler){
     handlers += handler.route.source.replace(/\\/g, '');
   });
   return handlers;
 }
 
-function default404(){
+function default404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -53,14 +52,14 @@ function default404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
 var ran = [];
 
-function custom404(){
+function custom404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -76,13 +75,13 @@ function custom404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('custom404');
+    return assert;
   });
 }
 
-function defaultIndex(){
+function defaultIndex( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -96,13 +95,13 @@ function defaultIndex(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('defaultIndex');
+    return assert;
   });
 }
 
-function customIndex(){
+function customIndex( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -121,13 +120,13 @@ function customIndex(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('customIndex');
+    return assert;
   });
 }
 
-function customIndex404(){
+function customIndex404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -146,13 +145,13 @@ function customIndex404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('customIndex404');
+    return assert;
   });
 }
 
-function routeTransitions(){
+function routeTransitions( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -218,13 +217,13 @@ function routeTransitions(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('routeTransitions');
+    return assert;
   });
 }
 
-function serviceLoading(){
+function serviceLoading( assert ){
   return (function(){
     var app = Rebound.start({
       "container": "#content",
@@ -311,13 +310,13 @@ function serviceLoading(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
 
-function queryParams(){
+function queryParams( assert ){
   return Rebound.start({
     "container": "#content",
     "services": {},
@@ -409,12 +408,12 @@ function queryParams(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
-function regexpRoutes(){
+function regexpRoutes( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
@@ -439,18 +438,41 @@ function regexpRoutes(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
 
-QUnit.test('Rebound Router', function() {
-  // Start off at a standard url and save what our page was loaded at
-  var oldLocation = window.location.pathname;
+function lazyComponentLoading( assert ){
+  return Rebound.start({
+    "container": "#content",
+    "root": window.location.pathname,
+    "jsPath": "/test/dummy-apps/9/:app.js",
+    "cssPath": "/test/dummy-apps/9/:app.css"
+  }).then(function(page){
+    var component = document.getElementsByTagName('test-component-9')[0].data;
+    equal(component.isHydrated, false, 'Lazy loaded components are inserted immediately in the dom with a dehydrated component instance.');
+    var end = assert.async(1)
+    component.onLoad(function(){
+      equal(component.isHydrated, true, 'Lazy loaded components are asyncronously upgraded.');
+      end();
+    });
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
+    Rebound.stop();
+    return assert;
+  });
+}
+
+
+
+QUnit.test('Rebound Router', function( assert ) {
+  assert.expect(81);
 
   QUnit.stop();
-  default404()
+  default404(assert)
   .then(custom404)
   .then(defaultIndex)
   .then(customIndex)
@@ -459,10 +481,10 @@ QUnit.test('Rebound Router', function() {
   .then(serviceLoading)
   .then(queryParams)
   .then(regexpRoutes)
+  .then(lazyComponentLoading)
+  // Reset our path to home after all route tests are done
   .then(function(){
-    // Reset our path to home after all route tests are done
     Rebound.stop();
     QUnit.start();
-    equal(testsRun, 9, 'All tests ran.');
   });
 });

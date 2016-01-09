@@ -71,6 +71,7 @@ QUnit.test('Rebound Property Compiler', function() {
   func = function(){
     return this.get('test.more').get('andMore').where({test : 1});
   };
+
   res = compiler.compile(func, 'path');
   deepEqual( res, ['test.more.andMore.@each.test'], 'Property Compiler returns proper dependancy for chained gets and where() with single argument' );
 
@@ -167,6 +168,33 @@ QUnit.test('Rebound Property Compiler', function() {
 
   res = compiler.compile(func, 'path');
   deepEqual( res, ['page', 'user.uid'], 'Property Compiler works with complex if statement (multiple terminators between `this`)' );
+
+
+  /*******************************
+                ES6
+  ********************************/
+
+
+  func = function(){
+    var res;
+    if(true){
+      let a = this.get('test');
+      res = a;
+    }
+    return res;
+  };
+  res = compiler.compile(func, 'path');
+  deepEqual( res, ['test'], 'Block scoped variables dont prevent dependancy discovery' );
+
+
+  // func = function(){
+  //   let a = () => { return this.get('test'); }
+  //   return a();
+  // };
+  //
+  // res = compiler.compile(func, 'path');
+  // deepEqual( res, ['test'], 'Arrow functions dont prevent dependancy discovery' );
+
 
 
   // TODO: Features to eventually support

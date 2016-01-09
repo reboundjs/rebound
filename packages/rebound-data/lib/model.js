@@ -8,8 +8,9 @@
 // Backbone Models by enabling deep data nesting. You can now have **Rebound Collections**
 // and **Rebound Computed Properties** as properties of the Model.
 
+import Backbone from "backbone";
 import ComputedProperty from "rebound-data/computed-property";
-import $ from "rebound-component/utils";
+import $ from "rebound-utils/rebound-utils";
 
 // Returns a function that, when called, generates a path constructed from its
 // parent's path and the key it is assigned to. Keeps us from re-naming children
@@ -32,11 +33,10 @@ var Model = Backbone.Model.extend({
 
   // Create a new Model with the specified attributes. The Model's lineage is set
   // up here to keep track of it's place in the data tree.
-  constructor: function(attributes, options){
+  constructor: function(attributes, options={}){
     var self = this;
-    if(attributes === null || attributes === undefined) attributes = {};
+    if(attributes === null || attributes === undefined){ attributes = {} };
     attributes.isModel && (attributes = attributes.attributes);
-    options || (options = {});
     this.helpers = {};
     this.defaults = this.defaults || {};
     this.setParent( options.parent || this );
@@ -69,9 +69,9 @@ var Model = Backbone.Model.extend({
     };
 
     options.success = function(resp) {
-      if (wait) destroy();
-      if (success) success.call(options.context, model, resp, options);
-      if (!model.isNew()) model.trigger('sync', model, resp, options);
+      if (wait){ destroy(); }
+      if (success){ success.call(options.context, model, resp, options); }
+      if (!model.isNew()){ model.trigger('sync', model, resp, options); }
     };
 
     var xhr = false;
@@ -81,7 +81,7 @@ var Model = Backbone.Model.extend({
       wrapError(this, options);
       xhr = this.sync('delete', this, options);
     }
-    if (!wait) destroy();
+    if (!wait){ destroy(); }
     return xhr;
   },
 
@@ -105,9 +105,9 @@ var Model = Backbone.Model.extend({
     // - Otherwise, unset the attribute.
     for(key in this.attributes){
       value = this.attributes[key];
-      if(value === obj[key]) continue;
-      else if(_.isUndefined(value)) obj[key] && (changed[key] = obj[key]);
-      else if (value.isComponent) continue;
+      if(value === obj[key]){ continue; }
+      else if(_.isUndefined(value)){ obj[key] && (changed[key] = obj[key]); }
+      else if (value.isComponent){ continue; }
       else if (value.isCollection || value.isModel || value.isComputedProperty){
         value.reset((obj[key] || []), {silent: true});
         if(value.isCollection) changed[key] = value.previousModels;
@@ -134,7 +134,7 @@ var Model = Backbone.Model.extend({
 
     // Trigger custom reset event
     this.changed = changed;
-    if (!options.silent) this.trigger('reset', this, options);
+    if (!options.silent){ this.trigger('reset', this, options); }
 
     // Return new values
     return obj;
@@ -158,8 +158,8 @@ var Model = Backbone.Model.extend({
         result = this,
         i, l=parts.length;
 
-    if(_.isUndefined(key) || _.isNull(key)) return undefined;
-    if(key === '' || parts.length === 0) return result;
+    if(_.isUndefined(key) || _.isNull(key)){ return void 0; }
+    if(key === '' || parts.length === 0){ return result; }
 
     for (i = 0; i < l; i++) {
       if(result && result.isComputedProperty && options.raw) return result;
@@ -197,7 +197,7 @@ var Model = Backbone.Model.extend({
     // If reset option passed, do a reset. If nothing passed, return.
     if(options.reset === true) return this.reset(attrs, options);
     if(options.defaults === true) this.defaults = attrs;
-    if(_.isEmpty(attrs)) return;
+    if(_.isEmpty(attrs)){ return void 0; }
 
     // For each attribute passed:
     for(key in attrs){
@@ -279,11 +279,11 @@ var Model = Backbone.Model.extend({
   // Recursive `toJSON` function traverses the data tree returning a JSON object.
   // If there are any cyclic dependancies the object's `cid` is used instead of looping infinitely.
   toJSON: function() {
-    if (this._isSerializing) return this.id || this.cid;
+    if (this._isSerializing){ return this.id || this.cid; }
     this._isSerializing = true;
     var json = _.clone(this.attributes);
     _.each(json, function(value, name) {
-        if( _.isNull(value) || _.isUndefined(value) ){ return; }
+        if( _.isNull(value) || _.isUndefined(value) ){ return void 0; }
         _.isFunction(value.toJSON) && (json[name] = value.toJSON());
     });
     this._isSerializing = false;

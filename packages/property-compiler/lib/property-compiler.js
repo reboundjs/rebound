@@ -1,7 +1,11 @@
 // Property Compiler
 // ----------------
 
-import { tokenizer } from "acorn";
+import { Parser, tokTypes } from "acorn";
+
+function tokenizer(input, options) {
+  return new Parser(options, input);
+}
 
 const TERMINATORS = [';',',','==','>','<','>=','<=','>==','<==','!=','!==', '===', '&&', '||', '+', '-', '/', '*', '{', '}'];
 
@@ -24,14 +28,19 @@ function compile(prop, name){
   if(prop.__params) return prop.__params;
 
   var str = prop.toString(), //.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1'), // String representation of function sans comments
-      token = tokenizer(str),
+      token = tokenizer(str, {
+        ecmaVersion: 6,
+        sourceType: 'script'
+      }),
       finishedPaths = [],
       listening = 0,
       paths = [],
       attrs = [],
       workingpath = [];
-  while(token.start !== token.end){
 
+  do {
+
+    // console.log(token.type.label, token.value);
     token.nextToken();
 
     if(token.value === 'this'){
@@ -45,7 +54,6 @@ function compile(prop, name){
       while(_.isUndefined(token.value)){
         token.nextToken();
       }
-
       // Replace any access to a collection with the generic @each placeholder and push dependancy
       workingpath.push(token.value.replace(/\[.+\]/g, ".@each").replace(/^\./, ''));
     }
@@ -61,7 +69,7 @@ function compile(prop, name){
 
     if(token.value === 'slice' || token.value === 'clone' || token.value === 'filter'){
       token.nextToken();
-      if(token.type.type === '(') workingpath.push('@each');
+      if(token.type.label === '(') workingpath.push('@each');
     }
 
     if(token.value === 'at'){
@@ -77,7 +85,7 @@ function compile(prop, name){
       token.nextToken();
       attrs = [];
       var itr = 0;
-      while(token.type.type !== ')'){
+      while(token.type.label !== ')'){
         if(token.value){
           if(itr%2 === 0){
             attrs.push(token.value);
@@ -89,16 +97,14 @@ function compile(prop, name){
       workingpath.push(attrs);
     }
 
-    if(listening && (_.indexOf(TERMINATORS, token.type.type) > -1 || _.indexOf(TERMINATORS, token.value) > -1)){
+    if(listening && (_.indexOf(TERMINATORS, token.type.label) > -1 || _.indexOf(TERMINATORS, token.value) > -1)){
       workingpath = _.reduce(workingpath, reduceMemos, ['']);
       finishedPaths = _.compact(_.union(finishedPaths, workingpath));
       workingpath = [];
       listening--;
     }
-// debugger;
-  }
 
-  console.log('COMPUTED PROPERTY', name, 'registered with these dependancy paths:', finishedPaths);
+  } while (token.start !== token.end && token.type !== tokTypes.eof);
 
   // Save our finished paths directly on the function
   prop.__params = finishedPaths;

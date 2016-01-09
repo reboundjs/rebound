@@ -1,7 +1,7 @@
 import reboundData from 'rebound-data/rebound-data';
 
-var Model = window.Rebound.Model = reboundData.Model,
-    Collection =  window.Rebound.Collection = reboundData.Collection;
+var Model = reboundData.Model,
+    Collection = reboundData.Collection;
 
 QUnit.test('Reboudnd Data - Collection', function() {
   var model, collection;

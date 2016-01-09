@@ -1,7 +1,7 @@
 import reboundData from 'rebound-data/rebound-data';
 
-var Model = window.Rebound.Model = reboundData.Model,
-    Collection =  window.Rebound.Collection = reboundData.Collection;
+var Model = reboundData.Model,
+    Collection = reboundData.Collection;
 
 QUnit.test('Rebound Data - Computed Properties', function( assert ) {
   var model, collection, model2, model3;
@@ -447,7 +447,6 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
   //   }
   // });
   // equal(undefined, model.get('proxy'), 'Computed properties with only a set function, setting a models, return undefined when accessed the first time.');
-  // // debugger;
   // window.now = true;
   // model.set('proxy', {biz: 'baz'});
   // equal({foo: 'bar', biz: 'baz'}, model.get('a').toJSON(), 'Computed proerties with only a set value, setting a model, can be used to set a model\'s value.');

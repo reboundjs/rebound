@@ -1,5 +1,4 @@
 var gulp = require('gulp');
-var rebound = require('gulp-rebound');
 var merge = require('gulp-merge');
 var es = require('event-stream');
 var babel = require('gulp-babel');
@@ -7,9 +6,8 @@ var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var jshint = require('gulp-jshint');
 var rename = require('gulp-rename');
-var rjs = require('gulp-requirejs');
 var connect = require('gulp-connect');
-var sourcemaps = require('gulp-sourcemaps');
+var compression = require('compression');
 var del = require('del');
 var qunit = require('node-qunit-phantomjs');
 var docco = require("gulp-docco");
@@ -25,9 +23,18 @@ var buffer = require('vinyl-buffer');
 var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var gutil = require('gulp-util');
+var filter = require('gulp-filter');
+
+var pjson = require('./package.json');
 
 var paths = {
-    all: ['packages/**/*.js', 'wrap/*.js', 'shims/*.js', 'test/**/*.html'],
+    library:   ['packages/*.js', 'packages/**/lib/**/*.js', 'wrap/*.js'],
+    tests: ['packages/**/test/**/*.js', 'test.js', 'test/**/*.html'],
+    apps:   ['test/dummy-apps/**/*.html'],
+    demo:   ["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html", "!test/demo/templates"],
+
+    reboundUtils:       'packages/rebound-utils/lib/**/*.js',
+    reboundTemplate:    'packages/rebound-htmlbars/lib/**/*.js',
     propertyCompiler:   'packages/property-compiler/lib/**/*.js',
     reboundCompiler:    'packages/rebound-compiler/lib/**/*.js',
     reboundComponent:   'packages/rebound-component/lib/**/*.js',
@@ -35,8 +42,16 @@ var paths = {
     reboundPrecompiler: 'packages/rebound-compiler/lib/**/*.js',
     reboundRouter:      'packages/rebound-router/lib/**/*.js',
     reboundRuntime:     'packages/runtime.js',
-    reboundCompiletime: 'packages/compiler.js'
+    reboundCompiletime: 'packages/compiler.js',
+    acorn:              './node_modules/acorn/src/**/*.js'
   };
+
+
+// The docco task: called on prepublish
+var docco = require('./tasks/docco');
+
+// The reease task: called on postpublish
+var release = require('./tasks/release');
 
 // JS hint task
 gulp.task('jshint', function() {
@@ -57,20 +72,14 @@ gulp.task('jshint', function() {
   .pipe(jshint.reporter(stylish));
 });
 
-gulp.task('acorn', ['jshint'], function(cb) {
-  // You can use multiple globbing patterns as you would with `gulp.src`
-  return del(['dist/**', 'test/demo/templates/**'], cb);
-});
+gulp.task('clean', ['jshint'], function(cb) { return del(['dist/**', 'test/demo/templates/**'], cb);});
+gulp.task('clean-cjs', ['jshint'], function(cb) { return del(['dist/cjs/**'], cb);});
+gulp.task('clean-amd', ['jshint'], function(cb) { return del(['dist/amd/**'], cb);});
 
-gulp.task('clean', ['acorn'], function() {
-  return gulp.src('./node_modules/acorn/src/**/*.js')
-  .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
-  .pipe(gulp.dest('dist/cjs/acorn'));
-});
-
-
-gulp.task('cjs', ['clean'], function() {
+gulp.task('cjs', ['clean-cjs'], function() {
   return es.merge(
+    gulp.src(paths.reboundUtils).pipe(rename({dirname: "rebound-utils/"})),
+    gulp.src(paths.reboundTemplate).pipe(rename(function (path){path.dirname = "rebound-htmlbars/" + path.dirname;})),
     gulp.src(paths.propertyCompiler).pipe(rename({dirname: "property-compiler/"})),
     gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
     gulp.src(paths.reboundComponent).pipe(rename({dirname: "rebound-component/"})),
@@ -80,12 +89,18 @@ gulp.task('cjs', ['clean'], function() {
     gulp.src(paths.reboundRuntime),
     gulp.src(paths.reboundCompiletime)
   )
-  .pipe(babel({blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']}))
+  .pipe(replace('%VER%', pjson.version))
+  .pipe(babel({
+    presets: ['es2015'],
+    plugins: []
+  }))
   .pipe(gulp.dest('dist/cjs'));
 });
 
-gulp.task('amd', ['clean'], function() {
+gulp.task('amd', ['clean-amd'], function() {
   return es.merge(
+    gulp.src(paths.reboundUtils).pipe(rename({dirname: "rebound-utils/"})),
+    gulp.src(paths.reboundTemplate).pipe(rename(function (path){path.dirname = "rebound-htmlbars/" + path.dirname;})),
     gulp.src(paths.propertyCompiler).pipe(rename({dirname: "property-compiler/"})),
     gulp.src(paths.reboundCompiler).pipe(rename({dirname: "rebound-compiler/"})),
     gulp.src(paths.reboundComponent).pipe(rename({dirname: "rebound-component/"})),
@@ -95,25 +110,27 @@ gulp.task('amd', ['clean'], function() {
     gulp.src(paths.reboundRuntime),
     gulp.src(paths.reboundCompiletime)
   )
+  .pipe(replace('%VER%', pjson.version))
   .pipe(babel({
-    modules: "amd",
     moduleIds: true,
-    blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']
+    presets: ['es2015'],
+    plugins: ["transform-es2015-modules-amd"]
   }))
   .pipe(gulp.dest('dist/amd'));
-  // .pipe(concat('rebound.runtime.js'))
-  // .pipe(gulp.dest('dist'));
 });
+
+gulp.task('babel', ['amd', 'cjs']);
 
 gulp.task('shims', function() {
   return gulp.src([
-    'shims/classList.js',
-    'shims/matchesSelector.js',
-    'node_modules/document-register-element/build/document-register-element.max.js',
+    'bower_components/console-polyfill/index.js',
+    'bower_components/requestAnimationFrame/rAF.js',
+    'bower_components/currentScript/currentScript.js',
+    'bower_components/classList/classList.js',
+    'bower_components/matchesSelector/matchesSelector.polyfill.js',
+    'bower_components/document-register-element/build/document-register-element.max.js',
     'bower_components/setimmediate/setImmediate.js',
     'bower_components/promise-polyfill/Promise.js',
-    'bower_components/backbone/backbone.js',
-    'bower_components/requirejs/require.js'
     ])
   .pipe(concat('rebound.shims.js'))
   .pipe(gulp.dest('dist'))
@@ -122,18 +139,25 @@ gulp.task('shims', function() {
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('runtime', ['shims', 'amd'], function() {
-  return es.merge(browserify({
-    entries: './dist/cjs/runtime.js',
-    paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
-    debug: true
-  })
-  .bundle()
-  .pipe(source('rebound.runtime.js'))
-  .pipe(buffer())
-  .pipe(sourcemaps.init({loadMaps: true})), gulp.src('./dist/rebound.shims.js'))
+gulp.task('runtime', ['shims', 'babel'], function() {
+  return es.merge(
+    gulp.src('./dist/rebound.shims.js'),
+
+    browserify(null, {
+      entries: './dist/cjs/runtime.js',
+      paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
+      debug: true
+    })
+    .ignore('jquery')
+    .bundle()
+    .pipe(source('rebound.runtime.js'))
+    .pipe(buffer())
+  )
+  .pipe(sourcemaps.init({loadMaps: true}))
   .pipe(concat('rebound.runtime.js'))
+  .pipe(sourcemaps.write('./'))
   .pipe(gulp.dest('dist'))
+  .pipe(filter(['rebound.runtime.js']))
   .pipe(rename({basename: "rebound.runtime.min"}))
   .pipe(uglify())
   .on('error', gutil.log)
@@ -142,12 +166,13 @@ gulp.task('runtime', ['shims', 'amd'], function() {
 });
 
 
-gulp.task('compiletime', ['shims', 'amd'], function() {
-  return es.merge(browserify({
+gulp.task('compiletime', ['shims', 'babel'], function() {
+  return es.merge(browserify(null, {
     entries: './dist/cjs/compiler.js',
     paths: ['./dist/cjs', './node_modules/htmlbars/dist/cjs'],
     debug: true
   })
+  .ignore('jquery')
   .bundle()
   .pipe(source('rebound.js'))
   .pipe(buffer())
@@ -161,7 +186,7 @@ gulp.task('compiletime', ['shims', 'amd'], function() {
   .pipe(gulp.dest('dist'));
 });
 
-gulp.task('test-helpers', ['runtime', 'compiletime'], function(){
+gulp.task('compile-library', ['runtime', 'compiletime'], function(){
   return gulp.src([
       "bower_components/underscore/underscore.js",
       "bower_components/jquery/dist/jquery.min.js",
@@ -172,44 +197,50 @@ gulp.task('test-helpers', ['runtime', 'compiletime'], function(){
       "packages/rebound-test/lib/test-helpers.js",
     ])
   .pipe(concat('rebound.test.js'))
-  .pipe(gulp.dest('dist'));
+  .pipe(gulp.dest('dist'))
+  .pipe(connect.reload());
+
 });
 
-gulp.task('compile-tests', function(){
+gulp.task('compile-test-apps', ['cjs'],  function(){
+  var rebound = require('./test/compile');
+  var apps = gulp.src(["test/dummy-apps/**/*.html"])
+  .pipe(rebound())
+  .pipe(gulp.dest('test/dummy-apps'))
+  .pipe(connect.reload());
+
+  return apps;
+});
+
+gulp.task('compile-tests', ['cjs'], function(){
   return gulp.src([
       "packages/*/test/*.js",
       "packages/tests.js"
     ])
   .pipe(babel({
-    modules: "amd",
     moduleIds: true,
-    blacklist: ['es6.forOf','regenerator','es6.spread','es6.destructuring']
+    presets: ['es2015'],
+    plugins: ["transform-es2015-modules-amd"]
   }))
   .pipe(concat('rebound.tests.js'))
-  .pipe(gulp.dest('test'));
+  .pipe(gulp.dest('test'))
+  .pipe(connect.reload());
+
 });
 
 
-gulp.task('compile-demo', ['cjs', 'test-helpers', 'compile-tests'],  function(){
-
-  var demo = gulp.src(["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html"])
+gulp.task('compile-demo', ['cjs'],  function(){
+  var rebound = require('./test/compile');
+  var demo = gulp.src(paths.demo)
   .pipe(rebound())
-  .pipe(gulp.dest('test/demo/templates'));
+  .pipe(gulp.dest('test/demo/templates'))
+  .pipe(connect.reload());
 
   return demo;
 });
-gulp.task('compile-apps', ['cjs', 'test-helpers', 'compile-tests'],  function(){
 
-  var apps = gulp.src(["test/dummy-apps/**/*.html"])
-  .pipe(rebound())
-  .pipe(gulp.dest('test/dummy-apps'));
-
-  return apps;
-});
-
-gulp.task('build', ['compile-demo', 'compile-apps'], function(){
-  return gulp.src(paths.all)
-    .pipe(connect.reload());
+gulp.task('build', ['docco', 'compile-demo', 'compile-test-apps', 'compile-tests', 'compile-library'], function(){
+  return gulp.src('').pipe(connect.reload());
 });
 
 // Start the test server
@@ -217,14 +248,18 @@ gulp.task('connect', ['build'], function() {
   return connect.server({
     root: __dirname,
     livereload: !process.env.TEST_ENV,
-    port: 8000
+    port: 8000,
+    middleware: function(){ return [compression()]; }
   });
 });
 
 // The default task (called when you run `npm start` from cli)
 // Build Rebound and re-run the build when a file changes
 gulp.task('default', ['connect'], function() {
-  gulp.watch(paths.all, ['build']);
+  gulp.watch(paths.library, ['compile-library']);
+  gulp.watch(paths.tests, ['compile-tests']);
+  gulp.watch(paths.apps, ['compile-test-apps']);
+  gulp.watch(paths.demo, ['compile-demo']);
 });
 
 gulp.task('test', ['connect'], function(cb) {
@@ -235,11 +270,5 @@ gulp.task('test', ['connect'], function(cb) {
     process.exit(code);
   });
 });
-
-// The docco task: called on prepublish
-var docco = require('./tasks/docco');
-
-// The reease task: called on postpublish
-var release = require('./tasks/release');
 
 
