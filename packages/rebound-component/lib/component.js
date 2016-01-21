@@ -4,12 +4,7 @@
 import Backbone from "backbone";
 import {$, REBOUND_SYMBOL} from "rebound-utils/rebound-utils";
 import { Model } from "rebound-data/rebound-data";
-
-const EMPTY_TEMPLATE = {
-  render(){
-    return {fragment: new DocumentFragment()};
-  }
-};
+import render from "rebound-htmlbars/render";
 
 // New Backbone Component
 var Component = Model.extend({
@@ -62,7 +57,7 @@ var Component = Model.extend({
     this.$el = (_.isFunction(Backbone.$)) ? Backbone.$(this.el) : false;
 
     // Render our dom and place the dom in our custom element
-    this.rerender();
+    this.render();
 
     // Add active class to this newly rendered template's link elements that require it
     $(this.el).markLinks();
@@ -80,29 +75,34 @@ var Component = Model.extend({
 
   _listenToService(key, service){
     var self = this;
-    this.listenTo(service, 'all', (type, model, value, options) => {
+    this.listenTo(service, 'all', (type, model, value, options={}) => {
       var attr,
           path = model.__path(),
           changed;
+
+      // Send the service's key via options
+      // TODO: Find a better way to get service keys in their path() method
+      options.service = key;
+
       if(type.indexOf('change:') === 0){
         changed = model.changedAttributes();
         for(attr in changed){
           // TODO: Modifying arguments array is bad. change this
           type = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
-          options.service = key;
           this.trigger.call(this, type, model, value, options);
         }
         return void 0;
       }
+
       return this.trigger.call(this, type, model, value, options);
     });
   },
 
   // Render our dom and place the dom in our custom element
   // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
-  rerender(){
+  render(){
     this.el.innerHTML = null;
-    this.el.appendChild(this[REBOUND_SYMBOL].template.render(this).fragment);
+    this.el.appendChild(render(this[REBOUND_SYMBOL].template, this).fragment);
   },
 
   deinitialize(){
@@ -216,7 +216,7 @@ function processProps(protoProps, staticProps){
   // These properties exist on the custom Component constructor
   // Ensure every constructor has a template and stylesheet
   staticProps || (staticProps = {});
-  staticProps.template || (staticProps.template = EMPTY_TEMPLATE);
+  staticProps.template || (staticProps.template = null);
   staticProps.stylesheet || (staticProps.stylesheet = '');
 
 
@@ -268,8 +268,9 @@ Component.hydrate = function hydrateComponent(protoProps={}, staticProps={}){
   // Ensure we hae a type, template and stylesheet
   this.prototype[REBOUND_SYMBOL] = {
     type: staticProps.type || 'anonymous-component',
-    template: staticProps.template || EMPTY_TEMPLATE,
-    stylesheet: staticProps.stylesheet || ''
+    template: staticProps.template || null,
+    stylesheet: staticProps.stylesheet || '',
+    isHydrated: true
   };
 
 };
@@ -309,8 +310,9 @@ Component.extend = function extendComponent(protoProps={}, staticProps={}){
   // Ensure we hae a type, template and stylesheet
   Component.prototype[REBOUND_SYMBOL] = {
     type: staticProps.type || 'anonymous-component',
-    template: staticProps.template || EMPTY_TEMPLATE,
-    stylesheet: staticProps.stylesheet || ''
+    template: staticProps.template || null,
+    stylesheet: staticProps.stylesheet || '',
+    isHydrated: staticProps.hasOwnProperty('isHydrated') ? staticProps.isHydrated : true
   };
 
   return Component;

@@ -1,8 +1,5 @@
 import $ from "rebound-utils/rebound-utils";
-import { default as _render } from "htmlbars-runtime/render";
 import Component from "rebound-component/factory";
-
-var render = _render.default || _render; // Fix for stupid Babel imports
 
 export default function component(morph, env, scope, tagName, params, attrs, templates, visitor) {
 
@@ -14,6 +11,7 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   }
 
   var component, element, outlet,
+      render = this.buildRenderResult,
       seedData = {},
       componentData = {},
       componentScope = this.createFreshScope();
@@ -73,4 +71,4 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   morph.setNode(element);
   morph.componentIsRendered = true;
 
-};
+}

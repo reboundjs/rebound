@@ -114,6 +114,8 @@ QUnit.test('Rebound Services', function() {
   // Array addtion recomputes
   deepEqual(service.get('arr').toJSON(), instance1.get('arrayProxy').toJSON(), 'Computed properties proxying collections in a service re-compute on model additions.');
   deepEqual(service.get('arr').toJSON(), instance2.get('arrayProxy').toJSON(), 'Computed properties in multiple components proxying collections in a service re-compute on model additions.');
+  window.foo = true;
+  debugger;
 
   service.get('arr').pop();
 

@@ -4,9 +4,9 @@
 import parse from "rebound-compiler/parser";
 import { compile as compileTemplate } from "rebound-htmlbars/compile";
 import { registerPartial } from "rebound-htmlbars/rebound-htmlbars";
+import render from "rebound-htmlbars/render";
 import Component from "rebound-component/factory";
 import loader from "rebound-router/loader";
-
 
 function compile(str, options={}){
   /* jshint evil: true */
@@ -16,6 +16,13 @@ function compile(str, options={}){
 
   // Compile our template
   defs.template = compileTemplate(defs.template);
+
+  // For client side rendered templates, put the render function directly on the
+  // template result for convenience. To sue templates rendered server side will
+  // consumers will have to invoke the view layer's render function themselves.
+  defs.template.render = function(data, options){
+    return render(this, data, options);
+  };
 
   // Fetch any dependancies
   loader.load(defs.deps);

@@ -225,7 +225,7 @@ var Model = Backbone.Model.extend({
         name: key,
         parent: target,
         root: this.__root__,
-        path: pathGenerator(target, key),
+        path: pathGenerator(target, attr),
         silent: true,
         defaults: options.defaults
       };

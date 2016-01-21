@@ -50,7 +50,7 @@ function removeComments(str) {
 }
 
 // TODO: This is messy, clean it up!
-function getDependancies(template, base=''){
+function getDependancies(template){
   var imports = [],
       partials = [],
       deps = [],
@@ -65,17 +65,17 @@ function getDependancies(template, base=''){
 
   // Assemble our imports dependancies
   (template.match(importsre) || []).forEach(function(importString, index){
-    deps.push(base + importString.replace(importsre, '$2'));
+    deps.push(importString.replace(importsre, '$2'));
   });
 
   // Assemble our partial dependancies
   (template.match(partialsre) || []).forEach(function(partial, index){
-    deps.push(base + partial.replace(partialsre, '$2'));
+    deps.push(partial.replace(partialsre, '$2'));
   });
 
   // Assemble our partial dependancies
   (template.match(helpersre) || []).forEach(function(partial, index){
-    deps.push(base + partial.replace(helpersre, '$2'));
+    deps.push(partial.replace(helpersre, '$2'));
   });
 
   return deps;
@@ -90,7 +90,7 @@ function parse(str, options={}){
       stylesheet: getStyle(str),
       template: getTemplate(str),
       script: getScript(str),
-      deps: getDependancies(str, options.baseDest)
+      deps: getDependancies(str)
     };
   }
 
@@ -98,7 +98,7 @@ function parse(str, options={}){
     isPartial: true,
     name: options.name,
     template: stripLinkTags(str),
-    deps: getDependancies(str, options.baseDest)
+    deps: getDependancies(str)
   };
 
 }

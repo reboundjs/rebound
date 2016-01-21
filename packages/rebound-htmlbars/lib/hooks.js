@@ -3,7 +3,9 @@
 // Here we augment HTMLBars' default hooks to make use of Rebound's evented data
 // objects for automatic databinding.
 
+import $ from "rebound-utils/rebound-utils";
 import hooks from "htmlbars-runtime/hooks";
+import { default as _render } from "htmlbars-runtime/render";
 
 // __Environment Hooks__ create and modify the template environment objects
 import createFreshEnv from "rebound-htmlbars/hooks/createFreshEnv";
@@ -65,5 +67,17 @@ hooks.hasHelper = hasHelper;
 hooks.lookupHelper = lookupHelper;
 hooks.registerHelper = registerHelper;
 
+
+// __buildRenderResult__ is a wrapper for the native HTMLBars render function. It
+// ensures every template is rendered with its own child environment, every environment
+// saves a referance to its unique render result for re-renders, and every render
+// result has a unique id.
+hooks.buildRenderResult = function buildRenderResult(template, env, scope, options){
+  var render = _render.default || _render; // Fix for stupid Babel imports
+  env = createChildEnv(env);
+  env.template = render(template, env, scope, options);
+  env.template.uid = $.uniqueId('template');
+  return env.template;
+};
 
 export default hooks;

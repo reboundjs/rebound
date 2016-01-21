@@ -3,54 +3,15 @@
 
 import { $, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
 import Component from "rebound-component/component";
-import { wrapComponent } from "rebound-htmlbars/wrap";
 
 var REGISTRY = {};
-const DUMMY_TEMPLATE = {
-  render(){
-    return { fragment: new DocumentFragment() };
-  }
-};
+const DUMMY_TEMPLATE = false;
 
 // Used to transport component specific data to the native element created callback
 // in leu of a good API for passing initialization data to document.createElement.
 // When registry.create is called, it stashes instance data on this object in a
 // shared scope. After createElement is finished, it cleans this transport object
-var ELEMENT_DATA = {
-  full: false,
-  save(instance, data, options){
-    this.full = true;
-    this.instance = instance;
-    this.data = data;
-    this.options = options;
-  },
-  clean(){
-    this.full = false;
-    delete this.instance;
-    delete this.data;
-    delete this.options;
-  }
-};
-
-function reserveComponent(type){
-
-  // If the component exists in the registry, and is hydrated already, this is
-  // a duplicate component name – exit and log an error.
-  if(REGISTRY[type] && REGISTRY[type].isHydrated){ return console.error('A component of type', type, 'already exists!'); }
-
-  // If the component exists in the registry, and is not yet hydrated,
-  // simply return the existing dehydrated constructor.
-  if(REGISTRY[type] && !REGISTRY[type].isHydrated){ return REGISTRY[type]; }
-
-  // Otherwise, create and return a new component subclass and register the element
-  return REGISTRY[type] = Component.extend({}, {
-    isHydrated: false,
-    type: type,
-    template: DUMMY_TEMPLATE
-  });
-
-}
-
+var ELEMENT_DATA;
 
 export function registerComponent(type, options={}) {
 
@@ -60,12 +21,11 @@ export function registerComponent(type, options={}) {
       options.type = type;
       options.isHydrated = true;
 
-  // If the view layer provides a teplate wrapper, wrap any template provided in it
-  if(wrapComponent){ options.template = wrapComponent(options.template); }
-
   // If the component exists in the registry, and is already hydrated, then this
   // is a conflicting component name – exit and log an error.
-  if(REGISTRY[type] && REGISTRY[type].isHydrated){ return console.error('A component of type', type, 'already exists!'); }
+  if(REGISTRY[type] && REGISTRY[type].isHydrated){
+    return console.error('A component of type', type, 'already exists!');
+  }
 
   // If there is a non-hydrated component in the registry, hydrate it with the
   // newly provided prototype.
@@ -91,7 +51,7 @@ export function registerComponent(type, options={}) {
     // component data object.
     if(this.data){
       this.data.reset(this.data.toJSON());
-      this.data.rerender();
+      this.data.render();
       this.data.isHydrated = true;
       this.data.loadCallbacks.forEach( (cb)=>{ cb(this.data); } );
     }
@@ -101,7 +61,7 @@ export function registerComponent(type, options={}) {
     // constructor with the provided properties. We don't need `new` here because
     // the instance we are building is provided for us, so we use `component.call`
     // to call the component constructor using that scope.
-    else if(ELEMENT_DATA.full){
+    else if(ELEMENT_DATA){
       this.data = new REGISTRY[type](this, ELEMENT_DATA.data, ELEMENT_DATA.options);
     }
 
@@ -151,16 +111,21 @@ export var ComponentFactory = function ComponentFactory(type, data={}, options={
   if(!REGISTRY[type] || !REGISTRY[type].isHydrated){
     el = document.createElement(type);
     options.isHydrated = false;
-    el.data = new (reserveComponent(type))(el, data, options);
+    REGISTRY[type] = Component.extend({}, {
+      isHydrated: false,
+      type: type,
+      template: DUMMY_TEMPLATE
+    });
+    el.data = new REGISTRY[type](el, data, options);
   }
 
   // If this component is in the registry, save the instance specific data to
   // deliver to the createElement call, and create the element. As part of the
   // `createdCallback` a new instance of
   else {
-    ELEMENT_DATA.save(this, data, options);
+    ELEMENT_DATA = { data: data, options: options };
     el = document.createElement(type);
-    ELEMENT_DATA.clean();
+    ELEMENT_DATA = void 0;
   }
 
   return el.data;

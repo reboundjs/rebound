@@ -48,10 +48,18 @@ LazyValue.prototype = {
     return this;
   },
 
-  addObserver: function(path, context) {
+  addObserver: function(path, context, env) {
     var position, res;
 
-    if(!_.isObject(context) || !_.isString(path)){ return console.error('Error adding observer for', context, path); };
+    if(!_.isObject(context) || !_.isString(path)){ return console.error('Error adding observer for', context, path); }
+
+    var cache = env.streams[context.cid] || (env.streams[context.cid] = {});
+    cache[path] || (cache[path] = []);
+    var position = cache[path].push(this) - 1;
+
+    this.observers.push({cid: context.cid, path: path, index: position});
+
+    return;
 
     // Ensure _observers exists and is an object
     context.__observers || (context.__observers = {});
@@ -70,6 +78,13 @@ LazyValue.prototype = {
     this.observers.push({context: context, path: path, index: position});
 
     return this;
+  },
+
+  makeDirty: function(){
+    this.cache = NIL;
+    for (var i = 0, l = this.subscribers.length; i < l; i++) {
+      this.subscribers[i].isLazyValue && this.subscribers[i].makeDirty();
+    }
   },
 
   notify: function() {

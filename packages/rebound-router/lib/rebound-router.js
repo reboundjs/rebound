@@ -27,6 +27,17 @@ var SERVICES = {};
 
 // Regexp to validate remote URLs
 var IS_REMOTE_URL = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/;
+var STRIP_SLASHES = /(^\/+|\/+$)/mg;
+
+function normalizeUrl(){
+  var url = '';
+  var args = Array.prototype.slice.call(arguments);
+  args.forEach(function(val){
+    if(!val || val === '/'){ return void 0; }
+    url += ('/' + val.replace(STRIP_SLASHES, ''));
+  });
+  return url || '/';
+}
 
 // Overload Backbone's loadUrl so it returns the value of the routed callback
 // Only ever compare the current path (excludes the query params) to the route regexp
@@ -185,6 +196,12 @@ var Router = Backbone.Router.extend({
     this.config = options;
     this.config.handlers = [];
     this.config.containers = [];
+
+    // Normalize our url configs
+    this.config.root = normalizeUrl(this.config.root);
+    this.config.assetRoot = this.config.assetRoot ? normalizeUrl(this.config.assetRoot) : this.config.root;
+    this.config.jsPath = normalizeUrl(this.config.assetRoot, this.config.jsPath);
+    this.config.cssPath = normalizeUrl(this.config.assetRoot, this.config.cssPath);
 
     // Get a unique instance id for this router
     this.uid = $.uniqueId('router');
@@ -354,59 +371,10 @@ var Router = Backbone.Router.extend({
   _fetchCSS: function(routeName, appName){
 
     var cssID = this.uid + '-' + appName + '-css',
-        cssUrl = this.config.cssPath.replace(/:route/g, routeName).replace(/:app/g, appName),
-        cssElement = document.getElementById(cssID);
+        cssUrl = this.config.cssPath.replace(/:route/g, routeName).replace(/:app/g, appName);
 
-    // If this css element is not on the page already, it hasn't been loaded before -
-    // create the element and load the css resource.
-    // Else if the css resource has been loaded before, enable it
-    return new Promise(function(resolve, reject){
-      var count = 0, ti;
-      if(cssElement === null){
-        // Construct our `<link>` element.
-        cssElement = document.createElement('link');
-        cssElement.setAttribute('type', 'text/css');
-        cssElement.setAttribute('rel', 'stylesheet');
-        cssElement.setAttribute('href', cssUrl);
-        cssElement.setAttribute('id', cssID);
-
-        // On successful load, clearInterval and resolve.
-        // On failed load, clearInterval and reject.
-        var successCallback = function(){
-          clearInterval(ti);
-          resolve(cssElement);
-        };
-        var errorCallback = function(err){
-          clearInterval(ti);
-          cssElement.dataset.error = '';
-          reject(err);
-        };
-
-        // Older browsers and phantomJS < 2.0 don't support the onLoad event for
-        // `<link>` tags. Pool stylesheets array as a fallback. Timeout at 5s.
-        ti = setInterval(function() {
-          for(var i = 0; i < document.styleSheets.length; i++){
-            count = count + 50;
-            if(document.styleSheets[i].href.indexOf(cssUrl) > -1) successCallback();
-            else if(count >= 5000) errorCallback('CSS Timeout');
-          }
-        }, 50);
-
-        // Modern browsers support loading events on `<link>` elements, bind these
-        // events. These will be callsed before our interval is called and they will
-        // clearInterval so the resolve/reject handlers aren't called twice.
-        $(cssElement).on('load', successCallback);
-        $(cssElement).on('error', errorCallback);
-        $(cssElement).on('readystatechange', function(){ clearInterval(ti); });
-
-        // Add our `<link>` element to the page.
-        document.head.appendChild(cssElement);
-
-      } else {
-        if(cssElement.hasAttribute('data-error')) return reject();
-        resolve(cssElement);
-      }
-    });
+    // Load the CSS
+    return loader.loadCSS(cssUrl, cssID);
   },
 
   // Fetches HTML and CSS

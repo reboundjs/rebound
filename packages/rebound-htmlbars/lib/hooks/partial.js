@@ -1,43 +1,49 @@
-import { wrapPartial } from "rebound-htmlbars/wrap";
+import $ from "rebound-utils/rebound-utils";
 import loader from "rebound-router/loader";
 
 var PARTIALS = {};
 
-if(!window.partialsRegistered){
-  // Create our new element prototype object
-  var element = Object.create(HTMLElement.prototype, {});
+export function registerPartial(name, template){
+  if(template && _.isString(name)){
 
-  // On element creation, make a new instance of the component and attach it
-  // to the element object as `data`
-  element.createdCallback = function() {
+    // If this partial has a callback list associated with its name, call all of
+    // the callbacks before registering the partial.
+    if(Array.isArray(PARTIALS[name])){
+      PARTIALS[name].forEach(function(cb) { cb(template); });
+    }
 
-  };
-
-  element.attributeChangedCallback = function(attr, oldVal, newVal){
-    console.log('PARTIAL NAME:', attr, oldVal, newVal);
-    if(attr !== 'type' || !this.data || !PARTIALS[newVal]){ return void 0; }
-    this.template = PARTIALS[newVal].render(this.data.scope, {env: this.data.env, contextualElement: this.data.renderNode.contextualElement});
-    this.innerHTML = null;
-    this.appendChild(this.template.fragment);
-  }
-
-  // Register our partial component
-  document.registerElement('rebound-partial', { prototype: element });
-  window.partialsRegistered = true;
-}
-
-export function registerPartial(name, func){
-  if(func && _.isString(name)){
-    loader.register(name);
-    return PARTIALS[name] = wrapPartial(func);
+    // Save the partial template in our cache and return it
+    loader.register('/'+name+'.js');
+    return PARTIALS[name] = template;
   }
 }
 
 export default function partial(renderNode, env, scope, path){
+
+  // If no path is passed, yell
   if(!path){ console.error('Partial hook must be passed path!'); }
+
+  // Resolve the value of path
   path = path.isLazyValue ? path.value : path;
-  var el = document.createElement('rebound-partial');
-  el.data = {scope: scope, env: env, renderNode: renderNode};
-  el.setAttribute('type', path);
-  return el;
+
+  // Create a child environment for the partial
+  env = this.createChildEnv(env);
+
+  var render = this.buildRenderResult;
+
+  // If a partial is registered with this path name, render it
+  if(PARTIALS[path] && !Array.isArray(PARTIALS[path])){
+    return render(PARTIALS[path], env, scope, { contextualElement: renderNode}).fragment;
+  }
+
+  // If this partial is not yet registered, add it to a callback list to be called
+  // when registered. When registered, replace the dummy node we created with the
+  // rendered partial template.
+  var node = document.createTextNode('');
+  PARTIALS[path] || (PARTIALS[path] = []);
+  PARTIALS[path].push(function partialCallback(template){
+    if(!node.parentNode){ return void 0; }
+    (node.parentNode).replaceChild(render(template, env, scope, { contextualElement: renderNode}).fragment, node);
+  });
+  return node;
 }

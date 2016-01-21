@@ -31,7 +31,7 @@ var paths = {
     library:   ['packages/*.js', 'packages/**/lib/**/*.js', 'wrap/*.js'],
     tests: ['packages/**/test/**/*.js', 'test.js', 'test/**/*.html'],
     apps:   ['test/dummy-apps/**/*.html'],
-    demo:   ["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html", "!test/demo/templates"],
+    demo:   ["test/demo/**/*.html", "!test/index.html", "!test/demo/index.html", "!test/demo/templates/**/*"],
 
     reboundUtils:       'packages/rebound-utils/lib/**/*.js',
     reboundTemplate:    'packages/rebound-htmlbars/lib/**/*.js',
@@ -205,7 +205,7 @@ gulp.task('compile-library', ['runtime', 'compiletime'], function(){
 gulp.task('compile-test-apps', ['cjs'],  function(){
   var rebound = require('./test/compile');
   var apps = gulp.src(["test/dummy-apps/**/*.html"])
-  .pipe(rebound())
+  .pipe(rebound({root: 'test/dummy-apps'}))
   .pipe(gulp.dest('test/dummy-apps'))
   .pipe(connect.reload());
 
@@ -232,7 +232,7 @@ gulp.task('compile-tests', ['cjs'], function(){
 gulp.task('compile-demo', ['cjs'],  function(){
   var rebound = require('./test/compile');
   var demo = gulp.src(paths.demo)
-  .pipe(rebound())
+  .pipe(rebound({root: 'test/demo/templates'}))
   .pipe(gulp.dest('test/demo/templates'))
   .pipe(connect.reload());
 
@@ -270,5 +270,3 @@ gulp.task('test', ['connect'], function(cb) {
     process.exit(code);
   });
 });
-
-

@@ -154,6 +154,32 @@ QUnit.test('Rebound Helpers - Each', function() {
   equal(dom.fragment.firstChild.innerHTML, 'Template', 'List is re-rendered again when length goes back up from zero.');
 
 
+
+  // Re-rendering
+    template = compiler.compile('<div>{{#each arrProxy as | item |}}{{item.val}}{{/each}}</div>', {name: 'test/partial'});
+    data = new Model({
+      show: true,
+      get arrProxy(){
+        if(this.get('show')){
+          return this.get('arr');
+        }
+        return [];
+      },
+      arr: [
+        {val:'1'},
+        {val:'2'},
+        {val:'3'}
+      ]
+    });
+    dom = template.render(data);
+    data.set('arr[2].val', '4');
+    equal(dom.fragment.firstChild.innerHTML, '124', 'Each blocks\' yielded templates that are databound');
+    data.set('show', false);
+    data.set('show', true);
+    data.set('arr[2].val', '5');
+    equal(dom.fragment.firstChild.innerHTML, '125', 'Each blocks\' yielded templates that re-render are still databound');
+debugger;
+
   // Scoping
     template = compiler.compile('<div>{{#each arr as | local |}}{{local.val}} {{parent}}{{/each}}</div>', {name: 'test/partial'});
     data = new Model({parent: 'bar', arr: [{val:'foo'}]});

@@ -1,4 +1,5 @@
 var through = require('through2');
+var path = require('path');
 var gutil = require('gulp-util');
 var rebound = require('../dist/cjs/rebound-compiler/precompile').default;
 var PluginError = gutil.PluginError;
@@ -27,11 +28,12 @@ function gulpRebound(options) {
     }
 
     // Compile
-    try{
+    try {
+
       file.contents = new Buffer(rebound(file.contents.toString(enc), {
-        name: file.path,
-        baseDest: options.baseUrl || ''
+        name: options.root + '/' + path.parse(file.relative).name, // file.stem not reliable
       }).src, enc);
+
       gutil.log(gutil.colors.green('File ' + file.relative + ' compiled'));
       file.path = file.path.replace('.html', '.js');
     } catch(err){

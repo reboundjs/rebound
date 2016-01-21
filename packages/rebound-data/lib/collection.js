@@ -24,7 +24,6 @@ var Collection = Backbone.Collection.extend({
     models || (models = []);
     options || (options = {});
     this._byValue = {};
-    this.__observers = {};
     this.helpers = {};
     this.cid = $.uniqueId('collection');
 

@@ -43,8 +43,9 @@ function default404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/0/:app.js",
-    "cssPath": "/test/dummy-apps/0/:app.css"
+    "assetRoot": "/test/dummy-apps",
+    "jsPath": "/0/:app.js",
+    "cssPath": "/0/:app.css"
   }).then(function(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Oops! We couldn't find this page.", 'No index component and no error component displays default 404 page.');
@@ -63,8 +64,9 @@ function custom404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/1/:app.js",
-    "cssPath": "/test/dummy-apps/1/:app.css"
+    "assetRoot": "/test/dummy-apps",
+    "jsPath": "/1/:app.js",
+    "cssPath": "/1/:app.css"
   }).then(function(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Custom 404!", 'No index component and a custom error component displays the custom 404 page.');
@@ -85,8 +87,9 @@ function defaultIndex( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/2/:app.js",
-    "cssPath": "/test/dummy-apps/2/:app.css"
+    "assetRoot": "/test/dummy-apps",
+    "jsPath": "/2/:app.js",
+    "cssPath": "/2/:app.css"
   }).then(function(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Default Index!", 'If no custom index page is specified, index.html component is used.');
@@ -105,8 +108,9 @@ function customIndex( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/3/:app.js",
-    "cssPath": "/test/dummy-apps/3/:app.css",
+    "assetRoot": "/test/dummy-apps/3",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {
       "": "there"
     }
@@ -130,8 +134,9 @@ function customIndex404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/4/:app.js",
-    "cssPath": "/test/dummy-apps/4/:app.css",
+    "assetRoot": "/test/dummy-apps/4",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {
       "": "not-there"
     }
@@ -155,8 +160,9 @@ function routeTransitions( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/5/:app.js",
-    "cssPath": "/test/dummy-apps/5/:app.css",
+    "assetRoot": "/test/dummy-apps/5",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {
       "foo": "test"
     }
@@ -232,8 +238,9 @@ function serviceLoading( assert ){
         "service2": "#footer"
       },
       "root": window.location.pathname,
-      "jsPath": "/test/dummy-apps/6/:app.js",
-      "cssPath": "/test/dummy-apps/6/:app.css",
+      "assetRoot": "/test/dummy-apps/6",
+      "jsPath": "/:app.js",
+      "cssPath": "/:app.css",
       "routeMapping": {
         "foo": "test"
       }
@@ -321,8 +328,9 @@ function queryParams( assert ){
     "container": "#content",
     "services": {},
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/7/:app.js",
-    "cssPath": "/test/dummy-apps/7/:app.css",
+    "assetRoot": "/test/dummy-apps/7",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {}
   })
   .then(function(){
@@ -417,8 +425,9 @@ function regexpRoutes( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/8/:app.js",
-    "cssPath": "/test/dummy-apps/8/:app.css"
+    "assetRoot": "/test/dummy-apps/8",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css"
   }).then(function(){
     return Rebound.router.navigate('test/baz');
   })
@@ -448,8 +457,9 @@ function lazyComponentLoading( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/9/:app.js",
-    "cssPath": "/test/dummy-apps/9/:app.css"
+    "assetRoot": "/test/dummy-apps/9",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css"
   }).then(function(page){
     var component = document.getElementsByTagName('test-component-9')[0].data;
     equal(component.isHydrated, false, 'Lazy loaded components are inserted immediately in the dom with a dehydrated component instance.');

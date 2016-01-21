@@ -4,7 +4,6 @@
 // Whenever it is notified of any changes to it's dependant values, mark the node
 // as dirty and add it to the environment's revalidation queue to be rerendered
 // during the next animation frame.
-
 export default function linkRenderNode(renderNode, env, scope, path, params, hash){
 
   function rerender(path, node, lazyValue, env){
@@ -35,4 +34,4 @@ export default function linkRenderNode(renderNode, env, scope, path, params, has
     }
   }
   return 1;
-};
+}

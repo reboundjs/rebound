@@ -6,9 +6,10 @@
     <script src="../../dist/rebound.runtime.js" id="Rebound" async>
     {
       "root": "/test/demo",
+      "assetRoot": "/test/demo",
       "services": {"service" : "nav"},
-      "jsPath": "/test/demo/templates/:app.js",
-      "cssPath": "/test/demo/:app.css",
+      "jsPath": "templates/:app.js",
+      "cssPath": ":app.css",
       "routeMapping": {
         "": "demo",
         "foo/bar": "test"
