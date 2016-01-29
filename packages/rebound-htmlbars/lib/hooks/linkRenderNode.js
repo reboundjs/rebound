@@ -9,7 +9,7 @@ export default function linkRenderNode(renderNode, env, scope, path, params, has
   function rerender(path, node, lazyValue, env){
     lazyValue.onNotify(function(){
       node.isDirty = true;
-      env.revalidateQueue[env.template.uid] = env.template;
+      env.template && (env.revalidateQueue[env.template.uid] = env.template);
     });
   }
 

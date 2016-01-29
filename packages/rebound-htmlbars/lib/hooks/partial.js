@@ -26,8 +26,8 @@ export default function partial(renderNode, env, scope, path){
   // Resolve the value of path
   path = path.isLazyValue ? path.value : path;
 
-  // Create a child environment for the partial
-  env = this.createChildEnv(env);
+  // Create new child scope for partial
+  scope = this.createChildScope(scope);
 
   var render = this.buildRenderResult;
 

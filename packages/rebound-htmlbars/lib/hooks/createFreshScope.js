@@ -7,8 +7,10 @@
 // separate dictionary to track whether a local was bound.
 export default function createFreshScope() {
   return {
+    level: 1,
     self: null,
     locals: {},
-    localPresent: {}
+    localPresent: {},
+    streams: {}
   };
 }

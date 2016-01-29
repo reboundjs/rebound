@@ -33,7 +33,7 @@ function equalTokens(fragment, html, message) {
   deepEqual(fragTokens, htmlTokens, message);
 }
 
-QUnit.test('Rebound Helpers - Each', function() {
+QUnit.test('Rebound Helpers - Each', function(assert) {
 
   var template, data, dom;
 
@@ -156,8 +156,10 @@ QUnit.test('Rebound Helpers - Each', function() {
 
 
   // Re-rendering
-    template = compiler.compile('<div>{{#each arrProxy as | item |}}{{item.val}}{{/each}}</div>', {name: 'test/partial'});
-    data = new Model({
+  (function(){
+    var rerendering = assert.async(2);
+    var template = compiler.compile('<div>{{#each arrProxy as | item |}}{{item.val}}{{/each}}</div>', {name: 'test/partial'});
+    var data = new Model({
       show: true,
       get arrProxy(){
         if(this.get('show')){
@@ -171,14 +173,35 @@ QUnit.test('Rebound Helpers - Each', function() {
         {val:'3'}
       ]
     });
-    dom = template.render(data);
-    data.set('arr[2].val', '4');
-    equal(dom.fragment.firstChild.innerHTML, '124', 'Each blocks\' yielded templates that are databound');
-    data.set('show', false);
-    data.set('show', true);
-    data.set('arr[2].val', '5');
-    equal(dom.fragment.firstChild.innerHTML, '125', 'Each blocks\' yielded templates that re-render are still databound');
-debugger;
+
+    new Promise(function(resolve) {
+      var dom = template.render(data);
+      data.set('arr[2].val', '4');
+      resolve(dom);
+    })
+    .then(function(dom){
+      return new Promise(function(resolve) {
+        window.setTimeout(function(){
+          equal(dom.fragment.firstChild.innerHTML, '124', 'Each blocks\' yielded templates that are databound');
+          data.set('show', false);
+          data.set('show', true);
+          data.set('arr[2].val', '5');
+          rerendering();
+          resolve(dom);
+        }, 10);
+      });
+    })
+    .then(function(dom){
+      return new Promise(function(resolve) {
+        window.setTimeout(function(){
+          equal(dom.fragment.firstChild.innerHTML, '125', 'Each blocks\' yielded templates that re-render are still databound');
+          rerendering();
+          resolve(dom);
+        }, 10);
+      });
+    });
+  })();
+
 
   // Scoping
     template = compiler.compile('<div>{{#each arr as | local |}}{{local.val}} {{parent}}{{/each}}</div>', {name: 'test/partial'});

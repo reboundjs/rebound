@@ -33,9 +33,11 @@ function push(arr){
 // dependants that need to be recomputed
 function recomputeCallback(){
   var len = TO_CALL.length;
-  for(let i=0;i<len;i++){
-    TO_CALL.shift().call();
+  CALL_TIMEOUT = null;
+  while(len--){
+    (TO_CALL.shift() || NOOP).call();
   }
+
   TO_CALL.added = {};
 }
 
@@ -104,7 +106,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   // Attached to listen to all events where this Computed Property's dependancies
   // are stored. See wire(). Will re-evaluate any computed properties that
   // depend on the changed data value which triggered this callback.
-  onRecompute: function(type, model, collection, options){if(window.foo){debugger;}
+  onRecompute: function(type, model, collection, options){
     var shortcircuit = { change: 1, sort: 1, request: 1, destroy: 1, sync: 1, error: 1, invalid: 1, route: 1, dirty: 1 };
     if( shortcircuit[type] || !model.isData ){ return void 0; }
     model || (model = {});
@@ -147,7 +149,6 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // If a change event, trigger anything that depends on that changed path.
     else if(type.indexOf('change:') === 0){
       vector = type.replace('change:', '').replace(/\.?\[.*\]/ig, '.@each');
-      console.log(vector, this.__computedDeps);
       _.each(this.__computedDeps, function(dependants, dependancy){
         startsWith(vector, dependancy) && push.call(TO_CALL, dependants);
       }, this);
@@ -156,7 +157,6 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     // Notifies all computed properties in the dependants array to recompute.
     // Push all recomputes to the end of our stack trace so all Computed Properties
     // already queued for recompute get a chance to.
-    if(window.Rebound && window.Rebound.testing){ return recomputeCallback.call(this); }
     if(!CALL_TIMEOUT){ CALL_TIMEOUT = setTimeout(_.bind(recomputeCallback, this), 0); }
 
   },
@@ -184,8 +184,6 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
     else if(type === 'remove'){ dest.remove && dest.remove(model); }
     // TODO: Add sort
 
-    // We've synced with the remote, not dirty anymore!
-    this.isDirty = false;
   },
 
   // Adds a litener to the root object and tells it what properties this

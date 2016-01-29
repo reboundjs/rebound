@@ -67,7 +67,7 @@ export default function attribute(attrMorph, env, scope, name, value){
     // If our input events have not been bound yet, bind them
     if(!attrMorph.eventsBound){
       $(el).on('change propertychange', function(event){
-        value.set(value.path, ((this.checked) ? true : false), {quiet: true});
+        value.set(value.path, ((this.checked) ? true : false));
       });
       attrMorph.eventsBound = true;
     }
@@ -78,7 +78,7 @@ export default function attribute(attrMorph, env, scope, name, value){
   // Special case for link elements with dynamic classes.
   // If the router has assigned it a truthy 'active' property, ensure that the extra class is present on re-render.
   else if( tagName === 'A' && name === 'class' && el.active ){
-    val = val ? String(val) + ' active' : 'active'
+    val = val ? String(val) + ' active' : 'active';
   }
 
   // Set the attribute on our element for visual referance
@@ -86,4 +86,4 @@ export default function attribute(attrMorph, env, scope, name, value){
 
   this.linkRenderNode(attrMorph, env, scope, '@attribute', [value], {});
 
-};
+}

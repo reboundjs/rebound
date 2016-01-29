@@ -68,13 +68,22 @@ hooks.lookupHelper = lookupHelper;
 hooks.registerHelper = registerHelper;
 
 
+// Bind local binds a local variable to the scope object and tracks the scope
+// level at which that local was added. See `createChildScope` for description
+// of scope levels
+hooks.bindLocal = function bindLocal(env, scope, name, value){
+  scope.localPresent[name] = scope.level;
+  scope.locals[name] = value;
+};
+
+
 // __buildRenderResult__ is a wrapper for the native HTMLBars render function. It
 // ensures every template is rendered with its own child environment, every environment
 // saves a referance to its unique render result for re-renders, and every render
 // result has a unique id.
 hooks.buildRenderResult = function buildRenderResult(template, env, scope, options){
   var render = _render.default || _render; // Fix for stupid Babel imports
-  env = createChildEnv(env);
+  env = hooks.createChildEnv(env);
   env.template = render(template, env, scope, options);
   env.template.uid = $.uniqueId('template');
   return env.template;

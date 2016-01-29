@@ -7,6 +7,9 @@
 // ```
 // The div's attribute expression is passed a concat LazyValue that alerts its
 // subscribers whenever any of its dynamic values change.
+
+var CONCAT_CACHE = {};
+
 import LazyValue from "rebound-htmlbars/lazy-value";
 
 export default function concat(env, params){
@@ -21,22 +24,16 @@ export default function concat(env, params){
   });
 
   // Check the streams cache and return if this LazyValue has already been made
-  if(env.streams[name]){ return env.streams[name]; }
+  if(CONCAT_CACHE[name]){ return CONCAT_CACHE[name]; }
 
   // Create a lazyvalue that returns the concatted values of all input params
-  var lazyValue = new LazyValue(function(params) {
+  // Add it to the streams cache and return
+  return CONCAT_CACHE[name] = new LazyValue(function(params) {
     return params.join('');
   }, {
     context: params[0].context,
-    path: name
+    path: name,
+    params: params
   });
-
-  // This LazyValue should recompute if any of its dynamic inputs changes
-  for (let i = 0; i < params.length; i++) {
-    lazyValue.addDependentValue(params[i]);
-  }
-
-  // Add it to the streams cache and return
-  return env.streams[name] = lazyValue;
 
 }

@@ -17,6 +17,6 @@ export default function createFreshEnv(){
     hooks: this,
     dom: new DOMHelper(),
     revalidateQueue: {},
-    streams: {},
+    observers: {},
   };
 }

@@ -11,7 +11,7 @@ function NOOP(){ return ''; }
 export function hasHelper(env, scope, name) {
   (env && env.helpers) || (env = { helpers: HELPERS });
   return !!(HELPERS[name] || env.helpers[name]);
-};
+}
 
 // lookupHelper returns the given function from the helpers object. Manual checks prevent user from overriding reserved words.
 export function lookupHelper(env, scope, name) {
@@ -30,7 +30,7 @@ export function lookupHelper(env, scope, name) {
   // If not a reserved helper, check env, then global helpers, or return undefined.
   if(!hasHelper(env, null, name)){ console.error('No helper named', name, 'registered with Rebound'); }
   return HELPERS[name] || env.helpers[name] || NOOP;
-};
+}
 
 export function registerHelper(name, callback, env){
   if(!_.isString(name)) return console.error('Name provided to registerHelper must be a string!');
@@ -39,7 +39,7 @@ export function registerHelper(name, callback, env){
 
   HELPERS[name] = callback;
 
-};
+}
 
 /*******************************
         Default helpers
@@ -93,7 +93,7 @@ function isTruthy(condition){
   if(condition === undefined || condition === null){ return false; }
 
   // Handle models
-  if(condition.isModel){ return true };
+  if(condition.isModel){ return true; }
 
   // Handle arrays and collection
   if(_.isArray(condition) || condition.isCollection){ return !!condition.length; }

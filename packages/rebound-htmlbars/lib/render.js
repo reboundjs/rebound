@@ -12,12 +12,12 @@ var ENV_QUEUE = [];
 var push = function(arr){
   var i, len = arr.length;
   this.added || (this.added = {});
-  for(i=0;i<len;i++){
-    if(this.added[arr[i].cid]){ continue; }
-    this.added[arr[i].cid] = 1;
-    if(arr[i].isLazyValue){ arr[i].makeDirty(); }
-    this.push(arr[i]);
-  }
+  arr.forEach((item) => {
+    if(this.added[item.cid]){ return; }
+    this.added[item.cid] = 1;
+    if(item.isLazyValue){ item.makeDirty(); }
+    this.push(item);
+  });
 };
 
 // Called on animation frame. TO_RENDER is a list of lazy-values to notify.
@@ -26,14 +26,10 @@ var push = function(arr){
 // to accomodate synchronous renders where the render queue callbacks may trigger
 // nested calls of `renderCallback`.
 function renderCallback(){
-  console.log('~~~~~ NOTIFYING ~~~~~')
 
   while(TO_RENDER.length){
-    var a = TO_RENDER.shift();
-    console.log(a.cid, a.path, a.cache)
-    a.notify();
+    TO_RENDER.shift().notify();
   }
-  console.log('~~~~~ NOTIFIED ~~~~~')
 
   TO_RENDER.added = {};
 
@@ -46,29 +42,23 @@ function renderCallback(){
   ENV_QUEUE.added = {};
 }
 
-// TODO: This will be a hair faster if we have a callback for each event we care about
- function onChange(type, model={}, collection={}, options={}){
-   var data, changed;
+// Listens for `change` events and calls `trigger` with the correct values
+function onChange(model, options){
+  trigger.call(this, 'change', model, model.changedAttributes());
+}
 
-  // If we don't care about this type of event, short circuit
-  var shortcircuit = { sort: 1, request: 1, destroy: 1, sync: 1, error: 1, invalid: 1, route: 1, dirty: 1 };
-  if( shortcircuit[type] || !!~type.indexOf('change:')){ return void 0; }
+// Listens for `reset` events and calls `trigger` with the correct values
+function onReset(data, options){
+  trigger.call(this, 'reset', data, data.isModel ? data.changedAttributes() : { '@each': data }, options);
+}
 
-  // If the third value is not a data object, then it is the options hash
-  !collection.isData && (options = collection) && (collection = model);
+// Listens for `update` events and calls `trigger` with the correct values
+function onUpdate(collection, options){
+  trigger.call(this, 'update', collection, { '@each': collection }, options);
+}
 
-  // This can be called for any type of modification event. Normalize the data coming
-  // in depending on the type of change.
-  if((type === 'reset' && options.previousAttributes) || type === 'change'){
-    data = model;
-    changed = model.changedAttributes();
-  }
-  else if(type === 'add' || type === 'remove' || type === 'update' || (type === 'reset' && options.previousModels)){
-    data = collection;
-    changed = {
-      '@each': data
-    };
-  }
+
+function trigger(type, data, changed, options={}){
 
   // If nothing has changed, exit.
   if(!data || !changed){ return void 0; }
@@ -81,28 +71,30 @@ function renderCallback(){
   // For each changed key, walk down the data tree from the root to the data
   // element that triggered the event and add all relevent callbacks to this
   // object's TO_RENDER queue.
-  var context = this,
-      parts = $.splitPath(basePath);
+  basePath = basePath.replace(/\[[^\]]+\]/g, ".@each");
+  var parts = $.splitPath(basePath);
+  var context = [];
 
-  do {
-    let key, obsPath, path, observers;
-console.log(type, basePath, context.__path(), parts, changed, (basePath + (basePath && '.') + 'KEY').replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, ''))
-    for(key in changed){
-      path = (basePath + (basePath && key && '.') + key).replace(context.__path(), '').replace(/\[[^\]]+\]/g, ".@each").replace(/^\./, '');
-      for(obsPath in context.__observers){
-        observers = context.__observers[obsPath];
-        if($.startsWith(obsPath, path)){
-          // If this is a collection event, trigger everything, otherwise only trigger property change callbacks
-          if(_.isArray(changed[key]) || data.isCollection){ push.call(TO_RENDER, observers.collection); }
-          push.call(TO_RENDER, observers.model);
+  while(1){
+    let pre = context.join('.');
+    let post = parts.join('.');
+
+    for(let key in changed){
+      let path = (post + (post && key && '.') + key);
+      for(let testPath in this.env.observers[pre]){
+        if($.startsWith(testPath, path)){
+          push.call(TO_RENDER, this.env.observers[pre][testPath]);
           push.call(ENV_QUEUE, [this.env]);
         }
       }
     }
-  } while(context !== data && (context = context.get(parts.shift(), {isPath: true})));
-console.log('--------------------')
+    if(parts.length === 0){ break; }
+    context.push(parts.shift());
+  }
+
   // If Rebound is loaded in a testing environment, call renderCallback syncronously
   // so that changes to the data reflect in the DOM immediately.
+  // TODO: Make tests async so this is not required
   if(window.Rebound && window.Rebound.testing){ return renderCallback(); }
 
   // Otherwise, queue our render callback to be called on the next animation frame,
@@ -131,8 +123,14 @@ export default function render(template, data, options={}){
 
   // Every component's template is rendered using a unique environment
   var env = hooks.createChildEnv(options.env || hooks.createFreshEnv());
+
+  // Add template specific hepers to env
   _.extend(env.helpers, options.helpers);
+
+  // Save env on component data to trigger lazy-value streams on data change
   data.env = env;
+
+  // Save data on env to allow helpers / hooks access to component methods
   env.root = data;
 
   // Ensure we have a contextual element to pass to render
@@ -141,8 +139,8 @@ export default function render(template, data, options={}){
 
   // If data is an eventable object, run the onChange helper on any change
   if(data.listenTo){
-    data.stopListening(data, 'all', onChange);
-    data.listenTo(data, 'all', onChange);
+    data.stopListening(null, null, onChange).stopListening(null, null, onReset).stopListening(null, null, onUpdate);
+    data.listenTo(data, 'change', onChange).listenTo(data, 'reset', onReset).listenTo(data, 'update', onUpdate);
   }
 
   // If this is a real template, run it with our merged helpers and hooks

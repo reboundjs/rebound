@@ -27,7 +27,7 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   for(let key in seedData){
 
     // For each param passed to our component, create its lazyValue
-    componentData[key] = this.get(env, componentScope, key);
+    componentData[key] = this.get(component.env, componentScope, key);
 
     // Set up two way binding between component and original context
     if(componentData[key].isLazyValue && attrs[key].isLazyValue){

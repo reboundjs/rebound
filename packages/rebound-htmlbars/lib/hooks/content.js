@@ -14,6 +14,8 @@ export default function content(morph, env, context, path, lazyValue){
     });
   }
 
+  morph.lazyValue = lazyValue;
+
   return lazyValue.value;
 
 };
