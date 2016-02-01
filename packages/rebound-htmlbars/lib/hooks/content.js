@@ -18,4 +18,4 @@ export default function content(morph, env, context, path, lazyValue){
 
   return lazyValue.value;
 
-};
+}

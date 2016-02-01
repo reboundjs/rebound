@@ -5,4 +5,4 @@
 // value itself, or a LazyValue.
 export default function getValue(referance){
   return (referance && referance.isLazyValue) ? referance.value : referance;
-};
+}

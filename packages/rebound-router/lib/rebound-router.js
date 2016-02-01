@@ -431,7 +431,6 @@ var Router = Backbone.Router.extend({
         if(!(cssElement instanceof Element) || !(jsElement instanceof Element) ) return throwError();
         (!isService && !isError) && (this.status = SUCCESS);
         cssElement && cssElement.removeAttribute('disabled');
-
         this._installResource(jsElement.dataset.name, appName, container).then(resolve, resolve);
       };
 

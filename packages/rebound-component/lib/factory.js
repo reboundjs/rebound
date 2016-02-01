@@ -14,7 +14,6 @@ const DUMMY_TEMPLATE = false;
 var ELEMENT_DATA;
 
 export function registerComponent(type, options={}) {
-
   // Ensure our options are set nicely and extract the prototype provided to us
   var proto = options.prototype || {};
       delete options.prototype;

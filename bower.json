@@ -41,7 +41,7 @@
     "classList": "https://github.com/eligrey/classList.js.git",
     "requestAnimationFrame": "https://gist.github.com/1579671.git",
     "currentScript": "https://github.com/epicmiller/currentScript-polyfill.git",
-    "document-register-element": "0.4.1",
+    "document-register-element": "0.5.4",
     "exoskeleton": "https://github.com/paulmillr/exoskeleton.git",
     "requirejs": "https://github.com/jrburke/requirejs.git#19a98167858db65342a269ba76f06e3be152210e",
     "almond": "0.2.9",

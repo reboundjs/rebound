@@ -64,7 +64,7 @@ var loader = {
         for(var i = 0; i < document.styleSheets.length; i++){
           count = count + 50;
           if(document.styleSheets[i].href.indexOf(url) > -1) successCallback();
-          else if(count >= 5000){ errorCallback('CSS Timeout') };
+          else if(count >= 5000){ errorCallback('CSS Timeout'); }
         }
       }, 50);
 

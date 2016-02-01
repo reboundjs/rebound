@@ -35,7 +35,7 @@ var Model = Backbone.Model.extend({
   // up here to keep track of it's place in the data tree.
   constructor: function(attributes, options={}){
     var self = this;
-    if(attributes === null || attributes === undefined){ attributes = {} };
+    if(attributes === null || attributes === undefined){ attributes = {}; }
     attributes.isModel && (attributes = attributes.attributes);
     this.helpers = {};
     this.defaults = this.defaults || {};

@@ -265,7 +265,7 @@ Component.hydrate = function hydrateComponent(protoProps={}, staticProps={}){
   // Add any static props to the function object itself
   if (staticProps){ _.extend(this, staticProps); }
 
-  // Ensure we hae a type, template and stylesheet
+  // Ensure we have a type, template and stylesheet
   this.prototype[REBOUND_SYMBOL] = {
     type: staticProps.type || 'anonymous-component',
     template: staticProps.template || null,

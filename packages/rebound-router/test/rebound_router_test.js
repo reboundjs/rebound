@@ -1,5 +1,4 @@
 import Rebound from 'runtime';
-debugger;
 window.Rebound = Rebound;
 
 var container = document.createElement('main');
@@ -463,7 +462,7 @@ function lazyComponentLoading( assert ){
   }).then(function(page){
     var component = document.getElementsByTagName('test-component-9')[0].data;
     equal(component.isHydrated, false, 'Lazy loaded components are inserted immediately in the dom with a dehydrated component instance.');
-    var end = assert.async(1)
+    var end = assert.async(1);
     component.onLoad(function(){
       equal(component.isHydrated, true, 'Lazy loaded components are asyncronously upgraded.');
       end();

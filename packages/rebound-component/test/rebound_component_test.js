@@ -131,11 +131,14 @@ QUnit.test('Rebound Components', function( assert ) {
   });
   c6.data.set('biz', 'foo');
 
+  // Phantomjs requires custom element to trigger upgrade
+  document.body.appendChild(partial.fragment);
+  document.body.appendChild(c5);
+
   // var cid = c1.data.cid;
   // equal(typeof c1.data.cid, 'string', 'Component saves a referance to itself on its contextual element as el.data');
   // equal(c1.data.isComponent, true, 'Unregistered components can be created from document.createElement');
   // equal(c1.data.isHydrated, false, 'Unregistered components can be created from document.createElement and are properly marked as dehydrated');
-
 
   component = compiler.compile(`
     <element name="lazy-component">
@@ -163,8 +166,8 @@ QUnit.test('Rebound Components', function( assert ) {
     </element>
   `);
 
+
   equal(typeof c5.data.cid, 'string', 'Post-registration, existing Components save a referance to itself on its contextual element as el.data.');
-  // equal(c1.data.cid, cid, 'Post-registration, existing Components  created from document.createElement preserve their cid');
   equal(c5.data.isHydrated, true, 'Post-registration, existing Components created from document.createElement are properly marked as hydrated.');
   equal(c5.data.method(), true, 'Post-registration, existing Components created from document.createElement are augmented to have prototype methods added.');
   deepEqual(c5.data.toJSON(), {

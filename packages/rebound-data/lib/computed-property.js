@@ -165,6 +165,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   // Called when a Computed Property's active cache object changes.
   // Pushes any changes to Computed Property that returns a data object back to
   // the original object.
+  // TODO: Will be a hair faster with individual callbacks for each event type
   onModify: function(type, model={}, collection={}, options={}){
     var shortcircuit = { sort: 1, request: 1, destroy: 1, sync: 1, error: 1, invalid: 1, route: 1 };
     if( this.isChanging || !this.tracking || shortcircuit[type] || ~type.indexOf('change:') ){ return void 0; }
@@ -346,7 +347,7 @@ _.extend(ComputedProperty.prototype, Backbone.Events, {
   // If Computed Property returns a value, all downstream dependancies will re-compute.
   set: function(key, val, options={}){
 
-    if(this.returnType === null){ return void 0; };
+    if(this.returnType === null){ return void 0; }
     var attrs = key;
     var value = this.value();
 

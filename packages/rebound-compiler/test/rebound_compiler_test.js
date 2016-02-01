@@ -36,7 +36,7 @@ function equalTokens(fragment, html, message) {
 
 QUnit.test('Rebound Compiler - Partials', function( assert ) {
 
-  assert.expect(11)
+  assert.expect(11);
 
   var spec = parse('<div class={{bar}}>{{foo}}</div>');
 
@@ -122,7 +122,7 @@ QUnit.test('Rebound Compiler - Partials', function( assert ) {
 
 QUnit.test('Rebound Compiler - Components', function( assert ) {
 
-  assert.expect(14)
+  assert.expect(14);
 
   var spec = parse(`
     <element name="test-element">
