@@ -244,19 +244,19 @@ gulp.task('build', ['docco', 'compile-demo', 'compile-test-apps', 'compile-tests
 });
 
 // Start the test server
-gulp.task('connect', ['build'], function() {
+gulp.task('connect', [], function() {
   return connect.server({
     root: __dirname,
     livereload: !process.env.TEST_ENV,
     port: 8000,
     // Add gzip compression to test file sizes and an artifical delay to test lazy components on local machines
-    middleware: function(){ return [compression(), function(req,res,next){setTimeout(function(){next()},100);}]; }
+    middleware: function(){ return [compression(), function(req,res,next){setTimeout(function(){next();},100);}]; }
   });
 });
 
 // The default task (called when you run `npm start` from cli)
 // Build Rebound and re-run the build when a file changes
-gulp.task('default', ['connect'], function() {
+gulp.task('default', ['connect', 'build'], function() {
   gulp.watch(paths.library, ['compile-library']);
   gulp.watch(paths.tests, ['compile-tests']);
   gulp.watch(paths.apps, ['compile-test-apps']);
