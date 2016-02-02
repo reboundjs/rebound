@@ -3,7 +3,7 @@
 
 import Backbone from "backbone";
 import $ from "rebound-utils/rebound-utils";
-import LazyComponent from "rebound-component/lazy-component";
+import { SERVICES, ServiceLoader} from "rebound-router/service";
 import Component from "rebound-component/factory";
 import loader from "rebound-router/loader";
 
@@ -22,8 +22,6 @@ var ERROR_ROUTE_NAME = 'error';
 var SUCCESS = 'success';
 var ERROR = 'error';
 var LOADING = 'loading';
-
-var SERVICES = {};
 
 // Regexp to validate remote URLs
 var IS_REMOTE_URL = /^([a-z]+:)|^(\/\/)|^([^\/]+\.)/;
@@ -218,13 +216,13 @@ var Router = Backbone.Router.extend({
     // Use the user provided container, or default to the closest `<main>` tag
     this.config.container = $((this.config.container || 'main'))[0];
     this.config.containers.push(this.config.container);
-    SERVICES.page = new LazyComponent();
+    SERVICES.page = new ServiceLoader('page');
 
     // Install our global components
     _.each(this.config.services, function(selector, route){
       var container = $(selector)[0] || document.createElement('span');
       this.config.containers.push(container);
-      SERVICES[route] = new LazyComponent();
+      SERVICES[route] = new ServiceLoader(route);
       this._fetchResource(route, container).catch(function(){});
     }, this);
 
@@ -307,6 +305,7 @@ var Router = Backbone.Router.extend({
   _installResource: function(PageApp, appName, container) {
     var oldPageName, pageInstance, routes = [];
     var isService = (container !== this.config.container);
+    var name = (isService) ? appName : 'page';
 
     // If no container exists, throw an error
     if(!container) throw 'No container found on the page! Please specify a container that exists in your Rebound config.';
@@ -315,10 +314,12 @@ var Router = Backbone.Router.extend({
     container.classList.remove('error', 'loading');
 
     // Uninstall any old resource we have loaded
-    if(!isService && this.current) this._uninstallResource();
+    if(!isService && this.current){ this._uninstallResource(); }
 
     // Load New PageApp, give it it's name so we know what css to remove when it deinitializes
     pageInstance = Component(PageApp).el;
+    if(SERVICES[name].isLazyComponent){ SERVICES[name].hydrate(pageInstance.data); }
+    else{ SERVICES[name] = pageInstance.data; }
     pageInstance.__pageId = this.uid + '-' + appName;
 
     // Add to our page
@@ -330,7 +331,7 @@ var Router = Backbone.Router.extend({
 
     // Add a default route handler for the route that got us here so if the component
     // does not define a route that handles it, we don't get a redirect loop
-    if(!isService) this.route(this._currentRoute, 'default', function(){ return void 0; });
+    if(!isService){ this.route(this._currentRoute, 'default', function(){ return void 0; }); }
 
     // Augment ApplicationRouter with new routes from PageApp added in reverse order to preserve order higherarchy
     _.each(pageInstance.data.routes, (value, key) => {
@@ -338,12 +339,8 @@ var Router = Backbone.Router.extend({
       this.route(key, value, function () { return pageInstance.data[value].apply(pageInstance.data, arguments); });
     });
 
-
-    var name = (isService) ? appName : 'page';
+    // If this is the main page component, set it as current
     if(!isService){ this.current = pageInstance; }
-
-    // Install the page instance on the global services cache
-    SERVICES[name] = pageInstance.data;
 
     // Always return a promise
     return new Promise(function(resolve, reject){

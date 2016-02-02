@@ -296,7 +296,7 @@ function serviceLoading( assert ){
 
     equal(container.querySelectorAll('#nav h1')[0].innerHTML.trim(), 'Service 1!', 'After transition to new app, and app with multiple services still has the first service rendered.');
     equal(container.querySelectorAll('#footer h1')[0].innerHTML.trim(), 'Service 2!', 'After transition to new app, and app with multiple services still has the subsequent services rendered.');
-
+debugger;
     equal(Rebound.services.page.el.getElementsByTagName('a')[0].className, '', 'Links on the main page service don\'t receive an active class on a route other than their own after a transition.');
     equal(Rebound.services.service1.el.getElementsByTagName('a')[0].className, '', 'Links in a service don\'t receive an active class on a route other than their own after a transition.');
     equal(Rebound.services.page.el.getElementsByTagName('a')[1].className, 'active', 'Links on the main page service receive an active class on their route after a transition.');
