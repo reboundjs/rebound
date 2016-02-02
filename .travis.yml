@@ -13,4 +13,4 @@ before_script:
 env:
   - SUITE=phantomjs
   - SUITE=saucelabs
-script: "[[ $SUITE = phantomjs ]] && npm test || testem ci"
+script: "[[ $SUITE = phantomjs ]] && npm test || npm run build && testem ci"

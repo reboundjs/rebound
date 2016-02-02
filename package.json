@@ -6,6 +6,7 @@
   "scripts": {
     "test": "TEST_ENV=true gulp test",
     "start": "gulp default",
+    "build": "gulp build",
     "prepublish": "bower install ",
     "postpublish": "gulp release"
   },
