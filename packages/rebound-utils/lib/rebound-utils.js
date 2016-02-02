@@ -94,6 +94,16 @@ $.prototype.markLinks = function markLinks(){
   return this;
 };
 
+// Empty all selected nodes
+$.prototype.empty = function empty(){
+  var len = this.length;
+  while(len--){
+    while (this[len].hasChildNodes()) {
+      this[len].removeChild(this[len].firstChild);
+    }
+  }
+  return this;
+};
 
 // Given a valid data path, split it into an array of its parts.
 // ex: foo.bar[0].baz --> ['foo', 'var', '0', 'baz']

@@ -76,7 +76,7 @@ var loader = {
       };
       var errorCallback = function(err){
         clearInterval(ti);
-        e.dataset.error = '';
+        e.setAttribute('data-error', '');
         reject(err);
       };
 

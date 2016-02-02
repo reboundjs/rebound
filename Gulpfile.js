@@ -250,7 +250,7 @@ gulp.task('connect', [], function() {
     livereload: !process.env.TEST_ENV,
     port: 8000,
     // Add gzip compression to test file sizes and an artifical delay to test lazy components on local machines
-    middleware: function(){ return [compression(), function(req,res,next){setTimeout(function(){next();},100);}]; }
+    middleware: function(){ return [compression(), function(req,res,next){setTimeout(function(){next();},20);}]; }
   });
 });
 

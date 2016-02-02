@@ -323,7 +323,7 @@ var Router = Backbone.Router.extend({
     pageInstance.__pageId = this.uid + '-' + appName;
 
     // Add to our page
-    container.innerHTML = '';
+    $(container).empty();
     container.appendChild(pageInstance);
 
     // Make sure we're back at the top of the page
@@ -428,7 +428,7 @@ var Router = Backbone.Router.extend({
         if(!(cssElement instanceof Element) || !(jsElement instanceof Element) ) return throwError();
         (!isService && !isError) && (this.status = SUCCESS);
         cssElement && cssElement.removeAttribute('disabled');
-        this._installResource(jsElement.dataset.name, appName, container).then(resolve, resolve);
+        this._installResource(jsElement.getAttribute('data-name'), appName, container).then(resolve, resolve);
       };
 
       // If loading a page, set status to loading

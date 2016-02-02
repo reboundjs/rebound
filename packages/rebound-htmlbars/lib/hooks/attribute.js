@@ -53,7 +53,6 @@ export default function attribute(attrMorph, env, scope, name, value){
     // If our input events have not been bound yet, bind them
     if(!attrMorph.eventsBound){
       $(el).on('change input propertychange', function(event){
-        debugger;
         value.set(value.path, this.value);
       });
       attrMorph.eventsBound = true;

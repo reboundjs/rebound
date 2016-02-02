@@ -101,7 +101,7 @@ var Component = Model.extend({
   // Render our dom and place the dom in our custom element
   // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
   render(){
-    this.el.innerHTML = null;
+    $(this.el).empty();
     this.el.appendChild(render(this[REBOUND_SYMBOL].template, this).fragment);
   },
 

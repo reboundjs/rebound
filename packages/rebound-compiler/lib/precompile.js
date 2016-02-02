@@ -29,7 +29,7 @@ export default function precompile(str, options={}){
     template = [
       "(function(R){",
       "  R.router._loadDeps([ " + (str.deps.length ? ('"' + str.deps.join('", "') + '"') : '') + " ]);",
-      "  document.currentScript.dataset.name = \"" + str.name + "\";",
+      "  document.currentScript.setAttribute(\"data-name\", \"" + str.name + "\");",
       "  return R.registerComponent(\"" + str.name + "\", {",
       "    prototype: " + str.script + ",",
       "    template: " + str.template + ",",

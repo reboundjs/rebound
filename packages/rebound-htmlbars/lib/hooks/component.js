@@ -64,7 +64,7 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   // If a `<content>` outlet is present in component's template, and a template
   // is provided, render it into the outlet
   if(templates.default && _.isElement(outlet)){
-    outlet.innerHTML = '';
+    $(outlet).empty();
     outlet.appendChild(render(templates.default, env, scope, {}).fragment);
   }
 
