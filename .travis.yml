@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "0.12"
+  - "4.1"
 sudo: false
 addons:
   sauce_connect:
@@ -9,7 +9,7 @@ addons:
 before_script:
   - npm install -g bower
   - "[[ $SUITE = saucelabs ]] && npm install -g saucie || true"
-  - "[[ $SUITE = saucelabs ]] && npm install -g testem@0.8.3 || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g testem || true"
 env:
   - SUITE=phantomjs
   - SUITE=saucelabs
