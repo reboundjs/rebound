@@ -17,10 +17,10 @@ function equalTokens(fragment, html, message) {
         // IE9 does strange things with uppercasing checkboxes' checked property
         a[0] = a[0] ? a[0].toLowerCase() : a[0];
         b[0] = b[0] ? b[0].toLowerCase() : b[0];
-        if (a.name > b.name) {
+        if (a[0] > b[0]) {
           return 1;
         }
-        if (a.name < b.name) {
+        if (a[0] < b[0]) {
           return -1;
         }
         return 0;
