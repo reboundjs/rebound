@@ -15,7 +15,9 @@ function getScript(str) {
 
 // Remove the contents of the component's `style` tag.
 function getStyle(str) {
-  return str.indexOf("<style>") > -1 && str.indexOf("</style>") > -1 ? str.replace(/([^]*<style>)([^]*)(<\/style>[^]*)/ig, "$2").replace(/"/g, "\\\"") : "";
+  var start = str.indexOf("<style>");
+  var end = str.indexOf("</style>");
+  return start > -1 && end > -1 ? str.substr(start + 7, end - (start + 7)).replace(/"/g, "\\\"") : "";
 }
 
 function stripLinkTags(str){
