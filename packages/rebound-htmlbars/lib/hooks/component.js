@@ -72,3 +72,30 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   morph.componentIsRendered = true;
 
 }
+
+
+
+// 
+// export default function component(morph, env, scope, tagName, params, attrs, templates, visitor) {
+//
+//   // Create a plain data object to pass to our new component as seed data
+//   var seedData = {};
+//   for(let key in attrs){ seedData[key] = this.getValue(attrs[key]); }
+//
+//   var component,
+//       componentScope = this.createChildScope(scope),
+//       componentEnv = this.createFreshEnv();
+//
+//   env.hooks.registerHelper(tagName, function(){this.yield();})
+//
+//   function render(temp, data){
+//     env.hooks.updateSelf(env, componentScope, data);
+//     env.hooks.block(morph, componentEnv, scope, tagName, params, attrs, temp, null, visitor);
+//     debugger;
+//   }
+//
+//   // Create the new component
+//   component = Component(tagName, seedData, {[REBOUND_SYMBOL]: { render: render }});
+//   morph.setNode(component.el);
+// }
+//

@@ -19,6 +19,10 @@ import { services, Router } from "rebound-router/rebound-router";
 import { registerHelper, registerPartial } from "rebound-htmlbars/rebound-htmlbars";
 import { ComponentFactory, registerComponent } from "rebound-component/factory";
 
+// Because of our bundle and how it plays with Backbone's UMD header, we need to
+// be a little more explicit with out DOM library search.
+Backbone.$ = window.$;
+
 // If Backbone doesn't have an ajax method from an external DOM library, use ours
 Backbone.ajax = Backbone.$ && Backbone.$.ajax && Backbone.ajax || utils.ajax;
 

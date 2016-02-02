@@ -28,6 +28,7 @@ var Component = Model.extend({
     this.consumers = [];
     this.services = {};
     this.loadCallbacks = [];
+    this.options = options;
 
     // If we are told this is not a hydrated component, mark it as such
     if(options.isHydrated === false){ this.isHydrated = false; }

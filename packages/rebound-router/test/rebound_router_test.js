@@ -465,6 +465,7 @@ function lazyComponentLoading( assert ){
     var end = assert.async(1);
     component.onLoad(function(){
       equal(component.isHydrated, true, 'Lazy loaded components are asyncronously upgraded.');
+      equal(typeof component.router, 'object', 'Component instances always have referance to the global router');
       end();
     });
     return Rebound.router.navigate('');
@@ -478,7 +479,7 @@ function lazyComponentLoading( assert ){
 
 
 QUnit.test('Rebound Router', function( assert ) {
-  assert.expect(81);
+  assert.expect(82);
 
   QUnit.stop();
   default404(assert)

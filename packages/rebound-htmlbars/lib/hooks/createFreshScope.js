@@ -11,6 +11,7 @@ export default function createFreshScope() {
     self: null,
     locals: {},
     localPresent: {},
-    streams: {}
+    streams: {},
+    blocks: {}
   };
 }

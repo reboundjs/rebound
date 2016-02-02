@@ -4,7 +4,8 @@
 import Backbone from "backbone";
 import $ from "rebound-utils/rebound-utils";
 import { SERVICES, ServiceLoader} from "rebound-router/service";
-import Component from "rebound-component/factory";
+import Component from "rebound-component/component";
+import ComponentFactory from "rebound-component/factory";
 import loader from "rebound-router/loader";
 
 // If no error page is defined for an app, this is the default 404 page
@@ -317,7 +318,7 @@ var Router = Backbone.Router.extend({
     if(!isService && this.current){ this._uninstallResource(); }
 
     // Load New PageApp, give it it's name so we know what css to remove when it deinitializes
-    pageInstance = Component(PageApp).el;
+    pageInstance = ComponentFactory(PageApp).el;
     if(SERVICES[name].isLazyComponent){ SERVICES[name].hydrate(pageInstance.data); }
     else{ SERVICES[name] = pageInstance.data; }
     pageInstance.__pageId = this.uid + '-' + appName;

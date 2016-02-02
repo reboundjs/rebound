@@ -79,6 +79,7 @@ QUnit.test('Rebound Components', function( assert ) {
   equal(c1.data.method(), 1, 'Plain functions passed to Component.extend are attached as methods to the Component object');
   equal(c1.innerHTML, '<div><content>Default Content</content></div>', 'Component places rendered template inside of outlet, with default content');
 
+
   var template = compiler.compile(`<test-component foo="bar" biz={{baz}}>Test Content</test-component>`, {name: 'component-test'});
   var data = new Model({baz: 'baz'});
   var partial = template.render(data);

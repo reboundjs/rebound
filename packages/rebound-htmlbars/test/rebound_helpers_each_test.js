@@ -37,9 +37,16 @@ QUnit.test('Rebound Helpers - Each', function(assert) {
 
   var template, data, dom;
 
-  // Modifications to the end
 
   template = compiler.compile('<div>{{#each arr as | obj |}}{{obj.val}}{{/each}}</div>', {name: 'test/partial'});
+
+  // Empty Data
+  data = new Model();
+  dom = template.render(data);
+  equal(dom.fragment.firstChild.innerHTML, '<!---->', 'Each helper will render nothing for an undefined list.');
+
+
+  // Modifications to the end
   data = new Model({arr: [{val: 1}, {val: 2}, {val: 3}]});
   dom = template.render(data);
   equal(dom.fragment.firstChild.innerHTML, '123', 'Each helper will render a list of values.');

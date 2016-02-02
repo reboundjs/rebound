@@ -134,6 +134,9 @@ HELPERS.unless = function unlessHelper(params, hash, templates){
 
 HELPERS.each = function eachHelper(params, hash, templates) {
 
+  // If no data passed, exit
+  if(!params[0]){ return void 0; }
+
   // Accepts collections, arrays, models, or objects
   var value = params[0].isCollection ? params[0].models : (params[0].isModel ? params[0].attributes : params[0]);
 
