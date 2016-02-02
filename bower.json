@@ -50,7 +50,8 @@
     "todomvc-common": "0.1.9",
     "html5shiv": "~3.7.2",
     "matchesSelector": "https://gist.github.com/3062955.git",
-    "promise-polyfill": "~2.1.0"
+    "promise-polyfill": "~2.1.0",
+    "console-polyfill": "https://github.com/paulmillr/console-polyfill.git"
   },
   "dependencies": {
     "setimmediate": "~1.0.1"

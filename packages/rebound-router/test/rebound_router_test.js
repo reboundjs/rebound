@@ -461,7 +461,7 @@ function lazyComponentLoading( assert ){
     "cssPath": "/:app.css"
   }).then(function(page){
     var component = document.getElementsByTagName('test-component-9')[0].data;
-    equal(component.isHydrated, false, 'Lazy loaded components are inserted immediately in the dom with a dehydrated component instance.');
+    equal(component.isComponent, true, 'Lazy loaded components are inserted immediately in the dom with a dehydrated component instance.');
     var end = assert.async(1);
     component.onLoad(function(){
       equal(component.isHydrated, true, 'Lazy loaded components are asyncronously upgraded.');
