@@ -2,7 +2,7 @@
   "framework": "qunit",
   "test_page": "test/index.html",
   "cwd": "",
-  "port": 8080,
+  "port": 8000,
   "launchers": {
     "SL_Chrome_Current": {
       "command": "saucie --browserNameSL='chrome' --versionSL='44.0' --platformSL='OS X 10.10' --ct=0",
