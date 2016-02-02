@@ -11,8 +11,8 @@
 var EVENT_CACHE = {};
 
 // Make only single copies of these functions so they aren't creted repeatedly.
-function returnFalse(){return false;}
-function returnTrue(){return true;}
+function returnFalse(){ return false; }
+function returnTrue(){ return true; }
 
 function Event( src, props ) {
 	// Allow instantiation without the 'new' keyword
@@ -200,28 +200,18 @@ export function on(eventName, delegate, data, handler) {
       eventNames = eventName.split(' '),
       delegateId, delegateGroup;
 
+	// The `on` method takes one of three forms: `on(eventName, [delegate, data,] handler)`
+  //  - If second param is a function, use that as our handler.
+	//  - If third param is a function, use that as our handler and the second param as the delegate selector
+	//  - If fourth param is a function, use that as our handler, the second param as the delegate selector, and the third params as the data object.
+  if(_.isFunction(delegate)){ handler = delegate; data = {}; delegate = void 0; }
+  else if(_.isFunction(data)){ handler = data; data = {}; delegate || (delegate = void 0);}
+	else if(_.isFunction(handler)){ data || (data = {}); delegate || (delegate = void 0);}
+	else { return console.error("No handler passed to Rebound's $.on"); }
+
   while(len--){
     let el = this[len];
-		data = {};
-		delegate = el;
-
-		// The `on` method takes one of three forms: `on(eventName, [delegate, data,] handler)`
-    //  - If second param is a function, use that as our handler.
-		//  - If third param is a function, use that as our handler and the second param as the delegate selector
-		//  - If fourth param is a function, use that as our handler, the second param as the delegate selector, and the third params as the data object.
-    if(_.isFunction(arguments[1])){
-			handler = arguments[1];
-		}
-    else if(_.isFunction(arguments[2])){
-			delegate = arguments[1];
-      handler = arguments[2];
-    }
-		else if(_.isFunction(arguments[3])){
-			delegate = arguments[1];
-			data = arguments[2];
-			handler = arguments[3];
-		}
-		else { return console.error("No handler passed to Rebound's $.on"); }
+		delegate = delegate || this.selector || el;
 
     // If our delegate selector is not a string or element, show an error.
     if(!_.isString(delegate) && !_.isElement(delegate)){

@@ -24,9 +24,11 @@ export var $ = function $(query){
   // array. If it is a string, push all elements that match to selectors array.
   _.each(query, function(item, index){
     if(_.isElement(item) || item === document || item === window){ selector.push(item); }
-    // Call slice to convert node list to array for push.
-    else if(_.isString(item)){ Array.prototype.push.apply(selector, Array.prototype.slice.call(document.querySelectorAll(item))); }
-  });
+    // Call slice to convert node list to array for push. Save selector used.
+    else if(_.isString(item)){
+      this.selector = item;
+      Array.prototype.push.apply(selector, Array.prototype.slice.call(document.querySelectorAll(item))); }
+  }, this);
 
   // Cache the length of our matched elements
   this.length = selector.length;

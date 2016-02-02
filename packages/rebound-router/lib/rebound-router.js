@@ -165,7 +165,7 @@ var Router = Backbone.Router.extend({
 
       // If this route was created from a string (not a regexp), remove the auto-captured
       // search params.
-      if(route._isString) args.pop();
+      if(route._isString){ args.pop(); }
 
       // If the route is not user prodided, if the history object has search params
       // then our args have the params as its last agrument as of Backbone 1.2.0
