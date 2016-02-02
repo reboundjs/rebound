@@ -11,9 +11,9 @@ var QS_PARSE_OPTS = {
   delimiter: /[;,&]/
 };
 
-export default {
-  query: {
+var query = {
     stringify(str){ return qs.stringify(str, QS_STRINGIFY_OPTS); },
     parse(obj){ return qs.parse(obj, QS_PARSE_OPTS); }
-  }
-};
+  };
+
+export { query as query };

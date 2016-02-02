@@ -6,7 +6,7 @@
 // This methods is added to Rebound's internal utility library and used throughout the framework.
 // Inspiration: http://krasimirtsonev.com/blog/article/Cross-browser-handling-of-Ajax-requests-in-absurdjs
 
-import url from "rebound-utils/urls";
+import { query } from "rebound-utils/urls";
 
 export default function ajax(ops) {
     if(typeof ops == 'string') ops = { url: ops };
@@ -39,7 +39,7 @@ export default function ajax(ops) {
                 };
             }
             if(ops.method == 'get') {
-                this.xhr.open("GET", ops.url + $.url.query.stringify(ops.data), true);
+                this.xhr.open("GET", ops.url + query.stringify(ops.data), true);
                 this.setHeaders({
                   'X-Requested-With': 'XMLHttpRequest'
                 });
@@ -54,7 +54,7 @@ export default function ajax(ops) {
                 this.setHeaders(ops.headers);
             }
             setTimeout(function() {
-                ops.method == 'get' ? self.xhr.send() : self.xhr.send($.url.query.stringify(ops.data));
+                ops.method == 'get' ? self.xhr.send() : self.xhr.send(query.stringify(ops.data));
             }, 20);
             return this.xhr;
         },

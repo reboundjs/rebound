@@ -2,7 +2,7 @@
 // ----------------
 
 import Backbone from "backbone";
-import url from "rebound-utils/urls";
+import { query } from "rebound-utils/urls";
 import ajax from "rebound-utils/ajax";
 import events from "rebound-utils/events";
 
@@ -39,7 +39,7 @@ export var $ = function $(query){
 };
 
 // Add url utils
-$.url = url;
+$.url = { query: query };
 
 // Add ajax util
 $.ajax = ajax;
