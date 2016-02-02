@@ -25,8 +25,7 @@
       },
       inputModified: function(event){
         // If enter
-        if(event.keyCode == 13)
-          this.set('editing', false);
+        if(event.keyCode == 13){ this.set('editing', false); }
 
         // If escape
         if(event.keyCode == 27){

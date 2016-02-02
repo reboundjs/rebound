@@ -7,7 +7,7 @@
 import Model from "rebound-data/model";
 import Collection from "rebound-data/collection";
 import ComputedProperty from "rebound-data/computed-property";
-import $ from "rebound-component/utils";
+import $ from "rebound-utils/rebound-utils";
 
 var sharedMethods = {
   // When a change event propagates up the tree it modifies the path part of
@@ -15,9 +15,9 @@ var sharedMethods = {
   // Ex: Would trigger `change:val`, `change:[0].val`, `change:arr[0].val` and `obj.arr[0].val`
   // on each parent as it is propagated up the tree.
   propagateEvent: function(type, model){
-    if(this.__parent__ === this || type === 'dirty') return;
+    if(this.__parent__ === this || type === 'dirty'){ return void 0; }
     if(type.indexOf('change:') === 0 && model.isModel){
-      if(this.isCollection && ~type.indexOf('change:[')) return;
+      if(this.isCollection && ~type.indexOf('change:[')){ return void 0; }
       var key,
           path = model.__path().replace(this.__parent__.__path(), '').replace(/^\./, ''),
           changed = model.changedAttributes();
@@ -27,7 +27,7 @@ var sharedMethods = {
         arguments[0] = ('change:' + path + (path && '.') + key); // jshint ignore:line
         this.__parent__.trigger.apply(this.__parent__, arguments);
       }
-      return;
+      return void 0;
     }
     return this.__parent__.trigger.apply(this.__parent__, arguments);
   },
@@ -35,10 +35,10 @@ var sharedMethods = {
   // Set this data object's parent to `parent` and, as long as a data object is
   // not its own parent, propagate every event triggered on `this` up the tree.
   setParent: function(parent){
-    if(this.__parent__) this.off('all', this.propagateEvent);
+    if(this.__parent__){ this.off('all', this.propagateEvent); }
     this.__parent__ = parent;
     this._hasAncestry = true;
-    if(parent !== this) this.on('all', this.__parent__.propagateEvent);
+    if(parent !== this){ this.on('all', this.__parent__.propagateEvent); }
     return parent;
   },
 
@@ -72,10 +72,10 @@ var sharedMethods = {
   deinitialize: function () {
 
   // Undelegate Backbone Events from this data object
-    if (this.undelegateEvents) this.undelegateEvents();
-    if (this.stopListening) this.stopListening();
-    if (this.off) this.off();
-    if (this.unwire) this.unwire();
+    if (this.undelegateEvents){ this.undelegateEvents(); }
+    if (this.stopListening){ this.stopListening(); }
+    if (this.off){ this.off(); }
+    if (this.unwire){ this.unwire(); }
 
   // Destroy this data object's lineage
     delete this.__parent__;
@@ -87,11 +87,11 @@ var sharedMethods = {
   // and then remove the element referance itself.
     if(this.el){
       _.each(this.el.__listeners, function(handler, eventType){
-        if (this.el.removeEventListener) this.el.removeEventListener(eventType, handler, false);
-        if (this.el.detachEvent) this.el.detachEvent('on'+eventType, handler);
+        if (this.el.removeEventListener){ this.el.removeEventListener(eventType, handler, false); }
+        if (this.el.detachEvent){ this.el.detachEvent('on'+eventType, handler); }
       }, this);
       $(this.el).walkTheDOM(function(el){
-        if(el.__lazyValue && el.__lazyValue.destroy()) n.__lazyValue.destroy();
+        if(el.__lazyValue && el.__lazyValue.destroy()){ n.__lazyValue.destroy(); }
       });
       delete this.el.__listeners;
       delete this.el.__events;
@@ -126,4 +126,7 @@ _.extend(Model.prototype, sharedMethods);
 _.extend(Collection.prototype, sharedMethods);
 _.extend(ComputedProperty.prototype, sharedMethods);
 
+export { Model as Model };
+export { Collection as Collection };
+export { ComputedProperty as ComputedProperty };
 export default { Model, Collection, ComputedProperty };

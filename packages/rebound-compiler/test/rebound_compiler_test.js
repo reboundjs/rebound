@@ -34,13 +34,13 @@ function equalTokens(fragment, html, message) {
 }
 
 
-QUnit.test('Rebound Compiler - Partials', function() {
+QUnit.test('Rebound Compiler - Partials', function( assert ) {
 
-  var spec;
+  assert.expect(11);
 
-  spec = parse('<div class={{bar}}>{{foo}}</div>');
+  var spec = parse('<div class={{bar}}>{{foo}}</div>');
 
-  equal(spec.isPartial, true, 'Compiler interperts plain HTMLBars strings as partials');
+  assert.equal(spec.isPartial, true, 'Compiler interperts plain HTMLBars strings as partials');
 
 
 
@@ -48,7 +48,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
     <link href="/foo/bar.html">
     <div class={{bar}}>{{foo}}</div>`);
 
-  deepEqual(spec.deps, ['"foo/bar"'], 'Compiler can find a single dependancy from <link> tag inside partials');
+  assert.deepEqual(spec.deps, ['foo/bar'], 'Compiler can find a single dependancy from <link> tag inside partials');
 
 
 
@@ -56,7 +56,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
     <link href='/foo/bar.html'>
     <div class={{bar}}>{{foo}}</div>`);
 
-  deepEqual(spec.deps, ['"foo/bar"'], 'Compiler can find a single dependancy from <link> tag inside partials using single quotes');
+  assert.deepEqual(spec.deps, ['foo/bar'], 'Compiler can find a single dependancy from <link> tag inside partials using single quotes');
 
 
 
@@ -64,7 +64,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
     <link href=/foo/bar.html>
     <div class={{bar}}>{{foo}}</div>`);
 
-  deepEqual(spec.deps, ['"foo/bar"'], 'Compiler can find a single dependancy from <link> tag inside partials using no quotes');
+  assert.deepEqual(spec.deps, ['foo/bar'], 'Compiler can find a single dependancy from <link> tag inside partials using no quotes');
 
 
 
@@ -72,7 +72,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
     <link foo='bar' biz href="/foo/bar.html" abc="123">
     <div class={{bar}}>{{foo}}</div>`);
 
-  deepEqual(spec.deps, ['"foo/bar"'], 'Compiler is tolerant to <link> tags having strange properties');
+  assert.deepEqual(spec.deps, ['foo/bar'], 'Compiler is tolerant to <link> tags having strange properties');
 
 
 
@@ -81,8 +81,8 @@ QUnit.test('Rebound Compiler - Partials', function() {
     <div class={{bar}}>{{foo}}</div>
     <link href="/far/boo.html">`);
 
-  deepEqual(spec.deps, ['"foo/bar"', '"far/boo"'], 'Compiler can find multiple dependancies throughout partials');
-  equal(spec.template.trim(), '<div class={{bar}}>{{foo}}</div>', 'Compiler strips <link> tags from partials');
+  assert.deepEqual(spec.deps, ['foo/bar', 'far/boo'], 'Compiler can find multiple dependancies throughout partials');
+  assert.equal(spec.template.trim(), '<div class={{bar}}>{{foo}}</div>', 'Compiler strips <link> tags from partials');
 
 
 
@@ -90,7 +90,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
     {{> foo/bar}}
     <div class={{bar}}>{{foo}}</div>`);
 
-  deepEqual(spec.deps, ['"foo/bar"'], 'Compiler can find a single dependancy from partial handlebar tag inside partials');
+  assert.deepEqual(spec.deps, ['foo/bar'], 'Compiler can find a single dependancy from partial handlebar tag inside partials');
 
 
 
@@ -99,7 +99,7 @@ QUnit.test('Rebound Compiler - Partials', function() {
     <div class={{bar}}>{{foo}}</div>
     {{> far/boo}}`);
 
-  deepEqual(spec.deps, ['"foo/bar"', '"far/boo"'], 'Compiler can find multiple dependancies throughout partials with partial syntax');
+  assert.deepEqual(spec.deps, ['foo/bar', 'far/boo'], 'Compiler can find multiple dependancies throughout partials with partial syntax');
 
 
 
@@ -120,10 +120,11 @@ QUnit.test('Rebound Compiler - Partials', function() {
 
 
 
-QUnit.test('Rebound Compiler - Components', function() {
-  var spec;
+QUnit.test('Rebound Compiler - Components', function( assert ) {
 
-  spec = parse(`
+  assert.expect(14);
+
+  var spec = parse(`
     <element name="test-element">
       <template>
         <link href="/foo/bar.html">
@@ -136,11 +137,11 @@ QUnit.test('Rebound Compiler - Components', function() {
       </script>
     </element>`);
 
-  equal(spec.isPartial, false, 'Compiler interperts component templates as components');
-  equal(spec.name, 'test-element', 'Compiler extracts name from element');
-  deepEqual(spec.deps, ['"foo/bar"'], 'Compiler can find a single dependancy from <link> tag inside components');
-  equal(spec.template.trim(), '<div class={{bar}}>{{foo}}</div>', 'Compiler strips <link> tags from partials');
-  deepEqual(eval(spec.script), {foo: 'bar'}, 'Script inside of element evals properly');
+  assert.equal(spec.isPartial, false, 'Compiler interperts component templates as components');
+  assert.equal(spec.name, 'test-element', 'Compiler extracts name from element');
+  assert.deepEqual(spec.deps, ['foo/bar'], 'Compiler can find a single dependancy from <link> tag inside components');
+  assert.equal(spec.template.trim(), '<div class={{bar}}>{{foo}}</div>', 'Compiler strips <link> tags from partials');
+  assert.deepEqual(eval(spec.script), {foo: 'bar'}, 'Script inside of element evals properly');
 
 
 
@@ -155,10 +156,10 @@ QUnit.test('Rebound Compiler - Components', function() {
       <script></script>
     </element>`);
 
-  equal(spec.name, 'test-element', 'Compiler extracts name from element with single quotes');
-  equal(spec.name, 'test-element', 'Compiler extracts name from element with other properties on the element tag');
-  deepEqual(spec.deps, ['"foo/bar"', '"bar/foo"', '"far/boo"'], 'Compiler can find a multiple dependancies from both <link> tags and partials inside components');
-  deepEqual(eval(spec.script), undefined, 'Empty script inside of element evals properly');
+  assert.equal(spec.name, 'test-element', 'Compiler extracts name from element with single quotes');
+  assert.equal(spec.name, 'test-element', 'Compiler extracts name from element with other properties on the element tag');
+  assert.deepEqual(spec.deps, ['foo/bar', 'bar/foo', 'far/boo'], 'Compiler can find a multiple dependancies from both <link> tags and partials inside components');
+  assert.deepEqual(eval(spec.script), undefined, 'Empty script inside of element evals properly');
 
 
 
@@ -167,16 +168,16 @@ QUnit.test('Rebound Compiler - Components', function() {
       <template></template>
     </element>`);
 
-  equal(spec.name, 'test-element', 'Compiler extracts name  from element with no quotes');
-  equal(spec.name, 'test-element', 'Compiler extracts the last name property from element with single quotes');
-  deepEqual(spec.template, '', 'Compiler works with empty template tag');
-  deepEqual(eval(spec.script), undefined, 'No script inside of element evals properly');
+  assert.equal(spec.name, 'test-element', 'Compiler extracts name  from element with no quotes');
+  assert.equal(spec.name, 'test-element', 'Compiler extracts the last name property from element with single quotes');
+  assert.deepEqual(spec.template, '', 'Compiler works with empty template tag');
+  assert.deepEqual(eval(spec.script), undefined, 'No script inside of element evals properly');
 
 
 
   spec = parse(`<element name=test-element></element>`);
 
-  deepEqual(spec.template, '', 'Compiler works with no template tag');
+  assert.deepEqual(spec.template, '', 'Compiler works with no template tag');
 
 
   var template = compiler.compile(`
@@ -192,8 +193,8 @@ QUnit.test('Rebound Compiler - Components', function() {
       </script>
     </element>`);
 
-  var el = document.createElement('test-element');
-
-  equal(el.data.isComponent, true, 'Compiler registers new element for use');
+  // var el = document.createElement('test-element');
+  //
+  // equal(el.data.isComponent, true, 'Compiler registers new element for use');
 
 });

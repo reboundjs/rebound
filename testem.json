@@ -5,38 +5,33 @@
   "port": 8080,
   "launchers": {
     "SL_Chrome_Current": {
-      "command": "saucie --browserNameSL='chrome' --versionSL='44.0' --platformSL='OS X 10.10' --ct=0",
+      "command": "saucie --browserNameSL='chrome' --versionSL='47.0' --platformSL='OS X 10.11' --ct=0",
       "protocol": "tap"
     },
     "SL_Chrome_Last": {
-      "command": "saucie --browserNameSL='chrome' --versionSL='43.0' --platformSL='OS X 10.10' --ct=0",
+      "command": "saucie --browserNameSL='chrome' --versionSL='46.0' --platformSL='OS X 10.11' --ct=0",
       "protocol": "tap"
     },
 
     "SL_Firefox_Current": {
-      "command": "saucie --browserNameSL='firefox' --versionSL='39.0' --platformSL='Linux' --ct=0",
+      "command": "saucie --browserNameSL='firefox' --versionSL='43.0' --platformSL='Linux' --ct=0",
       "protocol": "tap"
     },
     "SL_Firefox_Last": {
-      "command": "saucie --browserNameSL='firefox' --versionSL='38.0' --platformSL='Linux' --ct=0",
+      "command": "saucie --browserNameSL='firefox' --versionSL='42.0' --platformSL='Linux' --ct=0",
       "protocol": "tap"
     },
 
-    "SL_Safari_Current": {
+    "SL_Safari_9": {
+      "command": "saucie --browserNameSL='safari' --versionSL='9.0' --platformSL='OS X 10.11' --ct=0",
+      "protocol": "tap"
+    },
+    "SL_Safari_8": {
       "command": "saucie --browserNameSL='safari' --versionSL='8.0' --platformSL='OS X 10.10' --ct=0",
       "protocol": "tap"
     },
-    "SL_Safari_Last": {
+    "SL_Safari_7": {
       "command": "saucie --browserNameSL='safari' --versionSL='7.0' --platformSL='OS X 10.9' --ct=0",
-      "protocol": "tap"
-    },
-
-    "SL_Opera_Current": {
-      "command": "saucie --browserNameSL='opera' --versionSL='12.15' --platformSL='Linux' --ct=0",
-      "protocol": "tap"
-    },
-    "SL_Opera_Last": {
-      "command": "saucie --browserNameSL='opera' --versionSL='11.64' --platformSL='Windows 7' --ct=0",
       "protocol": "tap"
     },
 
@@ -69,12 +64,12 @@
     "SL_Chrome_Last",
     "SL_Firefox_Current",
     "SL_Firefox_Last",
-    "SL_Safari_Current",
-    "SL_Safari_Last",
-    "SL_Opera_Current",
+    "SL_Safari_9",
+    "SL_Safari_8",
+    "SL_Safari_7",
+    "SL_EDGE_20",
     "SL_IE_11",
     "SL_IE_10",
-    "SL_IE_9",
-    "SL_EDGE_20"
+    "SL_IE_9"
   ]
 }

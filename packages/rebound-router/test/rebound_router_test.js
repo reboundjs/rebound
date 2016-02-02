@@ -1,8 +1,6 @@
 import Rebound from 'runtime';
-
-var testsRun = [];
-
 window.Rebound = Rebound;
+
 var container = document.createElement('main');
     container.id = 'router-test';
     container.style.width = '100%';
@@ -34,18 +32,19 @@ document.body.appendChild(container);
 
 function getHandlers(){
   var handlers = '';
-  Backbone.history.handlers.forEach(function(handler){
+  Rebound.history.handlers.forEach(function(handler){
     handlers += handler.route.source.replace(/\\/g, '');
   });
   return handlers;
 }
 
-function default404(){
+function default404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/0/:app.js",
-    "cssPath": "/test/dummy-apps/0/:app.css"
+    "assetRoot": "/test/dummy-apps",
+    "jsPath": "/0/:app.js",
+    "cssPath": "/0/:app.css"
   }).then(function(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Oops! We couldn't find this page.", 'No index component and no error component displays default 404 page.');
@@ -53,19 +52,20 @@ function default404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
 var ran = [];
 
-function custom404(){
+function custom404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/1/:app.js",
-    "cssPath": "/test/dummy-apps/1/:app.css"
+    "assetRoot": "/test/dummy-apps",
+    "jsPath": "/1/:app.js",
+    "cssPath": "/1/:app.css"
   }).then(function(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Custom 404!", 'No index component and a custom error component displays the custom 404 page.');
@@ -76,18 +76,19 @@ function custom404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('custom404');
+    return assert;
   });
 }
 
-function defaultIndex(){
+function defaultIndex( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/2/:app.js",
-    "cssPath": "/test/dummy-apps/2/:app.css"
+    "assetRoot": "/test/dummy-apps",
+    "jsPath": "/2/:app.js",
+    "cssPath": "/2/:app.css"
   }).then(function(){
     QUnit.start();
     equal(container.querySelectorAll('h1')[0].innerHTML.trim(), "Default Index!", 'If no custom index page is specified, index.html component is used.');
@@ -96,18 +97,19 @@ function defaultIndex(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('defaultIndex');
+    return assert;
   });
 }
 
-function customIndex(){
+function customIndex( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/3/:app.js",
-    "cssPath": "/test/dummy-apps/3/:app.css",
+    "assetRoot": "/test/dummy-apps/3",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {
       "": "there"
     }
@@ -121,18 +123,19 @@ function customIndex(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('customIndex');
+    return assert;
   });
 }
 
-function customIndex404(){
+function customIndex404( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/4/:app.js",
-    "cssPath": "/test/dummy-apps/4/:app.css",
+    "assetRoot": "/test/dummy-apps/4",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {
       "": "not-there"
     }
@@ -146,18 +149,19 @@ function customIndex404(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('customIndex404');
+    return assert;
   });
 }
 
-function routeTransitions(){
+function routeTransitions( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/5/:app.js",
-    "cssPath": "/test/dummy-apps/5/:app.css",
+    "assetRoot": "/test/dummy-apps/5",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {
       "foo": "test"
     }
@@ -218,13 +222,13 @@ function routeTransitions(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
     ran.push('routeTransitions');
+    return assert;
   });
 }
 
-function serviceLoading(){
+function serviceLoading( assert ){
   return (function(){
     var app = Rebound.start({
       "container": "#content",
@@ -233,8 +237,9 @@ function serviceLoading(){
         "service2": "#footer"
       },
       "root": window.location.pathname,
-      "jsPath": "/test/dummy-apps/6/:app.js",
-      "cssPath": "/test/dummy-apps/6/:app.css",
+      "assetRoot": "/test/dummy-apps/6",
+      "jsPath": "/:app.js",
+      "cssPath": "/:app.css",
       "routeMapping": {
         "foo": "test"
       }
@@ -311,19 +316,20 @@ function serviceLoading(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
 
-function queryParams(){
+function queryParams( assert ){
   return Rebound.start({
     "container": "#content",
     "services": {},
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/7/:app.js",
-    "cssPath": "/test/dummy-apps/7/:app.css",
+    "assetRoot": "/test/dummy-apps/7",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css",
     "routeMapping": {}
   })
   .then(function(){
@@ -390,36 +396,37 @@ function queryParams(){
   .then(function(){
     QUnit.start();
     deepEqual(window._queryParams, {foo: 'bar'}, "Calling navigate can take a `data` option that is converted to query params.");
-    equal(window.location.search, '?foo=bar', "Calling navigate with a `data` option adds query params to the url in the navigation bar.");
+    equal(Backbone.history.getSearch(), '?foo=bar', "Calling navigate with a `data` option adds query params to the url in the navigation bar.");
     QUnit.stop();
     return Rebound.router.navigate('test', {data: {foo: 'bar', biz: 'baz'}});
   })
   .then(function(){
     QUnit.start();
     deepEqual(window._queryParams, {foo: 'bar', biz: 'baz'}, "Calling navigate can take a `data` option with multiple properties that is converted to query params.");
-    equal(window.location.search, '?foo=bar&biz=baz', "Calling navigate with a `data` option with multiple properties adds the query params to the url in the navigation bar with the apropreate seperator.");
+    equal(Backbone.history.getSearch(), '?foo=bar&biz=baz', "Calling navigate with a `data` option with multiple properties adds the query params to the url in the navigation bar with the apropreate seperator.");
     QUnit.stop();
     return Rebound.router.navigate('test?quux=norf', {data: {biz: 'baz', foo: 'bar'}});
   })
   .then(function(){
     QUnit.start();
     deepEqual(window._queryParams, {quux: 'norf', biz: 'baz', foo: 'bar'}, "Calling navigate with both a `data` option and a query string deliver both to the route callback.");
-    equal(window.location.search, '?quux=norf&biz=baz&foo=bar', "Calling navigate with both a `data` option and a query string adds both to the url in the navigation bar.");
+    equal(Backbone.history.getSearch(), '?quux=norf&biz=baz&foo=bar', "Calling navigate with both a `data` option and a query string adds both to the url in the navigation bar.");
     QUnit.stop();
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
-function regexpRoutes(){
+function regexpRoutes( assert ){
   return Rebound.start({
     "container": "#content",
     "root": window.location.pathname,
-    "jsPath": "/test/dummy-apps/8/:app.js",
-    "cssPath": "/test/dummy-apps/8/:app.css"
+    "assetRoot": "/test/dummy-apps/8",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css"
   }).then(function(){
     return Rebound.router.navigate('test/baz');
   })
@@ -439,18 +446,42 @@ function regexpRoutes(){
     return Rebound.router.navigate('');
   })
   .then(function(){
-    testsRun++;
     Rebound.stop();
+    return assert;
   });
 }
 
 
-QUnit.test('Rebound Router', function() {
-  // Start off at a standard url and save what our page was loaded at
-  var oldLocation = window.location.pathname;
+function lazyComponentLoading( assert ){
+  return Rebound.start({
+    "container": "#content",
+    "root": window.location.pathname,
+    "assetRoot": "/test/dummy-apps/9",
+    "jsPath": "/:app.js",
+    "cssPath": "/:app.css"
+  }).then(function(page){
+    var component = document.getElementsByTagName('test-component-9')[0].data;
+    equal(component.isComponent, true, 'Lazy loaded components are inserted immediately in the dom with a dehydrated component instance.');
+    var end = assert.async(1);
+    component.onLoad(function(){
+      equal(component.isHydrated, true, 'Lazy loaded components are asyncronously upgraded.');
+      end();
+    });
+    return Rebound.router.navigate('');
+  })
+  .then(function(){
+    Rebound.stop();
+    return assert;
+  });
+}
+
+
+
+QUnit.test('Rebound Router', function( assert ) {
+  assert.expect(81);
 
   QUnit.stop();
-  default404()
+  default404(assert)
   .then(custom404)
   .then(defaultIndex)
   .then(customIndex)
@@ -459,10 +490,10 @@ QUnit.test('Rebound Router', function() {
   .then(serviceLoading)
   .then(queryParams)
   .then(regexpRoutes)
+  .then(lazyComponentLoading)
+  // Reset our path to home after all route tests are done
   .then(function(){
-    // Reset our path to home after all route tests are done
     Rebound.stop();
     QUnit.start();
-    equal(testsRun, 9, 'All tests ran.');
   });
 });

@@ -1,15 +1,15 @@
 language: node_js
 node_js:
-  - "0.12"
+  - "4.1"
 sudo: false
 addons:
   sauce_connect:
     username: reboundjs
     access_key: 07875532-956f-448b-a77d-1520ac359f66
 before_script:
-  - npm install -g bower
   - "[[ $SUITE = saucelabs ]] && npm install -g saucie || true"
-  - "[[ $SUITE = saucelabs ]] && npm install -g testem@0.8.3 || true"
+  - "[[ $SUITE = saucelabs ]] && npm install -g testem || true"
+  - "npm run build"
 env:
   - SUITE=phantomjs
   - SUITE=saucelabs

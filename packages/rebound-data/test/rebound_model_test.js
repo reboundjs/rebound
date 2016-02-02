@@ -1,8 +1,5 @@
 import { Model, Collection } from 'rebound-data/rebound-data';
 
-window.Rebound.Model = Model;
-window.Rebound.Collection = Collection;
-
     // Notify all of a object's observers of the change, execute the callback
     function notify(obj, path) {
       // If path is not an array of keys, wrap it in array

@@ -1,13 +1,14 @@
-<element name="rebound-demo">
+<element name="demo-route">
 	<template>
 
 		<link href="/test/demo/templates/editing.html">
 
-		<section id="todoapp">
+		<button {{on 'click' 'test'}}>ADD 500!</button>
 
+		<section id="todoapp">
 			<header id="header">
 				<h1>{{firstTodo.title}}</h1>
-		    <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}"  {{on 'keyup' 'createTodo'}}>
+		    <input id="new-todo" type="text" placeholder="What needs to be done?" value="{{newTitle}}" {{on 'keyup' 'createTodo'}}>
 			</header>
 
 		  {{#if todos}}
@@ -27,26 +28,26 @@
 					</ul>
 					<input type="checkbox" id="toggle-all" checked={{allAreDone}} {{on 'click' 'toggleAll'}}>
 				</section>
-				<footer id="footer">
-					<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
-					<ul id="filters">
-						<li>
-							<a href="/all" class="{{if isAll 'selected'}}" >All</a>
-						</li>
-						<li>
-							<a href="/active?foo=bar" class="{{if isActive 'selected'}}" >Active</a>
-						</li>
-						<li>
-		          <a href="/completed" class="{{if isCompleted 'selected'}}">Completed</a>
-						</li>
-					</ul>
-					{{#unless noneAreDone}}
-						<button id="clear-completed" {{on "click" "clearCompleted"}}>
-							Clear completed ({{completed}})
-						</button>
-					{{/unless}}
-				</footer>
-		  {{/if}}
+			{{/if}}
+			<footer id="footer">
+				<span id="todo-count"><strong>{{remaining}}</strong> item left</span>
+				<ul id="filters">
+					<li>
+						<a href="/all" class="{{if isAll 'selected'}}" >All</a>
+					</li>
+					<li>
+						<a href="/active?foo=bar" class="{{if isActive 'selected'}}" >Active</a>
+					</li>
+					<li>
+	          <a href="/completed" class="{{if isCompleted 'selected'}}">Completed</a>
+					</li>
+				</ul>
+				{{#unless noneAreDone}}
+					<button id="clear-completed" {{on "click" "clearCompleted"}}>
+						Clear completed ({{completed}})
+					</button>
+				{{/unless}}
+			</footer>
 		</section>
 		<footer id="info">
 			<p>Double-click to edit a todo</p>
@@ -149,8 +150,8 @@
 	/************** Component Methods *****************/
 
 		createTodo: function(event){
-			if(event.keyCode !== 13){ return; } // if not enter key, return
-			if(this.get('newTitle') == '') return;
+			if(event.keyCode !== 13){ return void 0; } // if not enter key, return
+			if(this.get('newTitle') == ''){ return void 0; }
 			this.get('todos').add({
 				title: this.get('newTitle'),
 				editing: false,
@@ -182,7 +183,14 @@
 			this.set('filter', filter);
 		},
 		test: function(event){
-
+			var todos = this.get('todos');
+			for(var i=0;i<500;i++){
+				todos.push({
+					title: "Tie Bowtie",
+					editing: false,
+					isCompleted: !!(i%2)
+				})
+			}
 		}
 	});
 </script>

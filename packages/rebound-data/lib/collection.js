@@ -1,8 +1,9 @@
 // Rebound Collection
 // ----------------
 
+import Backbone from "backbone";
 import Model from "rebound-data/model";
-import $ from "rebound-component/utils";
+import $ from "rebound-utils/rebound-utils";
 
 function pathGenerator(collection){
   return function(){
@@ -23,9 +24,8 @@ var Collection = Backbone.Collection.extend({
     models || (models = []);
     options || (options = {});
     this._byValue = {};
-    this.__observers = {};
     this.helpers = {};
-    this.cid = _.uniqueId('collection');
+    this.cid = $.uniqueId('collection');
 
     // Set lineage
     this.setParent( options.parent || this );
@@ -55,13 +55,13 @@ var Collection = Backbone.Collection.extend({
     // If the key is a number or object, or just a single string that is not a path,
     // get by id and return the first occurance
     if(typeof key == 'number' || typeof key == 'object' || (parts.length == 1 && !options.isPath)){
-      if (key === null) return void 0;
+      if (key === null){ return void 0; }
       var id = this.modelId(this._isModel(key) ? key.attributes : key);
       var responses = [].concat(this._byValue[key], (this._byId[key] || this._byId[id] || this._byId[key.cid]));
       var res = responses[0], idx = Infinity;
 
       responses.forEach((value) => {
-        if(!value) return;
+        if(!value){ return void 0; }
         let i = _.indexOf(this.models, value);
         if(i > -1 && i < idx){ idx = i; res = value;}
       });
@@ -70,10 +70,10 @@ var Collection = Backbone.Collection.extend({
     }
 
     // If key is not a string, return undefined
-    if (!_.isString(key)) return void 0;
+    if (!_.isString(key)){ return void 0; }
 
-    if(_.isUndefined(key) || _.isNull(key)) return key;
-    if(key === '' || parts.length === 0) return result;
+    if(_.isUndefined(key) || _.isNull(key)){ return key; }
+    if(key === '' || parts.length === 0){ return result; }
 
     if (parts.length > 0) {
       for ( i = 0; i < l; i++) {

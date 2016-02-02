@@ -8,20 +8,30 @@
 <body>
   <div id="qunit"></div>
   <div id="qunit-fixture"></div>
+  <script src="../bower_components/console-polyfill/index.js"></script>
+  <script src="../bower_components/qunit/qunit/qunit.js"></script>
   <script src="../bower_components/underscore/underscore.js"></script>
   <script src="../bower_components/html5shiv/dist/html5shiv.js"></script>
-  <script src="../dist/rebound.shims.js"></script>
+  <script src="../bower_components/currentScript/currentScript.js"></script>
+
   <script src="../dist/rebound.js"></script>
+  <script src="../bower_components/requirejs/require.js"></script>
+
   <script src="../node_modules/htmlbars/dist/amd/htmlbars-util.amd.js"></script>
   <script src="../node_modules/htmlbars/dist/amd/htmlbars.amd.js"></script>
-  <script src="../bower_components/qunit/qunit/qunit.js"></script>
   <script src="/testem.js"></script>
   <script type="text/javascript">
+    window.Rebound || (window.Rebound = {});
+    window.Rebound.testing = true;
     QUnit.config.autostart = false;
     require.config({
         baseUrl: "../dist/amd",
         paths: {
-          "qs": "/node_modules/qs/dist/qs"
+          "qs": "/node_modules/qs/dist/qs",
+          "acorn": "/node_modules/acorn/dist/acorn",
+          "backbone": "/node_modules/backbone/backbone",
+          "jquery": "/bower_components/jquery/dist/jquery",
+          "underscore": "/bower_components/underscore/underscore"
         }
     })
   </script>

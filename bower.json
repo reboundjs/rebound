@@ -38,16 +38,25 @@
     "webcomponentsjs": "0.6.1",
     "pretender": "0.6.0",
     "backbone": "1.2.3",
+    "classList": "https://github.com/eligrey/classList.js.git",
+    "requestAnimationFrame": "https://gist.github.com/1579671.git",
+    "currentScript": "https://github.com/epicmiller/currentScript-polyfill.git",
+    "document-register-element": "0.5.4",
     "exoskeleton": "https://github.com/paulmillr/exoskeleton.git",
     "requirejs": "https://github.com/jrburke/requirejs.git#19a98167858db65342a269ba76f06e3be152210e",
     "almond": "0.2.9",
     "acorn": "~0.6.0",
-    "qunit": "~1.14.0",
+    "qunit": "~1.20.0",
     "todomvc-common": "0.1.9",
     "html5shiv": "~3.7.2",
-    "promise-polyfill": "~2.1.0"
+    "matchesSelector": "https://gist.github.com/3062955.git",
+    "promise-polyfill": "~2.1.0",
+    "console-polyfill": "https://github.com/paulmillr/console-polyfill.git"
   },
   "dependencies": {
     "setimmediate": "~1.0.1"
+  },
+  "resolutions": {
+    "jquery": "~2.1.4"
   }
 }
