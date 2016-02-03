@@ -95,10 +95,15 @@ var Model = Backbone.Model.extend({
     obj = (obj && obj.isModel && obj.attributes) || obj || {};
     options.previousAttributes = _.clone(this.attributes);
 
-
+    // Any unset previously existing values will be set back to default
+    _.each(this.defaults, function(val, key){
+      if(!obj.hasOwnProperty(key)){ obj[key] = val; }
+    }, this);
 
     // Iterate over the Model's attributes:
     // - If the property is the `idAttribute`, skip.
+    // - If the properties are already the same, skip
+    // - If the property is currently undefined and being changed, assign
     // - If the property is a `Model`, `Collection`, or `ComputedProperty`, reset it.
     // - If the passed object has the property, set it to the new value.
     // - If the Model has a default value for this property, set it back to default.
@@ -106,7 +111,7 @@ var Model = Backbone.Model.extend({
     for(key in this.attributes){
       value = this.attributes[key];
       if(value === obj[key]){ continue; }
-      else if(_.isUndefined(value)){ obj[key] && (changed[key] = obj[key]); }
+      else if(_.isUndefined(value) && !_.isUndefined(obj[key])){ changed[key] = obj[key]; }
       else if (value.isComponent){ continue; }
       else if (value.isCollection || value.isModel || value.isComputedProperty){
         value.reset((obj[key] || []), {silent: true});
@@ -115,18 +120,15 @@ var Model = Backbone.Model.extend({
         else if(value.isModel) changed[key] = value.changedAttributes();
       }
       else if (obj.hasOwnProperty(key)){ changed[key] = obj[key]; }
-      else if (this.defaults.hasOwnProperty(key) && !_.isFunction(this.defaults[key])){
-        changed[key] = obj[key] = this.defaults[key];
-      }
       else{
         changed[key] = undefined;
         this.unset(key, {silent: true});
       }
     }
 
-    // Any unset changed values will be set to obj[key]
-    _.each(obj, function(value, key, obj){
-      changed[key] = changed[key] || obj[key];
+    // Any new values will be set to on the model
+    _.each(obj, function(val, key){
+      if(_.isUndefined(changed[key])){ changed[key] = val; }
     });
 
     // Reset our model

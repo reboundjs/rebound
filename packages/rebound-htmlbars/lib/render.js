@@ -44,7 +44,8 @@ function reslot(env){
 
   // If a `<content>` outlet is present in component's template, and a template
   // is provided, render it into the outlet
-  if(slots.templates.default && _.isElement(outlet)){
+  if(slots.templates.default && _.isElement(outlet) && !outlet.slotted){
+    outlet.slotted = true;
     $(outlet).empty();
     outlet.appendChild(hooks.buildRenderResult(slots.templates.default, slots.env, slots.scope, {}).fragment);
   }

@@ -102,7 +102,7 @@ function isTruthy(condition){
   if(condition === 'true'){ return true; }
   if(condition === 'false'){ return false; }
 
-  return false;
+  return !!condition;
 }
 
 HELPERS.if = function ifHelper(params, hash, templates){

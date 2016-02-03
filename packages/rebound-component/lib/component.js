@@ -235,7 +235,7 @@ function processProps(protoProps, staticProps){
   if(!protoProps.hasOwnProperty(key)){ continue; }
 
   // If this is a reserved property name, yell
-  if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name in " + staticProps.tagName + "!"; }
+  if(reservedMethods[key]){ throw "ERROR: " + key + " is a reserved method name in " + staticProps.type + "!"; }
 
   // If a configuration property, or not actually on the obj, ignore it
   if(!protoProps.hasOwnProperty(key) || configProperties[key]){ continue; }

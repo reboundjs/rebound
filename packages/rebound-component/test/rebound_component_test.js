@@ -36,7 +36,7 @@ function equalTokens(fragment, html, message) {
 
 QUnit.test('Rebound Components', function( assert ) {
 
-  assert.expect( 32 );
+  assert.expect( 33 );
 
   var el = document.createDocumentFragment();
   var component = compiler.compile(`
@@ -152,6 +152,7 @@ QUnit.test('Rebound Components', function( assert ) {
   data = new Model({baz: 'baz'});
   template.render(el, data);
   var c6 = el.childNodes[1];
+  equal(c6.constructor.prototype, c5.constructor.prototype, 'Un-registered Components share the same prototype');
   equal(c6.data.isComponent, true, 'Un-registered Components can be created from HTMLBars templates');
   equal(c6.data.get('foo'), 'bar', 'Un-registered Components can receive properties as plain strings');
   equal(c6.data.get('biz'), 'baz', 'Un-registered Components can receive properties as handlebars');

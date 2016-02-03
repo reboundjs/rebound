@@ -110,7 +110,7 @@ export var ComponentFactory = function ComponentFactory(type, data={}, options={
   if(!REGISTRY[type] || !REGISTRY[type].isHydrated){
     el = document.createElement(type);
     options.isHydrated = false;
-    REGISTRY[type] = Component.extend({}, {
+    REGISTRY[type] = REGISTRY[type] || Component.extend({}, {
       isHydrated: false,
       type: type,
       template: DUMMY_TEMPLATE

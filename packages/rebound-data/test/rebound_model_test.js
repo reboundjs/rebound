@@ -134,17 +134,20 @@ QUnit.test('Rebound Data - Model', function() {
       return this.get('obj');
     }
   });
+  model.defaults = { prop: true };
   model.set('arr', [{foo: 'bar'}, {biz: 'baz'}, {test: false}]);
   deepEqual(model.toJSON(), {prop: true, 'arr': [{foo: 'bar', test: true}, {biz: 'baz', test: true}, {test: false}], obj: {foo: {bar: 'bar'}}, func: {foo: {bar: 'bar'}}}, 'Defaults set in a component are retained');
 
   model.reset({prop: false, arr: [{id: 1}], obj: {foo: {test: true}}});
-  notify(model, 'obj');
   deepEqual(model.toJSON(), {prop: false, arr: [{id: 1, test: true}], obj: {foo: {test: true}}, func: {foo: {test: true}}}, 'Calling reset() with new values on a model resets it with these new values');
   deepEqual(model.changed, {prop: false, arr: [{id: 1}], obj: {foo: {bar: undefined, test: true}}, func: {foo: {bar: undefined}}}, 'Calling reset() with new values on a model resets it with these new values and properly sets its changed property.');
 
   model.reset();
-  notify(model, 'obj');
-  deepEqual(model.toJSON(), {arr: [], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() on a model resets all of its properties and children');
+  deepEqual(model.toJSON(), {prop: true, arr: [], obj: {foo: {}}, func: {foo: {}}}, 'Calling reset() on a model resets all of its properties and children');
+
+  model.unset('prop');
+  model.reset();
+  deepEqual(model.get('prop'), true, 'Calling reset() on a model resets all unset values back to defaults');
 
 
   model = new Model({foo: {bar: 1}});
