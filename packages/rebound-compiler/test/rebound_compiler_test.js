@@ -102,15 +102,15 @@ QUnit.test('Rebound Compiler - Partials', function( assert ) {
   assert.deepEqual(spec.deps, ['foo/bar', 'far/boo'], 'Compiler can find multiple dependancies throughout partials with partial syntax');
 
 
-
+  var dom = document.createDocumentFragment();
   var template = compiler.compile('<div class={{bar}}>{{foo}}</div>', {name:'test/partial'});
-  var dom = template.render(new Model({foo:'bar', bar:'foo'}));
-  equalTokens(dom.fragment.firstChild, '<div class="foo">bar</div>', 'Compiler accepts plain HTMLBars strings and returns working template');
+  template.render(dom, new Model({foo:'bar', bar:'foo'}));
+  equalTokens(dom.firstChild, '<div class="foo">bar</div>', 'Compiler accepts plain HTMLBars strings and returns working template');
 
   template = compiler.compile('{{partial "test/partial"}}', {name:'test'});
-  var partial = template.render(new Model({foo:'bar', bar:'foo'}));
+  template.render(dom, new Model({foo:'bar', bar:'foo'}));
   // In PhantomJS, document fragments don't have a firstElementChild property
-  equalTokens(partial.fragment.childNodes[1], '<div class="foo">bar</div>', 'Compiler registers partial for use in other templates');
+  equalTokens(dom.childNodes[1], '<div class="foo">bar</div>', 'Compiler registers partial for use in other templates');
 
 
 });

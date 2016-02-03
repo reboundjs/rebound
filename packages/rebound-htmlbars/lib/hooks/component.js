@@ -1,14 +1,10 @@
-import $ from "rebound-utils/rebound-utils";
+import { $, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
 import Component from "rebound-component/factory";
 
 export default function component(morph, env, scope, tagName, params, attrs, templates, visitor) {
 
   // Components are only ever rendered once
   if (morph.componentIsRendered){ return void 0; }
-
-  if (this.hasHelper(env, scope, tagName)) {
-    return this.block(morph, env, scope, tagName, params, attrs, templates.default, templates.inverse, visitor);
-  }
 
   var component, element, outlet,
       render = this.buildRenderResult,
@@ -20,7 +16,7 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   for(let key in attrs){ seedData[key] = this.getValue(attrs[key]); }
 
   // For each param passed to our shared component, add it to our custom element
-  component = Component(tagName, seedData);
+  component = Component(tagName, seedData, {[REBOUND_SYMBOL]: {templates: templates, env: env, scope: scope}});
   element = component.el;
   componentScope.self = component;
 
@@ -48,54 +44,9 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
     }
   }
 
-
   /** The attributeChangedCallback on our custom element updates the component's data. **/
-
-
-  // Walk the dom, without traversing into other custom elements, and search for
-  // `<content>` outlets to render templates into.
-  $(element).walkTheDOM(function(el){
-    if(element === el){ return true; }
-    if(el.tagName === 'CONTENT'){ outlet = el; }
-    if(el.tagName.indexOf('-') > -1){ return false; }
-    return true;
-  });
-
-  // If a `<content>` outlet is present in component's template, and a template
-  // is provided, render it into the outlet
-  if(templates.default && _.isElement(outlet)){
-    $(outlet).empty();
-    outlet.appendChild(render(templates.default, env, scope, {}).fragment);
-  }
 
   morph.setNode(element);
   morph.componentIsRendered = true;
 
 }
-
-
-
-// 
-// export default function component(morph, env, scope, tagName, params, attrs, templates, visitor) {
-//
-//   // Create a plain data object to pass to our new component as seed data
-//   var seedData = {};
-//   for(let key in attrs){ seedData[key] = this.getValue(attrs[key]); }
-//
-//   var component,
-//       componentScope = this.createChildScope(scope),
-//       componentEnv = this.createFreshEnv();
-//
-//   env.hooks.registerHelper(tagName, function(){this.yield();})
-//
-//   function render(temp, data){
-//     env.hooks.updateSelf(env, componentScope, data);
-//     env.hooks.block(morph, componentEnv, scope, tagName, params, attrs, temp, null, visitor);
-//     debugger;
-//   }
-//
-//   // Create the new component
-//   component = Component(tagName, seedData, {[REBOUND_SYMBOL]: { render: render }});
-//   morph.setNode(component.el);
-// }
-//

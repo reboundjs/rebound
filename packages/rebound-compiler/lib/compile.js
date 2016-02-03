@@ -20,8 +20,8 @@ function compile(str, options={}){
   // For client side rendered templates, put the render function directly on the
   // template result for convenience. To sue templates rendered server side will
   // consumers will have to invoke the view layer's render function themselves.
-  defs.template.render = function(data, options){
-    return render(this, data, options);
+  defs.template.render = function(el, data, options){
+    return render(el, this, data, options);
   };
 
   // Fetch any dependancies

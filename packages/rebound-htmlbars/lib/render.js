@@ -1,4 +1,4 @@
-import $ from "rebound-utils/rebound-utils";
+import { $, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
 import _hooks from "rebound-htmlbars/hooks";
 
 var RENDER_TIMEOUT;
@@ -20,6 +20,36 @@ var push = function(arr){
   });
 };
 
+function reslot(env){
+
+  // Fix for stupid Babel module importer
+  // TODO: Fix this. This is dumb. Modules don't resolve in by time of this file's
+  // execution because of the dependancy tree so babel doesn't get a chance to
+  // interop the default value of these imports. We need to do this at runtime instead.
+  var hooks = _hooks.default || _hooks;
+
+  var outlet,
+      slots = env.root.options && env.root.options[REBOUND_SYMBOL];
+
+  if(!env.root || !slots){ return; }
+
+  // Walk the dom, without traversing into other custom elements, and search for
+  // `<content>` outlets to render templates into.
+  $(env.root.el).walkTheDOM(function(el){
+    if(env.root.el === el){ return true; }
+    if(el.tagName === 'CONTENT'){ outlet = el; }
+    if(el.tagName.indexOf('-') > -1){ return false; }
+    return true;
+  });
+
+  // If a `<content>` outlet is present in component's template, and a template
+  // is provided, render it into the outlet
+  if(slots.templates.default && _.isElement(outlet)){
+    $(outlet).empty();
+    outlet.appendChild(hooks.buildRenderResult(slots.templates.default, slots.env, slots.scope, {}).fragment);
+  }
+}
+
 // Called on animation frame. TO_RENDER is a list of lazy-values to notify.
 // When notified, they mark themselves as dirty. Then, call revalidate on all
 // dirty expressions for each environment we need to re-render. Use `while(queue.length)`
@@ -38,6 +68,7 @@ function renderCallback(){
     for(let key in env.revalidateQueue){
       env.revalidateQueue[key].revalidate();
     }
+    reslot(env);
   }
   ENV_QUEUE.added = {};
 }
@@ -107,7 +138,7 @@ function trigger(type, data, changed, options={}){
 // A render function that will merge user provided helpers and hooks with our defaults
 // and bind a method that re-renders dirty expressions on data change and executes
 // other delegated listeners added by our hooks.
-export default function render(template, data, options={}){
+export default function render(el, template, data, options={}){
 
   // Fix for stupid Babel module importer
   // TODO: Fix this. This is dumb. Modules don't resolve in by time of this file's
@@ -145,5 +176,9 @@ export default function render(template, data, options={}){
 
   // If this is a real template, run it with our merged helpers and hooks
   // If there is no template, just return an empty fragment
-  return env.template = template ? hooks.buildRenderResult(template, env, scope, options) : { fragment: document.createDocumentFragment() };
+  env.template = template ? hooks.buildRenderResult(template, env, scope, options) : { fragment: document.createDocumentFragment() };
+  $(el).empty();
+  el.appendChild(env.template.fragment);
+  reslot(env);
+  return el;
 }

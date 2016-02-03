@@ -114,7 +114,7 @@ export var ComponentFactory = function ComponentFactory(type, data={}, options={
       isHydrated: false,
       type: type,
       template: DUMMY_TEMPLATE
-    });
+    }, options);
     el.data = new REGISTRY[type](el, data, options);
   }
 

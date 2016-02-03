@@ -31,35 +31,6 @@ function equalTokens(fragment, html, message) {
   deepEqual(fragTokens, htmlTokens, message);
 }
 
-// Notify all of a object's observers of the change, execute the callback
-function notify(obj, path, template) {
-  // If path is not an array of keys, wrap it in array
-  path = (_.isString(path)) ? [path] : path;
-
-  // For each path, alert each observer and call its callback
-  _.each(path, function(path) {
-    if (obj.__observers && _.isObject(obj.__observers[path])) {
-      _.each(obj.__observers[path].collection, function(callback, index) {
-        if (callback) {
-          callback.notify();
-        } else {
-          delete obj.__observers[path][index];
-        }
-      });
-      _.each(obj.__observers[path].model, function(callback, index) {
-        if (callback) {
-          callback.notify();
-        } else {
-          delete obj.__observers[path][index];
-        }
-      });
-    }
-  });
-  template.revalidate();
-}
-
-
-
 /************************************************************
 
 Unles
@@ -69,96 +40,94 @@ Unles
 QUnit.test('Rebound Helpers - Unless', function() {
 
 
-  var template, data, dom;
+  var template, data, dom, el = document.createDocumentFragment();
 
 
   template = compiler.compile('<div>{{#unless bool}}{{foo}}{{/unless}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div>bar</div>', 'Block Unless helper in content without else block - false');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div>bar</div>', 'Block Unless helper in content without else block - false');
 
 
 
   template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div>bar</div>', 'Block Unless helper in content with else block - false');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div>bar</div>', 'Block Unless helper in content with else block - false');
 
 
 
   template = compiler.compile('<div>{{#unless bool}}{{foo}}{{/unless}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div>bar</div>', 'Block Unless helper in content without else block - false');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div>bar</div>', 'Block Unless helper in content without else block - false');
 
 
 
   template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
-  equalTokens(dom.fragment, '<div>foo</div>', 'Block Unless helper in content with else block - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(el, '<div>foo</div>', 'Block Unless helper in content with else block - true');
 
 
 
   template = compiler.compile('<div>{{#unless bool}}{{foo}}{{else}}{{bar}}{{/unless}}</div>', {name: 'test/partial'});
   data = new Model({foo:'bar', bar:'foo', bool: false});
-  dom = template.render(data);
+  template.render(el, data);
   data.set('bool', true);
-  notify(data, 'bool', dom);
-  equalTokens(dom.fragment, '<div>foo</div>', 'Block Unless helper is data bound');
+  equalTokens(el, '<div>foo</div>', 'Block Unless helper is data bound');
 
 
 
   template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
-  equalTokens(dom.fragment, '<div><!----></div>', 'Inline Unless helper in content without else term - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(el, '<div><!----></div>', 'Inline Unless helper in content without else term - true');
 
 
 
   template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
-  equalTokens(dom.fragment, '<div>foo</div>', 'Inline Unless helper in content with else term - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(el, '<div>foo</div>', 'Inline Unless helper in content with else term - true');
 
 
 
   template = compiler.compile('<div>{{unless bool foo}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div>bar</div>', 'Inline Unless helper in content without else term - false');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div>bar</div>', 'Inline Unless helper in content without else term - false');
 
 
 
   template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div>bar</div>', 'Inline Unless helper in content without else term - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div>bar</div>', 'Inline Unless helper in content without else term - true');
 
 
 
   template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
-  equalTokens(dom.fragment, '<div>test</div>', 'Inline Unless helper in element without else term - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(el, '<div>test</div>', 'Inline Unless helper in element without else term - true');
 
 
 
   template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: true}));
-  equalTokens(dom.fragment, '<div class="foo">test</div>', 'Inline Unless helper in element with else term - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: true}));
+  equalTokens(el, '<div class="foo">test</div>', 'Inline Unless helper in element with else term - true');
 
 
 
   template = compiler.compile('<div class={{unless bool foo}}>test</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div class="bar">test</div>', 'Inline Unless helper in element without else term - false');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div class="bar">test</div>', 'Inline Unless helper in element without else term - false');
 
 
 
   template = compiler.compile('<div class={{unless bool foo bar}}>test</div>', {name: 'test/partial'});
-  dom = template.render(new Model({foo:'bar', bar:'foo', bool: false}));
-  equalTokens(dom.fragment, '<div class="bar">test</div>', 'Inline Unless helper in element with else term - true');
+  template.render(el, new Model({foo:'bar', bar:'foo', bool: false}));
+  equalTokens(el, '<div class="bar">test</div>', 'Inline Unless helper in element with else term - true');
 
 
 
   template = compiler.compile('<div>{{unless bool foo bar}}</div>', {name: 'test/partial'});
   data = new Model({foo:'bar', bar:'foo', bool: false});
-  dom = template.render(data);
+  template.render(el, data);
   data.set('bool', true);
-  notify(data, 'bool', dom);
-  equalTokens(dom.fragment, '<div>foo</div>', 'Inline Unless helper is data bound');
+  equalTokens(el, '<div>foo</div>', 'Inline Unless helper is data bound');
 
 
 });

@@ -35,8 +35,10 @@ function equalTokens(fragment, html, message) {
 }
 
 QUnit.test('Rebound Components', function( assert ) {
-  assert.expect( 43 );
 
+  assert.expect( 32 );
+
+  var el = document.createDocumentFragment();
   var component = compiler.compile(`
         <element name="test-component">
           <template><div><content>Default Content</content></div></template>
@@ -44,12 +46,14 @@ QUnit.test('Rebound Components', function( assert ) {
             return {
               createdCallback: function(){
                 window.created = true;
+                if(window.created){ return; }
                 equal(this.el.firstChild.tagName, 'DIV', 'Created callback is called after template and content is placed in outlet');
                 equal(this.el.parentNode, null, 'Created callback in called before this.el has been added to the dom tree')
                 equal(this.el.tagName, 'TEST-COMPONENT', 'Scope of created callback has the outlet in this.el');
               },
               attachedCallback: function(){
                 window.attached = true;
+                if(window.attached){ return; }
                 equal(this.el.firstChild.tagName, 'DIV', 'Created callback is called after template and content is placed in outlet');
                 equal(this.el.parentNode, window.el, 'Attached callback in called after this.el has been added to the dom tree and has a referance to its parent')
                 equal(typeof this.$el, 'object', 'this.$el has a jQuery wrapped node if jQuery is present on the page')
@@ -70,9 +74,6 @@ QUnit.test('Rebound Components', function( assert ) {
         </element>
       `);
 
-  window.el = document.createElement('div');
-  document.body.appendChild(el);
-  window.attached = false;
   var c1 = document.createElement('test-component');
   equal(c1.data.isComponent, true, 'Components can be created from document.createElement');
   equal(typeof c1.data.cid, 'string', 'Component saves a referance to itself on its contextual element as el.data');
@@ -82,23 +83,51 @@ QUnit.test('Rebound Components', function( assert ) {
 
   var template = compiler.compile(`<test-component foo="bar" biz={{baz}}>Test Content</test-component>`, {name: 'component-test'});
   var data = new Model({baz: 'baz'});
-  var partial = template.render(data);
-  var c2 = partial.fragment.childNodes[1];
+  var partial = template.render(el, data);
+  var c2 = partial.childNodes[1];
   equal(c2.data.isComponent, true, 'Components can be created from other HTMLBars templates');
   equal(c2.data.get('foo'), 'bar', 'Components can receive properties as plain strings');
   equal(c2.data.get('biz'), 'baz', 'Components can receive properties as handlebars');
   equal(c2.innerHTML, '<div><content>Test Content</content></div>', 'Component places rendered template inside of outlet, with supplied content');
 
+  template = compiler.compile(`<test-component foo="bar">{{baz}} Test Content</test-component>`, {name: 'component-test'});
+  data = new Model({baz: 'baz'});
+  template.render(el, data);
+  c2 = el.childNodes[1];
+  equal(c2.innerHTML, '<div><content>baz Test Content</content></div>', 'Supplied outlet template is rendered in the context of the parent');
+  data.set('baz', 'biz');
+  equal(c2.innerHTML, '<div><content>biz Test Content</content></div>', 'Supplied outlet template is rendered in the context of the parent and is data bound');
+
   template = compiler.compile(`{{#each arr as |obj|}}<test-component val={{obj}}>Test Content</test-component>{{/each}}`, {name: 'component-each-test'});
   data = new Model({arr: [{val: 0}, {val: 1}, {val: 2}]});
-  partial = template.render(data);
-  var c3 = partial.fragment.querySelectorAll('test-component')[0];
+  partial = template.render(el, data);
+  var c3 = partial.querySelectorAll('test-component')[0];
   equal(c3.data.isComponent, true, 'Components can be created inside block helpers');
   deepEqual(c3.data.get('val').toJSON(), data.get('arr[0]').toJSON(), 'Components can receive locally defined objects inside block helpers');
   data.on('change:arr[0].val', function(){
     equal(this.get('arr[0].val'), 'baz', 'Components can modify local scope objects passed in via a block helper and the results are databound to the original object.');
   });
   c3.data.set('val.val', 'baz');
+
+
+  template = compiler.compile(`{{#each arr as |obj|}}<test-component>{{obj.val}}</test-component>{{/each}}`, {name: 'component-each-test'});
+  data = new Model({arr: [{val: 0}, {val: 1}, {val: 2}]});
+  template.render(el, data);
+  equal(el.textContent, '012', 'Supplied outlet template is rendered in the context of the parent and has access to block scope values');
+  data.set('arr[2].val', 4);
+  equal(el.textContent, '014', 'Supplied outlet template is rendered in the context of the parent and has is data bound to block scope values');
+
+
+
+  template = compiler.compile(`{{#if bool}}<test-component>{{val}}</test-component>{{/if}}`, {name: 'component-each-test'});
+  data = new Model({bool: true, val: 'foo'});
+  template.render(el, data);
+  data.set('bool', false);
+  data.set('val', 'bar');
+  data.set('bool', true);
+  equal(el.textContent, 'bar', 'Supplied outlet template is re-slotted after a re-render of its parent template');
+
+
 
   var c4 = new Component('test-component', new Model({baz: 'baz', biz: 'biz'}));
   equal(c4.isComponent, true, 'Components can be created using the Component factory');
@@ -121,8 +150,8 @@ QUnit.test('Rebound Components', function( assert ) {
 
   template = compiler.compile(`<lazy-component foo="bar" biz={{baz}}>Test Content</lazy-component>`, {name: 'component-test'});
   data = new Model({baz: 'baz'});
-  partial = template.render(data);
-  var c6 = partial.fragment.childNodes[1];
+  template.render(el, data);
+  var c6 = el.childNodes[1];
   equal(c6.data.isComponent, true, 'Un-registered Components can be created from HTMLBars templates');
   equal(c6.data.get('foo'), 'bar', 'Un-registered Components can receive properties as plain strings');
   equal(c6.data.get('biz'), 'baz', 'Un-registered Components can receive properties as handlebars');
@@ -132,18 +161,13 @@ QUnit.test('Rebound Components', function( assert ) {
   });
   c6.data.set('biz', 'foo');
 
-  // Phantomjs requires custom element to trigger upgrade
-  document.body.appendChild(partial.fragment);
+  // Phantomjs requires custom element to be in dom to trigger upgrade
+  document.body.appendChild(el);
   document.body.appendChild(c5);
-
-  // var cid = c1.data.cid;
-  // equal(typeof c1.data.cid, 'string', 'Component saves a referance to itself on its contextual element as el.data');
-  // equal(c1.data.isComponent, true, 'Unregistered components can be created from document.createElement');
-  // equal(c1.data.isHydrated, false, 'Unregistered components can be created from document.createElement and are properly marked as dehydrated');
 
   component = compiler.compile(`
     <element name="lazy-component">
-      <template><div>Content <content>Default Outlet</content></div></template>
+      <template><div>Content <content>Default Content</content></div></template>
       <script>
         return {
           createdCallback: function(){
@@ -179,17 +203,8 @@ QUnit.test('Rebound Components', function( assert ) {
     compProp: 1
   }, 'Post-registration, existing Components created from document.createElement contain the proper default properties.');
 
-  //
-  // var template = compiler.compile(`<lazy-component foo="bar" biz={{baz}}>Test Content</lazy-component>`, {name: 'component-test'});
-  // var data = new Model({baz: 'baz'});
-  // var partial = template.render(data);
-  // var c2 = partial.fragment.childNodes[1];
-  // equal(c2.data.isComponent, true, 'Components can be created from other HTMLBars templates');
-  // equal(c2.data.get('foo'), 'bar', 'Components can receive properties as plain strings');
-  // equal(c2.data.get('biz'), 'baz', 'Components can receive properties as handlebars');
-  // equal(c2.innerHTML, '<div><content>Test Content</content></div>', 'Component places rendered template inside of outlet, with supplied content');
-  //
-
+  equal(c5.innerHTML, '<div>Content <content>Default Content</content></div>', 'Rehydrated components made from document.createElement have default content post hydration.');
+  equal(c6.innerHTML, '<div>Content <content>Test Content</content></div>', 'Rehydrated components made from templates have custom slotted content post hydration.');
 
 });
 

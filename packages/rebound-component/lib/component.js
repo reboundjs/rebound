@@ -103,7 +103,7 @@ var Component = Model.extend({
   // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
   render(){
     $(this.el).empty();
-    this.el.appendChild(render(this[REBOUND_SYMBOL].template, this).fragment);
+    render(this.el, this[REBOUND_SYMBOL].template, this);
   },
 
   deinitialize(){
