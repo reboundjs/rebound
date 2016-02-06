@@ -72,7 +72,8 @@ LazyValue.prototype = {
   addObserver: function(path, context, env) {
 
     if(!_.isObject(context) || !_.isString(path)){ return console.error('Error adding observer for', context, path); }
-    var origin = context.__path().replace(/\[[^\]]+\]/g, ".@each");
+    path = path.trim();
+    var origin = context.__path().replace(/\[[^\]]+\]/g, ".@each").trim();
     var cache = env.observers[origin] || (env.observers[origin] = {});
     cache[path] || (cache[path] = []);
     var position = cache[path].push(this) - 1;

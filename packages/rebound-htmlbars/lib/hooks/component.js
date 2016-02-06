@@ -35,8 +35,7 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   var component, element, outlet,
       render = this.buildRenderResult,
       seedData = {},
-      componentData = {},
-      componentScope = this.createFreshScope();
+      componentData = {};
 
   // Create a plain data object to pass to our new component as seed data
   for(let key in attrs){ seedData[key] = this.getValue(attrs[key]); }
@@ -44,12 +43,11 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
   // For each param passed to our shared component, add it to our custom element
   component = Component(tagName, seedData, {[REBOUND_SYMBOL]: {templates: templates, env: env, scope: scope}});
   element = component.el;
-  componentScope.self = component;
 
   for(let key in seedData){
 
     // For each param passed to our component, create its lazyValue
-    componentData[key] = this.get(component.env, componentScope, key);
+    componentData[key] = this.get(component.env, component.scope, key);
 
     // Set up two way binding between component and original context
     if(componentData[key].isLazyValue && attrs[key].isLazyValue){

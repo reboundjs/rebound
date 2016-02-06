@@ -49,7 +49,19 @@ export function registerComponent(type, options={}) {
     // actually registered. Now, we need to finish hydrating this instance of the
     // component data object.
     if(this.data){
-      this.data.reset(this.data.toJSON());
+
+      // Anything that is not already set on our component should be set to our
+      // new default if it exists
+      // TODO: If a default value perscribes a certain user-defined subclass
+      // of Component or Model for a property already passed into a component,
+      // the existing vanila Component or Model should be upgraded to that subclass
+      var current = this.data.toJSON();
+      var defaults = this.data.defaults;
+      for(var key in defaults){
+        if(!current.hasOwnProperty(key) && defaults.hasOwnProperty(key)){
+          this.data.set(key, defaults[key]);
+        }
+      }
       this.data.render();
       this.data.isHydrated = true;
       this.data.loadCallbacks.forEach( (cb)=>{ cb(this.data); } );

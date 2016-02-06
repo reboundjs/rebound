@@ -10,6 +10,9 @@ export default function precompile(str, options={}){
     return console.error('No template provided!');
   }
 
+  // Ensure baseDest exists
+  options.baseDest || (options.baseDest = '');
+
   var template;
   str = parse(str, options);
 
@@ -20,7 +23,7 @@ export default function precompile(str, options={}){
   if (str.isPartial) {
     template = [
       "(function(R){",
-      "  R.router._loadDeps([ " + (str.deps.length ? ('"' + str.deps.join('", "') + '"') : '') + " ]);",
+      "  R.router._loadDeps([ " + (str.deps.length ? `"${options.baseDest}` + str.deps.join(`", "${options.baseDest}`) + '"' : '') + " ]);",
       "  R.registerPartial(\"" + str.name + "\", " + str.template + ");",
       "})(window.Rebound);"].join('\n');
   }
@@ -28,7 +31,7 @@ export default function precompile(str, options={}){
   else {
     template = [
       "(function(R){",
-      "  R.router._loadDeps([ " + (str.deps.length ? ('"' + str.deps.join('", "') + '"') : '') + " ]);",
+      "  R.router._loadDeps([ " + (str.deps.length ? `"${options.baseDest}` + str.deps.join(`", "${options.baseDest}`) + '"' : '') + " ]);",
       "  document.currentScript.setAttribute(\"data-name\", \"" + str.name + "\");",
       "  return R.registerComponent(\"" + str.name + "\", {",
       "    prototype: " + str.script + ",",

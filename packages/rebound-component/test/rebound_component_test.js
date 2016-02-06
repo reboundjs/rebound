@@ -36,7 +36,7 @@ function equalTokens(fragment, html, message) {
 
 QUnit.test('Rebound Components', function( assert ) {
 
-  assert.expect( 33 );
+  assert.expect( 37 );
 
   var el = document.createDocumentFragment();
   var component = compiler.compile(`
@@ -144,6 +144,7 @@ QUnit.test('Rebound Components', function( assert ) {
 
 
 
+  // Lazy Component Upgrades and Content Slotting
   var c5 = document.createElement('lazy-component');
   equal(c5.data, undefined, 'Un-registered Components created via docuent.createElement have nothing set for el.data');
   equal(c5.innerHTML, '', 'Dehydrated components have no content');
@@ -206,6 +207,34 @@ QUnit.test('Rebound Components', function( assert ) {
 
   equal(c5.innerHTML, '<div>Content <content>Default Content</content></div>', 'Rehydrated components made from document.createElement have default content post hydration.');
   equal(c6.innerHTML, '<div>Content <content>Test Content</content></div>', 'Rehydrated components made from templates have custom slotted content post hydration.');
+
+
+
+  // Lazy Component Data Resolution
+  template = compiler.compile(`<lazy-component-2 foo={{baz}}></lazy-component-2>`, {name: 'component-test'});
+  data = new Model({baz: 'baz'});
+  template.render(el, data);
+  var c7 = el.childNodes[1].data;
+
+  component = compiler.compile(`
+    <element name="lazy-component-2">
+      <template></template>
+      <script>
+        return {
+          foo: 'bar',
+          biz: 'baz'
+        }
+      </script>
+    </element>
+  `);
+
+  equal(c7.get('biz'), 'baz', 'Attributes previously undefined on a lazy property pre upgrade are set from new defaults post upgrade');
+  equal(c7.get('foo'), 'baz', 'Attributes set on a lazy property pre upgrade are retained post upgrade');
+  equal(data.get('baz'), 'baz', 'Attributes passed to a lazy property pre upgrade are retained post upgrade in original data object');
+
+  c7.set('foo', 'biz');
+  equal(data.get('baz'), 'biz', 'Attributes passed to a lazy property pre upgrade are still data bound post upgrade to the original data object');
+
 
 });
 

@@ -129,9 +129,9 @@ QUnit.test('Rebound Helpers - If', function() {
   template.render(dom, data);
   data.set('bool', true);
   equalTokens(dom, '<div>bar</div>', 'Inline If helper is data bound');
-  data.set('bool', '1')
+  data.set('bool', '1');
   equalTokens(dom, '<div>bar</div>', 'Inline If helper works with string values');
-  data.set('bool', '')
+  data.set('bool', '');
   equalTokens(dom, '<div>foo</div>', 'Inline If helper works with falsy string values');
 
 
