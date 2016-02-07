@@ -39,6 +39,7 @@ QUnit.test('Rebound Components', function( assert ) {
   assert.expect( 37 );
 
   var el = document.createDocumentFragment();
+
   var component = compiler.compile(`
         <element name="test-component">
           <template><div><content>Default Content</content></div></template>
@@ -214,7 +215,8 @@ QUnit.test('Rebound Components', function( assert ) {
   template = compiler.compile(`<lazy-component-2 foo={{baz}}></lazy-component-2>`, {name: 'component-test'});
   data = new Model({baz: 'baz'});
   template.render(el, data);
-  var c7 = el.childNodes[1].data;
+  var c7 = el.childNodes[1];
+  document.body.appendChild(c7); // Many browser need this to be in the dom for upgrade to happen
 
   component = compiler.compile(`
     <element name="lazy-component-2">
@@ -228,11 +230,11 @@ QUnit.test('Rebound Components', function( assert ) {
     </element>
   `);
 
-  equal(c7.get('biz'), 'baz', 'Attributes previously undefined on a lazy property pre upgrade are set from new defaults post upgrade');
-  equal(c7.get('foo'), 'baz', 'Attributes set on a lazy property pre upgrade are retained post upgrade');
+  equal(c7.data.get('biz'), 'baz', 'Attributes previously undefined on a lazy property pre upgrade are set from new defaults post upgrade');
+  equal(c7.data.get('foo'), 'baz', 'Attributes set on a lazy property pre upgrade are retained post upgrade');
   equal(data.get('baz'), 'baz', 'Attributes passed to a lazy property pre upgrade are retained post upgrade in original data object');
 
-  c7.set('foo', 'biz');
+  c7.data.set('foo', 'biz');
   equal(data.get('baz'), 'biz', 'Attributes passed to a lazy property pre upgrade are still data bound post upgrade to the original data object');
 
 
