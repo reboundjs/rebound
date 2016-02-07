@@ -110,7 +110,7 @@ QUnit.test('Rebound Compiler - Partials', function( assert ) {
   template = compiler.compile('{{partial "test/partial"}}', {name:'test'});
   template.render(dom, new Model({foo:'bar', bar:'foo'}));
   // In PhantomJS, document fragments don't have a firstElementChild property
-  equalTokens(dom.childNodes[1], '<div class="foo">bar</div>', 'Compiler registers partial for use in other templates');
+  equalTokens(dom.childNodes[1], '<rebound-partial path="test/partial"><div class="foo">bar</div></rebound-partial>', 'Compiler registers partial for use in other templates');
 
 
 });
