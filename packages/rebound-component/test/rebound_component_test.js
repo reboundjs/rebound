@@ -36,7 +36,7 @@ function equalTokens(fragment, html, message) {
 
 QUnit.test('Rebound Components', function( assert ) {
 
-  assert.expect( 37 );
+  assert.expect( 41 );
 
   var el = document.createDocumentFragment();
 
@@ -236,6 +236,43 @@ QUnit.test('Rebound Components', function( assert ) {
 
   c7.data.set('foo', 'biz');
   equal(data.get('baz'), 'biz', 'Attributes passed to a lazy property pre upgrade are still data bound post upgrade to the original data object');
+
+
+
+  // Lazy Component Computed Property Upgrade
+  template = compiler.compile(`<lazy-component-3></lazy-component-3>`, {name: 'component-test'});
+  data = new Model({});
+  template.render(el, data);
+  var c8 = el.childNodes[1];
+  document.body.appendChild(c8); // Many browser need this to be in the dom for upgrade to happen
+
+  c8.data.onLoad(function(data){
+
+    equal(1, 1, "Components' onLoad method calls registered callbacks after registration.");
+    deepEqual(this.get('arrFilter').toJSON(), [{val: 1}], 'Components with computed properties that depend on lazy loaded defaults are not executed until after all defaults are set (will fail hard on upgrade if not true).');
+    equal(this.cid, data.cid, "Components' onLoad callbacks' `this` property and first argument are the upgraded component.");
+
+  });
+
+  component = compiler.compile(`
+    <element name="lazy-component-3">
+      <template></template>
+      <script>
+        return {
+          arr: [{val: 1}, {val: 2}],
+          get arrFilter(){
+            return this.get('arr').where({val: 1});
+          }
+        }
+      </script>
+    </element>
+  `);
+
+  c8.data.onLoad(function(){
+
+    equal(1, 1, "After registration, Components' onLoad method calls registered callbacks immediately.");
+
+  });
 
 
 });

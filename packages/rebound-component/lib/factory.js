@@ -58,13 +58,13 @@ export function registerComponent(type, options={}) {
       var current = this.data.toJSON();
       var defaults = this.data.defaults;
       for(var key in defaults){
-        if(!current.hasOwnProperty(key) && defaults.hasOwnProperty(key)){
+        if ((!current.hasOwnProperty(key) || _.isUndefined(current[key])) && defaults.hasOwnProperty(key)) {
           this.data.set(key, defaults[key]);
         }
       }
       this.data.render();
       this.data.isHydrated = true;
-      this.data.loadCallbacks.forEach( (cb)=>{ cb(this.data); } );
+      this.data.loadCallbacks.forEach( (cb)=>{ cb.call(this.data, this.data); } );
     }
 
     // If we have element data, then we have come from a `new Component(component-name);`

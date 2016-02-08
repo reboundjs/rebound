@@ -13,16 +13,46 @@ const TEXT_INPUTS = { "null": 1,  text: 1,  email: 1, password: 1,
 // All valid boolean HTML input types
 const BOOLEAN_INPUTS = { checkbox: 1, radio: 1 };
 
+// Returns true is value is numeric based on HTML5 number input field logic.
+// Trailing decimals are considered non-numeric (ex `12.`).
+function isNumeric(val){
+  return val && !isNaN(Number(val)) && (!_.isString(val) || ((_.isString(val) && val[val.length-1] !== '.')));
+}
+
 // Attribute Hook
 export default function attribute(attrMorph, env, scope, name, value){
 
   var val = value.isLazyValue ? value.value : value,
       el = attrMorph.element,
       tagName = el.tagName,
-      type = el.getAttribute("type");
+      type = el.getAttribute("type"),
+      cursor = false;
+
 
   // If this is a text input element's value prop, wire up our databinding
-  if( tagName === 'INPUT' && TEXT_INPUTS[type] && name === 'value' ){
+  if( tagName === 'INPUT' && type === 'number' && name === 'value' ){
+
+    // If our input events have not been bound yet, bind them. Attempt to convert
+    // to a proper number type before setting.
+    if(!attrMorph.eventsBound){
+      $(el).on('change input propertychange', function(event){
+        var val = this.value;
+        val = isNumeric(val) ? Number(val) : undefined;
+        value.set(value.path, val);
+      });
+      attrMorph.eventsBound = true;
+    }
+
+    // Set the value property of the input
+    // Number Input elements may return `''` for non valid numbers. If both values
+    // are falsy, then don't blow away what the user is typing.
+    if(!el.value && !val){ return; }
+    else{ el.value = isNumeric(val) ? Number(val) : ''; }
+
+  }
+
+  // If this is a text input element's value prop, wire up our databinding
+  else if( tagName === 'INPUT' && TEXT_INPUTS[type] && name === 'value' ){
 
     // If our input events have not been bound yet, bind them
     if(!attrMorph.eventsBound){
@@ -32,8 +62,18 @@ export default function attribute(attrMorph, env, scope, name, value){
       attrMorph.eventsBound = true;
     }
 
-    // Set the value property of the input
-    el.value = val ? String(val) : '';
+    // Set the value property of the input if it has changed
+    if(el.value !== val){
+
+      // Only save the cursor position if this element is the currently focused one.
+      // Some browsers are dumb about selectionStart on some input types (I'm looking at you [type='email'])
+      // so wrap in try catch so it doesn't explode. Then, set the new value and
+      // re-position the cursor.
+      if(el === document.activeElement){ try{ cursor = el.selectionStart; } catch(e){ } }
+      el.value = val ? String(val) : '';
+      (cursor !== false) && el.setSelectionRange(cursor, cursor);
+
+    }
   }
 
   else if( tagName === 'INPUT' && BOOLEAN_INPUTS[type] && name === 'checked' ){

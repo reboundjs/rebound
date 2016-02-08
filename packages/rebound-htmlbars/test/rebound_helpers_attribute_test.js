@@ -148,6 +148,26 @@ QUnit.test('Rebound Helpers - Attribute', function() {
   dom.firstChild.dispatchEvent(evt);
   equal(data.get('bar'), 'Hello World', 'Value on tel input is two way data bound element -> data');
 
+  template = compiler.compile('<input type="number" value={{num}}>', {name: 'test/partial'});
+  data = new Model({num: 1});
+  template.render(dom, data);
+  equal(dom.firstChild.value, '1', 'Value of number input is set on first render');
+  data.set('num', 2);
+  equal(dom.firstChild.value, '2', 'Value of number input is data bound data -> element');
+  dom.firstChild.value = 10;
+  dom.firstChild.dispatchEvent(evt);
+  equal(data.get('num'), 10, 'Value on number input is two way data bound element -> data and converted to number type');
+  dom.firstChild.value = 'foobar';
+  dom.firstChild.dispatchEvent(evt);
+  equal(data.get('num'), undefined, "When a number element's value is set to a non-numerical value, the data is set to undefined");
+  dom.firstChild.value = '1.';
+  dom.firstChild.dispatchEvent(evt);
+  equal(data.get('num'), undefined, "Number element considers trailing decimal to be a non-numerical value and the data is set to undefined accordingly");
+  dom.firstChild.value = '1.5';
+  dom.firstChild.dispatchEvent(evt);
+  data.set('num', 'foo');
+  equal(dom.firstChild.value, '', "When data is set to a non-numeric value, the number input's value is set to empty string");
+
 
   template = compiler.compile('<input type="checkbox" checked={{bool}}>', {name: 'test/partial'});
   data = new Model({bool: false});

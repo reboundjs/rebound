@@ -71,7 +71,9 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
 
   // TODO: Move this to Component
   // // For each change on our component, update the states of the original context and the element's proeprties.
-  function updateAttrs() {
+  var updateAttrs = function updateAttrs() {
+    // Only do this for fully hydrated components
+    if(!component.isHydrated){ return; }
     var json = component.toJSON();
 
     if (_.isString(json)) return; // If is a string, this model is seralizing already
@@ -89,9 +91,9 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
         console.error(e.message);
       }
     });
-  }
+  };
   component.listenTo(component, 'change', updateAttrs);
-  updateAttrs();
+  component.onLoad(updateAttrs);
 
   /** The attributeChangedCallback on our custom element updates the component's data. **/
 
