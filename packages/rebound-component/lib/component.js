@@ -13,6 +13,12 @@ var Component = Model.extend({
   isHydrated: true,
   defaults: {},
 
+
+  // A method that returns a root scope by default. Meant to be overridden on
+  // instantiation if applicable.
+  __path: function(){ return this._scope || ''; },
+
+
   constructor(el, data, options){
 
     // Ensure options is an object
@@ -77,13 +83,16 @@ var Component = Model.extend({
   _listenToService(key, service){
     var self = this;
     this.listenTo(service, 'all', (type, model, value, options={}) => {
-      var attr,
+      var attr, oldScope = service._scope,
           path = model.__path(),
           changed;
 
-      // Send the service's key via options
-      // TODO: Find a better way to get service keys in their path() method
-      options.service = key;
+      // TODO: Find a better way to get service keys in their path() method based on call Scope
+      // Services may be installed at any location. In order for the __path() method
+      // to include this location in the correct context, it needs to have contextual
+      // knowledge of what called it. For the lifetime of this event tree, re-write
+      // its scope property appropreately. Re-set it to previous value when done.
+      service._scope = key;
 
       if(type.indexOf('change:') === 0){
         changed = model.changedAttributes();
@@ -92,10 +101,11 @@ var Component = Model.extend({
           type = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
           this.trigger.call(this, type, model, value, options);
         }
-        return void 0;
       }
-
-      return this.trigger.call(this, type, model, value, options);
+      else {
+        this.trigger.call(this, type, model, value, options);
+      }
+      service._scope = oldScope;
     });
   },
 
