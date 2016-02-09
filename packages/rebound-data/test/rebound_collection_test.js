@@ -50,14 +50,17 @@ QUnit.test('Reboudnd Data - Collection', function() {
   var CustomModel = Model.extend({
     toJSON: function(){
       return 'works';
-    }
+    },
+    idAttribute: 'foo.bar'
   });
 
-  model = new CustomModel();
+  model = new CustomModel({foo: {bar: 123}});
   collection = new Collection();
+  collection.add({id: 1});
   collection.add(model);
 
 
-  deepEqual(['works'], collection.toJSON(), 'Customized models added to a collection retain their custom attributes when added to the collection');
+  deepEqual(collection.toJSON(), [{id: 1}, 'works'], 'Customized models added to a collection retain their custom attributes when added to the collection');
+  equal(model.cid, collection._byId[123].cid, 'Collections defer to the custom Model\'s id attribute when getting Model ids.');
 
 });

@@ -43,6 +43,63 @@ var Collection = Backbone.Collection.extend({
 
   },
 
+  // TODO: Start - `Upstream to Backbone?`.
+  // Always give precedence to the provided model's idAttribute. Fall back to
+  // the Collection's idAttribute, and then to the default `id`.
+  modelId: function(model={}, data={}){
+    // Always give precedence to the provided model's idAttribute. Fall back to
+    // the Collection's idAttribute, and then to the default `id`.
+    var idAttribute = model.idAttribute || this.model.prototype.idAttribute || 'id';
+
+    // If this is a data element, just return the id
+    if(data.isData){ return data.get(idAttribute); }
+
+    // Otherwise, iterate down the object trying to get the id
+    $.splitPath(idAttribute).forEach(function(val, key){
+      if(!_.isObject(data)){ return; }
+      data = data.isData ? data.get(val) : data[val];
+    });
+
+    return data;
+  },
+
+  // Pass modelId the model itself, not just the attributes, so it can get the
+  // idAttribute from the model itslef and not the collection
+  _addReference: function(model, options) {
+    this._byId[model.cid] = model;
+    var id = this.modelId(model, model);
+    if (id != null){ this._byId[id] = model; }
+    model.on('all', this._onModelEvent, this);
+  },
+
+  // Pass modelId the model itself, not just the attributes, so it can get the
+  // idAttribute from the model itslef and not the collection
+  _removeReference: function(model, options) {
+    delete this._byId[model.cid];
+    var id = this.modelId(model, model);
+    if (id != null){ delete this._byId[id]; }
+    if (this === model.collection){ delete model.collection; }
+    model.off('all', this._onModelEvent, this);
+  },
+
+  // Pass modelId the model itself, not just the attributes, so it can get the
+  // idAttribute from the model itslef and not the collection
+  _onModelEvent: function(event, model, collection, options) {
+    if ((event === 'add' || event === 'remove') && collection !== this) return;
+    if (event === 'destroy') this.remove(model, options);
+    if (event === 'change') {
+      var prevId = this.modelId(model, model.previousAttributes());
+      var id = this.modelId(model, model);
+      if (prevId !== id) {
+        if (prevId != null){ delete this._byId[prevId]; }
+        if (id != null){ this._byId[id] = model; }
+      }
+    }
+    this.trigger.apply(this, arguments);
+  },
+  // TODO: End - `Upstream to Backbone?`.
+
+
   get: function(key, options){
 
     // Split the path at all '.', '[' and ']' and find the value referanced.
@@ -56,7 +113,7 @@ var Collection = Backbone.Collection.extend({
     // get by id and return the first occurance
     if(typeof key == 'number' || typeof key == 'object' || (parts.length == 1 && !options.isPath)){
       if (key === null){ return void 0; }
-      var id = this.modelId(this._isModel(key) ? key.attributes : key);
+      var id = this.modelId(key, key);
       var responses = [].concat(this._byValue[key], (this._byId[key] || this._byId[id] || this._byId[key.cid]));
       var res = responses[0], idx = Infinity;
 

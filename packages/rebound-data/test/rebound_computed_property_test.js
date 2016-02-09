@@ -494,5 +494,72 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
   }, 0);
 
 
+  /********************************
+
+   Custom Model Constructor
+
+   Models with custom constructors (specifically idAttributes) can cause issues
+   when resetting a Computed Property's cache object. The internal _byId hash,
+   without some custom methods, cannot get the unique id of the proxied models.
+   The fix is to always get the model's id using the Model's specified idAttribute,
+   not the Collection's template Model's idAttribute. This allows for mixed-type
+   models in a Collection.
+
+  ********************************/
+
+  collection = Collection.extend({
+    model: Model.extend({
+      idAttribute: 'val'
+    })
+  });
+
+  model = new Model({
+
+    arr: new collection([
+      {val: 1, test: 1},{val: 2, test: 2},{val: 3, test: 1},{val: 4, test: 2},{val: 5, test: 1}
+    ]),
+
+    test: 1,
+
+    get proxy(){
+      var test = this.get('test');
+      return this.get('arr').where({test: test});
+    }
+
+  });
+
+  equal(model.get('proxy').length, 3, 'Computed Properties returning models with a custom idAttribue work on first compute.');
+  model.set('test', 2);
+  equal(model.get('proxy').length, 2, 'Computed Properties returning models with a custom idAttribue work on condition re-compute.');
+  model.get('arr').push({val: 6, test: 2});
+  equal(model.get('proxy').length, 3, 'Computed Properties returning models with a custom idAttribue work on collection add.');
+  model.set('arr[2].test', 2);
+  equal(model.get('proxy').length, 4, 'Computed Properties returning models with a custom idAttribue work on internal collection change.');
+
+  // Deep Custom idAttributes
+  collection = Collection.extend({
+    model: Model.extend({
+      idAttribute: 'val.id'
+    })
+  });
+
+  model = new Model({
+
+    arr: new collection([
+      {val: {id: 1}, test: 1},{val: {id: 2}, test: 2},{val: {id: 3}, test: 1},{val: {id: 4}, test: 2},{val: {id: 5}, test: 1}
+    ]),
+
+    test: 1,
+
+    get proxy(){
+      var test = this.get('test');
+      return this.get('arr').where({test: test});
+    }
+
+  });
+
+  model.set('test', 2);
+  equal(model.get('proxy[0]').id, 2, 'Custom deep idAttributes on Models are totally a thing. Collections will defer to the model for its idAttribute.');
+  equal(model.get('proxy').length, 2, 'Computed Properties returning models with a custom deep idAttribues don\' screw up Collection cache re-compute.');
 
 });
