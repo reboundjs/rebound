@@ -4,41 +4,93 @@
 // **Collections** and **Computed Properties**. Controls tree ancestry
 // tracking, deep event propagation and tree destruction.
 
+import Backbone from "backbone";
 import Model from "rebound-data/model";
 import Collection from "rebound-data/collection";
 import ComputedProperty from "rebound-data/computed-property";
 import $ from "rebound-utils/rebound-utils";
 
-var sharedMethods = {
-  // When a change event propagates up the tree it modifies the path part of
-  // `change:<path>` to reflect the fully qualified path relative to that object.
-  // Ex: Would trigger `change:val`, `change:[0].val`, `change:arr[0].val` and `obj.arr[0].val`
-  // on each parent as it is propagated up the tree.
-  propagateEvent: function(type, model){
-    if(this.__parent__ === this || type === 'dirty'){ return void 0; }
-    if(type.indexOf('change:') === 0 && model.isModel){
-      if(this.isCollection && ~type.indexOf('change:[')){ return void 0; }
-      var key,
-          path = model.__path().replace(this.__parent__.__path(), '').replace(/^\./, ''),
-          changed = model.changedAttributes();
+const PROPAGATION_BLACKLIST = { "dirty": 1 };
+const LAST_PATH_SEGMENT = /[\.\[]?[^\.\[\:]*$/;
 
-      for(key in changed){
-        // TODO: Modifying arguments array is bad. change this
-        arguments[0] = ('change:' + path + (path && '.') + key); // jshint ignore:line
-        this.__parent__.trigger.apply(this.__parent__, arguments);
+var sharedMethods = {
+
+  // Override every object's `trigger` method to propagate events up to parent datum.
+  trigger: function(type){
+
+    // Call original trigger method to call applicable callbacks on this model
+    Backbone.Events.trigger.apply(this, arguments);
+
+    // If the options hash asks us not to propagate this even, stop.
+    // Options will always be the last variable passed to this function.
+    var options = arguments[arguments.length-1] || {};
+    if(options.propagate === false){ return this; }
+
+    // Save a mutable copy of the arguments passed to this function that we can
+    // edit as we pass it to our `parent`.
+    var args = [].slice.apply(arguments);
+    var parent = this.__parent__;
+
+    // If this is a named change event
+    if(!!~type.indexOf('change:')){
+
+      // Get our data object and raw event path
+      var model = arguments[1];
+      var path = type.replace('change:', '');
+
+      // Trigger an event on this data object for each intermediate object between
+      // the changed model and `this`. Ex: If `a.b[0].c` was modified, the Events
+      // `change:a.b[0].c`, `change:a.b[0]`, `change:a.b` would be triggered on
+      // object `a`.
+      while((path = path.replace(LAST_PATH_SEGMENT, ''))){
+        model = model.__parent__;
+        this.trigger('change:'+path, model, this.get(path, {isPath: 1}), {propagate: false});
       }
-      return void 0;
+
+      // Get the key of our last path segment. This is the un-stripped value: keys
+      // pointing to collections will still be wrapped in brackets (ex: [1]).
+      var key = (this.__path().match(LAST_PATH_SEGMENT) || [''])[0].replace(/^\./, '');
+
+      // If we have a key to work with, make any modifications needed before proxying up.
+      // TODO: Make internal path manipulation helper to encompass path mod logic
+      if(key){
+
+        // For Computed Properties, only handle those of type value that don't generate
+        // change events internally. Add to change hash and Proxy them right through
+        // to the parent with no modification – they already have the right event path name.
+        if(this.isComputedProperty){
+          parent.changed[key.replace(/\[([^\]*])\]/, '$1')] = this.returnType === 'value' ? this.cache.value : this.cache[this.returnType].changed;
+          if(this.returnType !== 'value'){ return this; }
+        }
+
+        // For all others, add to changed hash and add this model's location in
+        // its parent to the begining of the named `change:` event's path before
+        // proxying up to its parent.
+        else {
+          parent.changed[key.replace(/\[([^\]*])\]/, '$1')] = this.changed;
+          if(!!~args[0].indexOf('change:[')){ args[0] = args[0].replace(':', ':' + key); }
+          else{ args[0] = args[0].replace(':', ':' + key + '.'); }
+        }
+      }
     }
-    return this.__parent__.trigger.apply(this.__parent__, arguments);
+
+    // If this is not the root data element, or a blacklisted event, propagate
+    // the event up to this datum's parent.
+    if(parent !== this && !PROPAGATION_BLACKLIST[type]){
+      parent._changing = true;
+      parent.trigger.apply(parent, args);
+      parent._changing = false;
+    }
+
+    return this;
+
   },
 
   // Set this data object's parent to `parent` and, as long as a data object is
   // not its own parent, propagate every event triggered on `this` up the tree.
   setParent: function(parent){
-    if(this.__parent__){ this.off('all', this.propagateEvent); }
     this.__parent__ = parent;
     this._hasAncestry = true;
-    if(parent !== this){ this.on('all', this.__parent__.propagateEvent); }
     return parent;
   },
 

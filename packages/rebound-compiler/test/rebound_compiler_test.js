@@ -2,7 +2,7 @@
 
 import compiler from 'rebound-compiler/compile';
 import parse from 'rebound-compiler/parser';
-import tokenizer from 'simple-html-tokenizer';
+import { tokenize } from 'simple-html-tokenizer/index';
 import Model from 'rebound-data/model';
 
 function equalTokens(fragment, html, message) {
@@ -10,8 +10,8 @@ function equalTokens(fragment, html, message) {
 
   div.appendChild(fragment.cloneNode(true));
 
-  var fragTokens = tokenizer.tokenize(div.innerHTML);
-  var htmlTokens = tokenizer.tokenize(html);
+  var fragTokens = tokenize(div.innerHTML);
+  var htmlTokens = tokenize(html);
 
   function normalizeTokens(token) {
     if (token.type === 'StartTag') {

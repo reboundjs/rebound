@@ -1,24 +1,7 @@
-import { $, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
+import { $, Path, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
 import _hooks from "rebound-htmlbars/hooks";
 
 var RENDER_TIMEOUT;
-var TO_RENDER = [];
-var ENV_QUEUE = [];
-
-
-// A convenience method to push only unique eleents in an array of objects to
-// the TO_RENDER queue. If the element is a Lazy Value, it marks it as dirty in
-// the process
-var push = function(arr){
-  var i, len = arr.length;
-  this.added || (this.added = {});
-  arr.forEach((item) => {
-    if(this.added[item.cid]){ return; }
-    this.added[item.cid] = 1;
-    if(item.isLazyValue){ item.makeDirty(); }
-    this.push(item);
-  });
-};
 
 function reslot(env){
 
@@ -31,6 +14,7 @@ function reslot(env){
   var outlet,
       slots = env.root.options && env.root.options[REBOUND_SYMBOL];
 
+  // If we have no data, or no slots to re-render into, exit
   if(!env.root || !slots){ return; }
 
   // Walk the dom, without traversing into other custom elements, and search for
@@ -51,62 +35,93 @@ function reslot(env){
   }
 }
 
+// Listens for `change` events and calls `trigger` with the correct values
+function onChange(model, options){
+  trigger.call(this, model.__path(), model.changedAttributes());
+}
+
+// Listens for `reset` events and calls `trigger` with the correct values
+function onReset(data, options){
+  trigger.call(this, data.__path(), data.isModel ? data.changedAttributes() : { '@each': data }, options);
+}
+
+// Listens for `update` events and calls `trigger` with the correct values
+function onUpdate(collection, options){
+  trigger.call(this, collection.__path(), { '@each': collection }, options);
+}
+
+
+function ProcessQueue(func){
+  this.NextSymbol = '__Rebound_Process_Queue_Symbol__';
+  this.length = 0;
+  this.cache = {};
+  this.func = func;
+  this.first = null;
+  this.last = null;
+  this.processing = false;
+}
+
+ProcessQueue.prototype.add = function add(arr){
+  var i, obj, len = arr.length;
+  for(i=0;i<len;i++){
+    obj = arr[i];
+    obj.makeDirty && obj.makeDirty();
+    if(!obj || this.cache[obj.cid]){ continue; }
+    this.cache[obj.cid] = ++this.length;
+    this.last && (this.last[this.NextSymbol] = obj);
+    this.last = obj[this.NextSymbol] = obj;
+    !this.first && (this.first = obj);
+  }
+};
+
+ProcessQueue.prototype.process = function process(){
+  var len = this.length;
+  while(this.first && len--){
+    delete this.cache[this.first.cid];
+    var prev = this.first;
+    this.first = prev[this.NextSymbol];
+    delete prev[this.NextSymbol];
+    this.func(prev);
+  }
+  if(this.first === this.last){ this.first = this.last = null; }
+};
+
+const TO_RENDER = new ProcessQueue(function(item){ item.notify(); });
+const ENV_QUEUE = new ProcessQueue(function(env){
+  for(let key in env.revalidateQueue){
+    env.revalidateQueue[key].revalidate();
+  }
+  reslot(env);
+});
+
+
 // Called on animation frame. TO_RENDER is a list of lazy-values to notify.
 // When notified, they mark themselves as dirty. Then, call revalidate on all
 // dirty expressions for each environment we need to re-render. Use `while(queue.length)`
 // to accomodate synchronous renders where the render queue callbacks may trigger
 // nested calls of `renderCallback`.
 function renderCallback(){
-
-  while(TO_RENDER.length){
-    TO_RENDER.shift().notify();
-  }
-
-  TO_RENDER.added = {};
-
-  while(ENV_QUEUE.length){
-    let env = ENV_QUEUE.shift();
-    for(let key in env.revalidateQueue){
-      env.revalidateQueue[key].revalidate();
-    }
-    reslot(env);
-  }
-  ENV_QUEUE.added = {};
+  RENDER_TIMEOUT = null;
+  TO_RENDER.process();
+  ENV_QUEUE.process();
 }
 
-// Listens for `change` events and calls `trigger` with the correct values
-function onChange(model, options){
-  trigger.call(this, 'change', model, model.changedAttributes());
-}
-
-// Listens for `reset` events and calls `trigger` with the correct values
-function onReset(data, options){
-  trigger.call(this, 'reset', data, data.isModel ? data.changedAttributes() : { '@each': data }, options);
-}
-
-// Listens for `update` events and calls `trigger` with the correct values
-function onUpdate(collection, options){
-  trigger.call(this, 'update', collection, { '@each': collection }, options);
-}
-
-
-function trigger(type, data, changed, options={}){
+function trigger(basePath, changed, options={}){
 
   // If nothing has changed, exit.
-  if(!data || !changed){ return void 0; }
-
-  var basePath = data.__path();
+  if(!changed){ return void 0; }
 
   // If this event came from within a service, include the service key in the base path
   if(options.service){ basePath = options.service + '.' + basePath; }
 
+  // Replace any array path parts (ex: `[0]`) with the `@each` keyword and split.
+  basePath = basePath.replace(/\[[^\]]+\]/g, ".@each");
+  var parts = Path(basePath).split();
+  var context = [];
+
   // For each changed key, walk down the data tree from the root to the data
   // element that triggered the event and add all relevent callbacks to this
   // object's TO_RENDER queue.
-  basePath = basePath.replace(/\[[^\]]+\]/g, ".@each");
-  var parts = $.splitPath(basePath);
-  var context = [];
-
   while(1){
     let pre = context.join('.').trim();
     let post = parts.join('.').trim();
@@ -115,13 +130,13 @@ function trigger(type, data, changed, options={}){
       let path = (post + (post && key && '.') + key).trim();
       for(let testPath in this.env.observers[pre]){
         if($.startsWith(testPath, path)){
-          push.call(TO_RENDER, this.env.observers[pre][testPath]);
-          push.call(ENV_QUEUE, [this.env]);
+          TO_RENDER.add(this.env.observers[pre][testPath]);
+          ENV_QUEUE.add([this.env]);
         }
       }
     }
     if(parts.length === 0){ break; }
-    context.push(parts.shift());
+    context[context.length] = parts.shift();
   }
 
   // If Rebound is loaded in a testing environment, call renderCallback syncronously

@@ -1,5 +1,5 @@
 import Component from 'rebound-component/factory';
-import tokenizer from 'simple-html-tokenizer';
+import { tokenize } from 'simple-html-tokenizer/index';
 import compiler from 'rebound-compiler/compile';
 import reboundData from 'rebound-data/rebound-data';
 
@@ -11,8 +11,8 @@ function equalTokens(fragment, html, message) {
 
   div.appendChild(fragment.cloneNode(true));
 
-  var fragTokens = tokenizer.tokenize(div.innerHTML);
-  var htmlTokens = tokenizer.tokenize(html);
+  var fragTokens = tokenize(div.innerHTML);
+  var htmlTokens = tokenize(html);
 
   function normalizeTokens(token) {
     if (token.type === 'StartTag') {

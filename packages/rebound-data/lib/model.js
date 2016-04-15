@@ -10,7 +10,7 @@
 
 import Backbone from "backbone";
 import ComputedProperty from "rebound-data/computed-property";
-import $ from "rebound-utils/rebound-utils";
+import { Path, $ } from "rebound-utils/rebound-utils";
 
 // Returns a function that, when called, generates a path constructed from its
 // parent's path and the key it is assigned to. Keeps us from re-naming children
@@ -54,7 +54,7 @@ var Model = Backbone.Model.extend({
   toggle: function(attr, options) {
     options = options ? _.clone(options) : {};
     var val = this.get(attr);
-    if(!_.isBoolean(val)) console.error('Tried to toggle non-boolean value ' + attr +'!', this);
+    if(!_.isBoolean(val)){ console.error('Tried to toggle non-boolean value ' + attr +'!', this); }
     return this.set(attr, !val, options);
   },
 
@@ -144,37 +144,8 @@ var Model = Backbone.Model.extend({
 
   // **Model.Get** is overridden to provide support for getting from a deep data tree.
   // `key` may now be any valid json-like identifier. Ex: `obj.coll[3].value`.
-  // It needs to traverse `Models`, `Collections` and `Computed Properties` to
-  // find the correct value.
-  // - If key is undefined, return `undefined`.
-  // - If key is empty string, return `this`.
-  //
-  // For each part:
-  // - If a `Computed Property` and `options.raw` is true, return it.
-  // - If a `Computed Property` traverse to its value.
-  // - If not set, return its falsy value.
-  // - If a `Model` or `Collection`, traverse to it.
   get: function(key, options){
-    options || (options = {});
-    var parts  = $.splitPath(key),
-        result = this,
-        i, l=parts.length;
-
-    if(_.isUndefined(key) || _.isNull(key)){ return void 0; }
-    if(key === '' || parts.length === 0){ return result; }
-
-    for (i = 0; i < l; i++) {
-      if(result && result.isComputedProperty && options.raw) return result;
-      if(result && result.isComputedProperty) result = result.value();
-      if(_.isUndefined(result) || _.isNull(result)) return result;
-      if(parts[i] === '@parent') result = result.__parent__;
-      else if(result.isCollection) result = result.models[parts[i]];
-      else if(result.isModel) result = result.attributes[parts[i]];
-      else if(result && result.hasOwnProperty(parts[i])) result = result[parts[i]];
-    }
-
-    if(result && result.isComputedProperty && !options.raw) result = result.value();
-    return result;
+    return Path(key).query(this, options);
   },
 
 
@@ -197,14 +168,14 @@ var Model = Backbone.Model.extend({
     $.extractComputedProps(attrs);
 
     // If reset option passed, do a reset. If nothing passed, return.
-    if(options.reset === true) return this.reset(attrs, options);
-    if(options.defaults === true) this.defaults = attrs;
+    if(options.reset === true){ return this.reset(attrs, options); }
+    if(options.defaults === true){ this.defaults = attrs; }
     if(_.isEmpty(attrs)){ return void 0; }
 
     // For each attribute passed:
     for(key in attrs){
       let val = attrs[key],
-          paths = $.splitPath(key),
+          paths = Path(key).split(),
           attr  = (paths.pop() || ''),       // The key          ex: foo[0].bar --> bar
           target = this.get(paths.join('.')),  // The element    ex: foo.bar.baz --> foo.bar
           lineage;

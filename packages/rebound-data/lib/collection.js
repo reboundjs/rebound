@@ -3,7 +3,7 @@
 
 import Backbone from "backbone";
 import Model from "rebound-data/model";
-import $ from "rebound-utils/rebound-utils";
+import { Path, $ } from "rebound-utils/rebound-utils";
 
 function pathGenerator(collection){
   return function(){
@@ -25,6 +25,7 @@ var Collection = Backbone.Collection.extend({
     options || (options = {});
     this._byValue = {};
     this.helpers = {};
+    this.changed = {};
     this.cid = $.uniqueId('collection');
 
     // Set lineage
@@ -43,6 +44,13 @@ var Collection = Backbone.Collection.extend({
 
   },
 
+  changedAttributes(){
+    return Model.prototype.changedAttributes.apply(this, arguments);
+  },
+  hasChanged(){
+    return Model.prototype.hasChanged.apply(this, arguments);
+  },
+
   // TODO: Start - `Upstream to Backbone?`.
   // Always give precedence to the provided model's idAttribute. Fall back to
   // the Collection's idAttribute, and then to the default `id`.
@@ -55,7 +63,7 @@ var Collection = Backbone.Collection.extend({
     if(data.isData){ return data.get(idAttribute); }
 
     // Otherwise, iterate down the object trying to get the id
-    $.splitPath(idAttribute).forEach(function(val, key){
+    Path(idAttribute).split().forEach(function(val, key){
       if(!_.isObject(data)){ return; }
       data = data.isData ? data.get(val) : data[val];
     });
@@ -95,7 +103,7 @@ var Collection = Backbone.Collection.extend({
         if (id != null){ this._byId[id] = model; }
       }
     }
-    this.trigger.apply(this, arguments);
+    // this.trigger.apply(this, arguments);
   },
   // TODO: End - `Upstream to Backbone?`.
 
@@ -103,7 +111,7 @@ var Collection = Backbone.Collection.extend({
   get: function(key, options){
 
     // Split the path at all '.', '[' and ']' and find the value referanced.
-    var parts = _.isString(key) ? $.splitPath(key) : [],
+    var parts = _.isString(key) ? Path(key).split() : [],
         result = this,
         l=parts.length,
         i=0;
@@ -126,33 +134,13 @@ var Collection = Backbone.Collection.extend({
       return res;
     }
 
-    // If key is not a string, return undefined
-    if (!_.isString(key)){ return void 0; }
+    return Path(key).query(this, options);
 
-    if(_.isUndefined(key) || _.isNull(key)){ return key; }
-    if(key === '' || parts.length === 0){ return result; }
-
-    if (parts.length > 0) {
-      for ( i = 0; i < l; i++) {
-        // If returning raw, always return the first computed property found. If undefined, you're done.
-        if(result && result.isComputedProperty && options.raw) return result;
-        if(result && result.isComputedProperty) result = result.value();
-        if(_.isUndefined(result) || _.isNull(result)) return result;
-        if(parts[i] === '@parent') result = result.__parent__;
-        else if(result.isCollection) result = result.models[parts[i]];
-        else if(result.isModel) result = result.attributes[parts[i]];
-        else if(result.hasOwnProperty(parts[i])) result = result[parts[i]];
-      }
-    }
-
-    if(result && result.isComputedProperty && !options.raw) result = result.value();
-
-    return result;
   },
 
   set: function(models, options){
     var newModels = [],
-        parts = _.isString(models) ? $.splitPath(models) : [],
+        parts = _.isString(models) ? Path(models).split() : [],
         res,
         lineage = {
           parent: this,
@@ -173,18 +161,29 @@ var Collection = Backbone.Collection.extend({
 
     // If another collection, treat like an array
     models = (models.isCollection) ? models.models : models;
+
     // Ensure models is an array
     models = (!_.isArray(models)) ? [models] : models;
 
-    // If the model already exists in this collection, or we are told not to clone it, let Backbone handle the merge
-    // Otherwise, create our copy of this model, give them the same cid so our helpers treat them as the same object
-    // Use the more unique of the two constructors. If our Model has a custom constructor, use that. Otherwise, use
-    // Collection default Model constructor.
+    // For each data object being added
     _.each(models, function(data, index){
-      if(data.isModel && options.clone === false || this._byId[data.cid]) return newModels[index] = data;
-      var constructor = (data.constructor !== Object && data.constructor !== Rebound.Model) ? data.constructor : this.model;
+
+      // If the model already exists in this collection, or we are told not to clone it, let Backbone handle the merge
+      if(data.isData && options.clone === false || this._byId[data.cid]){
+        return newModels[index] = data;
+      }
+
+      // Otherwise, create our copy of this model,
+      // Use the more unique of the two constructors. If our Model has a custom
+      // constructor, use that. Otherwise, use Collection default Model constructor.
+      var constructor = _.isArray(data) ? Collection : this.model;
+      if(data.constructor !== Array && data.constructor !== Object && data.constructor !== Rebound.Model){
+        constructor = data.constructor;
+      }
       newModels[index] = new constructor(data, _.defaults(lineage, options));
-      data.isModel && (newModels[index].cid = data.cid);
+
+      // Give them the same cid so our helpers treat them as the same object
+      data.isData && (newModels[index].cid = data.cid);
     }, this);
 
     // Ensure that this element now knows that it has children now. Without this cyclic dependancies cause issues
@@ -193,7 +192,15 @@ var Collection = Backbone.Collection.extend({
     // Call original set function with model duplicates
     return Backbone.Collection.prototype.set.call(this, newModels, options);
 
+  },
+
+  // Override Collections' `_isModel` call so we can nest Collections without `Backbone.set`
+  // Wrapping them in a Model
+  _isModel: function _isModel(datum){
+    return datum.isData;
   }
+
+
 
 });
 

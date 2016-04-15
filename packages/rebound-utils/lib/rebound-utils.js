@@ -5,12 +5,13 @@ import Backbone from "backbone";
 import { query } from "rebound-utils/urls";
 import ajax from "rebound-utils/ajax";
 import events from "rebound-utils/events";
+import Path from "rebound-utils/paths";
 
 var ID_COUNTERS = {};
 
-export const REBOUND_SYMBOL = '__REBOUND_SYMBOL_PROPERTY_NAME__';
+const REBOUND_SYMBOL = '__REBOUND_SYMBOL_PROPERTY_NAME__';
 
-export var $ = function $(query){
+var $ = function $(query){
 
   var i, selector = [];
 
@@ -107,15 +108,6 @@ $.prototype.empty = function empty(){
   return this;
 };
 
-// Given a valid data path, split it into an array of its parts.
-// ex: foo.bar[0].baz --> ['foo', 'var', '0', 'baz']
-$.splitPath = function splitPath(path){
-  path = ('.'+path+'.').split(/(?:\.|\[|\])+/);
-  path.pop();
-  path.shift();
-  return path;
-};
-
 // Searches each key in an object and tests if the property has a lookupGetter or
 // lookupSetter. If either are preset convert the property into a computed property.
 $.extractComputedProps = function extractComputedProps(obj){
@@ -135,8 +127,8 @@ $.extractComputedProps = function extractComputedProps(obj){
 // Returns true if the data path `str` starts with `test`
 $.startsWith = function startsWith(str, test){
   if(str === test) return true;
-  str = $.splitPath(str);
-  test = $.splitPath(test);
+  str = Path(str).split();
+  test = Path(test).split();
   while(test[0] && str[0]){
     if(str[0] !== test[0] && str[0] !== '@each' && test[0] !== '@each') return false;
     test.shift();
@@ -145,4 +137,4 @@ $.startsWith = function startsWith(str, test){
   return true;
 };
 
-export default $;
+export { $, Path, REBOUND_SYMBOL, $ as default };

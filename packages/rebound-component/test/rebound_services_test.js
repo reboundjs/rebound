@@ -1,5 +1,5 @@
 import compiler from 'rebound-compiler/compile';
-import tokenizer from 'simple-html-tokenizer';
+import { tokenize } from 'simple-html-tokenizer/index';
 import Component from 'rebound-component/component';
 
 QUnit.test('Rebound Services', function() {

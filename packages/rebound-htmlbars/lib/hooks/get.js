@@ -2,7 +2,7 @@
 
 // The get hook streams a property at a named path from a given scope. It returns
 // a `LazyValue` that other code can subscribe to and be alerted when values change.
-import $ from "rebound-utils/rebound-utils";
+import { $, Path } from "rebound-utils/rebound-utils";
 import LazyValue from "rebound-htmlbars/lazy-value";
 
 export default function get(env, scope, path){
@@ -12,7 +12,7 @@ export default function get(env, scope, path){
   if(path === 'this'){ path = ''; }
 
   // If this path referances a block param, use that as the context instead.
-  var rest = $.splitPath(path);
+  var rest = Path(path).split();
   var key = rest.shift();
   if(scope.localPresent[key]){
     context = scope.locals[key];

@@ -184,13 +184,23 @@
 		},
 		test: function(event){
 			var todos = this.get('todos');
-			for(var i=0;i<500;i++){
-				todos.push({
-					title: "Tie Bowtie",
-					editing: false,
-					isCompleted: !!(i%2)
-				})
-			}
+			var start, end, average = 0, n=0;
+			// for(var n=1;n<=25;n++){
+				start = window.performance.now();
+				for(var i=0;i<500;i++){
+					todos.push({
+						title: "Tie Bowtie",
+						editing: false,
+						isCompleted: !!(i%2)
+					});
+				}
+				end = window.performance.now();
+				average += (end - start);
+				console.log('Run:', average / n);
+			// }
+			console.log('--------------------')
+			console.log('Average:', average / n);
+
 		}
 	});
 </script>

@@ -287,6 +287,7 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
   model.get('arr').shift();
   deepEqual(model.get('even').length, 2, 'Computed properties that return a modified Collection re-evaluate on dependancy remove.');
   deepEqual(model.get('firstEven.val'), 2, 'Computed properties depending on other computed properties that depend on a collection re-evaluate on base dependancy remove.');
+  window.FOO = true;
   model.set('even[0].val', 6);
   deepEqual(model.get('arr[1].val'), 6, 'Setting a Model in a Computed property that return a modified Collection modifies the original.');
 
@@ -561,5 +562,33 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
   model.set('test', 2);
   equal(model.get('proxy[0]').id, 2, 'Custom deep idAttributes on Models are totally a thing. Collections will defer to the model for its idAttribute.');
   equal(model.get('proxy').length, 2, 'Computed Properties returning models with a custom deep idAttribues don\' screw up Collection cache re-compute.');
+
+
+
+
+  // Proxied object uniqueness
+  collection = Collection.extend({
+    custom: true,
+    model: Model.extend({
+      defaults: {
+        foo: 'bar'
+      }
+    })
+  });
+
+  model = new Model({
+
+    arr: new collection([{one: 1}, {two: 2}, {three: 3}]),
+
+    get proxy(){
+      return this.get('arr');
+    }
+
+  });
+
+  assert.ok(model.get('proxy[0]') !== model.get('arr[0]'), 'Models returned from a proxied collection are not the same object.');
+  equal(model.get('proxy[0]').cid, model.get('arr[0]').cid, 'Models returned from a proxied collection share a cid.');
+  // equal(model.get('proxy').custom, model.get('arr').custom, 'Proxied objects retain their constructor specific properties.');
+
 
 });

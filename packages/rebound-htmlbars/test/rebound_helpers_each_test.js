@@ -1,5 +1,5 @@
 import compiler from 'rebound-compiler/compile';
-import tokenizer from 'simple-html-tokenizer';
+import { tokenize } from 'simple-html-tokenizer/index';
 import reboundData from 'rebound-data/rebound-data';
 
 var Model = reboundData.Model,
@@ -10,8 +10,8 @@ function equalTokens(fragment, html, message) {
 
   div.appendChild(fragment.cloneNode(true));
 
-  var fragTokens = tokenizer.tokenize(div.innerHTML);
-  var htmlTokens = tokenizer.tokenize(html);
+  var fragTokens = tokenize(div.innerHTML);
+  var htmlTokens = tokenize(html);
 
   function normalizeTokens(token) {
     if (token.type === 'StartTag') {
@@ -191,9 +191,11 @@ QUnit.test('Rebound Helpers - Each', function(assert) {
       return new Promise(function(resolve) {
         window.setTimeout(function(){
           equal(dom.firstChild.innerHTML, '124', 'Each blocks\' yielded templates that are databound');
+          console.log('-----------------------')
           data.set('show', false);
           data.set('show', true);
           data.set('arr[2].val', '5');
+          console.log('-----------------------')
           rerendering();
           resolve(dom);
         }, 10);

@@ -19,6 +19,7 @@ import helpers_unless from "rebound-htmlbars/test/rebound_helpers_unless_test";
 import model from "rebound-data/test/rebound_model_test";
 import collection from "rebound-data/test/rebound_collection_test";
 import computedProperty from "rebound-data/test/rebound_computed_property_test";
+import events from "rebound-data/test/rebound_events_test";
 
 import router from "rebound-router/test/rebound_router_test";
 

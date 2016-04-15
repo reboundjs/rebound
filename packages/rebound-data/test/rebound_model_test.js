@@ -202,7 +202,28 @@ QUnit.test('Rebound Data - Model', function() {
 
   equal(model.get('prop'), model.get('val'), 'Extended Rebound models with a computed property in its defaults hash are parsed succesfully.');
 
+  var ContainerModel = Model.extend({
+    defaults: {
+      obj: new NewModel()
+    }
+  });
 
+  model = new ContainerModel({
+    biz: 'baz',
+    obj2: new NewModel({foo: 'bar'})
+  });
+  model2 = new ContainerModel({});
+
+  equal(model.get('obj.val'), 'foo', 'Rebound Models with other extended Models in their defaults hash preserve the default class properties.');
+  equal(model.get('obj.prop'), 'foo', 'Rebound Models with other extended Models in their defaults hash preserve the default class computed properties.');
+
+  equal(model.get('obj2.val'), 'foo', 'Rebound Models taking other extended Models in their instance hash preserve the default class properties.');
+  equal(model.get('obj2.prop'), 'foo', 'Rebound Models taking other extended Models in their instance hash preserve the default class computed properties.');
+
+  model.set('obj3', new NewModel({foo: 'bar'}));
+
+  equal(model.get('obj3.val'), 'foo', 'Rebound Models taking other extended Models in their set method preserve the default class properties.');
+  equal(model.get('obj3.prop'), 'foo', 'Rebound Models taking other extended Models in their set method preserve the default class computed properties.');
 
 
 });
