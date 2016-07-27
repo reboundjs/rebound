@@ -1,4 +1,4 @@
-import { $, Path, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
+import { $, Path, Queue, REBOUND_SYMBOL } from "rebound-utils/rebound-utils";
 import _hooks from "rebound-htmlbars/hooks";
 
 var RENDER_TIMEOUT;
@@ -37,57 +37,21 @@ function reslot(env){
 
 // Listens for `change` events and calls `trigger` with the correct values
 function onChange(model, options){
-  trigger.call(this, model.__path(), model.changedAttributes());
+  trigger.call(this, model.path, model.changed);
 }
 
 // Listens for `reset` events and calls `trigger` with the correct values
 function onReset(data, options){
-  trigger.call(this, data.__path(), data.isModel ? data.changedAttributes() : { '@each': data }, options);
+  trigger.call(this, data.path, data.isModel ? data.changed : { '@each': data }, options);
 }
 
 // Listens for `update` events and calls `trigger` with the correct values
 function onUpdate(collection, options){
-  trigger.call(this, collection.__path(), { '@each': collection }, options);
+  trigger.call(this, collection.path, { '@each': collection }, options);
 }
 
-
-function ProcessQueue(func){
-  this.NextSymbol = '__Rebound_Process_Queue_Symbol__';
-  this.length = 0;
-  this.cache = {};
-  this.func = func;
-  this.first = null;
-  this.last = null;
-  this.processing = false;
-}
-
-ProcessQueue.prototype.add = function add(arr){
-  var i, obj, len = arr.length;
-  for(i=0;i<len;i++){
-    obj = arr[i];
-    obj.makeDirty && obj.makeDirty();
-    if(!obj || this.cache[obj.cid]){ continue; }
-    this.cache[obj.cid] = ++this.length;
-    this.last && (this.last[this.NextSymbol] = obj);
-    this.last = obj[this.NextSymbol] = obj;
-    !this.first && (this.first = obj);
-  }
-};
-
-ProcessQueue.prototype.process = function process(){
-  var len = this.length;
-  while(this.first && len--){
-    delete this.cache[this.first.cid];
-    var prev = this.first;
-    this.first = prev[this.NextSymbol];
-    delete prev[this.NextSymbol];
-    this.func(prev);
-  }
-  if(this.first === this.last){ this.first = this.last = null; }
-};
-
-const TO_RENDER = new ProcessQueue(function(item){ item.notify(); });
-const ENV_QUEUE = new ProcessQueue(function(env){
+const TO_RENDER = new Queue(function(item){ item.notify(); });
+const ENV_QUEUE = new Queue(function(env){
   for(let key in env.revalidateQueue){
     env.revalidateQueue[key].revalidate();
   }

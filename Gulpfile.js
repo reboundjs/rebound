@@ -18,6 +18,10 @@ var replace = require('gulp-replace');
 var stylish = require('jshint-stylish');
 
 var browserify = require('browserify');
+var rollup = require('gulp-rollup')
+var nodeResolve = require('rollup-plugin-node-resolve');
+var commonjs = require('rollup-plugin-commonjs');
+
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var uglify = require('gulp-uglify');
@@ -121,18 +125,15 @@ gulp.task('amd', ['clean-amd'], function() {
 
 gulp.task('babel', ['amd', 'cjs']);
 
-gulp.task('shims', function() {
-  return gulp.src([
-    'bower_components/console-polyfill/index.js',
-    'bower_components/requestAnimationFrame/rAF.js',
-    'bower_components/currentScript/currentScript.js',
-    'bower_components/classList/classList.js',
-    'bower_components/matchesSelector/matchesSelector.polyfill.js',
-    'bower_components/document-register-element/build/document-register-element.max.js',
-    'bower_components/setimmediate/setImmediate.js',
-    'bower_components/promise-polyfill/Promise.js',
-    ])
-  .pipe(concat('rebound.shims.js'))
+gulp.task('shims', function(){
+  return gulp.src('packages/polyfill.js')
+  .pipe(rollup({
+    plugins: [
+      nodeResolve({ jsnext: true, main: true }),
+      commonjs()
+    ]
+  }))
+  .pipe(rename({basename: "rebound.shims"}))
   .pipe(gulp.dest('dist'))
   .pipe(uglify())
   .pipe(rename({basename: "rebound.shims.min"}))
@@ -214,7 +215,7 @@ gulp.task('compile-test-apps', ['cjs'],  function(){
 
 gulp.task('compile-tests', ['cjs'], function(){
   return gulp.src([
-      "packages/*/test/*.js",
+      "packages/*/test/**/*.js",
       "packages/tests.js"
     ])
   .pipe(babel({

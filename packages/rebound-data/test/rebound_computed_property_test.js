@@ -36,12 +36,12 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
     }
   });
   equal(true, model.get('objProp').isModel, 'Returning a vanilla object gives you a Rebound Model on get.');
-  deepEqual(model, model.get('objProp').__parent__, 'Returning a vanilla object gives you a Rebound Model with its ancestry set.');
-  deepEqual('objProp', model.get('objProp').__path(), 'Returning a vanilla object gives you a Rebound Model with its path set.');
+  deepEqual(model, model.get('objProp').parent, 'Returning a vanilla object gives you a Rebound Model with its ancestry set.');
+  deepEqual('objProp', model.get('objProp').path, 'Returning a vanilla object gives you a Rebound Model with its path set.');
 
   equal(true, model.get('arrProp').isCollection, 'Returning a vanilla array gives you a Rebound Collection on get.');
-  deepEqual(model, model.get('arrProp').__parent__, 'Returning a vanilla object gives you a Rebound Collection with its ancestry set.');
-  deepEqual('arrProp', model.get('arrProp').__path(), 'Returning a vanilla object gives you a Rebound Collection with its path set.');
+  deepEqual(model, model.get('arrProp').parent, 'Returning a vanilla object gives you a Rebound Collection with its ancestry set.');
+  deepEqual('arrProp', model.get('arrProp').path, 'Returning a vanilla object gives you a Rebound Collection with its path set.');
 
 
 
@@ -547,7 +547,11 @@ QUnit.test('Rebound Data - Computed Properties', function( assert ) {
   model = new Model({
 
     arr: new collection([
-      {val: {id: 1}, test: 1},{val: {id: 2}, test: 2},{val: {id: 3}, test: 1},{val: {id: 4}, test: 2},{val: {id: 5}, test: 1}
+      {val: {id: 1}, test: 1},
+      {val: {id: 2}, test: 2},
+      {val: {id: 3}, test: 1},
+      {val: {id: 4}, test: 2},
+      {val: {id: 5}, test: 1}
     ]),
 
     test: 1,

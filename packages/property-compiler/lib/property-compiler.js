@@ -51,7 +51,7 @@ function compile(prop, name){
     // TODO: handle gets on collections
     if(token.value === 'get'){
       token.nextToken();
-      while(_.isUndefined(token.value)){
+      while(token.value === void 0){
         token.nextToken();
       }
       // Replace any access to a collection with the generic @each placeholder and push dependancy
@@ -60,7 +60,7 @@ function compile(prop, name){
 
     if(token.value === 'pluck'){
       token.nextToken();
-      while(_.isUndefined(token.value)){
+      while(token.value === void 0){
         token.nextToken();
       }
 
@@ -74,7 +74,7 @@ function compile(prop, name){
 
     if(token.value === 'at'){
       token.nextToken();
-      while(_.isUndefined(token.value)){
+      while(token.value === void 0){
         token.nextToken();
       }
       workingpath.push('@each');
@@ -97,7 +97,7 @@ function compile(prop, name){
       workingpath.push(attrs);
     }
 
-    if(listening && (_.indexOf(TERMINATORS, token.type.label) > -1 || _.indexOf(TERMINATORS, token.value) > -1)){
+    if(listening && (TERMINATORS.indexOf(token.type.label) > -1 || TERMINATORS.indexOf(token.value) > -1)){
       workingpath = _.reduce(workingpath, reduceMemos, ['']);
       finishedPaths = _.compact(_.union(finishedPaths, workingpath));
       workingpath = [];

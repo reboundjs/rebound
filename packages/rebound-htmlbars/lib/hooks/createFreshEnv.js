@@ -5,13 +5,14 @@
 // augmented with helpers as it goes
 import { default as _DOMHelper } from "dom-helper";
 import helpers from "rebound-htmlbars/helpers";
+import { $ } from "rebound-utils/rebound-utils";
 
 var DOMHelper = _DOMHelper.default || _DOMHelper; // Fix for stupid Babel imports
 
 export default function createFreshEnv(){
   return {
     isReboundEnv: true,
-    cid: _.uniqueId('env'),
+    cid: $.uniqueId('env'),
     root: null,
     helpers: helpers,
     hooks: this,

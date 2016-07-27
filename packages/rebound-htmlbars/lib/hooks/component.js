@@ -83,7 +83,7 @@ export default function component(morph, env, scope, tagName, params, attrs, tem
       // TODO: Currently, showing objects as properties on the custom element causes problems.
       // Linked models between the context and component become the same exact model and all hell breaks loose.
       // Find a way to remedy this. Until then, don't show objects.
-      if (_.isObject(value) || _.isUndefined(value)) { return; }
+      if (_.isObject(value) || value === void 0) { return; }
       value = _.isObject(value) ? JSON.stringify(value) : value;
       try {
         ATTRIBUTES[key] ? element.setAttribute(key, value) : element.dataset[key] = value;

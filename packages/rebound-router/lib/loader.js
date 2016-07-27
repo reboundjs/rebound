@@ -22,7 +22,7 @@ var loader = {
       var e = document.createElement('script');
       e.setAttribute('type', 'text/javascript');
       e.setAttribute('src', url);
-      e.setAttribute('id', (id || _.uniqueId('module')) );
+      e.setAttribute('id', (id || $.uniqueId('module')) );
       MODULE_CACHE[url] = e;
 
       // All browsers support loading events on `<script>` elements, bind to these

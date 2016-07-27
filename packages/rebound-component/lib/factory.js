@@ -58,7 +58,7 @@ export function registerComponent(type, options={}) {
       var current = this.data.toJSON();
       var defaults = this.data.defaults;
       for(var key in defaults){
-        if ((!current.hasOwnProperty(key) || _.isUndefined(current[key])) && defaults.hasOwnProperty(key)) {
+        if ((!current.hasOwnProperty(key) || current[key] === void 0) && defaults.hasOwnProperty(key)) {
           this.data.set(key, defaults[key]);
         }
       }

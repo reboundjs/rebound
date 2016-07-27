@@ -13,34 +13,29 @@ var Component = Model.extend({
   isHydrated: true,
   defaults: {},
 
-
-  // A method that returns a root scope by default. Meant to be overridden on
-  // instantiation if applicable.
-  __path: function(){ return this._scope || ''; },
-
-
   constructor(el, data, options){
 
     // Ensure options is an object
     options || (options = {});
 
+    Model.call(this);
+
     // Bind certian methods to ensure they are run in the context of our Component
-    _.bindAll(this, '_callOnComponent', '_listenToService');
+    this._callOnComponent = this._callOnComponent.bind(this);
+    this._listenToService = this._listenToService.bind(this);
 
     // Set instance cid and caches for this Component
     this.cid = $.uniqueId('component');
-    this.attributes = {};
-    this.changed = {};
     this.consumers = [];
-    this.services = {};
+    this.services || (this.services = {});
     this.loadCallbacks = [];
     this.options = options;
 
     // If we are told this is not a hydrated component, mark it as such
     if(options.isHydrated === false){ this.isHydrated = false; }
 
-    // Components are always the top of their data tree. Set parent and root to itself.
-    this.__parent__ = this.__root__ = this;
+    // Components are always the top of their data tree. Set parent to null.
+    this.parent = null;
 
     // Take our parsed data and add it to our backbone data structure. Does a deep defaults set.
     // In the model, primatives (arrays, objects, etc) are converted to Backbone Objects
@@ -84,18 +79,18 @@ var Component = Model.extend({
     var self = this;
     this.listenTo(service, 'all', (type, model, value, options={}) => {
       var attr, oldScope = service._scope,
-          path = model.__path(),
+          path = model.path,
           changed;
 
       // TODO: Find a better way to get service keys in their path() method based on call Scope
-      // Services may be installed at any location. In order for the __path() method
+      // Services may be installed at any location. In order for the path() method
       // to include this location in the correct context, it needs to have contextual
       // knowledge of what called it. For the lifetime of this event tree, re-write
       // its scope property appropreately. Re-set it to previous value when done.
       service._scope = key;
 
       if(type.indexOf('change:') === 0){
-        changed = model.changedAttributes();
+        changed = model.changed;
         for(attr in changed){
           // TODO: Modifying arguments array is bad. change this
           type = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
@@ -117,14 +112,37 @@ var Component = Model.extend({
   },
 
   deinitialize(){
+    super.deinitialize();
+
+    // If there is a dom element associated with this data object, destroy all listeners associated with it.
+    // Remove all event listeners from this dom element, recursively remove element lazyvalues,
+    // and then remove the element referance itself.
+    if(this.el){
+      _.each(this.el.__listeners, function(handler, eventType){
+        if (this.el.removeEventListener){ this.el.removeEventListener(eventType, handler, false); }
+        if (this.el.detachEvent){ this.el.detachEvent('on'+eventType, handler); }
+      }, this);
+      $(this.el).walkTheDOM(function(el){
+        if(el.__lazyValue && el.__lazyValue.destroy()){ n.__lazyValue.destroy(); }
+      });
+      delete this.el.__listeners;
+      delete this.el.__events;
+      delete this.$el;
+      delete this.el;
+    }
+
+    // Clean up Hook callback references.
+    delete this.__observers;
+
+    // Reove ourselves from each service we consume.
     if(this.consumers.length){ return void 0; }
     _.each(this.services, (service, key) => {
       _.each(service.consumers, (consumer, index) => {
-        if(consumer.component === this) service.consumers.splice(index, 1);
+        if(consumer && consumer.component === this) service.consumers.splice(index, 1);
       });
     });
     delete this.services;
-    Model.prototype.deinitialize.apply(this, arguments);
+
   },
 
   // LazyComponents have an onLoad function that calls all the registered callbacks
@@ -140,6 +158,7 @@ var Component = Model.extend({
   // It also marks itself as a consumer of this component
   set(key, val, options){
     var attrs, attr, serviceOptions;
+    this.services || (this.services = {});
     if (typeof key === 'object') {
       attrs = (key.isModel) ? key.attributes : key;
       options = val;
@@ -180,7 +199,7 @@ var Component = Model.extend({
     if(this.el){
       $(this.el).trigger(eventName, arguments);
     }
-    Backbone.Model.prototype.trigger.apply(this, arguments);
+    Model.prototype.trigger.apply(this, arguments);
   },
 
   _onAttributeChange(attrName, oldVal, newVal){
@@ -212,7 +231,7 @@ function processProps(protoProps, staticProps){
     'trigger':1,    'get':1,      'set':1,     'has':1,        'escape':1,
     'unset':1,      'clear':1,    'cid':1,     'attributes':1, 'hasChanged':1,
     'changed':1,    'toJSON':1,   'isValid':1, 'isNew':1,      'validationError':1,
-    'previous':1,   'toggle':1,   'previousAttributes':1,      'changedAttributes':1,
+    'previous':1,   'toggle':1
   },
   configProperties = {
     'id':1,        'idAttribute':1,      'url':1,              'urlRoot':1,

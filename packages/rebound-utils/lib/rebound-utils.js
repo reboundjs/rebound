@@ -6,6 +6,7 @@ import { query } from "rebound-utils/urls";
 import ajax from "rebound-utils/ajax";
 import events from "rebound-utils/events";
 import Path from "rebound-utils/paths";
+import Queue from "rebound-utils/queue";
 
 var ID_COUNTERS = {};
 
@@ -137,4 +138,34 @@ $.startsWith = function startsWith(str, test){
   return true;
 };
 
-export { $, Path, REBOUND_SYMBOL, $ as default };
+['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error', 'Object', 'Array'].forEach(function(name) {
+  $['is' + name] = function(obj) {
+    return Object.prototype.toString.call(obj) === '[object ' + name + ']';
+  };
+});
+
+// Use native isArray if present
+$.isArray = Array.isArray || $.isArray;
+
+$.makeProtected = function(obj, parent, keys){
+  var proto = parent.prototype;
+  var attrs = {}
+  keys.forEach((key) => {
+    if (proto[key] !== obj[key]) return;
+    attrs[key] = {
+      get: function(){
+        console.error(`Error: Attempted to get value of protected property ${key} on ${this}. This property may be used internally by a subclass by calling "super.${key}"`);
+        return void 0;
+      },
+      set: function(val){
+        console.error(`Error: Attempted to set value of protected property ${key} on ${this}. This property may be used internally by a subclass by calling "super.${key}"`);
+        return void 0;
+      },
+      configurable: false,
+      enumerable: false
+    }
+  });
+  return Object.defineProperties(obj, attrs);
+}
+
+export { $, Path, Queue, REBOUND_SYMBOL, $ as default };
