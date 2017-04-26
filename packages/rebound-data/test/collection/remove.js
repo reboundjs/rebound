@@ -1,24 +1,31 @@
 import { Model, Collection } from "rebound-data/rebound-data";
 
-QUnit.skip("[Rebound Data] Collection – Remove", function(assert) {
-  var collection;
 
-  collection = new Collection([
-    {id: 1, str: 'foo'},
-    {id: 2, bool: true},
-    {id: 3, int: 1},
-    {id: 4, obj: {
-      val: 'bar'
-    }}
-  ]);
+export default function tests(){
 
-  assert.equal(collection.get("1").id, 2, "Collection.get works to fetch a single model with string number syntax");
-  assert.equal(collection.get("[1]").id, 2, "Collection.get works to fetch a single model with bracket syntax");
-  assert.equal(collection.get(1).id, 2, "Collection.get works to fetch a single model with string interger syntax");
+  QUnit.module("Remove", function(){
+    QUnit.test("remove", function(assert) {
+      //
+      // var collection = new Collection([
+      //   {id: 1, str: 'foo'},
+      //   {id: 2, bool: true},
+      //   {id: 3, int: 1},
+      //   {id: 4 }
+      // ]);
 
-  assert.equal(collection.get("[0].str"), "foo", "Collection.get works on nested string values");
-  assert.equal(collection.get("[1].bool"), true, "Collection.get works on nested boolean values");
-  assert.equal(collection.get("[2].int"), 1, "Collection.get works on nested interger values");
-  assert.equal(collection.get("[3].obj.val"), "bar", "Collection.get works on deep nested values");
+      var model = new Model({
+        arr: [
+          {id: 1, str: 'foo'},
+          {id: 2, bool: true},
+          {id: 3, int: 1},
+          {id: 4 }
+        ]
+      })
 
-});
+      model.get('arr').remove(model.get('arr').at(1));
+      assert.deepEqual(Object.keys(model.changed()), ['arr[1]', 'arr'], "Remove propagates changed values up to parent");
+
+    });
+  });
+
+}

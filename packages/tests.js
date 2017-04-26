@@ -17,15 +17,23 @@ import helpers_partials from "rebound-htmlbars/test/rebound_helpers_partials_tes
 import helpers_register from "rebound-htmlbars/test/rebound_helpers_register_test";
 import helpers_unless from "rebound-htmlbars/test/rebound_helpers_unless_test";
 
-
+import path from "rebound-data/test/path";
 import events from "rebound-data/test/events";
+
 import data from "rebound-data/test/data";
+import value from "rebound-data/test/value";
 import model from "rebound-data/test/model";
+import collection from "rebound-data/test/collection";
+import computedProperty from "rebound-data/test/rebound_computed_property_test";
 
 QUnit.module("[Rebound Data]", function(){
+  path();
   events();
   data();
+  value();
   model();
+  collection();
+  computedProperty();
 });
 
 import collection_add from "rebound-data/test/collection/add";
@@ -46,7 +54,6 @@ import collection_toJSON from "rebound-data/test/collection/toJSON";
 import collection_unshift from "rebound-data/test/collection/unshift";
 import collection_where from "rebound-data/test/collection/where";
 
-import computedProperty from "rebound-data/test/rebound_computed_property_test";
 import events_test from "rebound-data/test/rebound_events_test";
 
 import router from "rebound-router/test/rebound_router_test";

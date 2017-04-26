@@ -1,7 +1,7 @@
 // Rebound Collection
 // -------------------
 
-// If models tend to represent a single row of data, a Backbone Collection is
+// If models tend to represent a single row of data, a Rebound Collection is
 // more analogous to a table full of data ... or a small slice or page of that
 // table, or a collection of rows that belong together for a particular reason
 // -- all of the messages in this particular folder, all of the documents
@@ -14,24 +14,23 @@
 
 import { Data } from "rebound-data/data";
 import Model from "rebound-data/model";
-import { Path, $ } from "rebound-utils/rebound-utils";
+import { $ } from "rebound-utils/rebound-utils";
+import Path from "rebound-data/path";
 
 // Default options for `Collection#set`.
-const SET_OPTIONS = {add: true, remove: false, merge: true, clone: false};
+const SET_OPTIONS = {add: true, remove: true, merge: true, clone: false};
 
 // Function for checking whether an object should be considered a model for
 // the purposes of adding to the collection. Looks for any data object
 // so we can nest Collections without `Rebound.set` Wrapping them in a Model
-function isModel(datum){
-  return datum && datum.isData;
-}
+function isModel(datum){ return datum && datum.isData; }
 
 // Prepare a hash of attributes (or other model) to be added to this
 // collection.
 function prepareModel(attrs, options) {
 
-  // If this is already a model, clone it. If asked not to, use the original Model.
-  if (isModel(attrs)) return (options.clone !== false) ? this.clone(attrs, options) : attrs;
+  // If this is already a model, use the original Model unless asked to clone it.
+  if (isModel(attrs)) return (options.clone === true) ? this.clone(attrs, options) : attrs;
 
   // If a plain object, make a new Model instance. Save its attribute data in `_pending`
   // to be set after insertion into the Collection
@@ -51,6 +50,7 @@ function removeModels(models, options) {
     if (!model) continue;
 
     var index = this.indexOf(model);
+    Data.prototype.change.call(this, index);
     this.models.splice(index, 1);
     this.length--;
 
@@ -61,6 +61,7 @@ function removeModels(models, options) {
     if (id != null) delete this._byId[id];
 
     options.index = index;
+
     if (!options.silent) {
       model.trigger('remove', model, this, options);
       this.trigger('remove', model, this, options);
@@ -78,7 +79,6 @@ function addReference(model, options) {
   this._byId[model.cid] = model;
   var id = this.modelId(model, model.attributes || model);
   if (id != void 0) this._byId[id] = model;
-  model.parent = this;
   model.on('all', onModelEvent, this);
 }
 
@@ -88,7 +88,6 @@ function removeReference(model, options) {
   delete this._byId[model.cid];
   var id = this.modelId(model, model);
   if (id != null) delete this._byId[id];
-  if (this === model.parent) model.parent = null;
   model.off('all', onModelEvent, this);
 }
 
@@ -120,50 +119,65 @@ function splice(array, insert, at) {
 
 export default class Collection extends Data {
 
+  // All Collections have the read-only property `isCollection`
+  get isCollection(){ return true; }
+  set isCollection(val){ throw new Error(`Error: Property "isCollection" is read-only on object:`, this); }
+
   constructor(models=[], options={}){
     super(models, options);
 
     // Set Caches
-    this._byValue = {};
     this.length = 0;
     this.models = [];
     this._byId  = {};
+    this._byValue = {};
 
     // Process instance specific options
     if (options.model) this.model = options.model;
     if (options.comparator) this.comparator = options.comparator;
 
-    // Prepare the hydrate method for callback and call unless we are instructed not to.
-    this.hydrate = this.hydrate.bind(this, models, options);
-    if (options.hydrate !== false) this.hydrate();
 
-  }
-
-  hydrate(models=[], options={}){
-
-    if (!this.hasOwnProperty('hydrate')) return console.warn('Warning: Attempted to hydrate an already hydrated Collection:', this);
-    delete this.hydrate;
+    // We don't want to pass any defaults to our children models. Delete them.
+    delete options.defaults;
 
     // Normalize Input
     models.isCollection && (models = models.models);
-    if (models) this.set(models);
-    else if (this.defaults) this.set(this.defaults);
+    if (models) this.set(models, _.extend({}, options));
+    else if (this.defaults) this.set(this.defaults, _.extend({}, options));
 
-    // Call the user provided initialize callback.
-    this.initialize.call(this, models, options);
+    // Unless told not to, call `hydrate` to set all values on our Collection.
+    // if (options.hydrate !== false) this.hydrate();
 
   }
+
+  // hydrate(models=[], options={}){
+  //
+  //   if (!this.hasOwnProperty('hydrate')) return console.warn('Warning: Attempted to hydrate an already hydrated Collection:', this);
+  //   delete this.hydrate;
+  //
+  //   // We don't want to pass any defaults to our children models. Delete them.
+  //   delete options.defaults;
+  //
+  //   // Normalize Input
+  //   models.isCollection && (models = models.models);
+  //   if (models) this.set(models, _.extend({}, options));
+  //   else if (this.defaults) this.set(this.defaults, _.extend({}, options));
+  //
+  //   // Call the user provided initialize callback.
+  //   this.initialize.call(this, models, options);
+  //
+  // }
 
   // Define how to uniquely identify models in the collection.
   // Always give precedence to the provided model's idAttribute. Fall back to
   // the Collection's idAttribute, and then to the default `id`.
   modelId(model={}, data={}){
     var idAttribute = model.idAttribute || this.model.prototype.idAttribute || 'id';
-    return Path(idAttribute).query(data);
+    return Path.query(idAttribute, data);
   }
 
   validate(models){
-    return Array.isArray(models);
+    return Array.isArray(models) || (models && models.isCollection);
   }
 
   location(obj){
@@ -177,20 +191,29 @@ export default class Collection extends Data {
     return this._byId[obj] || this._byId[this.modelId(obj, obj)] || obj.cid && this._byId[obj.cid];
   }
 
-  // Get a model by lookup path
-  get(key=''){
-    return typeof key === 'number' ? this.at(key) : Path(key).query(this);
+  [Data.get](key){
+    return this.models[key];
+  }
+
+  [Data.set](key, models){
+    return this.models.splice(key, 0, models);
+  }
+
+  [Data.delete](key){
+    return this.models.splice(key, 1);
   }
 
   // Update a collection by `set`-ing a new list of models, adding new ones,
   // removing models that are no longer present, and merging models that
   // already exist in the collection, as necessary. Similar to **Model#set**,
   // the core operation for updating the data contained by the collection.
-  set(models=[], options={}){
+  set(models=null, options={}){
+
+    if (models == null) return;
 
     // If models is a string, and it has parts, call set at that path
     if(typeof models === 'string'){
-      let parts = Path(models).split(),
+      let parts = Path.split(models),
           index = Number(parts[0]);
       if (Number.isNaN(index)) return this;
       return this.at(index).set(parts.splice(1, parts.length).join('.'), options);
@@ -201,12 +224,12 @@ export default class Collection extends Data {
     // By default, set options are `{ add: true, remove: false, merge: true, clone: false }`
     options = _.extend({}, SET_OPTIONS, options);
 
+    // If asked to parse the input, do so.
+    if (options.parse) models = this.parse(models, options);
+
     // If another collection, treat like an array. If a plain model, wrap in array.
     var singular = !Array.isArray(models) && !models.isCollection;
     models = singular ? [models] : models.slice();
-
-    // If asked to parse the input, do so.
-    if (options.parse) models = this.parse(models, options);
 
     super.dirty(options);
 
@@ -239,6 +262,7 @@ export default class Collection extends Data {
       // If a duplicate is found, prevent it from being added and
       // optionally merge it into the existing model.
       var existing = this.lookup(model);
+      if (window.foo) debugger;
       if (existing) {
         if (merge && model !== existing) {
           var attrs = isModel(model) ? model.attributes : model;
@@ -297,7 +321,6 @@ export default class Collection extends Data {
       if (at != null) options.index = at + i;
       model = toAdd[i];
       addReference.call(this, model, options);
-      !model._hydrated && model.hydrate();
       if (!options.silent) {
         model.trigger('add', model, this, options);
         this.trigger('add', model, this, options);
@@ -315,6 +338,12 @@ export default class Collection extends Data {
       }
     }
 
+    var previous = this.previous();
+    var len = previous.length > this.length ? previous: this.models;
+    for (let i=0; i<len; i++){
+      if(previous[i].cid !== this.models[i]) super.change(`[${i}]`);
+    }
+
     super.clean(options);
 
     // Return the added (or merged) model (or models).
@@ -322,15 +351,16 @@ export default class Collection extends Data {
 
   }
 
-  // Add a model, or list of models to the set. `models` may be Backbone
+  // Add a model, or list of models to the set. `models` may be Rebound
   // Models or raw JavaScript objects to be converted to Models, or any
   // combination of the two.
   add(models, options) {
-    return this.set(models, _.extend({merge: false}, options));
+    return this.set(models, _.extend({merge: false, remove: false}, options));
   }
 
   // Remove a model, or a list of models from the set.
   remove(models, options) {
+    super.dirty();
     options = _.extend({}, options);
     var singular = !_.isArray(models);
     models = singular ? [models] : models.slice();
@@ -339,6 +369,7 @@ export default class Collection extends Data {
       options.changes = {added: [], merged: [], removed: removed};
       this.trigger('update', this, options);
     }
+    super.clean();
     return singular ? removed[0] : removed;
   }
 
@@ -347,23 +378,34 @@ export default class Collection extends Data {
   // any granular `add` or `remove` events. Fires `reset` when finished.
   // Useful for bulk operations and optimizations.
   reset(models=[], options={}) {
+
+    options = options ? _.extend({clone: true}, options) : {clone: true};
+
+    // Validate input is an array or collection.
+    // If asked to parse the input, do so – this must happen before we validate inuput.
+    var input = (options.parse) ? this.parse(models, options) : models;
+    if (!this.validate(input)) {
+      throw new Error('Expected type Array or Collection for Collection.reset. Instead received:', models);
+    }
+
+    // If our parsed input is empty, use default values. Otherwise, keep the same. 
+    // `Set` will re-parse the input for itself.
+    models = input.length ? models : this.defaults;
+
     super.dirty(options);
 
-    options = _.extend({}, options);
-    models = models.length ? models : this.defaults;
-    var previousModels = this.models;
-    this.length = 0;
-    for (var i = 0; i < previousModels.length; i++) {
-      if (models[i]) previousModels[i].reset(models[i]);
-      else {
-        previousModels[i].reset(void 0, {defaults: false});
-        removeModels.call(this, [previousModels[i]], _.extend({silent: true}, options));
-      }
+    for (var i = 0; i < this.models.length; i++) {
+      super.change(`[${i}]`);
+      super.change(Data.flatten(this.models[i], `[${i}]`));
+      removeReference.call(this, this.models[i], options);
     }
+    options.previousModels = this.models;
+    this.length = 0;
+    this.models = [];
+    this._byId  = {};
+    models = this.add(models, _.extend({silent: true}, options));
     if (!options.silent) this.trigger('reset', this, options);
-
     super.clean(options);
-
     return models;
   }
 
@@ -386,7 +428,7 @@ export default class Collection extends Data {
   has(obj) { return this.lookup(obj) != null; }
 
   // Get the model at the given index.
-  at(index) { return this.models[(index < 0) ? index += this.length : index]; }
+  at(index) { index = parseInt(index); return this.models[(index < 0) ? index += this.length : index]; }
 
   // Return models with matching attributes. Useful for simple cases of
   // `filter`.
@@ -455,15 +497,9 @@ export default class Collection extends Data {
   }
 }
 
-_.extend(Collection.prototype, {
+// Set default...defaults
+Collection.prototype.defaults = [];
 
-  // Set data type flags
-  isCollection: true,
-
-  // Set default...defaults
-  defaults: [],
-
-  // The default model for a collection is just a **Backbone.Model**.
-  // This should be overridden in most cases.
-  model: Model,
-});
+// The default model for a collection is just a **Rebound.Model**.
+// This should be overridden in most cases.
+Collection.prototype.model = Model;

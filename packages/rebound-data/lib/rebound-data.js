@@ -3,14 +3,14 @@
 // These are methods inherited by all Rebound data types: **Models**,
 // **Collections** and **Computed Properties**. Controls tree ancestry
 // tracking, deep event propagation and tree destruction.
-
-import Backbone from "backbone";
+import $ from "rebound-utils/rebound-utils";
+import Path from "rebound-data/path";
 import Events from "rebound-data/events";
 import Data from "rebound-data/data";
+import Value from "rebound-data/value";
 import Model from "rebound-data/model";
 import Collection from "rebound-data/collection";
 import ComputedProperty from "rebound-data/computed-property";
-import $ from "rebound-utils/rebound-utils";
 
 // Underscore methods that we want to implement on the Model, mapped to the
 // number of arguments they take.
@@ -19,7 +19,7 @@ const MODEL_METHODS = {
 };
 
 // Underscore methods that we want to implement on the Collection.
-// 90% of the core usefulness of Backbone Collections is actually implemented
+// 90% of the core usefulness of Rebound Collections is actually implemented
 // right here:
 const COLLECTION_METHODS = {
     forEach: 3, each: 3, map: 3, collect: 3, reduce: 0,
@@ -32,7 +32,7 @@ const COLLECTION_METHODS = {
     sortBy: 3, indexBy: 3, findIndex: 3, findLastIndex: 3
   };
 
-// Proxy Backbone class methods to Underscore functions, wrapping the model's
+// Proxy Rebound class methods to Underscore functions, wrapping the model's
 // `attributes` object or collection's `models` array behind the scenes.
 //
 // collection.filter(function(model) { return model.get('age') > 10 });
@@ -83,37 +83,17 @@ var addUnderscoreMethods = function(Class, methods, attribute) {
 addUnderscoreMethods(Model, MODEL_METHODS, 'attributes');
 addUnderscoreMethods(Collection, COLLECTION_METHODS, 'models');
 
-Collection.extend = Model.extend = function(protoProps, staticProps) {
-  var parent = this;
-  var child;
+// Set up our default data types.
+Data.config('Object', Model);
+Data.config('Array', Collection);
+Data.config('Property', ComputedProperty);
+Data.config('Value', Value);
 
-  // The constructor function for the new subclass is either defined by you
-  // (the "constructor" property in your `extend` definition), or defaulted
-  // by us to simply call the parent constructor.
-  if (protoProps && _.has(protoProps, 'constructor')) {
-    child = protoProps.constructor;
-  } else {
-    child = function(){ return parent.apply(this, arguments); };
-  }
-
-  // Add static properties to the constructor function, if supplied.
-  _.extend(child, parent, staticProps);
-
-  // Set the prototype chain to inherit from `parent`, without calling
-  // `parent`'s constructor function and add the prototype properties.
-  child.prototype = _.create(parent.prototype, protoProps);
-  child.prototype.constructor = child;
-
-  // Set a convenience property in case the parent's prototype is needed
-  // later.
-  child.__super__ = parent.prototype;
-
-  return child;
-};
-
+export { Path as Path};
 export { Events as Events };
 export { Data as Data };
+export { Value as Value };
 export { Model as Model };
 export { Collection as Collection };
 export { ComputedProperty as ComputedProperty };
-export default { Model, Collection, ComputedProperty };
+export default { Path, Events, Data, Value, Model, Collection, ComputedProperty };

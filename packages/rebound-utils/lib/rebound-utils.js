@@ -20,14 +20,14 @@ var $ = function $(query){
   if ( !(this instanceof $) ) { return new $(query); }
 
   // Ensure query is an array
-  query = _.isArray(query) ? query : [query];
+  query = Array.isArray(query) ? query : [query];
 
   // For each query in query array: If it is an element, push it to the selectors
   // array. If it is a string, push all elements that match to selectors array.
-  _.each(query, function(item, index){
+  $.each(query, function(item){
     if(_.isElement(item) || item === document || item === window || item instanceof DocumentFragment){ selector.push(item); }
     // Call slice to convert node list to array for push. Save selector used.
-    else if(_.isString(item)){
+    else if($.isString(item)){
       this.selector = item;
       Array.prototype.push.apply(selector, Array.prototype.slice.call(document.querySelectorAll(item))); }
   }, this);
@@ -39,6 +39,22 @@ var $ = function $(query){
   for (i=0; i < this.length; i++) { this[i] = selector[i]; }
 
 };
+
+$.each = function(obj, iteratee, context) {
+    var i, length;
+    if (Array.isArray(obj)) {
+      for (i = 0, length = obj.length; i < length; i++) {
+        iteratee.call(context, obj[i], i, obj);
+      }
+    }
+    else {
+      var keys = Object.keys(obj);
+      for (i = 0, length = keys.length; i < length; i++) {
+        iteratee.call(context, obj[keys[i]], keys[i], obj);
+      }
+    }
+    return obj;
+  };
 
 // Add url utils
 $.url = { query: query };
@@ -114,7 +130,7 @@ $.prototype.empty = function empty(){
 $.extractComputedProps = function extractComputedProps(obj){
   for(var key in obj){
     let get, set;
-    if(!obj.hasOwnProperty(key)) continue;
+    if(!Object.hasOwnProperty.call(obj, key)) continue;
     var desc = Object.getOwnPropertyDescriptor(obj, key);
     get = desc.hasOwnProperty('get') && desc.get;
     set = desc.hasOwnProperty('set') && desc.set;
@@ -147,9 +163,9 @@ $.startsWith = function startsWith(str, test){
 // Use native isArray if present
 $.isArray = Array.isArray || $.isArray;
 
-$.makeProtected = function(obj, parent, keys){
+$.makeProtected = function makeProtected(obj, parent, keys){
   var proto = parent.prototype;
-  var attrs = {}
+  var attrs = {};
   keys.forEach((key) => {
     if (proto[key] !== obj[key]) return;
     attrs[key] = {
@@ -163,9 +179,32 @@ $.makeProtected = function(obj, parent, keys){
       },
       configurable: false,
       enumerable: false
-    }
+    };
   });
   return Object.defineProperties(obj, attrs);
-}
+};
+
+
+// To make obj fully immutable, freeze each object in obj.
+// To do so, we use this function.
+$.deepFreeze = function deepFreeze(obj) {
+
+  if (typeof obj !== 'object') return obj;
+
+  // Retrieve the property names defined on obj
+  var propNames = Object.getOwnPropertyNames(obj);
+
+  // Freeze properties before freezing self
+  propNames.forEach(function(name) {
+    var prop = obj[name];
+
+    // Freeze prop if it is an object
+    if (typeof prop == 'object' && prop !== null)
+      deepFreeze(prop);
+  });
+
+  // Freeze self (no-op if already frozen)
+  return Object.freeze(obj);
+};
 
 export { $, Path, Queue, REBOUND_SYMBOL, $ as default };

@@ -1,5 +1,10 @@
 import { Events } from "rebound-data/rebound-data";
 
+function size(obj){
+  if (obj == null) return 0;
+  return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
+}
+
 export default function tests(){
 
   class TestObject extends Events {
@@ -12,7 +17,7 @@ export default function tests(){
 
     // Expose the private events channel for testing
     get _events(){
-      return this[Object.getOwnPropertySymbols(this).filter((sym) => { return !!~sym.toString().indexOf("Rebound-Events"); })[0]];
+      return this[Object.getOwnPropertySymbols(this).filter((sym) => { return !!~sym.toString().indexOf("<events>"); })[0]];
     }
   }
 
@@ -38,7 +43,7 @@ export default function tests(){
       var b = new TestObject();
       a.listenToOnce(b, 'all', function(){ assert.ok(true); });
       b.trigger('anything');
-      assert.equal(_.size(a._events.listeningTo), 0);
+      assert.equal(size(a._events.listeningTo), 0);
     });
 
     QUnit.test('listenToOnce with event maps cleans up references', function(assert) {
@@ -50,7 +55,7 @@ export default function tests(){
         two: function() { assert.ok(false); }
       });
       b.trigger('one');
-      assert.equal(_.size(a._events.listeningTo), 1);
+      assert.equal(size(a._events.listeningTo), 1);
     });
 
     QUnit.test('listenToOnce with event maps binds the correct `this`', function(assert) {

@@ -144,7 +144,7 @@ export default function (){
       class TestClass extends Events {
         assertTrue() {
           assert.ok(true, '`this` was bound to the callback');
-        };
+        }
       }
 
       var obj = new TestClass();
@@ -259,4 +259,4 @@ export default function (){
     });
 
   });
-};
+}

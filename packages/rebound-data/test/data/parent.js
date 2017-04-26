@@ -1,18 +1,12 @@
 import { Data } from "rebound-data/rebound-data";
 
 // Make protected methods public
-class Test extends Data {
 
-  dirty(){
-    return super.dirty.apply(this, arguments);
-  }
-  clean(){
-    return super.clean.apply(this, arguments);
-  }
-  change(){
-    return super.change.apply(this, arguments);
-  }
-
+class Test extends Data(Object) {
+  constructor(){ super(); }
+  [Data.get](key){ return super.cache[key]; }
+  [Data.set](key, val){ super.cache[key] = val; return true; }
+  [Data.delete](key){ return delete super.cache[key]; }
 }
 
 export default function tests(){
@@ -30,65 +24,66 @@ export default function tests(){
       assert.expect(1);
       var obj = new Test();
       var parent = new Test();
-      obj.parent = parent;
+      parent.set('obj', obj);
       delete obj.parent;
       assert.equal(obj.parent, parent, "Deleting the parent property has no effect");
     });
 
 
-    QUnit.test("Setting to invalid values on data with no parent is a no-op", function(assert) {
-      assert.expect(2);
+    QUnit.test("Setting parent directly is a no-op", function(assert) {
+      assert.expect(6);
       var obj = new Test();
+      var parent = new Test();
 
-      obj.parent = false;
-      assert.equal(obj.parent, null, "Setting parent to a non-object value is a keeps `parent` NULL.")
+      assert.throws(()=>{
+        obj.parent = false;
+      }, /read-only property "parent"./, "Setting parent directly throws.");
+      assert.equal(obj.parent, null, "Setting parent to a non-object value is a keeps `parent` NULL.");
 
-      obj.parent = {};
-      assert.equal(obj.parent, null, "Setting parent to a non-data object is a keeps `parent` NULL.")
+      assert.throws(()=>{
+        obj.parent = {};
+      }, /read-only property "parent"./, "Setting parent directly throws.");
+      assert.equal(obj.parent, null, "Setting parent to a non-data object is a keeps `parent` NULL.");
+
+      assert.throws(()=>{
+        obj.parent = parent;
+      }, /read-only property "parent"./, "Setting parent directly throws.");
+      assert.equal(obj.parent, null, "Setting parent to a non-data object is a keeps `parent` NULL.");
+
     });
 
 
-    QUnit.test("Setting and changing parent", function(assert) {
-      assert.expect(5);
+    QUnit.test("Setting and changing parents", function(assert) {
+      assert.expect(6);
 
       var model = new Test();
       var parent1 = new Test();
       var parent2 = new Test();
 
-      model.parent = parent1;
+      parent1.set('key', model);
       assert.equal(model.parent.cid, parent1.cid, "Assigning parent to a data object works and returns the data object when accessed.");
+      assert.equal(parent1.get('key'), model, "Value is placed in parent.");
 
-      parent1.remove = function(){
-        assert.ok(1, "Changing parents calles `remove` on old parent.");
-      }
-      model.parent = parent2;
-      assert.equal(model.parent.cid, parent2.cid, "Re-assigning parent to a differeent data object works and returns the new parent when accessed.")
+      parent2.set('key', model);
+      assert.equal(parent1.get('key'), void 0, "When moved to new object, value is removed from previous parent.");
+      assert.equal(model.parent.cid, parent2.cid, "Re-assigning parent to a differeent data object works and returns the new parent when accessed.");
 
-      parent2.remove = function(el){
-        assert.equal(el, model, "Unsetting a data object's parent value removes it from its previous parent.");
-      }
-      model.parent = void 0;
-      assert.equal(model.parent, null, "Setting parent to a non-data object sets `parent` to NULL.")
+      parent2.delete('key');
+      assert.equal(parent2.get('key'), void 0, "When deleted from an object, value is removed from parent.");
+      assert.equal(model.parent, null, "Setting parent to a non-data object sets `parent` to NULL.");
 
     });
 
-    QUnit.test("Setting to invalid values removes parent value", function(assert){
-      assert.expect(3);
+    QUnit.test("Setting to different values removes previous value's parent", function(assert){
+      assert.expect(2);
 
       var model = new Test();
       var parent = new Test();
 
-      model.parent = parent;
-      model.parent = true;
+      parent.set('key', model);
+      assert.equal(model.parent, parent, "Parent set");debugger;
+      parent.set('key', true);
       assert.equal(model.parent, null, "Setting parent to a boolean value is a sets `parent` to NULL.");
-
-      model.parent = parent;
-      model.parent = '';
-      assert.equal(model.parent, null, "Setting parent to a string value is a sets `parent` to NULL.");
-
-      model.parent = parent;
-      model.parent = {};
-      assert.equal(model.parent, null, "Setting parent to an object value is a sets `parent` to NULL.");
 
     });
 
@@ -99,8 +94,8 @@ export default function tests(){
       var parent = new Test();
 
       assert.throws(function(){
-        model.parent = parent;
-        parent.parent = model;
+        parent.set('key', model);
+        model.set('key', parent);
       }, "Setting `parent` throws when it would create a shalow cyclic ancestry chain.");
 
     });
@@ -113,14 +108,14 @@ export default function tests(){
       var parent = new Test();
       var grandparent = new Test();
 
-      model.parent = parent;
-      parent.parent = grandparent;
+      parent.set('model', model);
+      grandparent.set('parent', parent);
       assert.throws(function(){
-        grandparent.parent = model;
+        model.set('err', grandparent);
       }, "Setting `parent` throws when it would create a deep cyclic ancestry chain.");
 
     });
 
   });
 
-};
+}

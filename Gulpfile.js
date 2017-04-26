@@ -1,35 +1,28 @@
 var gulp = require('gulp');
-var merge = require('gulp-merge');
+var pjson = require('./package.json');
+
 var es = require('event-stream');
 var babel = require('gulp-babel');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
-var jshint = require('gulp-jshint');
+var eslint = require('gulp-eslint');
 var rename = require('gulp-rename');
 var connect = require('gulp-connect');
 var compression = require('compression');
 var del = require('del');
 var qunit = require('node-qunit-phantomjs');
-var docco = require("gulp-docco");
-var git = require('gulp-git');
-var pjson = require('./package.json');
-var mkdirp = require('mkdirp');
 var replace = require('gulp-replace');
-var stylish = require('jshint-stylish');
 
 var browserify = require('browserify');
-var rollup = require('gulp-rollup')
+var rollup = require('gulp-rollup');
 var nodeResolve = require('rollup-plugin-node-resolve');
 var commonjs = require('rollup-plugin-commonjs');
 
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
-var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var gutil = require('gulp-util');
 var filter = require('gulp-filter');
-
-var pjson = require('./package.json');
 
 var paths = {
     library:   ['packages/*.js', 'packages/**/lib/**/*.js', 'wrap/*.js'],
@@ -52,33 +45,21 @@ var paths = {
 
 
 // The docco task: called on prepublish
-var docco = require('./tasks/docco');
+require('./tasks/docco');
 
 // The reease task: called on postpublish
-var release = require('./tasks/release');
+require('./tasks/release');
 
 // JS hint task
-gulp.task('jshint', function() {
-  gulp.src('./packages/**/*.js')
-  .pipe(jshint({
-    curly: false,
-    loopfunc: true,
-    eqnull: true,
-    browser: true,
-    esnext: true,
-    '-W058': true, // Allow prens-less constructors (new Object;)
-    '-W093': true, // Allow returning assignment (return a = b;)
-    '-W030': true, // Allow unused expressions. Good for conditional assignment.
-    globals: {
-      jQuery: true
-    }
-  }))
-  .pipe(jshint.reporter(stylish));
+gulp.task('eslint', function() {
+  return gulp.src('./packages/**/*.js')
+    .pipe(eslint())
+    .pipe(eslint.format());
 });
 
-gulp.task('clean', ['jshint'], function(cb) { return del(['dist/**', 'test/demo/templates/**'], cb);});
-gulp.task('clean-cjs', ['jshint'], function(cb) { return del(['dist/cjs/**'], cb);});
-gulp.task('clean-amd', ['jshint'], function(cb) { return del(['dist/amd/**'], cb);});
+gulp.task('clean', ['eslint'], function(cb) { return del(['dist/**', 'test/demo/templates/**'], cb);});
+gulp.task('clean-cjs', ['eslint'], function(cb) { return del(['dist/cjs/**'], cb);});
+gulp.task('clean-amd', ['eslint'], function(cb) { return del(['dist/amd/**'], cb);});
 
 gulp.task('cjs', ['clean-cjs'], function() {
   return es.merge(
@@ -96,7 +77,7 @@ gulp.task('cjs', ['clean-cjs'], function() {
   .pipe(replace('%VER%', pjson.version))
   .pipe(babel({
     presets: ['es2015'],
-    plugins: []
+    plugins: ["transform-class-properties"]
   }))
   .pipe(gulp.dest('dist/cjs'));
 });
@@ -118,7 +99,7 @@ gulp.task('amd', ['clean-amd'], function() {
   .pipe(babel({
     moduleIds: true,
     presets: ['es2015'],
-    plugins: ["transform-es2015-modules-amd"]
+    plugins: ["transform-es2015-modules-amd", "transform-class-properties"]
   }))
   .pipe(gulp.dest('dist/amd'));
 });
@@ -221,7 +202,7 @@ gulp.task('compile-tests', ['cjs'], function(){
   .pipe(babel({
     moduleIds: true,
     presets: ['es2015'],
-    plugins: ["transform-es2015-modules-amd"]
+    plugins: ["transform-es2015-modules-amd", "transform-class-properties"]
   }))
   .pipe(concat('rebound.tests.js'))
   .pipe(gulp.dest('test'))
@@ -258,13 +239,13 @@ gulp.task('connect', [], function() {
 // The default task (called when you run `npm start` from cli)
 // Build Rebound and re-run the build when a file changes
 gulp.task('default', ['connect', 'build'], function() {
-  gulp.watch(paths.library, ['compile-library']);
+  gulp.watch(paths.library, ['compile-library', 'docco']);
   gulp.watch(paths.tests, ['compile-tests']);
   gulp.watch(paths.apps, ['compile-test-apps']);
   gulp.watch(paths.demo, ['compile-demo']);
 });
 
-gulp.task('test', ['connect'], function(cb) {
+gulp.task('test', ['connect'], function() {
   qunit('http://localhost:8000/test/index.html', {
     verbose: true,
     timeout: 15

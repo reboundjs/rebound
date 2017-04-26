@@ -35,7 +35,19 @@ export default function tests(){
       assert.equal(model.get("test.test2[0].test3"), "foo", "Model.get works n levels deep - Collections included");
     });
 
+
+
+    QUnit.test("Model.get deeper than exists", function(assert) {
+      assert.expect(1);
+      var model = new Model({
+        foo: 'bar'
+      });
+      assert.equal(model.get("foo.test2[0].test3"), void 0, "Model.get returns undefined when asking for a value deeper than exists");
+    });
+
   });
+
+
 
 }
 

@@ -1,5 +1,10 @@
 import { Events } from "rebound-data/rebound-data";
 
+function size(obj){
+  if (obj == null) return 0;
+  return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
+}
+
 export default function tests(){
 
   class TestObject extends Events {
@@ -12,7 +17,7 @@ export default function tests(){
 
     // Expose the private events channel for testing
     get _events(){
-      return this[Object.getOwnPropertySymbols(this).filter((sym) => { return !!~sym.toString().indexOf("Rebound-Events"); })[0]];
+      return this[Object.getOwnPropertySymbols(this).filter((sym) => { return !!~sym.toString().indexOf("<events>"); })[0]];
     }
   }
 
@@ -34,21 +39,21 @@ export default function tests(){
       var fn = function() {};
       b.on('event', fn);
       a.listenTo(b, 'event', fn).stopListening();
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._listeners), 0);
       a.listenTo(b, 'event', fn).stopListening(b);
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
       a.listenTo(b, 'event', fn).stopListening(b, 'event');
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
       a.listenTo(b, 'event', fn).stopListening(b, 'event', fn);
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
     });
 
     QUnit.test('stopListening cleans up named references', function(assert) {
@@ -60,7 +65,7 @@ export default function tests(){
       a.listenTo(b, 'other', function(){ assert.ok(false); });
       a.stopListening(b, 'other');
       a.stopListening(b, 'all');
-      assert.equal(_.size(a._events.listeningTo), 0);
+      assert.equal(size(a._events.listeningTo), 0);
     });
 
     QUnit.test('listenToOnce and stopListening', function(assert) {
@@ -82,21 +87,21 @@ export default function tests(){
       var fn = function() {};
       b.on('event', fn);
       a.listenToOnce(b, 'event', fn).stopListening();
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
       a.listenToOnce(b, 'event', fn).stopListening(b);
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
       a.listenToOnce(b, 'event', fn).stopListening(b, 'event');
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
       a.listenToOnce(b, 'event', fn).stopListening(b, 'event', fn);
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache.event), 1);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache.event), 1);
+      assert.equal(size(b._events.listeners), 0);
     });
 
     QUnit.test('stopListening cleans up delegated event listeners', function(assert) {
@@ -106,16 +111,16 @@ export default function tests(){
       var fn = function() {};
       b.on('event:@all', fn);
       a.listenTo(b, 'event:@all', fn);
-      assert.equal(_.size(a._events.listeningTo), 1);
-      assert.equal(_.size(b._events.listeners), 1);
+      assert.equal(size(a._events.listeningTo), 1);
+      assert.equal(size(b._events.listeners), 1);
       assert.equal(b._events.delegateCount, 1);
-      assert.equal(_.size(b._events.cache['event:@all']), 2);
+      assert.equal(size(b._events.cache['event:@all']), 2);
       a.stopListening();
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.listeners), 0);
       assert.equal(b._events.delegateCount, 1);
       assert.equal(Object.keys(b._events.delegates).length, 1);
-      assert.equal(_.size(b._events.cache['event:@all']), 1);
+      assert.equal(size(b._events.cache['event:@all']), 1);
     });
 
     QUnit.test('stopListening with omitted args', function(assert) {
@@ -156,4 +161,4 @@ export default function tests(){
     });
 
   });
-};
+}

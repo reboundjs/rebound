@@ -12,13 +12,8 @@ QUnit.skip("[Rebound Data] Collection – At", function(assert) {
     }}
   ]);
 
-  assert.equal(collection.get("1").id, 2, "Collection.get works to fetch a single model with string number syntax");
-  assert.equal(collection.get("[1]").id, 2, "Collection.get works to fetch a single model with bracket syntax");
-  assert.equal(collection.get(1).id, 2, "Collection.get works to fetch a single model with string interger syntax");
-
-  assert.equal(collection.get("[0].str"), "foo", "Collection.get works on nested string values");
-  assert.equal(collection.get("[1].bool"), true, "Collection.get works on nested boolean values");
-  assert.equal(collection.get("[2].int"), 1, "Collection.get works on nested interger values");
-  assert.equal(collection.get("[3].obj.val"), "bar", "Collection.get works on deep nested values");
+  assert.equal(collection.at("1").id, 2, "Collection.get works to fetch a single model with string number syntax");
+  assert.equal(collection.at("[1]").id, 2, "Collection.get works to fetch a single model with bracket syntax");
+  assert.equal(collection.at(1).id, 2, "Collection.get works to fetch a single model with string interger syntax");
 
 });

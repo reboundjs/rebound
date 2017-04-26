@@ -6,18 +6,21 @@ export default function tests(){
 
     QUnit.test("Model.reset successfully resets primitive values to defaults", function(assert) {
       assert.expect(2);
-      var model = new (Model.extend({
-        defaults: {
-          val: 'val',
-          int: 0,
-          bool: false,
-          str: ''
+      var model = new class Test extends Model {
+        get defaults(){
+          return {
+            val: 'val',
+            int: 0,
+            bool: false,
+            str: ''
+          };
         }
-      }))({
+      }({
         int: 1,
         bool: true,
         str: "string"
       });
+      debugger;
       model.reset();
       assert.deepEqual(model.toJSON(), { val: 'val', int: 0, bool: false, str: '' }, "Primitive values are reset to defaults on model.reset");
       assert.deepEqual(model.changed(), { int: 0, bool: false, str: '' }, "Primitive values reset to defaults on model.reset have the appropreate changed");
@@ -25,14 +28,16 @@ export default function tests(){
 
     QUnit.test("Model.reset with passed value hash", function(assert) {
       assert.expect(2);
-      var model = new (Model.extend({
-        defaults: {
-          val: 'val',
-          int: 0,
-          bool: false,
-          str: ''
+      var model = new class Test extends Model {
+        get defaults(){
+          return {
+            val: 'val',
+            int: 0,
+            bool: false,
+            str: ''
+          };
         }
-      }))({
+      }({
         int: 1,
         bool: true,
         str: "string"
@@ -44,13 +49,15 @@ export default function tests(){
 
     QUnit.test("Model.reset with empty complex objects as default", function(assert) {
       assert.expect(2);
-      var model = new (Model.extend({
-        defaults: {
-          val: 'val',
-          obj: {},
-          arr: []
+      var model = new class Test extends Model {
+        get defaults(){
+          return {
+            val: 'val',
+            obj: {},
+            arr: []
+          };
         }
-      }))({
+      }({
         obj: { foo: 'bar' },
         arr: [{ biz: 'baz'}]
       });
@@ -68,13 +75,15 @@ export default function tests(){
     QUnit.test("Model.reset with complex objects with state as default", function(assert) {
       assert.expect(2);
 
-      var model = new (Model.extend({
-        defaults: {
-          val: 'val',
-          obj: { biz: 'baz' },
-          arr: [{ foo: 'bar' }]
+      var model = new class Test extends Model {
+        get defaults(){
+          return {
+            val: 'val',
+            obj: { biz: 'baz' },
+            arr: [{ foo: 'bar' }]
+          };
         }
-      }))({
+      }({
         obj: { foo: 'bar' },
         arr: [{ biz: 'baz'}]
       });
@@ -94,12 +103,14 @@ export default function tests(){
 
     QUnit.test("Model.reset with empty complex objects as default with modification", function(assert) {
       assert.expect(1);
-      var model = new (Model.extend({
-        defaults: {
-          obj: {},
-          arr: []
+      var model = new class Test extends Model {
+        get defaults(){
+          return {
+            obj: {},
+            arr: []
+          };
         }
-      }))({
+      }({
         obj: { foo: 'bar' },
         arr: [{ biz: 'baz'}]
       });
@@ -110,12 +121,14 @@ export default function tests(){
 
     QUnit.test("Model.reset with complex objects as default wtih state, with modification", function(assert) {
       assert.expect(1);
-      var model = new (Model.extend({
-        defaults: {
-          obj: { no: 'op'},
-          arr: [{ no: 'op' }]
+      var model = new class Test extends Model {
+        get defaults(){
+          return {
+            obj: { no: 'op'},
+            arr: [{ no: 'op' }]
+          };
         }
-      }))({
+      }({
         obj: { foo: 'bar' },
         arr: [{ biz: 'baz'}]
       });
@@ -126,16 +139,17 @@ export default function tests(){
 
     QUnit.test("Model.reset with collection in defaults wtih state custom model with modification", function(assert) {
       assert.expect(2);
-      var collection = Collection.extend({
-        model: Model.extend({
-          defaults: {
-            test: true
-          }
-        })
-      });
+      class TestColl extends Collection {}
+      class TestModel extends Model {
+        get defaults(){
+          return { test: true };
+        }
+      }
+      TestColl.prototype.model = TestModel;
+
       var model = new Model({
         bool: true,
-        arr: (new collection([{id: 2}, {id: 3}])),
+        arr: (new TestColl([{id: 2}, {id: 3}])),
         obj: { foo: { bar: "bar" } }
       });
       model.defaults = { prop: true };
@@ -159,6 +173,7 @@ export default function tests(){
         arr: model.get('arr'),
         "arr[0]": model.get('arr[0]'),
         "arr[0].id": 1,
+        "arr[0].test": true,
         "arr[1]": undefined,
         "arr[1].id": undefined,
         "arr[1].test": undefined

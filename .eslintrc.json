@@ -1,0 +1,22 @@
+{
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {}
+  },
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true,
+    "qunit": true
+  },
+  "rules": {
+      "semi": 2,
+      "curly": "off",
+      "expr": "off",
+      "boss": "off",
+      "no-cond-assign": "off",
+      "no-console": "off"
+  }
+}

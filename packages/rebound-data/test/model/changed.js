@@ -17,7 +17,7 @@ export default function tests(){
 
     QUnit.test("[Rebound Data] Model – Changed", function(assert) {
       var model, collection, model2, model3;
-
+debugger;
       // Construction
       model = new Model({
         str: 'foo',
@@ -82,7 +82,6 @@ export default function tests(){
         'int': 1
       }, "Model.changed returns correct information after multi change for deeply nested object values, models only" );
 
-debugger;
       // Deep Objects and Collections
       model = new Model({
         str: 'foo',
@@ -93,7 +92,7 @@ debugger;
           { arr: [{ obj: { str: 'foo' } }] }
         ]
       });
-      debugger;
+
       assert.shallowEqual(model.changed(), {
         str: 'foo',
         int: 0,
@@ -109,7 +108,6 @@ debugger;
       }, "Model.changed returns correct information after construction for deeply nested object values – including collections" );
 
       model.set('arr[1].arr[0].obj.str', 'bar');
-
       assert.shallowEqual(model.changed(), {
         'arr': model.get('arr'),
         'arr[1]': model.get('arr[1]'),

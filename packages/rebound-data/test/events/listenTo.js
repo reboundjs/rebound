@@ -36,7 +36,6 @@ export default function tests(){
       a.stopListening(b, {event2: cb});
       b.trigger('event event2');
       a.stopListening();
-      debugger;
       b.trigger('event event2');
     });
 

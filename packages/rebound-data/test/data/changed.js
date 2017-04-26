@@ -1,134 +1,79 @@
 import { Data } from "rebound-data/rebound-data";
 
 class Test extends Data {
-
-  // Dummy `get` method in liu of proper child value management
-  get(key){
-    return key + ' getter';
+  constructor(values={}){
+    super(values);
+    this._value = {};
+    this.set(values);
   }
-
-  // Expose protected properties to the public for testing
-  dirty(){
-    return super.dirty.apply(this, arguments);
+  dirty(){ return super.dirty(); }
+  clean(){ return super.clean(); }
+  [Data.get](key){ return this._value[key]; }
+  [Data.set](key, val){
+    this._value[key] = val;
+    this.trigger('change');
+    return true;
   }
-  clean(){
-    return super.clean.apply(this, arguments);
-  }
-  change(){
-    return super.change.apply(this, arguments);
-  }
-
+  [Data.delete](key){ return delete this._value[key]; }
 }
 
 export default function tests(){
   QUnit.module("Changed", function() {
 
-    QUnit.test("The `change` Method is Protected", function(assert) {
-
-      // Protection Tests
-      var protect = new Data();
-      var child = new Test();
-      assert.equal(protect.change, void 0, "The `change` method is protected by default and is undefined on a new Data instance.");
-      protect.change = 1;
-      assert.equal(protect.change, void 0, "The `change` method is protected by default and is not able to be set on the instance.");
-      assert.throws(function(){
-        delete protect.change;
-      }, "The `change` method is protected by default and is not able to be deleted on the instance.")
-
-      assert.equal(typeof child.change, 'function', "Extensions of Data are able to re-define the change method, and call the protected method internally.");
-
-    });
-
-    QUnit.test("Initial state is empty", function (assert){
+    QUnit.test("Initial state is empty on basic data creation", function (assert){
       var obj = new Test();
       assert.deepEqual(obj.changed(), {}, "Initial state for changed hash is empty object");
     });
 
+
+    QUnit.test("Initial state contains new values", function (assert){
+      var obj = new Test({foo: 'bar'});
+      assert.deepEqual(obj.changed(), {foo: 'bar'}, "Initial state for newly created data object has initial data");
+    });
+
     QUnit.test("Calling Change While Data is Clean is a No-op", function(assert){
       var obj = new Test();
+      obj.set("biz", 1);
+      assert.deepEqual(obj.changed(), {biz: 1});
 
-      obj.change("biz");
-      assert.deepEqual(obj.changed(), {});
-
-      obj.dirty();
-      obj.change("foo");
-      obj.clean();
-      obj.change("bar");
-
-      assert.deepEqual(obj.changed(), {
-        'foo': 'foo getter',
-      });
 
     });
 
-    QUnit.test("Passing change single string", function(assert) {
+    QUnit.test("Passing changed path string", function(assert) {
       var obj = new Test();
 
       obj.dirty();
-      obj.change("foo");
-      assert.deepEqual(obj.changed(), { foo: 'foo getter' }, "Setting changed to a string adds it as a property to the changed hash.");
-      assert.deepEqual(obj.changed('foo'), 'foo getter', "Accessing a changed value calls `get` on the object at that path.");
+      obj.set("foo", 'bar');
+      assert.deepEqual(obj.changed(), { foo: 'bar' }, "Setting changed to a string adds it as a property to the changed hash.");
+      assert.deepEqual(obj.changed('foo'), 'bar', "Accessing a changed value calls `get` on the object at that path.");
       assert.deepEqual(obj.changed('bar'), undefined, "Attempting to access a value not defined on `changed` returns unefined.");
-    });
-
-    QUnit.test("Unsetting change with a single string", function(assert) {
-      var obj = new Test();
-
-      obj.dirty();
-      obj.change("foo");
-      obj.change("foo", false);
-      assert.deepEqual(obj.changed(), { }, "Unsetting changed with a string removes it as a property from the changed hash.");
-      assert.deepEqual(obj.changed('foo'), undefined, "Accessing a removed changed value calls `get` on the object at that path.");
-    });
-
-    QUnit.test("Passing change a hash", function(assert) {
-      var obj = new Test();
-      obj.dirty();
-      obj.change({ bar: 'val', biz: 'baz' });
-      assert.deepEqual(obj.changed(), {
-        bar: 'bar getter',
-        biz: 'biz getter'
-      }, "Setting changed to an object adds all of its properties as a properties on the changed hash.");
-      assert.equal(obj.changed('bar'), 'bar getter', "Accessing a changed value calls `get` on the object at that path.");
-      assert.deepEqual(obj.changed('foo'), undefined, "Attempting to access a value not defined on `changed` returns unefined.");
-    });
-
-
-    QUnit.test("Unsetting change with a hash", function(assert) {
-      var obj = new Test();
-
-      obj.dirty();
-      obj.change({ bar: 'val', biz: 'baz' });
-      obj.change({ bar: 'val', biz: 'baz' }, false);
-      assert.deepEqual(obj.changed(), { }, "Unsetting changed with a hash removes all keys as a property from the changed hash.");
-      assert.deepEqual(obj.changed('bar'), undefined, "Accessing a removed changed value calls `get` on the object at that path.");
-      assert.deepEqual(obj.changed('biz'), undefined, "Accessing a removed changed value calls `get` on the object at that path.");
-
-    });
-
-    QUnit.test("Change with Dirty and Clean", function(assert) {
-      var obj = new Test();
-      obj.dirty();
-      obj.change('foo');
-      obj.change({ bar: 'val', biz: 'baz' });
-      assert.deepEqual(obj.changed(), {
-        foo: 'foo getter',
-        bar: 'bar getter',
-        biz: 'biz getter'
-      }, "Multiple changes while dirty result in accumalted changed values");
-
       obj.clean();
-      assert.deepEqual(obj.changed(), {
-        foo: 'foo getter',
-        bar: 'bar getter',
-        biz: 'biz getter'
-      }, "After marked clean, changed values are still present");
 
+    });
+
+    QUnit.test("Changed hash is unset when value is set back to previous.", function(assert) {
+      var obj = new Test({test: 0});
       obj.dirty();
-      assert.deepEqual(obj.changed(), {}, "Once marked as dirty again, changes hash is re-set");
-      obj.change('foo');
-      assert.deepEqual(obj.changed(), {foo: 'foo getter'}, "Changes made after being re-set are logged");
+      debugger;
+      obj.set("test", 1);
+      assert.deepEqual(obj.changed(), { test: 1 }, "Unsetting changed with a string removes it as a property from the changed hash.");
+      assert.deepEqual(obj.changed('test'), 1, "Accessing a removed changed value calls `get` on the object at that path.");
+      obj.set("test", 0);
+      assert.deepEqual(obj.changed(), { }, "Unsetting changed with a string removes it as a property from the changed hash.");
+      assert.deepEqual(obj.changed('foo'), void 0, "Accessing a removed changed value calls `get` on the object at that path.");
+      obj.clean();
+    });
 
+    QUnit.test("Modifying multiple values in a hash", function(assert) {
+      var obj = new Test();
+      obj.set({ foo: 'bar', biz: 'baz' });
+      assert.deepEqual(obj.changed(), {
+        foo: 'bar',
+        biz: 'baz'
+      }, "Setting changed to an object adds all of its properties as a properties on the changed hash.");
+      assert.equal(obj.changed('foo'), 'bar', "Accessing a changed value calls `get` on the object at that path.");
+      assert.equal(obj.changed('biz'), 'baz', "Accessing a changed value calls `get` on the object at that path.");
+      assert.deepEqual(obj.changed('test'), void 0, "Attempting to access a value not defined on `changed` returns unefined.");
     });
 
     QUnit.test("Propagating Changes Up Ancestry", function(assert){
@@ -137,80 +82,161 @@ export default function tests(){
       var grandparent = new Test();
 
       // Set up ancestry
-      grandparent.location = function(){ return 'parent'; }
-      parent.parent = grandparent;
-      parent.location = function(){ return 'child'; }
-      child.parent = parent;
+      grandparent.set('parent', parent);
+      parent.set('child', child);
+      child.set("foo", 1);
 
-      child.dirty();
-      child.change("foo");
       assert.deepEqual(child.changed(), {
-        foo: 'foo getter'
+        foo: 1
       }, "Setting changed to an object with ancestry data successfully adds.");
+
       assert.deepEqual(parent.changed(), {
-        'child': 'child getter',
-        'child.foo': 'child.foo getter'
+        'child': child,
+        'child.foo': 1
       }, "Setting changed to an object with ancestry data propagates the change up to its parent with the right path.");
+
       assert.deepEqual(grandparent.changed(), {
-        'parent': 'parent getter',
-        'parent.child': 'parent.child getter',
-        'parent.child.foo': 'parent.child.foo getter'
+        'parent': parent,
+        'parent.child': child,
+        'parent.child.foo': 1
       }, "Setting changed to an object with ancestry data successfully adds propagates the change up n layers with the right path.");
 
     });
 
-
-    QUnit.test("Propagating Changes Up New Ancestry", function(assert){
-      var child = new Test();
+    QUnit.test("Propagate unsetting change up ancestry mid change", function(assert){
+      var child = new Test({"foo": 0});
       var parent = new Test();
       var grandparent = new Test();
 
       // Set up ancestry
-      grandparent.location = function(){ return 'parent'; }
-      parent.location = function(){ return 'child'; }
+      grandparent.set('parent', parent);
+      parent.set('child', child);
+      child.on('change', function(){
+        if (this._hasrun) return;
+        this._hasrun = true;
+        this.set("foo", 0);
+      });
+      child.set("foo", 1);
 
-      child.dirty();
-      child.change("foo");
-
-      assert.deepEqual(child.changed(), {
-        foo: 'foo getter'
-      }, "Setting changed to an object no ancestry data successfully adds.");
-
-      child.parent = parent;
-      assert.deepEqual(parent.changed(), {
-        'child': 'child getter',
-        'child.foo': 'child.foo getter'
-      }, "Setting parent to an object with change data propagates the change up to its parent with the right path.");
-
-      parent.parent = grandparent;
-      assert.deepEqual(grandparent.changed(), {
-        'parent': 'parent getter',
-        'parent.child': 'parent.child getter',
-        'parent.child.foo': 'parent.child.foo getter'
-      }, "Setting parent to an object with change data from a new child successfully adds propagates the change up n layers with the right path.");
+      assert.deepEqual(child.changed(), {}, "Unsetting changed value on an object mid change is successful.");
+      assert.deepEqual(child.changed(), {}, "Unsetting changed value on an object mid change is successful on parents.");
+      assert.deepEqual(child.changed(), {}, "Unsetting changed value on an object mid change is successful on grandparents.");
 
     });
+
+    QUnit.test("Propagate unsetting change up ancestry mid change with additional change", function(assert){
+      var child = new Test({"foo": 0});
+      var parent = new Test();
+      var grandparent = new Test();
+
+      // Set up ancestry
+      grandparent.set('parent', parent);
+      parent.set('child', child);
+      child.on('change', function(){
+        if (this._hasrun) return;
+        this._hasrun = true;
+        this.set("bar", 1);
+        this.set("foo", 0);
+      });
+      child.set("foo", 1);
+
+      assert.deepEqual(child.changed(), {
+        'bar': 1
+      }, "Unsetting and Setting changed to an object with ancestry data successfully updates changed.");
+
+      assert.deepEqual(parent.changed(), {
+        'child': child,
+        'child.bar': 1
+      }, "Unsetting and Setting changed to an object with ancestry data successfully updates changed on parents.");
+
+      assert.deepEqual(grandparent.changed(), {
+        'parent': parent,
+        'parent.child': child,
+        'parent.child.bar': 1
+      }, "Unsetting and Setting changed to an object with ancestry data successfully updates changed on grandparent.");
+
+    });
+
+
+    QUnit.test("Removing children mid child change", function(assert){
+      var child = new Test({"foo": 0});
+      var parent = new Test();
+      var grandparent = new Test();
+
+      // Set up ancestry
+      grandparent.set('parent', parent);
+      parent.set('child', child);
+      child.on('change', function(){
+        this.parent.remove(this);
+      });
+      child.set("foo", 1);
+
+      assert.deepEqual(child.changed(), {
+        'foo': 1
+      }, "Unsetting and Setting changed to an object with ancestry data successfully updates changed.");
+
+      assert.deepEqual(parent.changed(), {
+        'child': undefined
+      }, "Unsetting and Setting changed to an object with ancestry data successfully updates changed on parents.");
+
+      assert.deepEqual(grandparent.changed(), {
+        'parent': parent,
+        'parent.child': undefined
+      }, "Unsetting and Setting changed to an object with ancestry data successfully updates changed on grandparent.");
+
+    });
+
+    QUnit.test("Swapping children mid child change", function(assert){
+      var child1 = new Test({"foo": 0});
+      var child2 = new Test({"bar": 0});
+      var parent = new Test();
+      var grandparent = new Test();
+
+      // Set up ancestry
+      grandparent.set('parent', parent);
+      parent.set('child', child1);
+      child1.on('change', function(){
+        if (this._hasRan) return;
+        this._hasRan = true;
+        this.parent.set('child', child2);
+      });
+      child1.set("foo", 1);
+
+      assert.deepEqual(child1.changed(), {
+        'foo': 1
+      }, "Changed values on previous changed object are left intact");
+
+      assert.deepEqual(parent.changed(), {
+        'child': child2
+      }, "New child is on parent's changed values, old child's changed values have been removed.");
+
+      assert.deepEqual(grandparent.changed(), {
+        'parent': parent,
+        'parent.child': child2
+      }, "Those changes propagate up.");
+
+    });
+
 
     QUnit.test("Dirty State is Inherited", function(assert){
       var child = new Test();
       var parent = new Test();
-      parent.location = function(){ return 'child'; }
+      parent.location = function(){ return 'child'; };
       child.dirty();
-      child.parent = parent;
-      child.change("foo");
-
+      parent.set('child', child);
+      child.set("foo", 1);
       parent.dirty();
       assert.deepEqual(parent.changed(), {
-        'child': 'child getter',
-        'child.foo': 'child.foo getter'
-      }, "Parents added inside of a child's transaction inherit their dirty degree and are not cleared of session state if modified.");
+        'child': child,
+        'child.foo': 1
+      }, "Parents receiving a dirty child inherit their dirty degree and are not cleared of session state children are further modified.");
 
     });
 
     QUnit.test("Dirty State is Propagated and Resets Parent's Change", function(assert){
       var child = new Test();
       var parent = new Test();
-      parent.location = function(){ return 'child'; }
+      parent.location = function(){ return 'child'; };
 
       child.parent = parent;
       child.dirty();
@@ -230,4 +256,4 @@ export default function tests(){
 
 
   });
-};
+}

@@ -1,0 +1,86 @@
+
+# Defition
+Stores quantitative data. Discrete or continuous.
+
+# Requirements
+ - Save previous
+ - Fetch changed
+ - Must store value
+ - Manage Parent
+ - Manage Children
+ - Manage Location Data (Key, Path, Etc.)
+ - Get value at 0-1 key locations (Value proxy & Value store)
+ - Set value at 0-1 key locations (Value store & Key-Value store)
+
+# Guarentees
+ - Will have children
+ - Children have single parent
+ - Key *NOT* known at set time
+
+
+```javascript
+
+class Model extends Data (Object) {
+  [Data.get](key){}
+  [Data.set](key, value){}
+  [Data.delete](key){}
+  [Data.validate](data){}
+}
+
+class Collection extends Data (Array) {
+  [Data.get](key){}
+  [Data.set](key, value){}
+  [Data.delete](key){}
+  [Data.validate](data){}
+}
+
+class Value extends Data (Boolean, Number, RegExp, String, Symbol) {
+  [Data.get](key){}
+  [Data.set](key, value){}
+  [Data.delete](key){}
+  [Data.validate](data){}
+}
+
+
+class Model extends Data {
+  [Data.get](){}
+  [Data.set](value){}
+  [Data.delete](){}
+}
+
+```
+
+
+
+get() // Value Store
+get(key) // Key Value Store
+
+set(value) // Self Determined Key
+set(key, value) // Prescribed Key
+
+Value:
+  get()
+  set(value)
+
+Dictionary:
+  get(key)
+  set(key, value)
+
+Array:
+  get(index)
+  set(index, value)
+
+Map:
+  get(obj)
+  set(obj, value)
+
+Set:
+  get(order)
+  set(value)
+
+Property:
+  get() || get(value)
+  set(value) || set(key, value)
+
+
+

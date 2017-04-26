@@ -1,5 +1,7 @@
 var gulp = require('gulp');
+var pjson = require('../package.json');
 var concat = require('gulp-concat');
+var replace = require('gulp-replace');
 var docco = require("gulp-docco");
 
 /*******************************************************************************
@@ -17,6 +19,9 @@ gulp.task('docco', [], function() {
 
     // Rebound Data
     'packages/rebound-data/lib/rebound-data.js',
+      'packages/rebound-data/lib/path.js',
+      'packages/rebound-data/lib/events.js',
+      'packages/rebound-data/lib/data.js',
       'packages/rebound-data/lib/model.js',
       'packages/rebound-data/lib/collection.js',
       'packages/rebound-data/lib/computed-property.js',
@@ -73,6 +78,7 @@ gulp.task('docco', [], function() {
     'packages/property-compiler/lib/property-compiler.js'
   ])
   .pipe(concat('rebound.js'))
+  .pipe(replace('%VER%', pjson.version))
   .pipe(docco())
   .pipe(gulp.dest('dist/docs'));
 });

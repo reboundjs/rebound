@@ -1,55 +1,55 @@
-import { Data, Model, Collection } from "rebound-data/rebound-data";
+import { Data, Model } from "rebound-data/rebound-data";
+
+class Test extends Data{
+  constructor(){ super(); this._values = {}; }
+  [Data.get](key){ return this._values[key]; }
+  [Data.set](key, val){ this._values[key] = val; return true; }
+  [Data.delete](key){ return delete this._values[key]; }
+}
 
 export default function tests(){
     QUnit.module("Path", function(){
 
       QUnit.test("Default Value", function(assert) {
         assert.expect(1);
-        var obj = new Data();
+        var obj = new Test();
         assert.equal(obj.path, "", "Default value is empty string.");
       });
 
       QUnit.test("Shallow path", function(assert) {
-        assert.expect(2);
-        var child = new Data();
-        var parent = new Data();
-        parent.location = function(){
-          assert.ok(true, "Path is assembled from individual location calls");
-          return 'foo';
-        };
-        child.parent = parent;
+        assert.expect(1);
+        var child = new Test();
+        var parent = new Test();
+        parent.set('foo', child);
         assert.equal(child.path, "foo", "Path returns proper value for shallow trees");
       });
 
       QUnit.test("Deep path constructed properly", function(assert) {
         assert.expect(1);
-        var child = new Data();
-        var parent = new Data();
-        var grandparent = new Data();
+        var child = new Test();
+        var parent = new Test();
+        var grandparent = new Test();
 
-        parent.location = function(){ return "foo"; };
-        grandparent.location = function(){ return 'bar'; };
-        child.parent = parent;
-        parent.parent = grandparent;
+        parent.set('foo', child);
+        grandparent.set('bar', parent);
+
         assert.equal(child.path, "bar.foo", "Path returns proper values for deep trees.");
       });
 
 
       QUnit.test("Path properly escapes path segments", function(assert) {
         assert.expect(2);
-        var child = new Data();
-        var parent = new Data();
-        var grandparent = new Data();
-        var greatgrandparent = new Data();
+        var child = new Test();
+        var parent = new Test();
+        var grandparent = new Test();
+        var greatgrandparent = new Test();
 
-        parent.location = function(){ return "foo"; };
-        grandparent.location = function(){ return 1; };
-        child.parent = parent;
-        parent.parent = grandparent;
+        parent.set('foo', child);
+        grandparent.set(1, parent);
+
         assert.equal(child.path, "[1].foo", "Path returns proper values for deep trees.");
 
-        greatgrandparent.location = function(){ return 'bar'; };
-        grandparent.parent = greatgrandparent;
+        greatgrandparent.set('bar', grandparent);
 
         assert.equal(child.path, "bar[1].foo", "Path returns proper values for deep trees when ancester's parent is set.");
 
@@ -59,7 +59,7 @@ export default function tests(){
       QUnit.test("Models and Path", function(assert) {
         assert.expect(7);
 
-        var model, collection, model2, model3;
+        var model;
 
         // Construction
         model = new Model({
@@ -120,7 +120,7 @@ export default function tests(){
     // TODO: Move to Collection tests
     QUnit.test("Collections and Path", function(assert) {
       assert.expect(10);
-      var model, collection, model2, model3;
+      var model;
 
       // Construction
       model = new Model({

@@ -3,28 +3,26 @@ import { Model, Collection } from "rebound-data/rebound-data";
 export default function tests(){
   QUnit.module("Defaults", function(){
 
-    var Shallow = Model.extend( {
-      defaults: {
+    class Shallow extends Model {};
+    Shallow.prototype.defaults = {
+      foo: 'bar',
+      bool: true,
+      int: 1
+    };
+
+    class Deep extends Model {};
+    Deep.prototype.defaults = {
+      obj: {
         foo: 'bar',
         bool: true,
         int: 1
       }
-    });
-
-    var Deep = Model.extend({
-      defaults: {
-        obj: {
-          foo: 'bar',
-          bool: true,
-          int: 1
-        }
-      }
-    });
+    };
 
     QUnit.test('Reserved native methods are set as attributes, not overridden on Model', function(assert) {
-      var Defaulted = Backbone.Model.extend({
-        defaults: {hasOwnProperty: true}
-      });
+      class Defaulted extends Model {
+        get defaults(){ return { hasOwnProperty: true }; }
+      };
       var model = new Defaulted();
       assert.equal(model.get('hasOwnProperty'), true);
       model = new Defaulted({hasOwnProperty: undefined});
@@ -159,14 +157,14 @@ export default function tests(){
     });
 
     QUnit.test("Models with defaults inside of collections", function(assert) {
-
-      var collection = Collection.extend({
-        model: Model.extend({
-          defaults: {
-            test: true
-          }
-        })
-      });
+      class M extends Model {
+        get defaults(){
+          return { test: true };
+        }
+      }
+      class collection extends Collection {}
+      collection.prototype.model = M;
+      
       var model = new Model({
         arr: (new collection([{id: 1}, {id: 2}]))
       });

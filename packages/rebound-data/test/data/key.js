@@ -1,47 +1,47 @@
 import { Data, Model, Collection } from "rebound-data/rebound-data";
 
+class Test extends Data{
+  constructor(){ super(); this._value = {}; }
+  [Data.get](key){ return this._value[key]; }
+  [Data.set](key, val){ this._value[key] = val; return true; }
+  [Data.delete](key){ return delete this._value[key]; }
+}
+
 export default function tests(){
   QUnit.module("Key", function(){
 
     QUnit.test("Initial State is Empty String", function(assert){
       assert.expect(1);
-      var obj = new Data();
+      var obj = new Test();
       assert.equal(obj.key, "", "Accessing `key` on a parentless object returns an empty string.");
     });
 
     QUnit.test("Proxies to User Defined `location` Method", function(assert){
-      assert.expect(2);
-      var child = new Data();
-      var parent = new Data();
-      parent.location = function(obj){
-        assert.equal(obj.cid, child.cid, "Accessing `key` on a child object calls `location` on its parent and passes the child object.");
-        return "foo";
-      }
-      child.parent = parent;
-      assert.equal(child.key, "foo", "Accessing `key` on a child object returns the value from parent's `location` method.");
+      assert.expect(1);
+      var child = new Test();
+      var parent = new Test();
+
+      parent.set('foo', child);
+      assert.equal(child.key, parent.location(child), "Accessing `key` on a child object returns the value from parent's `location` method.");
     });
 
     QUnit.test("Caches Previous Values Until Parent Changed", function(assert){
       assert.expect(3);
-      var child = new Data();
-      var parent = new Data();
-      parent.location = function(obj){ return "foo"; }
-      child.parent = parent;
+      var child = new Test();
+      var parent = new Test();
+      parent.set('foo', child);
       assert.equal(child.key, "foo", "Accessing `key` on a child object returns the value from parent's `location` method.");
-      parent.location = function(obj){ return "bar"; }
       assert.equal(child.key, "foo", "The `key` accessor is cached and will always return the same value until `parent` is changed.");
-      child.parent = null;
-      child.parent = parent;
+      parent.set('bar', child);
       assert.equal(child.key, "bar", "When `parent` is changed the key cache is busted and will re-compute.");
     });
 
     QUnit.test("Casts as String", function(assert){
       assert.expect(1);
-      var child = new Data();
-      var parent = new Data();
-      child.parent = parent;
-      parent.location = function(obj){ return 12345; }
-      assert.ok(child.key === "12345", "`key` will return the String cast version of what is returned from `location`");
+      var child = new Test();
+      var parent = new Test();
+      parent.set(12345, child);
+      assert.equal(child.key, "12345", "`key` will return the String cast version of what is returned from `location`");
     });
 
     QUnit.test("Key and Models", function(assert){
@@ -95,18 +95,52 @@ export default function tests(){
       assert.equal(collection.at(2).key, 2, "Key for model in collection promoted on add is correct for indicies > 0.");
 
       collection = new Collection();
-      debugger;
+
       var a = new Model({val: 1});
       collection.add(a);
       collection.add(new Model({val: 2}));
       collection.add(new Model({val: 3}));
       assert.equal(collection.at(0).key, 0, "Key for existing model added to collection is correct.");
       assert.equal(collection.at(2).key, 2, "Key for existing model added to collection is correct for indicies > 0.");
-debugger;
+
       var model = collection.at(2);
       collection.add(model, {at: 0});
       assert.equal(model.key, 2, "Key for model moved within collection is correct.");
     });
 
+
+    QUnit.test("Key cache Invalidation", function(assert){
+      assert.expect(5);
+
+      class Test extends Data(Array) {
+        [Data.get](key){ return super.cache[key]; }
+        [Data.set](key, val){
+          super.cache.unshift(val);
+          for (let i=1;i<super.cache.length;i++) this.touch(i, super.cache[i]);
+          return true;
+        }
+        [Data.delete](key){ return delete super.cache[key]; }
+      }
+
+      var test = new Test();
+      var a = new Data('a');
+      var b = new Data('b');
+      var c = new Data('c');
+
+      test.set(0, a);
+      test.set(0, b);
+
+      assert.equal(a.key, '1');
+      assert.equal(b.key, '0');
+
+      test.set(0, c);
+
+      assert.equal(a.key, '2');
+      assert.equal(b.key, '1');
+      assert.equal(c.key, '0');
+
+    });
+
+
   });
-};
+}

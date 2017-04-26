@@ -11,7 +11,7 @@ export default function tests(){
     }
   }
 
-  QUnit.module("Trigger", function(assert) {
+  QUnit.module("Trigger", function() {
 
     QUnit.test('trigger all for each event', function(assert) {
       assert.expect(3);
@@ -67,4 +67,4 @@ export default function tests(){
     });
 
   });
-};
+}

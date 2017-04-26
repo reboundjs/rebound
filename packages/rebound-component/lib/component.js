@@ -7,18 +7,15 @@ import { Model } from "rebound-data/rebound-data";
 import render from "rebound-htmlbars/render";
 
 // New Backbone Component
-var Component = Model.extend({
+class Component extends Model {
 
-  isComponent: true,
-  isHydrated: true,
-  defaults: {},
+  // All Components have the read-only property `isComponent`
+  get isComponent(){ return true; }
+  set isComponent(val){ throw new Error(`Error: Property "isComponent" is read-only on object:`, this); }
 
-  constructor(el, data, options){
+  constructor(el, data, options={}){
 
-    // Ensure options is an object
-    options || (options = {});
-
-    Model.call(this);
+    super(data, options)
 
     // Bind certian methods to ensure they are run in the context of our Component
     this._callOnComponent = this._callOnComponent.bind(this);
@@ -32,7 +29,7 @@ var Component = Model.extend({
     this.options = options;
 
     // If we are told this is not a hydrated component, mark it as such
-    if(options.isHydrated === false){ this.isHydrated = false; }
+    this.isHydrated = options.isHydrated !== false;
 
     // Components are always the top of their data tree. Set parent to null.
     this.parent = null;
@@ -68,12 +65,12 @@ var Component = Model.extend({
     this.initialize();
 
     return this;
-  },
+  }
 
   _callOnComponent(name, event){
     if(!_.isFunction(this[name])){ throw "ERROR: No method named " + name + " on component " + this.tagName + "!"; }
     return this[name].call(this, event);
-  },
+  }
 
   _listenToService(key, service){
     var self = this;
@@ -93,7 +90,7 @@ var Component = Model.extend({
         changed = model.changed;
         for(attr in changed){
           // TODO: Modifying arguments array is bad. change this
-          type = ('change:' + key + '.' + path + (path && '.') + attr); // jshint ignore:line
+          type = ('change:' + key + '.' + path + (path && '.') + attr); // eslint-disable-line
           this.trigger.call(this, type, model, value, options);
         }
       }
@@ -102,14 +99,14 @@ var Component = Model.extend({
       }
       service._scope = oldScope;
     });
-  },
+  }
 
   // Render our dom and place the dom in our custom element
   // TODO: Check if template is a string, and if the compiler exists on the page, and compile if needed
   render(){
     $(this.el).empty();
     render(this.el, this[REBOUND_SYMBOL].template, this);
-  },
+  }
 
   deinitialize(){
     super.deinitialize();
@@ -143,7 +140,7 @@ var Component = Model.extend({
     });
     delete this.services;
 
-  },
+  }
 
   // LazyComponents have an onLoad function that calls all the registered callbacks
   // after it has been hydrated. If we are calling onLoad on an already loaded
@@ -151,7 +148,7 @@ var Component = Model.extend({
   onLoad(cb){
     if(!this.isHydrated){ this.loadCallbacks.push(cb); }
     else{ cb(this); }
-  },
+  }
 
   // Set is overridden on components to accept components as a valid input type.
   // Components set on other Components are mixed in as a shared object. {raw: true}
@@ -185,14 +182,14 @@ var Component = Model.extend({
     }
 
     return this;
-  },
+  }
 
   $(selector) {
     if(!this.$el){
       return console.error('No DOM manipulation library on the page!');
     }
     return this.$el.find(selector);
-  },
+  }
 
   // Trigger all events on both the component and the element
   trigger(eventName){
@@ -200,7 +197,7 @@ var Component = Model.extend({
       $(this.el).trigger(eventName, arguments);
     }
     Model.prototype.trigger.apply(this, arguments);
-  },
+  }
 
   _onAttributeChange(attrName, oldVal, newVal){
     // Commented out because tracking attribute changes and making sure they dont infinite loop is hard.
@@ -222,7 +219,7 @@ var Component = Model.extend({
     // else{ this.set(attrName, newVal, {quiet: true}); }
   }
 
-});
+}
 
 
 function processProps(protoProps, staticProps){
@@ -280,6 +277,9 @@ function processProps(protoProps, staticProps){
   }
 
 }
+
+// Set default...defaults
+Component.prototype.defaults = {};
 
 Component.hydrate = function hydrateComponent(protoProps={}, staticProps={}){
 

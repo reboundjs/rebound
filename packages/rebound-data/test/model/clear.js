@@ -4,7 +4,7 @@ export default function clear(){
   QUnit.module("Clear", function(){
 
     QUnit.test('Shallow Clear', function(assert) {
-      assert.expect(3)
+      assert.expect(4)
       var model = new Model({
         undef: undefined,
         str: 'foo',
@@ -12,17 +12,31 @@ export default function clear(){
         int: 0
       });
       model.count = 0;
-      model.on('change:@all update', function(name){
+      var events = [];
+      model.on('all', function(name){
+        events.push(name);
+      });
+      model.on('change:@all', function(name){
         this.count++
       });
       model.clear();
 
       assert.deepEqual(model.toJSON(), {}, 'Clears all primitive values in a model.');
       assert.deepEqual(model.count, 4, 'A change event is triggered for each value cleared');
+      assert.deepEqual(events, [
+        "dirty",
+        "change:undef",
+        "change:str",
+        "change:bool",
+        "change:int",
+        "update",
+        "clean"
+      ], 'Correct events triggered');
       assert.deepEqual(model.changed(), {
         str: undefined,
         bool: undefined,
-        int: undefined
+        int: undefined,
+        undef: undefined
       }, 'Clearing all primitive values in a model sets proper changed values.');
 
     });
@@ -42,22 +56,35 @@ export default function clear(){
         },
         arr: [{id: 1}]
       });
-      model.count = 0;
+      var events = []
       model.on('all', function(name){
-        console.log(name);
-        this.count++
+        events.push(name);
       });
 
       model.clear();
 
       assert.deepEqual(model.toJSON(), {}, 'Clears all primitive and complex values in a model.');
-      assert.deepEqual(model.count, 6, 'A change event is triggered for each value cleared');
+      assert.deepEqual(events, [
+        'dirty',
+        'change:str',
+        'change:bool',
+        'change:int',
+        'change:obj',
+        'change:arr',
+        'update',
+        'clean'
+      ], 'A change event is triggered for each value cleared, update is called at end.');
       assert.deepEqual(model.changed(), {
         str: undefined,
         bool: undefined,
         int: undefined,
         obj: undefined,
-        arr: undefined
+        'obj.foo': undefined,
+        'obj.obj': undefined,
+        'obj.obj.biz': undefined,
+        arr: undefined,
+        'arr[0]': undefined,
+        'arr[0].id': undefined
       }, 'Clearing all primitive values in a model sets proper changed values.');
 
     });

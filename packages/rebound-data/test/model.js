@@ -25,11 +25,26 @@ export default function (){
     changed();
     clear();
     defaults();
+
     get();
+
     reset();
+    
     set();
     toggle();
     toJSON();
+
+    QUnit.test("IsModel", function(assert) {
+      assert.expect(2);
+
+      var data = new Model()
+
+      assert.ok(data.isModel, "A model has a truthy `isModel` property.");
+      assert.throws(function(){
+        data.isModel = false;
+      }, "Attempting to set a datum's `isData` property throws.");
+
+    });
 
   }); // End: Model Module
 

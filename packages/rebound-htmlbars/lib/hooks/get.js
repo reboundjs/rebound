@@ -27,7 +27,7 @@ export default function get(env, scope, path){
   // Given a context and a path, create a LazyValue object that returns
   // the value of object at path and add an observer to the context at path.
   return scope.streams[path] = new LazyValue(function() {
-      return this.context.get(this.path, {isPath: true});
+      return this.context.get(this.path);
     }, {
       context: context,
       path: path,

@@ -1,5 +1,10 @@
 import { Events } from "rebound-data/rebound-data";
 
+function size(obj){
+  if (obj == null) return 0;
+  return Array.isArray(obj) ? obj.length : Object.keys(obj).length;
+}
+
 export default function tests(){
 
   class TestObject extends Events {
@@ -12,7 +17,7 @@ export default function tests(){
 
     // Expose the private events channel for testing
     get _events(){
-      return this[Object.getOwnPropertySymbols(this).filter((sym) => { return !!~sym.toString().indexOf("Rebound-Events"); })[0]];
+      return this[Object.getOwnPropertySymbols(this).filter((sym) => { return !!~sym.toString().indexOf("<events>"); })[0]];
     }
   }
 
@@ -110,20 +115,20 @@ export default function tests(){
       var fn = function() {};
       a.listenTo(b, 'event', fn);
       b.off();
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.listeners), 0);
       a.listenTo(b, 'event', fn);
       b.off('event');
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.listeners), 0);
       a.listenTo(b, 'event', fn);
       b.off(null, fn);
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.listeners), 0);
       a.listenTo(b, 'event', fn);
       b.off(null, null, a);
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.listeners), 0);
     });
 
 
@@ -131,20 +136,20 @@ export default function tests(){
       assert.expect(9);
       var a = new TestObject();
       var b = new TestObject();
-      var fn = function() {};
+
       b.on('event:@all', function() {});
       a.listenTo(b, 'event:@all', function() {});
       assert.equal(b._events.delegateCount, 1);
       assert.equal(Object.keys(b._events.delegates).length, 1);
       assert.equal(b._events.cache['event:@all'].length, 2);
-      assert.equal(_.size(a._events.listeningTo), 1);
+      assert.equal(size(a._events.listeningTo), 1);
       b.off();
-      assert.equal(_.size(a._events.listeningTo), 0);
-      assert.equal(_.size(b._events.cache['event:@all']), 0);
-      assert.equal(_.size(b._events.listeners), 0);
+      assert.equal(size(a._events.listeningTo), 0);
+      assert.equal(size(b._events.cache['event:@all']), 0);
+      assert.equal(size(b._events.listeners), 0);
       assert.equal(b._events.delegateCount, 0);
       assert.equal(Object.keys(b._events.delegates).length, 0);
     });
 
   });
-};
+}
